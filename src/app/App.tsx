@@ -1,11 +1,12 @@
 import { initSurvicate } from '../public-path';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react'; // Added useState
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
 import ChunkLoader from '@/components/loader/chunk-loader';
 import RoutePromptDialog from '@/components/route-prompt-dialog';
 import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
+import PWAInstallModal from '@/components/pwa-install-modal/PWAInstallModal'; // Import the new modal
 import { TAuthData } from '@/types/api-types';
 import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
 import CoreStoreProvider from './CoreStoreProvider';
@@ -13,6 +14,16 @@ import './app-root.scss';
 
 const Layout = lazy(() => import('../components/layout'));
 const AppRoot = lazy(() => import('./app-root'));
+
+// Define an interface for the BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+    readonly platforms: string[];
+    readonly userChoice: Promise<{
+        outcome: 'accepted' | 'dismissed';
+        platform: string;
+    }>;
+    prompt(): Promise<void>;
+}
 
 const { TRANSLATIONS_CDN_URL, R2_PROJECT_NAME, CROWDIN_BRANCH_NAME } = process.env;
 const i18nInstance = initializeI18n({
@@ -44,6 +55,9 @@ const router = createBrowserRouter(
 );
 
 function App() {
+    const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [showInstallModal, setShowInstallModal] = useState(false);
+
     useEffect(() => {
         initSurvicate();
         window?.dataLayer?.push({ event: 'page_load' });
@@ -55,6 +69,47 @@ function App() {
             }
         };
     }, []);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (event: Event) => {
+            event.preventDefault(); // Prevent the mini-infobar from appearing on mobile
+            const typedEvent = event as BeforeInstallPromptEvent;
+            setDeferredInstallPrompt(typedEvent);
+
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const alreadyInstalled = localStorage.getItem('dbot_pwa_already_installed') === 'true';
+            
+            if (!isStandalone && !alreadyInstalled) {
+                setShowInstallModal(true);
+            }
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
+
+    const handlePWAInstall = async () => {
+        setShowInstallModal(false);
+        if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            if (outcome === 'accepted') {
+                localStorage.setItem('dbot_pwa_already_installed', 'true');
+                console.log('User accepted the PWA installation prompt');
+            } else {
+                console.log('User dismissed the PWA installation prompt');
+            }
+            setDeferredInstallPrompt(null);
+        }
+    };
+
+    const handlePWAModalClose = () => {
+        setShowInstallModal(false);
+        sessionStorage.setItem('dbot_pwa_prompt_dismissed_this_session', 'true');
+    };
 
     useEffect(() => {
         const accountsList = localStorage.getItem('accountsList');
@@ -126,7 +181,16 @@ function App() {
         }
     }, []);
 
-    return <RouterProvider router={router} />;
+    return (
+        <>
+            <RouterProvider router={router} />
+            <PWAInstallModal
+                show={showInstallModal && !!deferredInstallPrompt}
+                onInstall={handlePWAInstall}
+                onClose={handlePWAModalClose}
+            />
+        </>
+    );
 }
 
 export default App;
