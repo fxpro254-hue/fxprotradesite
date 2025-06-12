@@ -2429,9 +2429,9 @@ const AppHeader = observer(() => {
                     onClick={() => setIsCopyModalOpen(true)} // Update onClick to open the new modal
                     tooltipContent={localize('Copy Trading Settings')}
                     tooltipPosition='bottom'
-                    className='app-header__copy-icon' // Add a class for potential styling
+                    className='app-header__toggle' // Add a class for potential styling
                 >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className='app-header__profile_icon'> {/* Consider using a different class if needed */}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> 
                         <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
                     </svg>
                 </Tooltip>
@@ -2447,7 +2447,7 @@ const AppHeader = observer(() => {
                                 className="auth-modal__close-btn" 
                                 onClick={() => setIsModalOpen(false)}
                             >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
                                 </svg>
                             </button>

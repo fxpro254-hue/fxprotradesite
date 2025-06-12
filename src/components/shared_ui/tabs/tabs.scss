@@ -3,6 +3,11 @@
 .dc-tabs {
     position: relative;
     display: grid;
+    --tab-border-radius: 6px;
+    --tab-transition: 0.3s ease;
+    --tab-active-color: var(--brand-red-coral);
+    --tab-inactive-color: var(--text-general);
+    --tab-hover-bg: rgba(0, 0, 0, 0.05);
 
     &--top {
         grid-template-rows: auto 1fr;
@@ -14,10 +19,12 @@
 
     &__list {
         width: 100%;
-        line-height: 30px;
+        line-height: 20px;
         display: flex;
         position: relative;
-
+        gap: 4px;
+        padding: 1px;
+        
         @include mobile-or-tablet-screen {
             justify-content: center;
         }
@@ -28,7 +35,7 @@
         }
 
         &--border-bottom {
-            border-bottom: 2px solid var(--general-section-1);
+            border-bottom: 1px solid var(--general-section-1);
         }
 
         &--top {
@@ -37,17 +44,13 @@
 
         &--bottom {
             order: 1;
-            border-top: 2px solid var(--general-section-1);
+            border-top: 1px solid var(--general-section-1);
         }
 
         &--center {
             justify-content: center;
             width: fit-content;
             margin: auto;
-
-            .dc-tabs__item {
-                padding: 0 2.2rem;
-            }
         }
 
         &--fit-content {
@@ -76,29 +79,48 @@
 
     &__item {
         list-style: none;
-        font-size: 13px;
+        font-size: 14px;
+        padding: 8px 16px;  // Reduced vertical padding
         text-align: center;
         white-space: nowrap;
-        color: var(--text-general);
+        color: var(--tab-inactive-color);
+        transition: all var(--tab-transition);
+        border-radius: var(--tab-border-radius);
+        position: relative;
         -webkit-touch-callout: none;
         -webkit-tap-highlight-color: transparent;
+        border-bottom: 3px solid transparent;
+
+        &:hover:not(.dc-tabs__active) {
+            background-color: var(--tab-hover-bg);
+        }
 
         &__counter {
-            margin-top: -2rem;
-            vertical-align: middle;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            margin-left: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 10px;
+            background-color: var(--general-section-1);
+            padding: 0 6px;
         }
 
         &__icon {
-            padding-right: 0.7rem;
+            padding-right: 8px;
+            display: inline-flex;
+            align-items: center;
 
             @include mobile-or-tablet-screen {
-                padding-right: 0;
-                padding-top: 0;
+                padding-right: 2px;
             }
         }
 
         &--header-fit-content {
-            padding: 0 16px;
+            padding: 8px 16px;
         }
 
         &--is-hidden {
@@ -109,18 +131,19 @@
             position: relative;
 
             &:after {
-                border-bottom: 2px solid var(--brand-red-coral);
+                border-bottom: 3px solid var(--tab-active-color);
                 content: '';
                 position: absolute;
                 left: 0;
+                bottom: 0;
                 display: block;
                 width: 100%;
+                border-radius: 1px;
             }
         }
 
         &:not(.dc-tabs__active) {
             cursor: pointer;
-            color: var(--text-general);
         }
 
         &:not(&--header-fit-content) {
@@ -129,42 +152,14 @@
     }
 
     &__active {
-        font-weight: 700;
+        font-weight: 600;
         color: var(--text-prominent);
+        border-bottom: 3px solid var(--tab-active-color);
+        background-color: transparent;
     }
 
+    // Hide the active line since we're using border-bottom on the active tab
     &__active-line {
-        display: block;
-        position: absolute;
-
-        /* rtl:begin:ignore */
-        left: 0;
-
-        /* rtl:end:ignore */
-        height: 2px;
-        background: var(--brand-red-coral);
-        transition: all ease-in-out 0.3s;
-
-        &--top {
-            bottom: -2px;
-        }
-
-        &--bottom {
-            top: -2px;
-        }
-
-        &--is-hidden {
-            display: none;
-        }
-
-        &--fit-content {
-            @include mobile-or-tablet-screen {
-                width: 120px;
-            }
-        }
-
-        &:not(&--header-fit-content) {
-            width: var(--tab-width);
-        }
+        display: none;
     }
 }
