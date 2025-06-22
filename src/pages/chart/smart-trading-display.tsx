@@ -878,12 +878,12 @@ const SmartTradingDisplay = observer(() => {
               switch (actionToUse) {
                 case 'Rise':
                     // TEMPORARY FIX: Use DIGITODD instead of CALL to test if CALL/PUT is causing disconnection
-                    contractType = 'DIGITODD'; // was 'CALL'
+                    contractType = 'CALLE'; // was 'CALL'
                     console.log(`🚨 [TEMP FIX] Using DIGITODD instead of CALL for Rise to test disconnection issue`);
                     break;
                 case 'Fall':
                     // TEMPORARY FIX: Use DIGITEVEN instead of PUT to test if CALL/PUT is causing disconnection  
-                    contractType = 'DIGITEVEN'; // was 'PUT'
+                    contractType = 'PUTE'; // was 'PUT'
                     console.log(`🚨 [TEMP FIX] Using DIGITEVEN instead of PUT for Fall to test disconnection issue`);
                     break;
                 case 'Even':
@@ -962,14 +962,10 @@ const SmartTradingDisplay = observer(() => {
                 }
                 
                 console.log(`🚨 [RISE/FALL] Validated contract parameters:`, contractParameters);
-            }
-
-            // Create array to store all trade promises (for copy trading)
-            const trades = [];            // Enhanced API call with specific error handling for Rise/Fall
-            console.log(`🚨 [API CALL] Preparing to send buy request for ${contractType}`);
-            
+            }            // Create array to store all trade promises
+            const trades = [];            // Standard trade for current account
             const standardTradePromise = doUntilDone(() => {
-                console.log(`🚨 [API CALL] Sending buy request:`, {
+                console.log(`🚨 [API CALL] Sending buy request for ${contractType}:`, {
                     buy: 1,
                     price: contractParameters.amount,
                     parameters: contractParameters,
@@ -1002,7 +998,7 @@ const SmartTradingDisplay = observer(() => {
             }, [], api_base);
             trades.push(standardTradePromise);
 
-            // Check copy trading settings (adapted from TradingHub)
+            // Check copy trading settings from header (same implementation as TradingHub)
             if (client?.loginid) {
                 const copyTradeEnabled = localStorage.getItem(`copytradeenabled_${client.loginid}`) === 'true';
                 if (copyTradeEnabled) {
@@ -1015,9 +1011,12 @@ const SmartTradingDisplay = observer(() => {
                             buy_contract_for_multiple_accounts: '1',
                             price: contractParameters.amount,
                             tokens,
-                            parameters: contractParameters
+                            parameters: {
+                                ...contractParameters
+                            }
                         };
                         trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
+                        console.log(`Smart Trading: Adding copy trade for ${tokens.length} accounts`);
                     }
                     
                     // Check if copying to real account is enabled
@@ -1034,16 +1033,19 @@ const SmartTradingDisplay = observer(() => {
                                     buy_contract_for_multiple_accounts: '1',
                                     price: contractParameters.amount,
                                     tokens: [realAccountToken],
-                                    parameters: contractParameters
+                                    parameters: {
+                                        ...contractParameters
+                                    }
                                 };
                                 trades.push(doUntilDone(() => api_base.api.send(realOption), [], api_base));
+                                console.log(`Smart Trading: Adding copy to real account trade`);
                             }
                         } catch (e) {
-                            console.error('Error copying to real account:', e);
+                            console.error('Smart Trading: Error copying to real account:', e);
                         }
                     }
                 }
-            }            // Execute all trades with enhanced error handling for Rise/Fall
+            }// Execute all trades with enhanced error handling for Rise/Fall
             console.log(`🚨 [TRADE EXECUTION] About to execute ${trades.length} trade(s) for ${contractType}`);
             
             let results;
@@ -2495,7 +2497,6 @@ const SmartTradingDisplay = observer(() => {
                 return strategy;
             })        );
     };
-
     // Over/Under Pattern Trading barrier handlers for over-under-2 cards
     const handleOverUnderPatternTradingBarrierChange = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
@@ -2976,10 +2977,9 @@ const SmartTradingDisplay = observer(() => {
                     </button>
                 </div>
             </div>
-              <div className="smart-trading-strategies">
-                {analysisStrategies
-                    .filter(strategy => !strategy.id.includes('rise-fall') && !strategy.id.includes('matches-differs'))
-                    .map(strategy => {
+            
+            <div className="smart-trading-strategies">
+                {analysisStrategies.map(strategy => {
                     const met = isConditionMet(strategy.id);
                     return (
                         <div
