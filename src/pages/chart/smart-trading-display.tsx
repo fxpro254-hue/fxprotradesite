@@ -2976,9 +2976,10 @@ const SmartTradingDisplay = observer(() => {
                     </button>
                 </div>
             </div>
-            
-            <div className="smart-trading-strategies">
-                {analysisStrategies.map(strategy => {
+              <div className="smart-trading-strategies">
+                {analysisStrategies
+                    .filter(strategy => !strategy.id.includes('rise-fall') && !strategy.id.includes('matches-differs'))
+                    .map(strategy => {
                     const met = isConditionMet(strategy.id);
                     return (
                         <div
