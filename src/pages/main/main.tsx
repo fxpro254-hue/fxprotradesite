@@ -51,7 +51,10 @@ const AutoTraderIcon = () => (
 
 const ChartsIcon = () => (
     <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V3M6 15L10 11L14 15L20 9M20 9V13M20 9H16" stroke="var(--text-general)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M4 20L10 14L14 16L20 10" stroke="var(--text-general)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="8" y="3" width="8" height="8" rx="2" stroke="var(--text-general)" stroke-width="2"/>
+        <path d="M12 5V9" stroke="var(--text-general)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M10 7H14" stroke="var(--text-general)" stroke-width="2" stroke-linecap="round"/>
     </svg>
 );
 
@@ -238,7 +241,7 @@ const AppWrapper = observer(() => {
                             <button onClick={handleOpen}>Load Bot</button>
                         </div>
                         <div label={<><BotBuilderIcon /><Localize i18n_default_text='Bot Builder' /></>} id='id-bot-builder' />
-                        <div label={<><ChartsIcon /><Localize i18n_default_text='Charts' /></>} id='id-charts'>
+                        <div label={<><ChartsIcon /><Localize i18n_default_text='Smart trading' /></>} id='id-charts'>
                             <Suspense fallback={<ChunkLoader message={localize('Please wait, loading chart...')} />}>
                                 <Chart show_digits_stats={true} />
                             </Suspense>
