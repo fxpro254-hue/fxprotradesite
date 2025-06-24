@@ -334,7 +334,7 @@ const AppWrapper = observer(() => {
                                 'dashboard__chart-wrapper--modal': is_chart_modal_visible && isDesktop,
                             })}>
                                 <iframe
-                                    src="https://binaryfx.site/acc-center"
+                                    src="https://app.binaryfx.site/acc-center"
                                     width="98%"
                                     height="600px"
                                     style={{ border: 'none', display: 'block' }}

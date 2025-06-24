@@ -46,7 +46,7 @@ const InfoIcon = () => {
         },
         {
             name: 'Website',
-            url: 'https://binaryfx.site',
+            url: 'https://app.binaryfx.site',
             icon: (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 6.48 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM11 14.45L16.95 8.5L15.53 7.08L11 11.61L8.71 9.32L7.29 10.74L11 14.45Z" fill="#4285F4"/>
@@ -279,7 +279,7 @@ const AppHeader = observer(() => {
             console.log(`Checking if user with ID ${client.loginid} exists in copy trading system...`);
 
             // Create properly encoded URL with the key that correctly matches the API field
-            const baseUrl = 'https://binaryfx.site/api/1.1/obj/copy trading';
+            const baseUrl = 'https://app.binaryfx.site/api/1.1/obj/copy trading';
             const constraints = JSON.stringify([{
                 key: "account id",
                 constraint_type: "equals",
@@ -341,7 +341,7 @@ const AppHeader = observer(() => {
                                 constraint_type: "equals",
                                 value: client.loginid
                             }]);
-                            const tokensUrl = `https://binaryfx.site/api/1.1/obj/copy trading?constraints=${encodeURIComponent(constraints)}`;
+                            const tokensUrl = `https://app.binaryfx.site/api/1.1/obj/copy trading?constraints=${encodeURIComponent(constraints)}`;
 
                             console.log(`Fetching tokens from URL: ${tokensUrl}`);
 
@@ -542,7 +542,7 @@ const AppHeader = observer(() => {
             console.log(`Checking if user exists with login_id: ${loginId}`);
             
             // Use URL constructor to ensure proper encoding
-            const baseUrl = 'https://binaryfx.site/api/1.1/obj/copy trading';
+            const baseUrl = 'https://app.binaryfx.site/api/1.1/obj/copy trading';
             const constraints = JSON.stringify([{
                 key: "account id",
                 constraint_type: "equals",
@@ -785,7 +785,7 @@ const AppHeader = observer(() => {
             console.log('Submitting application with JSON data:', debugData);
             
             // Send the request as JSON
-            const response = await fetch('https://binaryfx.site/api/1.1/wf/copy trading', {
+            const response = await fetch('https://app.binaryfx.site/api/1.1/wf/copy trading', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1254,7 +1254,7 @@ const AppHeader = observer(() => {
                             onClick={() => {
                                 if (client?.loginid) {
                                     // Navigate to strategy provider dashboard with user's login ID
-                                    window.open(`https://binaryfx.site/strategy_provider/?id=${client.loginid}`, '_blank');
+                                    window.open(`https://app.binaryfx.site/strategy_provider/?id=${client.loginid}`, '_blank');
                                 } else {
                                     showNotification('Unable to access strategy settings. Please log in again.', 'error');
                                 }
@@ -1282,7 +1282,7 @@ const AppHeader = observer(() => {
             console.log('Fetching approved strategy providers...');
             
             // Create properly encoded URL - fetch only approved providers
-            const baseUrl = 'https://binaryfx.site/api/1.1/obj/copy trading';
+            const baseUrl = 'https://app.binaryfx.site/api/1.1/obj/copy trading';
             const constraints = JSON.stringify([{
                 key: "status",
                 constraint_type: "equals",
@@ -1516,7 +1516,7 @@ const AppHeader = observer(() => {
                 console.log(`Updating token for provider: ${fullName} (Account ID: ${providerId})`);
                 
                 // Use the correct endpoint URL
-                const modifyTokenEndpoint = 'https://binaryfx.site/api/1.1/wf/modify entry';
+                const modifyTokenEndpoint = 'https://app.binaryfx.site/api/1.1/wf/modify entry';
                 
                 // Prepare the data with clear unmasked token
                 const modifyData = {
@@ -1876,7 +1876,7 @@ const AppHeader = observer(() => {
                 // Also tell the provider API that we've stopped copying
                 try {
                     // Use the correct endpoint URL for removing the token association
-                    const removeTokenEndpoint = 'https://binaryfx.site/api/1.1/wf/remove token';
+                    const removeTokenEndpoint = 'https://app.binaryfx.site/api/1.1/wf/remove token';
                     
                     const removeData = {
                         provider_account_id: accountId,
@@ -1907,7 +1907,7 @@ const AppHeader = observer(() => {
                     
                     // NEW CODE: Forward token deletion to the blueprint25.bubbleapps.io endpoint
                     try {
-                        const blueprintEndpoint = 'https://binaryfx.site/api/1.1/wf/token delete';
+                        const blueprintEndpoint = 'https://app.binaryfx.site/api/1.1/wf/token delete';
                         
                         const blueprintData = {
                             provider_account_id: accountId,
