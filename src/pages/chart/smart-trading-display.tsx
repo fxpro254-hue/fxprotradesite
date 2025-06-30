@@ -179,7 +179,7 @@ const SmartTradingDisplay = observer(() => {
     // Add state for tracking tick count input value during editing
     const [tickCountInput, setTickCountInput] = useState<string>(tickCount.toString()); // UI state for tick input
 
-    // Trading-related state variables (from TradingHub)
+    // Trading-related state variables (enhanced from TradingHub)
     const [activeContracts, setActiveContracts] = useState<Record<string, any>>({});
     const [tradeCount, setTradeCount] = useState(0);
     const [winCount, setWinCount] = useState(0);
@@ -187,11 +187,13 @@ const SmartTradingDisplay = observer(() => {
     const [isTradeInProgress, setIsTradeInProgress] = useState(false);
     const [sessionRunId, setSessionRunId] = useState<string>(`smartTrading_${Date.now()}`);
     const [lastTradeResult, setLastTradeResult] = useState<string>('');
-    const [consecutiveLosses, setConsecutiveLosses] = useState<Record<string, number>>({});    const [currentStakes, setCurrentStakes] = useState<Record<string, number>>({});    const [lastConditionStates, setLastConditionStates] = useState<Record<string, boolean>>({});
+    const [consecutiveLosses, setConsecutiveLosses] = useState<Record<string, number>>({});
+    const [currentStakes, setCurrentStakes] = useState<Record<string, number>>({});
+    const [lastConditionStates, setLastConditionStates] = useState<Record<string, boolean>>({});
     
     // Reference to store per-strategy state that should not trigger re-renders
     const strategyRefsMap = useRef<Record<string, any>>({});
-    // Refs for trading management
+    // Enhanced refs for trading management (from TradingHub)
     const activeContractRef = useRef<string | null>(null);
     const lastTradeTime = useRef<number>(0);
     const minimumTradeCooldown = 3000; // 3 seconds between trades for more frequent trading
@@ -199,6 +201,15 @@ const SmartTradingDisplay = observer(() => {
     const lastTradeRef = useRef<{ id: string | null, profit: number | null }>({ id: null, profit: null });
     const contractSettledTimeRef = useRef(0);
     const waitingForSettlementRef = useRef(false);
+
+    // Add refs from TradingHub for robust state management
+    const currentStakeRefs = useRef<Record<string, string>>({});
+    const currentConsecutiveLossesRefs = useRef<Record<string, number>>({});
+    const lastMartingaleActionRefs = useRef<Record<string, string>>({});
+    const lastWinTimeRefs = useRef<Record<string, number>>({});
+    
+    // CRITICAL FIX: Add ref for activeContracts to avoid stale state in event handlers
+    const activeContractsRef = useRef<Record<string, any>>({});
 
     // Effect to load and initialize volatility analyzer
     useEffect(() => {
@@ -318,14 +329,18 @@ const SmartTradingDisplay = observer(() => {
                 lastTradeRef.current?.id !== response.data.contract_id) {
                 const contract_info = response.data;
 
+                console.log(`🔔 [SETTLEMENT DEBUG] Contract settlement triggered for ${contract_info.contract_id}`);
+                console.log(`🔔 [SETTLEMENT DEBUG] Active contract ref: ${activeContractRef.current}`);
+                console.log(`🔔 [SETTLEMENT DEBUG] Profit: ${contract_info.profit}`);
+                console.log(`🔔 [SETTLEMENT DEBUG] Available contracts in ref:`, Object.keys(activeContractsRef.current));
+
                 if (contract_info.contract_id === activeContractRef.current) {
                     const isWin = contract_info.profit >= 0;
                     setLastTradeResult(isWin ? 'WIN' : 'LOSS');
 
                     console.log(`🔔 [OBSERVER] Smart contract ${contract_info.contract_id} settled with ${isWin ? 'WIN' : 'LOSS'}, profit: ${contract_info.profit}.`);
-                    console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Contract settlement via globalObserver (source: ${contract_info._source || 'direct'})`);
 
-                    // CRITICAL FIX: Check if we've already processed this contract to prevent duplicate martingale
+                    // Enhanced duplicate prevention system (from TradingHub)
                     const contractKey = `${contract_info.contract_id}_${isWin ? 'WIN' : 'LOSS'}`;
                     if (!strategyRefsMap.current.processedContracts) {
                         strategyRefsMap.current.processedContracts = new Set();
@@ -348,17 +363,19 @@ const SmartTradingDisplay = observer(() => {
                         id: contract_info.contract_id, 
                         profit: contract_info.profit 
                     };
+                    contractSettledTimeRef.current = Date.now();
 
-                    // Find which strategy this contract belongs to
-                    const contractData = activeContracts[contract_info.contract_id];
-                    console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Contract data:`, contractData);
+                    // Find which strategy this contract belongs to using ref to avoid stale state (CRITICAL FIX)
+                    const contractData = activeContractsRef.current[contract_info.contract_id];
+                    console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Contract data from ref:`, contractData);
+                    console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Available contracts in ref:`, Object.keys(activeContractsRef.current));
                     
                     if (contractData?.strategy_id) {
                         const strategyId = contractData.strategy_id;
                         
-                        // Log current stake before update for debugging
-                        const currentStake = currentStakes[strategyId] || 0;
-                        const currentLosses = consecutiveLosses[strategyId] || 0;
+                        // Enhanced logging with ref-based values
+                        const currentStake = currentStakeRefs.current[strategyId] || '0';
+                        const currentLosses = currentConsecutiveLossesRefs.current[strategyId] || 0;
                         console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Strategy ${strategyId}: Current stake before update: ${currentStake}, Consecutive losses: ${currentLosses}`);
                         
                         if (isWin) {
@@ -369,24 +386,37 @@ const SmartTradingDisplay = observer(() => {
                         } else {
                             setLossCount(prev => prev + 1);
                             console.log(`🔍 [OBSERVER MARTINGALE DEBUG] ❌ LOSS: About to call manageStake('${strategyId}', 'martingale')`);
-                            console.log(`🔍 [OBSERVER MARTINGALE DEBUG] ❌ LOSS: Current consecutive losses BEFORE call: ${consecutiveLosses[strategyId] || 0}`);
+                            console.log(`🔍 [OBSERVER MARTINGALE DEBUG] ❌ LOSS: Current consecutive losses BEFORE call: ${currentLosses}`);
                             const newStakeValue = manageStake(strategyId, 'martingale');
                             console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Martingale returned stake: ${newStakeValue}`);
-                            console.log(`🔍 [OBSERVER MARTINGALE DEBUG] ❌ LOSS: Current consecutive losses AFTER call: ${consecutiveLosses[strategyId] || 0}`);
+                            console.log(`🔍 [OBSERVER MARTINGALE DEBUG] ❌ LOSS: Current consecutive losses AFTER call: ${currentConsecutiveLossesRefs.current[strategyId] || 0}`);
                             console.log(`❌ LOSS: Strategy ${strategyId} stake increased using martingale to ${newStakeValue}`);
                         }
                         
-                        // Update UI for the specific strategy card
+                        // Update UI for the specific strategy card with enhanced current stake tracking
                         setAnalysisStrategies(prev => prev.map(s => 
                             s.id === strategyId ? {
                                 ...s, 
                                 lastTradeResult: isWin ? 'WIN' : 'LOSS',
-                                currentStake: currentStakes[strategyId] || s.settings.stake
+                                currentStake: parseFloat(currentStakeRefs.current[strategyId] || s.settings.stake.toString())
                             } : s
                         ));
+                        
+                        // Enhanced summary logging for martingale tracking
+                        console.log(`🎯 [SETTLEMENT SUMMARY] Strategy ${strategyId} after ${isWin ? 'WIN' : 'LOSS'}:`);
+                        console.log(`🎯 [SETTLEMENT SUMMARY] - Current stake: $${currentStakeRefs.current[strategyId] || 'undefined'}`);
+                        console.log(`🎯 [SETTLEMENT SUMMARY] - Consecutive losses: ${currentConsecutiveLossesRefs.current[strategyId] || 0}`);
+                        console.log(`🎯 [SETTLEMENT SUMMARY] - Base stake: $${strategy.settings.stake}`);
+                        console.log(`🎯 [SETTLEMENT SUMMARY] - Multiplier: ${strategy.settings.martingaleMultiplier || 2}`);
+                        
+                        if (!isWin && currentConsecutiveLossesRefs.current[strategyId] > 0) {
+                            const expectedStake = strategy.settings.stake * Math.pow(strategy.settings.martingaleMultiplier || 2, currentConsecutiveLossesRefs.current[strategyId]);
+                            console.log(`🎯 [SETTLEMENT SUMMARY] - Expected next stake: $${expectedStake.toFixed(2)} (Level ${currentConsecutiveLossesRefs.current[strategyId]})`);
+                        }
                     } else {
                         console.error(`🔍 [OBSERVER MARTINGALE DEBUG] ❌ No strategy_id found for contract ${contract_info.contract_id}`);
-                        console.error(`🔍 [OBSERVER MARTINGALE DEBUG] Available contracts:`, Object.keys(activeContracts));
+                        console.error(`🔍 [OBSERVER MARTINGALE DEBUG] Available contracts in ref:`, Object.keys(activeContractsRef.current));
+                        console.error(`🔍 [OBSERVER MARTINGALE DEBUG] Contract data found:`, activeContractsRef.current[contract_info.contract_id]);
                     }
 
                     activeContractRef.current = null;
@@ -435,7 +465,7 @@ const SmartTradingDisplay = observer(() => {
                     if (contract.is_sold === 1) {    
                         const contractId = contract.contract_id;
                         
-                        // CRITICAL FIX: Use the same duplicate prevention as the globalObserver handler
+                        // Enhanced duplicate prevention (from TradingHub implementation)
                         const isWin = contract.profit >= 0;
                         const contractKey = `${contractId}_${isWin ? 'WIN' : 'LOSS'}`;
                         
@@ -445,6 +475,11 @@ const SmartTradingDisplay = observer(() => {
                         
                         if (strategyRefsMap.current.processedContracts.has(contractKey)) {
                             console.warn(`🔍 [INTERVAL HANDLER] ⚠️ DUPLICATE SETTLEMENT PREVENTED for ${contractKey} (via interval)`);
+                            return;
+                        }
+                        
+                        if (lastTradeRef.current?.id === contractId) {
+                            console.log(`🔍 [INTERVAL HANDLER] Contract ${contractId} already processed by globalObserver, skipping interval handler`);
                             return;
                         }
                         
@@ -458,14 +493,6 @@ const SmartTradingDisplay = observer(() => {
                             console.log(`🔍 [INTERVAL HANDLER] Cleaned up old processed contracts, now tracking ${strategyRefsMap.current.processedContracts.size}`);
                         }
                                                 
-                        if (lastTradeRef.current?.id === contractId) {
-                            console.log(`🔍 [INTERVAL HANDLER] Contract ${contractId} already processed by globalObserver, skipping interval handler`);
-                            return;
-                        }
-                        
-                        console.log(`🔍 [INTERVAL HANDLER] Processing contract ${contractId} settlement via interval check`);
-                        strategyRefsMap.current.processedContracts.add(contractKey);
-                                                
                         const profit = contract.profit;
                         lastTradeRef.current = { id: contractId, profit };
                         contractSettledTimeRef.current = Date.now();
@@ -473,75 +500,61 @@ const SmartTradingDisplay = observer(() => {
                         console.log(`🏁 Smart contract ${contractId} settled. Result: ${isWin ? 'WIN' : 'LOSS'}, Profit: ${profit}`);
                         console.log(`📊 Ready for next trade in 2 seconds (settlement buffer)`);
 
-                        // Enhanced debugging for martingale issue
-                        console.log(`🔍 [MARTINGALE DEBUG] Active contracts:`, Object.keys(activeContracts));
-                        console.log(`🔍 [MARTINGALE DEBUG] Looking for contract ${contractId} in activeContracts`);
-                        
-                        // Find which strategy this contract belongs to and manage martingale
-                        const contractData = activeContracts[contractId];
-                        console.log(`🔍 [MARTINGALE DEBUG] Contract data found:`, contractData);
+                        // Enhanced contract data handling using ref to avoid stale state (CRITICAL FIX)
+                        const contractData = activeContractsRef.current[contractId];
+                        console.log(`🔍 [INTERVAL HANDLER] Contract data found in ref:`, contractData);
+                        console.log(`🔍 [INTERVAL HANDLER] Available contracts in ref:`, Object.keys(activeContractsRef.current));
                         
                         if (contractData?.strategy_id) {
                             const strategyId = contractData.strategy_id;
-                            const currentStake = contractData.current_stake || 0;
-                            const initialStake = contractData.initial_stake || 0;
-                            const martingaleLevel = contractData.martingale_level || 0;
-                            const martingaleMultiplier = contractData.martingale_multiplier || 2;
                             
-                            console.log(`🔍 [MARTINGALE DEBUG] Strategy ${strategyId} settlement processing:`);
-                            console.log(`🔍 [MARTINGALE DEBUG] - Result: ${isWin ? 'WIN' : 'LOSS'}`);
-                            console.log(`🔍 [MARTINGALE DEBUG] - Current stake: ${currentStake}`);
-                            console.log(`🔍 [MARTINGALE DEBUG] - Initial stake: ${initialStake}`);
-                            console.log(`🔍 [MARTINGALE DEBUG] - Martingale level: ${martingaleLevel}`);
-                            console.log(`🔍 [MARTINGALE DEBUG] - Martingale multiplier: ${martingaleMultiplier}`);
+                            // Enhanced logging with ref-based values for consistency
+                            const currentStake = currentStakeRefs.current[strategyId] || contractData.current_stake || '0';
+                            const currentLosses = currentConsecutiveLossesRefs.current[strategyId] || 0;
+                            console.log(`🔍 [INTERVAL HANDLER] Strategy ${strategyId} settlement processing:`);
+                            console.log(`🔍 [INTERVAL HANDLER] - Result: ${isWin ? 'WIN' : 'LOSS'}`);
+                            console.log(`🔍 [INTERVAL HANDLER] - Current stake: ${currentStake}`);
+                            console.log(`🔍 [INTERVAL HANDLER] - Current losses: ${currentLosses}`);
                             
                             if (isWin) {
                                 setWinCount(prev => prev + 1);
-                                console.log(`🔍 [MARTINGALE DEBUG] Calling manageStake('${strategyId}', 'reset')`);
+                                console.log(`🔍 [INTERVAL HANDLER] Calling manageStake('${strategyId}', 'reset')`);
                                 manageStake(strategyId, 'reset');
                                 setLastTradeResult('WIN');
-                                console.log(`✅ WIN: Strategy ${strategyId} reset to initial stake ${initialStake} (was ${currentStake})`);
+                                console.log(`✅ WIN: Strategy ${strategyId} reset to initial stake`);
                             } else {
                                 setLossCount(prev => prev + 1);
-                                console.log(`🔍 [MARTINGALE DEBUG] ❌ LOSS DETECTED - About to call manageStake('${strategyId}', 'martingale')`);
-                                
-                                // Get current consecutive losses BEFORE calling martingale
-                                const currentLosses = consecutiveLosses[strategyId] || 0;
-                                console.log(`🔍 [MARTINGALE DEBUG] Current consecutive losses BEFORE martingale call: ${currentLosses}`);
+                                console.log(`🔍 [INTERVAL HANDLER] ❌ LOSS: About to call manageStake('${strategyId}', 'martingale')`);
+                                console.log(`🔍 [INTERVAL HANDLER] ❌ LOSS: Current consecutive losses BEFORE call: ${currentLosses}`);
                                 
                                 const newStakeValue = manageStake(strategyId, 'martingale');
-                                console.log(`🔍 [MARTINGALE DEBUG] Martingale function returned stake: ${newStakeValue}`);
-                                
-                                // Get consecutive losses AFTER calling martingale
-                                const postLosses = consecutiveLosses[strategyId] || 0;
-                                console.log(`🔍 [MARTINGALE DEBUG] Current consecutive losses AFTER martingale call: ${postLosses}`);
+                                console.log(`🔍 [INTERVAL HANDLER] Martingale returned stake: ${newStakeValue}`);
+                                console.log(`🔍 [INTERVAL HANDLER] ❌ LOSS: Current consecutive losses AFTER call: ${currentConsecutiveLossesRefs.current[strategyId] || 0}`);
                                 
                                 setLastTradeResult('LOSS');
-                                const expectedNewStake = initialStake * Math.pow(martingaleMultiplier, martingaleLevel + 1);
-                                console.log(`❌ LOSS: Strategy ${strategyId} stake should increase from ${currentStake} to ~${expectedNewStake.toFixed(2)} (level ${martingaleLevel+1})`);
-                                console.log(`🔍 [MARTINGALE DEBUG] Actual new stake from manageStake: ${newStakeValue}`);
+                                console.log(`❌ LOSS: Strategy ${strategyId} stake increased using martingale to ${newStakeValue}`);
                             }
                         } else {
-                            console.error(`🔍 [MARTINGALE DEBUG] ❌ CRITICAL: No strategy_id found in contract data for ${contractId}`);
-                            console.error(`🔍 [MARTINGALE DEBUG] Available contract data keys:`, contractData ? Object.keys(contractData) : 'No contract data');
-                            console.error(`🔍 [MARTINGALE DEBUG] This means martingale cannot be applied!`);
+                            console.error(`🔍 [INTERVAL HANDLER] ❌ CRITICAL: No strategy_id found in contract data for ${contractId}`);
+                            console.error(`🔍 [INTERVAL HANDLER] Available contract data keys:`, contractData ? Object.keys(contractData) : 'No contract data');
+                            console.error(`🔍 [INTERVAL HANDLER] Available contracts in ref:`, Object.keys(activeContractsRef.current));
                             
-                            // Fallback: try to find the strategy by checking which one is currently active
+                            // Enhanced fallback mechanism (from TradingHub)
                             const activeStrategy = analysisStrategies.find(s => s.activeContractType);
                             if (activeStrategy) {
-                                console.log(`🔍 [MARTINGALE DEBUG] 🚨 FALLBACK: Using currently active strategy ${activeStrategy.id}`);
+                                console.log(`🔍 [INTERVAL HANDLER] 🚨 FALLBACK: Using currently active strategy ${activeStrategy.id}`);
                                 if (isWin) {
                                     setWinCount(prev => prev + 1);
                                     manageStake(activeStrategy.id, 'reset');
                                     setLastTradeResult('WIN');
                                 } else {
                                     setLossCount(prev => prev + 1);
-                                    console.log(`🔍 [MARTINGALE DEBUG] 🚨 FALLBACK: Applying martingale to ${activeStrategy.id}`);
+                                    console.log(`🔍 [INTERVAL HANDLER] 🚨 FALLBACK: Applying martingale to ${activeStrategy.id}`);
                                     manageStake(activeStrategy.id, 'martingale');
                                     setLastTradeResult('LOSS');
                                 }
                             } else {
-                                console.error(`🔍 [MARTINGALE DEBUG] ❌ NO FALLBACK: No active strategy found either!`);
+                                console.error(`🔍 [INTERVAL HANDLER] ❌ NO FALLBACK: No active strategy found either!`);
                             }
                         }
                             
@@ -579,7 +592,23 @@ const SmartTradingDisplay = observer(() => {
         };
     }, []);
 
-    // Load saved settings from localStorage for each strategy
+    // Initialize refs in the main useEffect (from TradingHub pattern)
+    useEffect(() => {
+        analysisStrategies.forEach(strategy => {
+            // Initialize current stake refs with actual values
+            currentStakeRefs.current[strategy.id] = (currentStakes[strategy.id] || strategy.settings.stake).toFixed(2);
+            // Initialize consecutive losses refs
+            currentConsecutiveLossesRefs.current[strategy.id] = consecutiveLosses[strategy.id] || 0;
+        });
+    }, [currentStakes, consecutiveLosses]);
+
+    // CRITICAL FIX: Keep activeContractsRef in sync with activeContracts state
+    useEffect(() => {
+        activeContractsRef.current = activeContracts;
+        console.log(`🔧 [CONTRACTS REF] Updated activeContractsRef with ${Object.keys(activeContracts).length} contracts`);
+    }, [activeContracts]);
+
+    // Load saved settings from localStorage for each strategy with ref initialization
     useEffect(() => {
         try {
             analysisStrategies.forEach(strategy => {
@@ -595,6 +624,8 @@ const SmartTradingDisplay = observer(() => {
                                 s
                         ));
                         setCurrentStakes(prev => ({ ...prev, [strategy.id]: stakeValue }));
+                        // Initialize refs for robust state management
+                        currentStakeRefs.current[strategy.id] = stakeValue.toFixed(2);
                     }
                 }
                 
@@ -610,6 +641,20 @@ const SmartTradingDisplay = observer(() => {
                                 s
                         ));
                     }
+                }
+                
+                // Initialize refs for this strategy to prevent stale state issues
+                if (!currentStakeRefs.current[strategy.id]) {
+                    currentStakeRefs.current[strategy.id] = strategy.settings.stake.toFixed(2);
+                }
+                if (!currentConsecutiveLossesRefs.current[strategy.id]) {
+                    currentConsecutiveLossesRefs.current[strategy.id] = 0;
+                }
+                if (!lastMartingaleActionRefs.current[strategy.id]) {
+                    lastMartingaleActionRefs.current[strategy.id] = 'initial';
+                }
+                if (!lastWinTimeRefs.current[strategy.id]) {
+                    lastWinTimeRefs.current[strategy.id] = 0;
                 }
             });
         } catch (e) {
@@ -818,7 +863,7 @@ const SmartTradingDisplay = observer(() => {
         );
     };
 
-    // Enhanced blur handler with localStorage persistence and validation
+    // Enhanced blur handler with localStorage persistence and validation (from TradingHub)
     const handleInputBlur = (strategyId: string, settingName: keyof TradeSettings, value: string) => {
         const numericValue = parseFloat(value);
         
@@ -844,15 +889,16 @@ const SmartTradingDisplay = observer(() => {
                         finalValue = Math.max(finalValue, 1); // Minimum multiplier
                     }
                     
-                    // Save to localStorage for persistence
+                    // Save to localStorage and update refs for persistence (enhanced from TradingHub)
                     try {
                         if (settingName === 'stake') {
-                            localStorage.setItem(`smartTrading_initialStake_${strategyId}`, finalValue.toString());
-                            // Also update current stakes
+                            localStorage.setItem(`smartTrading_initialStake_${strategyId}`, finalValue.toFixed(2));
+                            // Also update current stakes and refs
                             setCurrentStakes(prev => ({ ...prev, [strategyId]: finalValue }));
+                            currentStakeRefs.current[strategyId] = finalValue.toFixed(2);
                             console.log(`Saved stake for strategy ${strategyId}: ${finalValue}`);
                         } else if (settingName === 'martingaleMultiplier') {
-                            localStorage.setItem(`smartTrading_martingale_${strategyId}`, finalValue.toString());
+                            localStorage.setItem(`smartTrading_martingale_${strategyId}`, finalValue.toFixed(1));
                             console.log(`Saved martingale for strategy ${strategyId}: ${finalValue}`);
                         }
                     } catch (e) {
@@ -873,22 +919,22 @@ const SmartTradingDisplay = observer(() => {
         );
     };
 
-    // Add a save all settings function similar to trading-hub
+    // Add a save all settings function (enhanced from trading-hub)
     const handleSaveAllSettings = () => {
         analysisStrategies.forEach(strategy => {
             // Validate and save stake
-            const validStake = Math.max(strategy.settings.stake || 0.35, 0.35);
-            manageStake(strategy.id, 'init', { newValue: validStake.toString() });
+            const validStake = Math.max(strategy.settings.stake || 0.35, 0.35).toFixed(2);
+            manageStake(strategy.id, 'init', { newValue: validStake });
             
             // Validate and save martingale
-            const validMartingale = Math.max(strategy.settings.martingaleMultiplier || 1, 1);
-            manageMartingale(strategy.id, 'init', { newValue: validMartingale.toString() });
+            const validMartingale = Math.max(strategy.settings.martingaleMultiplier || 1, 1).toFixed(1);
+            manageMartingale(strategy.id, 'init', { newValue: validMartingale });
             
             console.log(`Settings saved for strategy ${strategy.id}: Stake=${validStake}, Martingale=${validMartingale}`);
         });
     };
 
-    // Reset martingale state for all strategies (similar to trading-hub startTrading function)
+    // Reset martingale state for all strategies (enhanced from trading-hub)
     const resetAllMartingaleStates = () => {
         analysisStrategies.forEach(strategy => {
             manageStake(strategy.id, 'reset');
@@ -903,7 +949,7 @@ const SmartTradingDisplay = observer(() => {
         console.log('All martingale states reset - ready for fresh trading session');
     };
 
-    // Global settings management for all strategies
+    // Global settings management for all strategies (enhanced from trading-hub)
     const loadAllStrategySettings = () => {
         try {
             analysisStrategies.forEach(strategy => {
@@ -933,12 +979,12 @@ const SmartTradingDisplay = observer(() => {
     const saveAllStrategySettings = () => {
         try {
             analysisStrategies.forEach(strategy => {
-                // Save current stakes and martingale settings
-                const currentStake = currentStakes[strategy.id] || strategy.settings.stake;
-                const currentMartingale = strategy.settings.martingaleMultiplier || 2;
+                // Save current stakes and martingale settings using ref values
+                const currentStake = currentStakeRefs.current[strategy.id] || strategy.settings.stake.toFixed(2);
+                const currentMartingale = (strategy.settings.martingaleMultiplier || 2).toFixed(1);
                 
-                localStorage.setItem(`smartTrading_initialStake_${strategy.id}`, currentStake.toString());
-                localStorage.setItem(`smartTrading_martingale_${strategy.id}`, currentMartingale.toString());
+                localStorage.setItem(`smartTrading_initialStake_${strategy.id}`, currentStake);
+                localStorage.setItem(`smartTrading_martingale_${strategy.id}`, currentMartingale);
             });
             console.log('All strategy settings saved to localStorage');
         } catch (e) {
@@ -946,12 +992,12 @@ const SmartTradingDisplay = observer(() => {
         }
     };
 
-    // Enhanced stake display function similar to trading-hub
+    // Enhanced stake display function (fully adapted from trading-hub-display.tsx)
     const displayStake = (strategyId: string) => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
         if (!strategy) return '$0.35';
         
-        const currentStake = currentStakes[strategyId] || strategy.settings.stake;
+        const currentStake = parseFloat(currentStakeRefs.current[strategyId] || strategy.settings.stake.toString());
         const initialStake = strategy.settings.stake;
         
         if (Math.abs(currentStake - initialStake) < 0.01) {
@@ -961,28 +1007,63 @@ const SmartTradingDisplay = observer(() => {
         }
     };
 
-    // Enhanced Martingale Management Functions (adapted from trading-hub-display.tsx)
+    // Add debugging function to check martingale state
+    const debugMartingaleState = (strategyId?: string) => {
+        const strategies = strategyId ? [analysisStrategies.find(s => s.id === strategyId)].filter(Boolean) : analysisStrategies;
+        
+        console.log(`🔍 [MARTINGALE DEBUG] ===== Current Martingale State =====`);
+        strategies.forEach(strategy => {
+            if (!strategy) return;
+            const id = strategy.id;
+            const currentStake = currentStakeRefs.current[id] || 'undefined';
+            const losses = currentConsecutiveLossesRefs.current[id] || 0;
+            const baseStake = strategy.settings.stake;
+            const multiplier = strategy.settings.martingaleMultiplier || 2;
+            
+            console.log(`🔍 [MARTINGALE DEBUG] Strategy: ${id}`);
+            console.log(`🔍 [MARTINGALE DEBUG] - Current stake: $${currentStake}`);
+            console.log(`🔍 [MARTINGALE DEBUG] - Base stake: $${baseStake}`);
+            console.log(`🔍 [MARTINGALE DEBUG] - Consecutive losses: ${losses}`);
+            console.log(`🔍 [MARTINGALE DEBUG] - Multiplier: ${multiplier}`);
+            console.log(`🔍 [MARTINGALE DEBUG] - Last action: ${lastMartingaleActionRefs.current[id] || 'none'}`);
+            
+            if (losses > 0) {
+                const expectedStake = baseStake * Math.pow(multiplier, losses);
+                console.log(`🔍 [MARTINGALE DEBUG] - Expected stake: $${expectedStake.toFixed(2)}`);
+                console.log(`🔍 [MARTINGALE DEBUG] - Stake correct: ${Math.abs(parseFloat(currentStake) - expectedStake) < 0.01 ? '✅' : '❌'}`);
+            }
+            console.log(`🔍 [MARTINGALE DEBUG] -------------------------`);
+        });
+        console.log(`🔍 [MARTINGALE DEBUG] ===================================`);
+    };
+
+    // Make debug function available globally for testing
+    if (typeof window !== 'undefined') {
+        (window as any).debugMartingaleState = debugMartingaleState;
+    }
+
+    // Enhanced Martingale Management Functions (fully adapted from trading-hub-display.tsx)
     const manageMartingale = (strategyId: string, action: 'init' | 'update' | 'get', params?: { 
         newValue?: string 
-    }): number => {
+    }): string => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
-        if (!strategy) return 2;
+        if (!strategy) return '2';
 
         switch (action) {
             case 'init':
                 if (params?.newValue) {
-                    const validValue = Math.max(parseFloat(params.newValue), 1);
+                    const validValue = Math.max(parseFloat(params.newValue), 1).toFixed(1);
                     console.log(`Martingale initialization for strategy ${strategyId} from ${strategy.settings.martingaleMultiplier} to ${validValue}`);
                     
                     // Update the strategy settings
                     setAnalysisStrategies(prev => prev.map(s => 
                         s.id === strategyId ? 
-                            { ...s, settings: { ...s.settings, martingaleMultiplier: validValue } } : 
+                            { ...s, settings: { ...s.settings, martingaleMultiplier: parseFloat(validValue) } } : 
                             s
                     ));
                     
                     try {
-                        localStorage.setItem(`smartTrading_martingale_${strategyId}`, validValue.toString());
+                        localStorage.setItem(`smartTrading_martingale_${strategyId}`, validValue);
                     } catch (e) {
                         console.warn('Could not save martingale to localStorage', e);
                     }
@@ -1000,7 +1081,7 @@ const SmartTradingDisplay = observer(() => {
                                 { ...s, settings: { ...s.settings, martingaleMultiplier: numValue } } : 
                                 s
                         ));
-                        return numValue;
+                        return params.newValue;
                     }
                 }
                 break;
@@ -1010,115 +1091,106 @@ const SmartTradingDisplay = observer(() => {
                 if (storedValue) {
                     const parsedValue = parseFloat(storedValue);
                     if (!isNaN(parsedValue) && parsedValue >= 1) {
-                        return parsedValue;
+                        return parsedValue.toFixed(1);
                     }
                 }
-                return strategy.settings.martingaleMultiplier || 2;
+                return (strategy.settings.martingaleMultiplier || 2).toFixed(1);
                 
             default:
                 console.error('Unknown martingale management action:', action);
         }
         
-        return strategy.settings.martingaleMultiplier || 2;
+        return (strategy.settings.martingaleMultiplier || 2).toFixed(1);
     };
 
     const manageStake = (strategyId: string, action: 'init' | 'reset' | 'martingale' | 'update' | 'get', params?: { 
         newValue?: string,
         lossCount?: number  
-    }): number => {
+    }): string => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
-        if (!strategy) return 0.35;
+        if (!strategy) return '0.35';
 
-        const currentStake = currentStakes[strategyId] || strategy.settings.stake;
-        
-        // Get losses from state, but be aware this might be stale during rapid updates
-        const lossesFromState = consecutiveLosses[strategyId] || 0;
+        // Use refs to avoid stale state issues (from TradingHub implementation)
+        const currentStakeRef = currentStakeRefs.current[strategyId] || strategy.settings.stake.toString();
+        const currentConsecutiveLossesRef = currentConsecutiveLossesRefs.current[strategyId] || 0;
         
         console.log(`🔧 [MANAGE STAKE] Called with action: ${action} for strategy: ${strategyId}`);
-        console.log(`🔧 [MANAGE STAKE] Current stake: ${currentStake}, losses from state: ${lossesFromState}`);
+        console.log(`🔧 [MANAGE STAKE] Current stake ref: ${currentStakeRef}, losses ref: ${currentConsecutiveLossesRef}`);
         console.log(`🔧 [MANAGE STAKE] Params:`, params);
 
         switch (action) {
             case 'init':
                 if (params?.newValue) {
-                    const validValue = Math.max(parseFloat(params.newValue), 0.35);
+                    const validValue = Math.max(parseFloat(params.newValue), 0.35).toFixed(2);
                     console.log(`Stake initialization for strategy ${strategyId} from ${strategy.settings.stake} to ${validValue}`);
                     
                     // Update strategy settings
                     setAnalysisStrategies(prev => prev.map(s => 
                         s.id === strategyId ? 
-                            { ...s, settings: { ...s.settings, stake: validValue } } : 
+                            { ...s, settings: { ...s.settings, stake: parseFloat(validValue) } } : 
                             s
                     ));
                     
-                    setCurrentStakes(prev => ({ ...prev, [strategyId]: validValue }));
+                    setCurrentStakes(prev => ({ ...prev, [strategyId]: parseFloat(validValue) }));
+                    currentStakeRefs.current[strategyId] = validValue;
                     
                     try {
-                        localStorage.setItem(`smartTrading_initialStake_${strategyId}`, validValue.toString());
+                        localStorage.setItem(`smartTrading_initialStake_${strategyId}`, validValue);
                     } catch (e) {
                         console.warn('Could not save stake to localStorage', e);
                     }
                     
                     return validValue;
                 }
-                
-                console.log(`Initializing stake for strategy ${strategyId} to ${strategy.settings.stake}`);
-                setCurrentStakes(prev => ({ ...prev, [strategyId]: strategy.settings.stake }));
-                setConsecutiveLosses(prev => ({ ...prev, [strategyId]: 0 }));
-                return strategy.settings.stake;
+                break;
                 
             case 'update':
                 if (params?.newValue !== undefined) {
                     const numValue = parseFloat(params.newValue);
                     if (!isNaN(numValue)) {
+                        const validValue = Math.max(numValue, 0.35).toFixed(2);
                         setAnalysisStrategies(prev => prev.map(s => 
                             s.id === strategyId ? 
-                                { ...s, settings: { ...s.settings, stake: numValue } } : 
+                                { ...s, settings: { ...s.settings, stake: parseFloat(validValue) } } : 
                                 s
                         ));
-                        return numValue;
+                        setCurrentStakes(prev => ({ ...prev, [strategyId]: parseFloat(validValue) }));
+                        currentStakeRefs.current[strategyId] = validValue;
+                        return validValue;
                     }
                 }
                 break;
                 
             case 'reset':
                 const storedInitialStake = localStorage.getItem(`smartTrading_initialStake_${strategyId}`) || strategy.settings.stake.toString();
-                const initialStake = parseFloat(storedInitialStake);
                 
-                // Store last win time for this strategy to prevent duplicate processing
-                const strategyRefs = strategyRefsMap.current;
-                if (!strategyRefs[strategyId]) strategyRefs[strategyId] = {};
-                strategyRefs[strategyId].lastWinTime = Date.now();
-                strategyRefs[strategyId].lastAction = 'reset';
+                // Store last win time for this strategy to prevent duplicate processing (from TradingHub)
+                lastMartingaleActionRefs.current[strategyId] = 'reset';
+                lastWinTimeRefs.current[strategyId] = Date.now();
                 
-                console.log(`🔧 [MANAGE STAKE] Resetting stake for strategy ${strategyId} from ${currentStake} to stored initial: ${initialStake}`);
-                console.log(`🔧 [MANAGE STAKE] Consecutive losses counter reset from ${lossesFromState} to 0`);
+                console.log(`🔧 [MANAGE STAKE] Resetting stake for strategy ${strategyId} from ${currentStakeRef} to stored initial: ${storedInitialStake}`);
+                console.log(`🔧 [MANAGE STAKE] Consecutive losses counter reset from ${currentConsecutiveLossesRef} to 0`);
                 
-                setCurrentStakes(prev => ({ ...prev, [strategyId]: initialStake }));
+                setCurrentStakes(prev => ({ ...prev, [strategyId]: parseFloat(storedInitialStake) }));
+                currentStakeRefs.current[strategyId] = storedInitialStake;
                 setConsecutiveLosses(prev => ({ ...prev, [strategyId]: 0 }));
+                currentConsecutiveLossesRefs.current[strategyId] = 0;
                 
-                return initialStake;
+                return storedInitialStake;
                 
             case 'martingale':
                 console.log(`🎯 [MARTINGALE FUNCTION] Starting martingale for strategy ${strategyId}`);
-                console.log(`🎯 [MARTINGALE FUNCTION] Current stakes state:`, currentStakes);
-                console.log(`🎯 [MARTINGALE FUNCTION] Current losses state:`, consecutiveLosses);
                 
-                const strategyRef = strategyRefsMap.current[strategyId] || {};
-                
-                // Prevent duplicate martingale applications that can happen with rapid settlements
-                if (strategyRef.lastAction === 'martingale' && 
-                    strategyRef.lastWinTime && 
-                    Date.now() - strategyRef.lastWinTime < 2000) {
+                // Prevent duplicate martingale applications (from TradingHub implementation)
+                if (lastMartingaleActionRefs.current[strategyId] === 'martingale' && 
+                    lastWinTimeRefs.current[strategyId] && 
+                    Date.now() - lastWinTimeRefs.current[strategyId] < 2000) {
                     console.warn(`🎯 [MARTINGALE FUNCTION] Prevented duplicate martingale for strategy ${strategyId} - too soon after last application`);
-                    return currentStake;
+                    return currentStakeRef;
                 }
                 
-                const prevLossCount = lossesFromState;
-                console.log(`🎯 [MARTINGALE FUNCTION] 🔍 DEBUGGING LOSS COUNT: prevLossCount from state = ${prevLossCount}`);
-                console.log(`🎯 [MARTINGALE FUNCTION] 🔍 DEBUGGING LOSS COUNT: params?.lossCount = ${params?.lossCount}`);
-                
-                // Correct logic: increment the loss count for this loss
+                // CRITICAL FIX: Use the correct ref for consecutive losses
+                const prevLossCount = currentConsecutiveLossesRefs.current[strategyId] || 0;
                 const newLossCount = params?.lossCount !== undefined ? 
                     params.lossCount : prevLossCount + 1;
                        
@@ -1129,67 +1201,41 @@ const SmartTradingDisplay = observer(() => {
                 
                 const baseStake = localStorage.getItem(`smartTrading_initialStake_${strategyId}`) || strategy.settings.stake.toString();
                 const currentMartingale = manageMartingale(strategyId, 'get');
-                const multiplier = currentMartingale;
+                const multiplier = parseFloat(currentMartingale);
                 const validMultiplier = !isNaN(multiplier) && multiplier >= 1 ? multiplier : 1;
                 
-                // CORRECTED MARTINGALE CALCULATION
-                // The formula should be: baseStake × multiplier^lossCount
-                // For first loss (lossCount=1): 0.5 × 2^1 = 1.0
-                // For second loss (lossCount=2): 0.5 × 2^2 = 2.0
-                const newStake = parseFloat(baseStake) * Math.pow(validMultiplier, safeLossCount);
+                // Enhanced martingale calculation (from TradingHub)
+                const newStake = (parseFloat(baseStake) * Math.pow(validMultiplier, safeLossCount)).toFixed(2);
                 
                 console.log(`🎯 [MARTINGALE FUNCTION] ✅ Calculation details for strategy ${strategyId}:`);
                 console.log(`🎯 [MARTINGALE FUNCTION] - Base stake: ${baseStake}`);
                 console.log(`🎯 [MARTINGALE FUNCTION] - Multiplier: ${validMultiplier}`);
                 console.log(`🎯 [MARTINGALE FUNCTION] - Previous loss count: ${prevLossCount}`);
                 console.log(`🎯 [MARTINGALE FUNCTION] - New loss count (exponent): ${safeLossCount}`);
-                console.log(`🎯 [MARTINGALE FUNCTION] - Formula: ${baseStake} × ${validMultiplier}^${safeLossCount}`);
-                console.log(`🎯 [MARTINGALE FUNCTION] - Calculation: ${baseStake} × ${Math.pow(validMultiplier, safeLossCount)} = ${newStake}`);
-                console.log(`🎯 [MARTINGALE FUNCTION] - Current stake before: ${currentStake}`);
-                console.log(`🎯 [MARTINGALE FUNCTION] - New stake after: ${newStake}`);
+                console.log(`🎯 [MARTINGALE FUNCTION] - Formula: ${baseStake} × ${validMultiplier}^${safeLossCount} = ${newStake}`);
+                console.log(`🎯 [MARTINGALE FUNCTION] - Calculation: ${parseFloat(baseStake)} × ${Math.pow(validMultiplier, safeLossCount)} = ${newStake}`);
                 
-                // Validate the calculation makes sense
-                if (safeLossCount === 1) {
-                    const expectedFirstLoss = parseFloat(baseStake) * validMultiplier;
-                    console.log(`🎯 [MARTINGALE FUNCTION] ✅ First loss validation: ${baseStake} × ${validMultiplier} = ${expectedFirstLoss} (calculated: ${newStake})`);
-                    if (Math.abs(newStake - expectedFirstLoss) > 0.01) {
-                        console.error(`🎯 [MARTINGALE FUNCTION] ❌ CALCULATION ERROR: Expected ${expectedFirstLoss}, got ${newStake}`);
-                    } else {
-                        console.log(`🎯 [MARTINGALE FUNCTION] ✅ CALCULATION VERIFIED: First loss correctly calculated!`);
-                    }
-                }
+                // Update refs to prevent stale state issues (from TradingHub)
+                lastMartingaleActionRefs.current[strategyId] = 'martingale';
+                lastWinTimeRefs.current[strategyId] = Date.now();
+                currentStakeRefs.current[strategyId] = newStake;
+                currentConsecutiveLossesRefs.current[strategyId] = safeLossCount;
                 
-                // Initialize strategy ref if needed
-                if (!strategyRefsMap.current[strategyId]) {
-                    strategyRefsMap.current[strategyId] = {};
-                }
-                strategyRefsMap.current[strategyId].lastWinTime = Date.now();
-                strategyRefsMap.current[strategyId].lastAction = 'martingale';
-                
-                console.log(`🎯 [MARTINGALE FUNCTION] Updating state - stakes and losses`);
-                setCurrentStakes(prev => {
-                    const newStakes = { ...prev, [strategyId]: newStake };
-                    console.log(`🎯 [MARTINGALE FUNCTION] Stakes state updated:`, newStakes);
-                    return newStakes;
-                });
-                setConsecutiveLosses(prev => {
-                    const newLosses = { ...prev, [strategyId]: safeLossCount };
-                    console.log(`🎯 [MARTINGALE FUNCTION] Losses state updated:`, newLosses);
-                    return newLosses;
-                });
+                setCurrentStakes(prev => ({ ...prev, [strategyId]: parseFloat(newStake) }));
+                setConsecutiveLosses(prev => ({ ...prev, [strategyId]: safeLossCount }));
                 
                 console.log(`🎯 [MARTINGALE FUNCTION] ✅ Martingale completed for strategy ${strategyId}, returning stake: ${newStake}`);
                 return newStake;
                 
             case 'get':
-                return currentStake;
+                return currentStakeRef;
                 
             default:
                 console.error('Unknown stake management action:', action);
-                return currentStake;
+                return currentStakeRef;
         }
         
-        return currentStake;
+        return currentStakeRef;
     };
 
     const prepareRunPanelForSmartTrading = () => {
@@ -1241,12 +1287,23 @@ const SmartTradingDisplay = observer(() => {
             setIsTradeInProgress(true);
             prepareRunPanelForSmartTrading();
 
-            // Get the current stake for this strategy based on martingale history
-            const currentTradeStake = manageStake(strategyId, 'get');
-            const strategyConsecutiveLosses = consecutiveLosses[strategyId] || 0;
+            // Get the current stake for this strategy based on martingale history (enhanced from TradingHub)
+            const currentTradeStake = parseFloat(manageStake(strategyId, 'get'));
+            const strategyConsecutiveLosses = currentConsecutiveLossesRefs.current[strategyId] || 0;
             
             console.log(`Starting trade for ${strategyId} with stake: ${currentTradeStake}`);
             console.log(`Current martingale state: Level=${strategyConsecutiveLosses}, Base=${strategy.settings.stake}`);
+            
+            // Determine which action to use based on strategy (MOVED UP to fix reference error)
+            let actionToUse = '';
+            if (strategyId === 'even-odd-2') {
+                actionToUse = strategy.settings.patternAction || 'Even';
+            } else if (strategyId === 'over-under-2') {
+                actionToUse = strategy.settings.overUnderPatternAction || 'Over';
+            } else {
+                actionToUse = strategy.settings.conditionAction || '';
+            }
+            console.log(`Strategy ${strategyId} using action: ${actionToUse}`);
             
             // Update the strategy's active contract type for UI feedback
             setAnalysisStrategies(prev => prev.map(s => 
@@ -1264,6 +1321,21 @@ const SmartTradingDisplay = observer(() => {
             lastTradeTime.current = now;
 
             console.log(`Starting smart trade: ${tradeId} with stake ${currentTradeStake} for strategy ${strategyId}`);
+            console.log(`🎯 [STAKE DEBUG] Using calculated stake: $${currentTradeStake} (from manageStake 'get')`);
+            console.log(`🎯 [STAKE DEBUG] Strategy base stake: $${strategy.settings.stake}`);
+            console.log(`🎯 [STAKE DEBUG] Current consecutive losses: ${strategyConsecutiveLosses}`);
+            console.log(`🎯 [STAKE DEBUG] Current stake ref: ${currentStakeRefs.current[strategyId]}`);
+            console.log(`🎯 [STAKE DEBUG] Expected martingale level: ${strategyConsecutiveLosses > 0 ? `Level ${strategyConsecutiveLosses}` : 'Base level'}`);
+            
+            if (strategyConsecutiveLosses > 0) {
+                const expectedStake = strategy.settings.stake * Math.pow(strategy.settings.martingaleMultiplier || 2, strategyConsecutiveLosses);
+                console.log(`🎯 [STAKE DEBUG] Expected stake calculation: ${strategy.settings.stake} × ${strategy.settings.martingaleMultiplier || 2}^${strategyConsecutiveLosses} = $${expectedStake.toFixed(2)}`);
+                if (Math.abs(currentTradeStake - expectedStake) > 0.01) {
+                    console.warn(`🎯 [STAKE DEBUG] ⚠️ STAKE MISMATCH: Expected $${expectedStake.toFixed(2)}, but using $${currentTradeStake}`);
+                } else {
+                    console.log(`🎯 [STAKE DEBUG] ✅ STAKE MATCHES: Calculated stake matches expected martingale value`);
+                }
+            }
 
             // Determine contract type and parameters based on strategy
             let contractType = '';
@@ -1275,20 +1347,7 @@ const SmartTradingDisplay = observer(() => {
                 duration: strategy.settings.ticks,
                 duration_unit: 't',
                 symbol: selectedSymbol,
-            };            // Map strategy actions to contract types
-            let actionToUse = '';
-            
-            // Determine which action property to use based on strategy
-            if (strategyId === 'even-odd-2') {
-                actionToUse = strategy.settings.patternAction || 'Even';
-            } else if (strategyId === 'over-under-2') {
-                actionToUse = strategy.settings.overUnderPatternAction || 'Over';
-            } else {
-                actionToUse = strategy.settings.conditionAction || '';
-            }
-              console.log(`Strategy ${strategyId} using action: ${actionToUse}`);
-            
-            // Add specific validation for Rise/Fall contracts
+            };            // Add specific validation for Rise/Fall contracts
             if (actionToUse === 'Rise' || actionToUse === 'Fall') {
                 console.log(`🚨 [RISE/FALL] Preparing ${actionToUse} contract with parameters:`, {
                     symbol: selectedSymbol,
@@ -1494,7 +1553,7 @@ const SmartTradingDisplay = observer(() => {
                 
                 const contractId = buy.contract_id;
                 console.log(`🚨 [SUCCESS] Smart trade executed. Contract ID: ${contractId}, Strategy: ${strategyId}, Type: ${contractType}`);
-                activeContractRef.current = contractId;                // Store detailed contract information for tracking and martingale
+                activeContractRef.current = contractId;                // Store detailed contract information for tracking and martingale (enhanced from TradingHub)
                 setActiveContracts(prev => ({
                     ...prev,
                     [contractId]: { 
@@ -1508,10 +1567,10 @@ const SmartTradingDisplay = observer(() => {
                         barrier: barrier,
                         duration: contractParameters.duration,
                         duration_unit: contractParameters.duration_unit,
-                        // Store stake tracking info for martingale
+                        // Enhanced stake tracking info for martingale using refs for accuracy
                         initial_stake: strategy.settings.stake,
                         current_stake: currentTradeStake,
-                        martingale_level: consecutiveLosses[strategyId] || 0,
+                        martingale_level: currentConsecutiveLossesRefs.current[strategyId] || 0,
                         martingale_multiplier: strategy.settings.martingaleMultiplier || 2,
                     }
                 }));
@@ -3411,14 +3470,6 @@ const SmartTradingDisplay = observer(() => {
                         >
                             <div className="strategy-card__header">
                                 <h3 className="strategy-card__name">{strategy.name}</h3>
-                                {strategy.activeContractType && (
-                                    <div className="strategy-card__status">
-                                        <span className="status-indicator trading">
-                                            <div className="status-indicator-animated"></div>
-                                            {localize('Auto Trading Active')}
-                                        </span>
-                                    </div>
-                                )}
                                 <div className="condition-indicator-container">
                                     <span
                                         className={`condition-indicator ${met ? 'active' : ''}`}
@@ -3486,7 +3537,7 @@ const SmartTradingDisplay = observer(() => {
                             </div>
 
                             {/* Enhanced Trading Status Display */}
-                            {strategy.activeContractType && (
+                           {/* {strategy.activeContractType && (
                                 <div className="strategy-card__status">
                                     <div className="status-info">
                                         <Text size="xs" weight="bold">
@@ -3527,7 +3578,7 @@ const SmartTradingDisplay = observer(() => {
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                </div> */}
                             )}
                         </div>
                     );
