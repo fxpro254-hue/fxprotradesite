@@ -23,25 +23,25 @@ interface TradeSettings {
     stake: number;
     ticks: number; // Duration in ticks
     martingaleMultiplier: number;
-    
+
     // Optional input state properties for handling empty inputs
     stakeInput?: string;
     ticksInput?: string;
     martingaleMultiplierInput?: string;
-    
+
     // Add trading condition properties
     conditionType?: string; // 'rise' or 'fall'
     conditionOperator?: string; // '>', '<', '>=', '<=', '='
     conditionValue?: number; // Percentage threshold
     conditionValueInput?: string; // For UI handling of input
     conditionAction?: string; // 'Rise' or 'Fall' contract
-    
+
     // Pattern condition properties (for even-odd-2)
     patternDigitCount?: number; // How many digits to check
     patternDigitCountInput?: string; // For UI handling of input
     patternType?: string; // 'even' or 'odd'
     patternAction?: string; // 'Even' or 'Odd' contract type to buy
-      // Over/Under pattern condition properties (for over-under-2)
+    // Over/Under pattern condition properties (for over-under-2)
     overUnderPatternDigitCount?: number; // How many digits to check
     overUnderPatternDigitCountInput?: string; // For UI handling of input
     overUnderPatternType?: string; // 'over' or 'under'
@@ -51,7 +51,7 @@ interface TradeSettings {
     overUnderPatternTradingBarrier?: number; // Independent trading barrier digit (0-9)
     overUnderPatternTradingBarrierInput?: string; // For UI handling of trading barrier input// Matches/Differs condition properties
     conditionDigit?: number; // The digit to match/differ (0-9)
-    
+
     // Trading barrier properties (for over/under strategies)
     tradingBarrier?: number; // Independent trading barrier digit (0-9)
     tradingBarrierInput?: string; // For UI handling of trading barrier input
@@ -72,9 +72,9 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
         id: 'rise-fall',
         name: localize('Rise/Fall'),
         description: localize('Trades based on market rise/fall predictions.'),
-        settings: { 
-            stake: 0.5, 
-            ticks: 1, 
+        settings: {
+            stake: 0.5,
+            ticks: 1,
             martingaleMultiplier: 1,
             conditionType: 'rise',
             conditionOperator: '>',
@@ -87,14 +87,14 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
         id: 'even-odd',
         name: localize('Even/Odd'),
         description: localize('Trades based on the last digit being even or odd.'),
-        settings: { 
-            stake: 0.5, 
-            ticks: 1, 
+        settings: {
+            stake: 0.5,
+            ticks: 1,
             martingaleMultiplier: 1,
             conditionType: 'even',
             conditionOperator: '>',
             conditionValue: 60,
-            conditionAction: 'Even' 
+            conditionAction: 'Even'
         },
         activeContractType: null,
     },
@@ -102,9 +102,9 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
         id: 'even-odd-2',
         name: localize('Even/Odd'),
         description: localize('Alternative strategy for even/odd last digit trading.'),
-        settings: { 
-            stake: 0.5, 
-            ticks: 1, 
+        settings: {
+            stake: 0.5,
+            ticks: 1,
             martingaleMultiplier: 1,
             patternDigitCount: 3,
             patternType: 'even',
@@ -115,9 +115,9 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
     {
         id: 'over-under',
         name: localize('Over/Under'),
-        description: localize('Trades based on the last digit being over or under a predicted number.'),        settings: { 
-            stake: 0.5, 
-            ticks: 1, 
+        description: localize('Trades based on the last digit being over or under a predicted number.'), settings: {
+            stake: 0.5,
+            ticks: 1,
             martingaleMultiplier: 1,
             conditionType: 'over',
             conditionOperator: '>',
@@ -130,9 +130,9 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
     {
         id: 'over-under-2',
         name: localize('Over/Under'),
-        description: localize('Alternative approach for over/under digit trading with custom parameters.'),        settings: { 
-            stake: 0.5, 
-            ticks: 1, 
+        description: localize('Alternative approach for over/under digit trading with custom parameters.'), settings: {
+            stake: 0.5,
+            ticks: 1,
             martingaleMultiplier: 1,
             overUnderPatternDigitCount: 3,
             overUnderPatternType: 'over',
@@ -146,9 +146,9 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
         id: 'matches-differs',
         name: localize('Matches/Differs'),
         description: localize('Trades based on the last digit matching or differing from a predicted number.'),
-        settings: { 
-            stake: 0.5, 
-            ticks: 1, 
+        settings: {
+            stake: 0.5,
+            ticks: 1,
             martingaleMultiplier: 1,
             conditionType: 'matches',
             conditionOperator: '>',
@@ -190,7 +190,7 @@ const SmartTradingDisplay = observer(() => {
     const [consecutiveLosses, setConsecutiveLosses] = useState<Record<string, number>>({});
     const [currentStakes, setCurrentStakes] = useState<Record<string, number>>({});
     const [lastConditionStates, setLastConditionStates] = useState<Record<string, boolean>>({});
-    
+
     // Reference to store per-strategy state that should not trigger re-renders
     const strategyRefsMap = useRef<Record<string, any>>({});
     // Enhanced refs for trading management (from TradingHub)
@@ -207,7 +207,7 @@ const SmartTradingDisplay = observer(() => {
     const currentConsecutiveLossesRefs = useRef<Record<string, number>>({});
     const lastMartingaleActionRefs = useRef<Record<string, string>>({});
     const lastWinTimeRefs = useRef<Record<string, number>>({});
-    
+
     // CRITICAL FIX: Add ref for activeContracts to avoid stale state in event handlers
     const activeContractsRef = useRef<Record<string, any>>({});
 
@@ -221,7 +221,7 @@ const SmartTradingDisplay = observer(() => {
             script.onload = () => {
                 volatilityAnalyzerLoaded.current = true;
                 console.log('Volatility analyzer loaded');
-                
+
                 // Explicitly initialize the analyzer
                 if (typeof window.initVolatilityAnalyzer === 'function') {
                     try {
@@ -231,7 +231,7 @@ const SmartTradingDisplay = observer(() => {
                         console.error('Error initializing volatility analyzer:', e);
                     }
                 }
-                
+
                 // Load the enhancer script after the main analyzer is loaded
                 const enhancerScript = document.createElement('script');
                 enhancerScript.src = `/ai/analyzer-enhancer.js?v=${Date.now()}`;
@@ -240,7 +240,7 @@ const SmartTradingDisplay = observer(() => {
                     console.log('Analyzer enhancer loaded');
                 };
                 document.body.appendChild(enhancerScript);
-                
+
                 // Wait a bit to ensure everything is initialized
                 setTimeout(() => {
                     // Send initial configuration
@@ -258,27 +258,27 @@ const SmartTradingDisplay = observer(() => {
                         barrier: barrierValue
                     }, '*');
                     setHasSentInitCommands(true);
-                    
+
                     // Force a status check
                     window.postMessage({
                         type: 'REQUEST_STATUS'
                     }, '*');
                 }, 1000); // Wait longer to ensure both scripts are loaded
             };
-            
+
             script.onerror = (e) => {
                 console.error('Failed to load volatility analyzer:', e);
             };
-            
+
             document.body.appendChild(script);
         }
 
         // Listen for messages from the volatility analyzer
         const handleMessage = (event: MessageEvent) => {
             if (!event.data || typeof event.data !== 'object') return;
-            
+
             const { type } = event.data;
-              switch (type) {
+            switch (type) {
                 case 'ANALYSIS_DATA':
                     console.log(`📊 Received analysis data for ${event.data.strategyId}:`, event.data.data);
                     setAnalysisData(prev => ({
@@ -286,15 +286,15 @@ const SmartTradingDisplay = observer(() => {
                         [event.data.strategyId]: event.data.data
                     }));
                     break;
-                    
+
                 case 'PRICE_UPDATE':
                     setCurrentPrice(event.data.price);
                     break;
-                    
+
                 case 'ANALYZER_CONNECTION_STATUS':
                     console.log('Analyzer connection status:', event.data.status);
                     break;
-                    
+
                 case 'ANALYZER_STATUS':
                     console.log('Analyzer status:', event.data.status);
                     break;
@@ -324,8 +324,8 @@ const SmartTradingDisplay = observer(() => {
     useEffect(() => {
         const session_id = `smartTrading_${Date.now()}`;
         setSessionRunId(session_id);
-        globalObserver.emit('bot.started', session_id);        const contractSettlementHandler = (response: any) => {
-            if (response?.id === 'contract.settled' && response?.data && 
+        globalObserver.emit('bot.started', session_id); const contractSettlementHandler = (response: any) => {
+            if (response?.id === 'contract.settled' && response?.data &&
                 lastTradeRef.current?.id !== response.data.contract_id) {
                 const contract_info = response.data;
 
@@ -345,13 +345,13 @@ const SmartTradingDisplay = observer(() => {
                     if (!strategyRefsMap.current.processedContracts) {
                         strategyRefsMap.current.processedContracts = new Set();
                     }
-                    
+
                     if (strategyRefsMap.current.processedContracts.has(contractKey)) {
                         console.warn(`🔍 [OBSERVER MARTINGALE DEBUG] ⚠️ DUPLICATE SETTLEMENT PREVENTED for ${contractKey}`);
                         return;
                     }
                     strategyRefsMap.current.processedContracts.add(contractKey);
-                    
+
                     // Clean up old processed contracts to prevent memory leaks (keep last 50)
                     if (strategyRefsMap.current.processedContracts.size > 50) {
                         const contractsArray = Array.from(strategyRefsMap.current.processedContracts);
@@ -359,9 +359,9 @@ const SmartTradingDisplay = observer(() => {
                         console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Cleaned up old processed contracts, now tracking ${strategyRefsMap.current.processedContracts.size}`);
                     }
 
-                    lastTradeRef.current = { 
-                        id: contract_info.contract_id, 
-                        profit: contract_info.profit 
+                    lastTradeRef.current = {
+                        id: contract_info.contract_id,
+                        profit: contract_info.profit
                     };
                     contractSettledTimeRef.current = Date.now();
 
@@ -369,15 +369,15 @@ const SmartTradingDisplay = observer(() => {
                     const contractData = activeContractsRef.current[contract_info.contract_id];
                     console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Contract data from ref:`, contractData);
                     console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Available contracts in ref:`, Object.keys(activeContractsRef.current));
-                    
+
                     if (contractData?.strategy_id) {
                         const strategyId = contractData.strategy_id;
-                        
+
                         // Enhanced logging with ref-based values
                         const currentStake = currentStakeRefs.current[strategyId] || '0';
                         const currentLosses = currentConsecutiveLossesRefs.current[strategyId] || 0;
                         console.log(`🔍 [OBSERVER MARTINGALE DEBUG] Strategy ${strategyId}: Current stake before update: ${currentStake}, Consecutive losses: ${currentLosses}`);
-                        
+
                         if (isWin) {
                             setWinCount(prev => prev + 1);
                             console.log(`🔍 [OBSERVER MARTINGALE DEBUG] WIN: Calling manageStake('${strategyId}', 'reset')`);
@@ -392,23 +392,23 @@ const SmartTradingDisplay = observer(() => {
                             console.log(`🔍 [OBSERVER MARTINGALE DEBUG] ❌ LOSS: Current consecutive losses AFTER call: ${currentConsecutiveLossesRefs.current[strategyId] || 0}`);
                             console.log(`❌ LOSS: Strategy ${strategyId} stake increased using martingale to ${newStakeValue}`);
                         }
-                        
+
                         // Update UI for the specific strategy card with enhanced current stake tracking
-                        setAnalysisStrategies(prev => prev.map(s => 
+                        setAnalysisStrategies(prev => prev.map(s =>
                             s.id === strategyId ? {
-                                ...s, 
+                                ...s,
                                 lastTradeResult: isWin ? 'WIN' : 'LOSS',
                                 currentStake: parseFloat(currentStakeRefs.current[strategyId] || s.settings.stake.toString())
                             } : s
                         ));
-                        
+
                         // Enhanced summary logging for martingale tracking
                         console.log(`🎯 [SETTLEMENT SUMMARY] Strategy ${strategyId} after ${isWin ? 'WIN' : 'LOSS'}:`);
                         console.log(`🎯 [SETTLEMENT SUMMARY] - Current stake: $${currentStakeRefs.current[strategyId] || 'undefined'}`);
                         console.log(`🎯 [SETTLEMENT SUMMARY] - Consecutive losses: ${currentConsecutiveLossesRefs.current[strategyId] || 0}`);
                         console.log(`🎯 [SETTLEMENT SUMMARY] - Base stake: $${strategy.settings.stake}`);
                         console.log(`🎯 [SETTLEMENT SUMMARY] - Multiplier: ${strategy.settings.martingaleMultiplier || 2}`);
-                        
+
                         if (!isWin && currentConsecutiveLossesRefs.current[strategyId] > 0) {
                             const expectedStake = strategy.settings.stake * Math.pow(strategy.settings.martingaleMultiplier || 2, currentConsecutiveLossesRefs.current[strategyId]);
                             console.log(`🎯 [SETTLEMENT SUMMARY] - Expected next stake: $${expectedStake.toFixed(2)} (Level ${currentConsecutiveLossesRefs.current[strategyId]})`);
@@ -424,8 +424,8 @@ const SmartTradingDisplay = observer(() => {
             }
         };
 
-        globalObserver.register('contract.status', (response: any) => {   
-            if (response?.data?.is_sold) {     
+        globalObserver.register('contract.status', (response: any) => {
+            if (response?.data?.is_sold) {
                 console.log(`🔍 [CONTRACT.STATUS] Contract sold detected, delegating to settlement handler`);
                 // Add a marker to identify this came from contract.status
                 const modifiedResponse = {
@@ -446,9 +446,9 @@ const SmartTradingDisplay = observer(() => {
             if (!activeContractRef.current) return;
             try {
                 const response = await api_base.api.send({
-                    proposal_open_contract: 1,    
+                    proposal_open_contract: 1,
                     contract_id: activeContractRef.current
-                });                if (response?.proposal_open_contract) {
+                }); if (response?.proposal_open_contract) {
                     const contract = response.proposal_open_contract;
 
                     // Update contract data with latest API response
@@ -458,41 +458,41 @@ const SmartTradingDisplay = observer(() => {
                             ...prev[contract.contract_id],
                             ...contract,
                             // Ensure we preserve the strategy_id from our original contract creation
-                            strategy_id: prev[contract.contract_id]?.strategy_id 
+                            strategy_id: prev[contract.contract_id]?.strategy_id
                         }
                     }));
 
-                    if (contract.is_sold === 1) {    
+                    if (contract.is_sold === 1) {
                         const contractId = contract.contract_id;
-                        
+
                         // Enhanced duplicate prevention (from TradingHub implementation)
                         const isWin = contract.profit >= 0;
                         const contractKey = `${contractId}_${isWin ? 'WIN' : 'LOSS'}`;
-                        
+
                         if (!strategyRefsMap.current.processedContracts) {
                             strategyRefsMap.current.processedContracts = new Set();
                         }
-                        
+
                         if (strategyRefsMap.current.processedContracts.has(contractKey)) {
                             console.warn(`🔍 [INTERVAL HANDLER] ⚠️ DUPLICATE SETTLEMENT PREVENTED for ${contractKey} (via interval)`);
                             return;
                         }
-                        
+
                         if (lastTradeRef.current?.id === contractId) {
                             console.log(`🔍 [INTERVAL HANDLER] Contract ${contractId} already processed by globalObserver, skipping interval handler`);
                             return;
                         }
-                        
+
                         console.log(`🔍 [INTERVAL HANDLER] Processing contract ${contractId} settlement via interval check`);
                         strategyRefsMap.current.processedContracts.add(contractKey);
-                        
+
                         // Clean up old processed contracts to prevent memory leaks (keep last 50)
                         if (strategyRefsMap.current.processedContracts.size > 50) {
                             const contractsArray = Array.from(strategyRefsMap.current.processedContracts);
                             strategyRefsMap.current.processedContracts = new Set(contractsArray.slice(-25));
                             console.log(`🔍 [INTERVAL HANDLER] Cleaned up old processed contracts, now tracking ${strategyRefsMap.current.processedContracts.size}`);
                         }
-                                                
+
                         const profit = contract.profit;
                         lastTradeRef.current = { id: contractId, profit };
                         contractSettledTimeRef.current = Date.now();
@@ -504,10 +504,10 @@ const SmartTradingDisplay = observer(() => {
                         const contractData = activeContractsRef.current[contractId];
                         console.log(`🔍 [INTERVAL HANDLER] Contract data found in ref:`, contractData);
                         console.log(`🔍 [INTERVAL HANDLER] Available contracts in ref:`, Object.keys(activeContractsRef.current));
-                        
+
                         if (contractData?.strategy_id) {
                             const strategyId = contractData.strategy_id;
-                            
+
                             // Enhanced logging with ref-based values for consistency
                             const currentStake = currentStakeRefs.current[strategyId] || contractData.current_stake || '0';
                             const currentLosses = currentConsecutiveLossesRefs.current[strategyId] || 0;
@@ -515,7 +515,7 @@ const SmartTradingDisplay = observer(() => {
                             console.log(`🔍 [INTERVAL HANDLER] - Result: ${isWin ? 'WIN' : 'LOSS'}`);
                             console.log(`🔍 [INTERVAL HANDLER] - Current stake: ${currentStake}`);
                             console.log(`🔍 [INTERVAL HANDLER] - Current losses: ${currentLosses}`);
-                            
+
                             if (isWin) {
                                 setWinCount(prev => prev + 1);
                                 console.log(`🔍 [INTERVAL HANDLER] Calling manageStake('${strategyId}', 'reset')`);
@@ -526,11 +526,11 @@ const SmartTradingDisplay = observer(() => {
                                 setLossCount(prev => prev + 1);
                                 console.log(`🔍 [INTERVAL HANDLER] ❌ LOSS: About to call manageStake('${strategyId}', 'martingale')`);
                                 console.log(`🔍 [INTERVAL HANDLER] ❌ LOSS: Current consecutive losses BEFORE call: ${currentLosses}`);
-                                
+
                                 const newStakeValue = manageStake(strategyId, 'martingale');
                                 console.log(`🔍 [INTERVAL HANDLER] Martingale returned stake: ${newStakeValue}`);
                                 console.log(`🔍 [INTERVAL HANDLER] ❌ LOSS: Current consecutive losses AFTER call: ${currentConsecutiveLossesRefs.current[strategyId] || 0}`);
-                                
+
                                 setLastTradeResult('LOSS');
                                 console.log(`❌ LOSS: Strategy ${strategyId} stake increased using martingale to ${newStakeValue}`);
                             }
@@ -538,7 +538,7 @@ const SmartTradingDisplay = observer(() => {
                             console.error(`🔍 [INTERVAL HANDLER] ❌ CRITICAL: No strategy_id found in contract data for ${contractId}`);
                             console.error(`🔍 [INTERVAL HANDLER] Available contract data keys:`, contractData ? Object.keys(contractData) : 'No contract data');
                             console.error(`🔍 [INTERVAL HANDLER] Available contracts in ref:`, Object.keys(activeContractsRef.current));
-                            
+
                             // Enhanced fallback mechanism (from TradingHub)
                             const activeStrategy = analysisStrategies.find(s => s.activeContractType);
                             if (activeStrategy) {
@@ -557,7 +557,7 @@ const SmartTradingDisplay = observer(() => {
                                 console.error(`🔍 [INTERVAL HANDLER] ❌ NO FALLBACK: No active strategy found either!`);
                             }
                         }
-                            
+
                         // Update analytics regardless of strategy identification
                         const strategyForAnalytics = contractData?.strategy_id || 'unknown';
                         setAnalysisData(prev => ({
@@ -618,9 +618,9 @@ const SmartTradingDisplay = observer(() => {
                     const stakeValue = parseFloat(savedStake);
                     if (!isNaN(stakeValue) && stakeValue >= 0.35) {
                         console.log(`Loaded saved stake for strategy ${strategy.id}: ${stakeValue}`);
-                        setAnalysisStrategies(prev => prev.map(s => 
-                            s.id === strategy.id ? 
-                                { ...s, settings: { ...s.settings, stake: stakeValue } } : 
+                        setAnalysisStrategies(prev => prev.map(s =>
+                            s.id === strategy.id ?
+                                { ...s, settings: { ...s.settings, stake: stakeValue } } :
                                 s
                         ));
                         setCurrentStakes(prev => ({ ...prev, [strategy.id]: stakeValue }));
@@ -628,21 +628,21 @@ const SmartTradingDisplay = observer(() => {
                         currentStakeRefs.current[strategy.id] = stakeValue.toFixed(2);
                     }
                 }
-                
+
                 // Load saved martingale multiplier
                 const savedMartingale = localStorage.getItem(`smartTrading_martingale_${strategy.id}`);
                 if (savedMartingale) {
                     const martingaleValue = parseFloat(savedMartingale);
                     if (!isNaN(martingaleValue) && martingaleValue >= 1) {
                         console.log(`Loaded saved martingale for strategy ${strategy.id}: ${martingaleValue}`);
-                        setAnalysisStrategies(prev => prev.map(s => 
-                            s.id === strategy.id ? 
-                                { ...s, settings: { ...s.settings, martingaleMultiplier: martingaleValue } } : 
+                        setAnalysisStrategies(prev => prev.map(s =>
+                            s.id === strategy.id ?
+                                { ...s, settings: { ...s.settings, martingaleMultiplier: martingaleValue } } :
                                 s
                         ));
                     }
                 }
-                
+
                 // Initialize refs for this strategy to prevent stale state issues
                 if (!currentStakeRefs.current[strategy.id]) {
                     currentStakeRefs.current[strategy.id] = strategy.settings.stake.toFixed(2);
@@ -663,9 +663,10 @@ const SmartTradingDisplay = observer(() => {
     }, [client?.loginid]);
 
     // Auto-trading effect - monitor conditions and execute trades
-    useEffect(() => {        const autoTradingInterval = setInterval(() => {
+    useEffect(() => {
+        const autoTradingInterval = setInterval(() => {
             const newConditionStates: Record<string, boolean> = {};
-            
+
             analysisStrategies.forEach(strategy => {
                 if (strategy.activeContractType && strategy.activeContractType !== null) {
                     // Enhanced debugging for rise/fall specifically
@@ -678,7 +679,7 @@ const SmartTradingDisplay = observer(() => {
                             analysisKeys: analysis ? Object.keys(analysis) : [],
                             settings: strategy.settings
                         });
-                        
+
                         if (analysis) {
                             console.log(`🔍 [RISE/FALL DEBUG] Analysis content:`, {
                                 riseRatio: analysis.riseRatio,
@@ -688,13 +689,13 @@ const SmartTradingDisplay = observer(() => {
                             });
                         }
                     }
-                    
+
                     const conditionMet = isConditionMet(strategy.id);
                     const wasConditionMet = lastConditionStates[strategy.id] || false;
                     const conditionJustBecameTrue = conditionMet && !wasConditionMet;
-                    
+
                     newConditionStates[strategy.id] = conditionMet;
-                    
+
                     // Enhanced logging for rise/fall
                     if (strategy.id === 'rise-fall') {
                         console.log(`🔍 [RISE/FALL DEBUG] Condition evaluation:`, {
@@ -706,21 +707,21 @@ const SmartTradingDisplay = observer(() => {
                     } else {
                         console.log(`Strategy ${strategy.id}: condition=${conditionMet}, was=${wasConditionMet}, justBecameTrue=${conditionJustBecameTrue}`);
                     }
-                    
+
                     // Check if we can trade
                     const now = Date.now();
                     const timeSinceLastTrade = now - lastTradeTime.current;
                     const timeSinceSettlement = now - contractSettledTimeRef.current;
-                    
+
                     // Priority trading: if condition just became true, reduce cooldown requirements
                     const priorityCooldown = conditionJustBecameTrue ? 1000 : minimumTradeCooldown; // 1 second for new conditions
                     const settlementBuffer = conditionJustBecameTrue ? 1000 : 2000; // 1 second for new conditions
-                    
-                    const canTrade = conditionMet && 
-                                   !isTradeInProgress && 
-                                   timeSinceLastTrade >= priorityCooldown &&
-                                   (!activeContractRef.current || timeSinceSettlement >= settlementBuffer);
-                    
+
+                    const canTrade = conditionMet &&
+                        !isTradeInProgress &&
+                        timeSinceLastTrade >= priorityCooldown &&
+                        (!activeContractRef.current || timeSinceSettlement >= settlementBuffer);
+
                     if (canTrade) {
                         const tradeReason = conditionJustBecameTrue ? '🔥 IMMEDIATE (condition just met)' : '✅ REGULAR (condition continues)';
                         console.log(`${tradeReason} Executing trade for strategy ${strategy.id}`);
@@ -733,7 +734,7 @@ const SmartTradingDisplay = observer(() => {
                         if (isTradeInProgress) reasons.push('trade in progress');
                         if (timeSinceLastTrade < priorityCooldown) reasons.push(`cooldown (${priorityCooldown - timeSinceLastTrade}ms remaining)`);
                         if (activeContractRef.current && timeSinceSettlement < settlementBuffer) reasons.push(`waiting for settlement (${settlementBuffer - timeSinceSettlement}ms remaining)`);
-                        
+
                         // Only log if condition is met but other factors prevent trading (to reduce noise)
                         if (conditionMet && reasons.length > 1) {
                             console.log(`⏳ Strategy ${strategy.id} condition met but waiting: ${reasons.slice(1).join(', ')}`);
@@ -749,7 +750,7 @@ const SmartTradingDisplay = observer(() => {
                     }
                 }
             });
-            
+
             // Update condition states
             setLastConditionStates(newConditionStates);
         }, 1000); // Check every 1 second for more responsive trading
@@ -761,19 +762,19 @@ const SmartTradingDisplay = observer(() => {
     const handleSymbolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newSymbol = e.target.value;
         setSelectedSymbol(newSymbol);
-        
+
         if (volatilityAnalyzerLoaded.current) {
             console.log(`Sending symbol update: ${newSymbol}`);
-            
+
             // Send multiple formats to ensure compatibility
             window.postMessage({
                 type: 'UPDATE_SYMBOL',
                 symbol: newSymbol
             }, '*');
-            
+
             // Clear analysis data when changing symbols
             setAnalysisData({});
-            
+
             // Reset data refresh after symbol change
             if (hasSentInitCommands) {
                 setTimeout(() => {
@@ -791,26 +792,26 @@ const SmartTradingDisplay = observer(() => {
     // Update the tick count change handler to allow empty inputs
     const handleTickCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        
+
         // Always update the input state for the UI
         setTickCountInput(value);
-        
+
         // Only update the actual tick count when we have a valid number
         if (value !== '') {
             const newTickCount = parseInt(value, 10);
             // Ensure newTickCount is a positive number and within reasonable bounds if necessary
-            if (!isNaN(newTickCount) && newTickCount > 0 && newTickCount <= 5000) { 
+            if (!isNaN(newTickCount) && newTickCount > 0 && newTickCount <= 5000) {
                 setTickCount(newTickCount);
-                
+
                 if (volatilityAnalyzerLoaded.current) {
                     console.log(`Sending tick count update: ${newTickCount}`);
-                    
+
                     window.postMessage({
                         type: 'UPDATE_TICK_COUNT',
                         tickCount: newTickCount,
-                        count: newTickCount 
+                        count: newTickCount
                     }, '*');
-                    
+
                     setAnalysisData({});
                 }
             }
@@ -827,17 +828,17 @@ const SmartTradingDisplay = observer(() => {
             const defaultTickCount = 120; // Default tick count value
             newTickCount = defaultTickCount;
         }
-        
+
         setTickCount(newTickCount);
         setTickCountInput(newTickCount.toString());
-            
+
         if (volatilityAnalyzerLoaded.current) {
             window.postMessage({
                 type: 'UPDATE_TICK_COUNT',
                 tickCount: newTickCount,
-                count: newTickCount 
+                count: newTickCount
             }, '*');
-            
+
             setAnalysisData({});
         }
     };
@@ -849,15 +850,15 @@ const SmartTradingDisplay = observer(() => {
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              // Store the raw value in a temporary UI state
-                              [`${settingName}Input`]: value, 
-                              // Keep the actual value unchanged if input is empty
-                              [settingName]: value === '' ? strategy.settings[settingName] : parseFloat(value),
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            // Store the raw value in a temporary UI state
+                            [`${settingName}Input`]: value,
+                            // Keep the actual value unchanged if input is empty
+                            [settingName]: value === '' ? strategy.settings[settingName] : parseFloat(value),
+                        },
+                    }
                     : strategy
             )
         );
@@ -866,20 +867,20 @@ const SmartTradingDisplay = observer(() => {
     // Enhanced blur handler with localStorage persistence and validation (from TradingHub)
     const handleInputBlur = (strategyId: string, settingName: keyof TradeSettings, value: string) => {
         const numericValue = parseFloat(value);
-        
+
         // On blur, always set a valid numeric value (default to min values if empty)
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy => {
                 if (strategy.id === strategyId) {
                     // Set appropriate default values based on the setting type
                     let finalValue = numericValue;
-                    
+
                     if (value === '' || isNaN(numericValue)) {
                         if (settingName === 'stake') finalValue = 0.35; // Minimum stake
                         else if (settingName === 'ticks') finalValue = 1; // Minimum ticks
                         else if (settingName === 'martingaleMultiplier') finalValue = 1; // Minimum multiplier
                     }
-                    
+
                     // Validate and clamp values
                     if (settingName === 'stake') {
                         finalValue = Math.max(finalValue, 0.35); // Minimum stake
@@ -888,7 +889,7 @@ const SmartTradingDisplay = observer(() => {
                     } else if (settingName === 'martingaleMultiplier') {
                         finalValue = Math.max(finalValue, 1); // Minimum multiplier
                     }
-                    
+
                     // Save to localStorage and update refs for persistence (enhanced from TradingHub)
                     try {
                         if (settingName === 'stake') {
@@ -904,7 +905,7 @@ const SmartTradingDisplay = observer(() => {
                     } catch (e) {
                         console.warn(`Could not save ${settingName} to localStorage`, e);
                     }
-                    
+
                     return {
                         ...strategy,
                         settings: {
@@ -925,11 +926,11 @@ const SmartTradingDisplay = observer(() => {
             // Validate and save stake
             const validStake = Math.max(strategy.settings.stake || 0.35, 0.35).toFixed(2);
             manageStake(strategy.id, 'init', { newValue: validStake });
-            
+
             // Validate and save martingale
             const validMartingale = Math.max(strategy.settings.martingaleMultiplier || 1, 1).toFixed(1);
             manageMartingale(strategy.id, 'init', { newValue: validMartingale });
-            
+
             console.log(`Settings saved for strategy ${strategy.id}: Stake=${validStake}, Martingale=${validMartingale}`);
         });
     };
@@ -940,12 +941,12 @@ const SmartTradingDisplay = observer(() => {
             manageStake(strategy.id, 'reset');
             console.log(`Reset martingale state for strategy ${strategy.id}`);
         });
-        
+
         // Reset global counters
         contractSettledTimeRef.current = 0;
         waitingForSettlementRef.current = false;
         setLastTradeResult('');
-        
+
         console.log('All martingale states reset - ready for fresh trading session');
     };
 
@@ -961,7 +962,7 @@ const SmartTradingDisplay = observer(() => {
                         manageStake(strategy.id, 'init', { newValue: savedStake });
                     }
                 }
-                
+
                 // Load martingale
                 const savedMartingale = localStorage.getItem(`smartTrading_martingale_${strategy.id}`);
                 if (savedMartingale) {
@@ -982,7 +983,7 @@ const SmartTradingDisplay = observer(() => {
                 // Save current stakes and martingale settings using ref values
                 const currentStake = currentStakeRefs.current[strategy.id] || strategy.settings.stake.toFixed(2);
                 const currentMartingale = (strategy.settings.martingaleMultiplier || 2).toFixed(1);
-                
+
                 localStorage.setItem(`smartTrading_initialStake_${strategy.id}`, currentStake);
                 localStorage.setItem(`smartTrading_martingale_${strategy.id}`, currentMartingale);
             });
@@ -996,10 +997,10 @@ const SmartTradingDisplay = observer(() => {
     const displayStake = (strategyId: string) => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
         if (!strategy) return '$0.35';
-        
+
         const currentStake = parseFloat(currentStakeRefs.current[strategyId] || strategy.settings.stake.toString());
         const initialStake = strategy.settings.stake;
-        
+
         if (Math.abs(currentStake - initialStake) < 0.01) {
             return `$${currentStake.toFixed(2)}`;
         } else {
@@ -1010,7 +1011,7 @@ const SmartTradingDisplay = observer(() => {
     // Add debugging function to check martingale state
     const debugMartingaleState = (strategyId?: string) => {
         const strategies = strategyId ? [analysisStrategies.find(s => s.id === strategyId)].filter(Boolean) : analysisStrategies;
-        
+
         console.log(`🔍 [MARTINGALE DEBUG] ===== Current Martingale State =====`);
         strategies.forEach(strategy => {
             if (!strategy) return;
@@ -1019,14 +1020,14 @@ const SmartTradingDisplay = observer(() => {
             const losses = currentConsecutiveLossesRefs.current[id] || 0;
             const baseStake = strategy.settings.stake;
             const multiplier = strategy.settings.martingaleMultiplier || 2;
-            
+
             console.log(`🔍 [MARTINGALE DEBUG] Strategy: ${id}`);
             console.log(`🔍 [MARTINGALE DEBUG] - Current stake: $${currentStake}`);
             console.log(`🔍 [MARTINGALE DEBUG] - Base stake: $${baseStake}`);
             console.log(`🔍 [MARTINGALE DEBUG] - Consecutive losses: ${losses}`);
             console.log(`🔍 [MARTINGALE DEBUG] - Multiplier: ${multiplier}`);
             console.log(`🔍 [MARTINGALE DEBUG] - Last action: ${lastMartingaleActionRefs.current[id] || 'none'}`);
-            
+
             if (losses > 0) {
                 const expectedStake = baseStake * Math.pow(multiplier, losses);
                 console.log(`🔍 [MARTINGALE DEBUG] - Expected stake: $${expectedStake.toFixed(2)}`);
@@ -1043,8 +1044,8 @@ const SmartTradingDisplay = observer(() => {
     }
 
     // Enhanced Martingale Management Functions (fully adapted from trading-hub-display.tsx)
-    const manageMartingale = (strategyId: string, action: 'init' | 'update' | 'get', params?: { 
-        newValue?: string 
+    const manageMartingale = (strategyId: string, action: 'init' | 'update' | 'get', params?: {
+        newValue?: string
     }): string => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
         if (!strategy) return '2';
@@ -1054,38 +1055,38 @@ const SmartTradingDisplay = observer(() => {
                 if (params?.newValue) {
                     const validValue = Math.max(parseFloat(params.newValue), 1).toFixed(1);
                     console.log(`Martingale initialization for strategy ${strategyId} from ${strategy.settings.martingaleMultiplier} to ${validValue}`);
-                    
+
                     // Update the strategy settings
-                    setAnalysisStrategies(prev => prev.map(s => 
-                        s.id === strategyId ? 
-                            { ...s, settings: { ...s.settings, martingaleMultiplier: parseFloat(validValue) } } : 
+                    setAnalysisStrategies(prev => prev.map(s =>
+                        s.id === strategyId ?
+                            { ...s, settings: { ...s.settings, martingaleMultiplier: parseFloat(validValue) } } :
                             s
                     ));
-                    
+
                     try {
                         localStorage.setItem(`smartTrading_martingale_${strategyId}`, validValue);
                     } catch (e) {
                         console.warn('Could not save martingale to localStorage', e);
                     }
-                    
+
                     return validValue;
                 }
                 break;
-                
+
             case 'update':
                 if (params?.newValue !== undefined) {
                     const numValue = parseFloat(params.newValue);
                     if (!isNaN(numValue)) {
-                        setAnalysisStrategies(prev => prev.map(s => 
-                            s.id === strategyId ? 
-                                { ...s, settings: { ...s.settings, martingaleMultiplier: numValue } } : 
+                        setAnalysisStrategies(prev => prev.map(s =>
+                            s.id === strategyId ?
+                                { ...s, settings: { ...s.settings, martingaleMultiplier: numValue } } :
                                 s
                         ));
                         return params.newValue;
                     }
                 }
                 break;
-                
+
             case 'get':
                 const storedValue = localStorage.getItem(`smartTrading_martingale_${strategyId}`);
                 if (storedValue) {
@@ -1095,17 +1096,17 @@ const SmartTradingDisplay = observer(() => {
                     }
                 }
                 return (strategy.settings.martingaleMultiplier || 2).toFixed(1);
-                
+
             default:
                 console.error('Unknown martingale management action:', action);
         }
-        
+
         return (strategy.settings.martingaleMultiplier || 2).toFixed(1);
     };
 
-    const manageStake = (strategyId: string, action: 'init' | 'reset' | 'martingale' | 'update' | 'get', params?: { 
+    const manageStake = (strategyId: string, action: 'init' | 'reset' | 'martingale' | 'update' | 'get', params?: {
         newValue?: string,
-        lossCount?: number  
+        lossCount?: number
     }): string => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
         if (!strategy) return '0.35';
@@ -1113,7 +1114,7 @@ const SmartTradingDisplay = observer(() => {
         // Use refs to avoid stale state issues (from TradingHub implementation)
         const currentStakeRef = currentStakeRefs.current[strategyId] || strategy.settings.stake.toString();
         const currentConsecutiveLossesRef = currentConsecutiveLossesRefs.current[strategyId] || 0;
-        
+
         console.log(`🔧 [MANAGE STAKE] Called with action: ${action} for strategy: ${strategyId}`);
         console.log(`🔧 [MANAGE STAKE] Current stake ref: ${currentStakeRef}, losses ref: ${currentConsecutiveLossesRef}`);
         console.log(`🔧 [MANAGE STAKE] Params:`, params);
@@ -1123,35 +1124,35 @@ const SmartTradingDisplay = observer(() => {
                 if (params?.newValue) {
                     const validValue = Math.max(parseFloat(params.newValue), 0.35).toFixed(2);
                     console.log(`Stake initialization for strategy ${strategyId} from ${strategy.settings.stake} to ${validValue}`);
-                    
+
                     // Update strategy settings
-                    setAnalysisStrategies(prev => prev.map(s => 
-                        s.id === strategyId ? 
-                            { ...s, settings: { ...s.settings, stake: parseFloat(validValue) } } : 
+                    setAnalysisStrategies(prev => prev.map(s =>
+                        s.id === strategyId ?
+                            { ...s, settings: { ...s.settings, stake: parseFloat(validValue) } } :
                             s
                     ));
-                    
+
                     setCurrentStakes(prev => ({ ...prev, [strategyId]: parseFloat(validValue) }));
                     currentStakeRefs.current[strategyId] = validValue;
-                    
+
                     try {
                         localStorage.setItem(`smartTrading_initialStake_${strategyId}`, validValue);
                     } catch (e) {
                         console.warn('Could not save stake to localStorage', e);
                     }
-                    
+
                     return validValue;
                 }
                 break;
-                
+
             case 'update':
                 if (params?.newValue !== undefined) {
                     const numValue = parseFloat(params.newValue);
                     if (!isNaN(numValue)) {
                         const validValue = Math.max(numValue, 0.35).toFixed(2);
-                        setAnalysisStrategies(prev => prev.map(s => 
-                            s.id === strategyId ? 
-                                { ...s, settings: { ...s.settings, stake: parseFloat(validValue) } } : 
+                        setAnalysisStrategies(prev => prev.map(s =>
+                            s.id === strategyId ?
+                                { ...s, settings: { ...s.settings, stake: parseFloat(validValue) } } :
                                 s
                         ));
                         setCurrentStakes(prev => ({ ...prev, [strategyId]: parseFloat(validValue) }));
@@ -1160,53 +1161,53 @@ const SmartTradingDisplay = observer(() => {
                     }
                 }
                 break;
-                
+
             case 'reset':
                 const storedInitialStake = localStorage.getItem(`smartTrading_initialStake_${strategyId}`) || strategy.settings.stake.toString();
-                
+
                 // Store last win time for this strategy to prevent duplicate processing (from TradingHub)
                 lastMartingaleActionRefs.current[strategyId] = 'reset';
                 lastWinTimeRefs.current[strategyId] = Date.now();
-                
+
                 console.log(`🔧 [MANAGE STAKE] Resetting stake for strategy ${strategyId} from ${currentStakeRef} to stored initial: ${storedInitialStake}`);
                 console.log(`🔧 [MANAGE STAKE] Consecutive losses counter reset from ${currentConsecutiveLossesRef} to 0`);
-                
+
                 setCurrentStakes(prev => ({ ...prev, [strategyId]: parseFloat(storedInitialStake) }));
                 currentStakeRefs.current[strategyId] = storedInitialStake;
                 setConsecutiveLosses(prev => ({ ...prev, [strategyId]: 0 }));
                 currentConsecutiveLossesRefs.current[strategyId] = 0;
-                
+
                 return storedInitialStake;
-                
+
             case 'martingale':
                 console.log(`🎯 [MARTINGALE FUNCTION] Starting martingale for strategy ${strategyId}`);
-                
+
                 // Prevent duplicate martingale applications (from TradingHub implementation)
-                if (lastMartingaleActionRefs.current[strategyId] === 'martingale' && 
-                    lastWinTimeRefs.current[strategyId] && 
+                if (lastMartingaleActionRefs.current[strategyId] === 'martingale' &&
+                    lastWinTimeRefs.current[strategyId] &&
                     Date.now() - lastWinTimeRefs.current[strategyId] < 2000) {
                     console.warn(`🎯 [MARTINGALE FUNCTION] Prevented duplicate martingale for strategy ${strategyId} - too soon after last application`);
                     return currentStakeRef;
                 }
-                
+
                 // CRITICAL FIX: Use the correct ref for consecutive losses
                 const prevLossCount = currentConsecutiveLossesRefs.current[strategyId] || 0;
-                const newLossCount = params?.lossCount !== undefined ? 
+                const newLossCount = params?.lossCount !== undefined ?
                     params.lossCount : prevLossCount + 1;
-                       
+
                 const maxLossCount = 10; // Cap at 10 consecutive losses for safety
                 const safeLossCount = Math.min(newLossCount, maxLossCount);
-                
+
                 console.log(`🎯 [MARTINGALE FUNCTION] Loss count progression: ${prevLossCount} → ${newLossCount} → ${safeLossCount} (max: ${maxLossCount})`);
-                
+
                 const baseStake = localStorage.getItem(`smartTrading_initialStake_${strategyId}`) || strategy.settings.stake.toString();
                 const currentMartingale = manageMartingale(strategyId, 'get');
                 const multiplier = parseFloat(currentMartingale);
                 const validMultiplier = !isNaN(multiplier) && multiplier >= 1 ? multiplier : 1;
-                
+
                 // Enhanced martingale calculation (from TradingHub)
                 const newStake = (parseFloat(baseStake) * Math.pow(validMultiplier, safeLossCount)).toFixed(2);
-                
+
                 console.log(`🎯 [MARTINGALE FUNCTION] ✅ Calculation details for strategy ${strategyId}:`);
                 console.log(`🎯 [MARTINGALE FUNCTION] - Base stake: ${baseStake}`);
                 console.log(`🎯 [MARTINGALE FUNCTION] - Multiplier: ${validMultiplier}`);
@@ -1214,27 +1215,27 @@ const SmartTradingDisplay = observer(() => {
                 console.log(`🎯 [MARTINGALE FUNCTION] - New loss count (exponent): ${safeLossCount}`);
                 console.log(`🎯 [MARTINGALE FUNCTION] - Formula: ${baseStake} × ${validMultiplier}^${safeLossCount} = ${newStake}`);
                 console.log(`🎯 [MARTINGALE FUNCTION] - Calculation: ${parseFloat(baseStake)} × ${Math.pow(validMultiplier, safeLossCount)} = ${newStake}`);
-                
+
                 // Update refs to prevent stale state issues (from TradingHub)
                 lastMartingaleActionRefs.current[strategyId] = 'martingale';
                 lastWinTimeRefs.current[strategyId] = Date.now();
                 currentStakeRefs.current[strategyId] = newStake;
                 currentConsecutiveLossesRefs.current[strategyId] = safeLossCount;
-                
+
                 setCurrentStakes(prev => ({ ...prev, [strategyId]: parseFloat(newStake) }));
                 setConsecutiveLosses(prev => ({ ...prev, [strategyId]: safeLossCount }));
-                
+
                 console.log(`🎯 [MARTINGALE FUNCTION] ✅ Martingale completed for strategy ${strategyId}, returning stake: ${newStake}`);
                 return newStake;
-                
+
             case 'get':
                 return currentStakeRef;
-                
+
             default:
                 console.error('Unknown stake management action:', action);
                 return currentStakeRef;
         }
-        
+
         return currentStakeRef;
     };
 
@@ -1261,13 +1262,13 @@ const SmartTradingDisplay = observer(() => {
         const now = Date.now();
         const timeSinceLastTrade = now - lastTradeTime.current;
         const timeSinceSettlement = now - contractSettledTimeRef.current;
-        
+
         // Enhanced timing controls similar to trading-hub
         if (timeSinceLastTrade < minimumTradeCooldown) {
             console.log(`Trade cooldown active for strategy ${strategyId} (${timeSinceLastTrade}ms < ${minimumTradeCooldown}ms)`);
             return;
         }
-        
+
         if (activeContractRef.current !== null) {
             if (!waitingForSettlementRef.current) {
                 console.log(`Waiting for previous contract settlement for strategy ${strategyId}`);
@@ -1275,12 +1276,12 @@ const SmartTradingDisplay = observer(() => {
             }
             return;
         }
-        
+
         if (timeSinceSettlement < 2000 && contractSettledTimeRef.current > 0) {
             console.log(`Recent settlement detected for strategy ${strategyId}, waiting for martingale calculation to complete...`);
             return;
         }
-        
+
         waitingForSettlementRef.current = false;
 
         try {
@@ -1290,10 +1291,10 @@ const SmartTradingDisplay = observer(() => {
             // Get the current stake for this strategy based on martingale history (enhanced from TradingHub)
             const currentTradeStake = parseFloat(manageStake(strategyId, 'get'));
             const strategyConsecutiveLosses = currentConsecutiveLossesRefs.current[strategyId] || 0;
-            
+
             console.log(`Starting trade for ${strategyId} with stake: ${currentTradeStake}`);
             console.log(`Current martingale state: Level=${strategyConsecutiveLosses}, Base=${strategy.settings.stake}`);
-            
+
             // Determine which action to use based on strategy (MOVED UP to fix reference error)
             let actionToUse = '';
             if (strategyId === 'even-odd-2') {
@@ -1304,19 +1305,19 @@ const SmartTradingDisplay = observer(() => {
                 actionToUse = strategy.settings.conditionAction || '';
             }
             console.log(`Strategy ${strategyId} using action: ${actionToUse}`);
-            
+
             // Update the strategy's active contract type for UI feedback
-            setAnalysisStrategies(prev => prev.map(s => 
-                s.id === strategyId 
-                    ? { 
-                        ...s, 
+            setAnalysisStrategies(prev => prev.map(s =>
+                s.id === strategyId
+                    ? {
+                        ...s,
                         activeContractType: actionToUse,
                         currentStake: currentTradeStake
-                      } 
+                    }
                     : s
             ));
             const tradeId = `smart_${strategyId}_${Date.now()}`;
-            
+
             setTradeCount(prev => prev + 1);
             lastTradeTime.current = now;
 
@@ -1326,7 +1327,7 @@ const SmartTradingDisplay = observer(() => {
             console.log(`🎯 [STAKE DEBUG] Current consecutive losses: ${strategyConsecutiveLosses}`);
             console.log(`🎯 [STAKE DEBUG] Current stake ref: ${currentStakeRefs.current[strategyId]}`);
             console.log(`🎯 [STAKE DEBUG] Expected martingale level: ${strategyConsecutiveLosses > 0 ? `Level ${strategyConsecutiveLosses}` : 'Base level'}`);
-            
+
             if (strategyConsecutiveLosses > 0) {
                 const expectedStake = strategy.settings.stake * Math.pow(strategy.settings.martingaleMultiplier || 2, strategyConsecutiveLosses);
                 console.log(`🎯 [STAKE DEBUG] Expected stake calculation: ${strategy.settings.stake} × ${strategy.settings.martingaleMultiplier || 2}^${strategyConsecutiveLosses} = $${expectedStake.toFixed(2)}`);
@@ -1356,7 +1357,7 @@ const SmartTradingDisplay = observer(() => {
                     duration_unit: 't'
                 });
             }
-              switch (actionToUse) {
+            switch (actionToUse) {
                 case 'Rise':
                     // TEMPORARY FIX: Use DIGITODD instead of CALL to test if CALL/PUT is causing disconnection
                     contractType = 'CALLE'; // was 'CALL'
@@ -1372,7 +1373,7 @@ const SmartTradingDisplay = observer(() => {
                     break;
                 case 'Odd':
                     contractType = 'DIGITODD';
-                    break;                case 'Over':
+                    break; case 'Over':
                     if (strategyId === 'over-under') {
                         // Use the trading barrier instead of analysis barrier
                         barrier = (strategy.settings.tradingBarrier || 5).toString();
@@ -1390,7 +1391,7 @@ const SmartTradingDisplay = observer(() => {
                     } else if (strategyId === 'over-under-2') {
                         // Use the trading barrier instead of pattern analysis barrier
                         barrier = (strategy.settings.overUnderPatternTradingBarrier || 5).toString();
-                    }                    contractType = 'DIGITUNDER';
+                    } contractType = 'DIGITUNDER';
                     contractParameters.barrier = barrier;
                     break;
                 case 'Matches':
@@ -1414,34 +1415,34 @@ const SmartTradingDisplay = observer(() => {
                     action: actionToUse,
                     strategy: strategyId
                 });
-                
+
                 // Validate required parameters for CALL/PUT
                 const requiredParams = ['amount', 'basis', 'currency', 'duration', 'duration_unit', 'symbol', 'contract_type'];
                 const missingParams = requiredParams.filter(param => !contractParameters[param]);
-                
+
                 if (missingParams.length > 0) {
                     throw new Error(`Missing required parameters for ${contractType}: ${missingParams.join(', ')}`);
                 }
-                
+
                 // Ensure no invalid parameters for CALL/PUT (these contracts don't use barriers)
                 if (contractParameters.barrier) {
                     console.log(`🚨 [RISE/FALL] Removing barrier parameter for ${contractType} contract`);
                     delete contractParameters.barrier;
                 }
-                
+
                 // Add specific validation for Rise/Fall contracts
                 // Ensure we're using the correct duration format
                 if (contractParameters.duration_unit === 't' && contractParameters.duration < 1) {
                     console.error(`🚨 [RISE/FALL] Invalid duration: ${contractParameters.duration} ticks`);
                     contractParameters.duration = Math.max(1, contractParameters.duration);
                 }
-                
+
                 // Ensure amount is valid
                 if (contractParameters.amount < 0.35) {
                     console.error(`🚨 [RISE/FALL] Amount too low: ${contractParameters.amount}, setting to minimum 0.35`);
                     contractParameters.amount = 0.35;
                 }
-                
+
                 console.log(`🚨 [RISE/FALL] Validated contract parameters:`, contractParameters);
             }            // Create array to store all trade promises
             const trades = [];            // Standard trade for current account
@@ -1451,11 +1452,11 @@ const SmartTradingDisplay = observer(() => {
                     price: contractParameters.amount,
                     parameters: contractParameters,
                 });
-                
+
                 // Add additional safety checks for Rise/Fall contracts
                 if (contractType === 'CALL' || contractType === 'PUT') {
                     console.log(`🚨 [SAFETY] Double-checking Rise/Fall API call structure`);
-                    
+
                     // Ensure the API call structure is correct for Rise/Fall
                     const apiRequest = {
                         buy: 1,
@@ -1466,11 +1467,11 @@ const SmartTradingDisplay = observer(() => {
                             contract_type: contractType,
                         },
                     };
-                    
+
                     console.log(`🚨 [SAFETY] Final API request for ${contractType}:`, apiRequest);
                     return api_base.api.send(apiRequest);
                 }
-                
+
                 return api_base.api.send({
                     buy: 1,
                     price: contractParameters.amount,
@@ -1486,7 +1487,7 @@ const SmartTradingDisplay = observer(() => {
                     // Get tokens for copy trading
                     const tokensStr = localStorage.getItem(`extratokens_${client.loginid}`);
                     const tokens = tokensStr ? JSON.parse(tokensStr) : [];
-                    
+
                     if (tokens.length > 0) {
                         const copyOption = {
                             buy_contract_for_multiple_accounts: '1',
@@ -1499,16 +1500,16 @@ const SmartTradingDisplay = observer(() => {
                         trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
                         console.log(`Smart Trading: Adding copy trade for ${tokens.length} accounts`);
                     }
-                    
+
                     // Check if copying to real account is enabled
-                    const copyToReal = client.loginid?.startsWith('VR') && 
+                    const copyToReal = client.loginid?.startsWith('VR') &&
                         localStorage.getItem(`copytoreal_${client.loginid}`) === 'true';
-                        
+
                     if (copyToReal) {
                         try {
                             const accountsList = JSON.parse(localStorage.getItem('accountsList') || '{}');
                             const realAccountToken = Object.entries(accountsList).find(([id]) => id.startsWith('CR'))?.[1];
-                            
+
                             if (realAccountToken) {
                                 const realOption = {
                                     buy_contract_for_multiple_accounts: '1',
@@ -1528,35 +1529,36 @@ const SmartTradingDisplay = observer(() => {
                 }
             }// Execute all trades with enhanced error handling for Rise/Fall
             console.log(`🚨 [TRADE EXECUTION] About to execute ${trades.length} trade(s) for ${contractType}`);
-            
+
             let results;
             try {
                 results = await Promise.all(trades);
-                console.log(`🚨 [TRADE EXECUTION] Received results:`, results);            } catch (error) {
+                console.log(`🚨 [TRADE EXECUTION] Received results:`, results);
+            } catch (error) {
                 console.error(`🚨 [TRADE EXECUTION ERROR] Failed to execute trades:`, error);
-                
+
                 // Check if it's a connection issue
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 if (errorMessage?.includes('disconnected') || errorMessage?.includes('connection')) {
                     console.error(`🚨 [CONNECTION ERROR] Server disconnection detected during ${contractType} trade`);
                 }
-                
+
                 throw error; // Re-throw to be caught by outer try-catch
             }
-            
+
             const successfulTrades = results.filter(result => result && result.buy);
             console.log(`🚨 [TRADE RESULTS] ${successfulTrades.length} successful trades out of ${results.length} attempts`);
 
             if (successfulTrades.length > 0) {
                 const result = successfulTrades[0]; // Use the main account result
                 const buy = result.buy;
-                
+
                 const contractId = buy.contract_id;
                 console.log(`🚨 [SUCCESS] Smart trade executed. Contract ID: ${contractId}, Strategy: ${strategyId}, Type: ${contractType}`);
                 activeContractRef.current = contractId;                // Store detailed contract information for tracking and martingale (enhanced from TradingHub)
                 setActiveContracts(prev => ({
                     ...prev,
-                    [contractId]: { 
+                    [contractId]: {
                         contract_id: contractId,
                         buy_price: contractParameters.amount,
                         status: 'open',
@@ -1602,7 +1604,7 @@ const SmartTradingDisplay = observer(() => {
                 globalObserver.emit('bot.contract', contract_info);
                 globalObserver.emit('bot.bot_ready');
                 globalObserver.emit('contract.purchase_received', buy.contract_id);
-                globalObserver.emit('contract.status', { 
+                globalObserver.emit('contract.status', {
                     id: 'contract.purchase',
                     data: contract_info,
                     buy,
@@ -1620,19 +1622,20 @@ const SmartTradingDisplay = observer(() => {
             } else {
                 console.error('Smart trade purchase failed: No buy response received');
                 globalObserver.emit('ui.log.error', 'Smart trade purchase failed: No buy response received');
-            }        } catch (error) {
+            }
+        } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             console.error('🚨 [TRADE ERROR] Smart trade execution error:', error);
-            
+
             // Check if it's a server disconnection specifically for Rise/Fall
-            if (errorMessage?.includes('disconnected') || 
-                errorMessage?.includes('connection') || 
+            if (errorMessage?.includes('disconnected') ||
+                errorMessage?.includes('connection') ||
                 errorMessage?.includes('WebSocket') ||
                 errorMessage?.includes('network')) {
-                
+
                 console.error(`🚨 [DISCONNECTION] Server disconnected during trade for strategy ${strategyId}`);
                 console.error(`🚨 [DISCONNECTION] Error details:`, errorMessage);
-                
+
                 // Attempt to reconnect (if there's a reconnection function available)
                 if (typeof (window as any).reconnectAPI === 'function') {
                     console.log(`🚨 [RECONNECTION] Attempting to reconnect API...`);
@@ -1642,7 +1645,7 @@ const SmartTradingDisplay = observer(() => {
                         console.error(`🚨 [RECONNECTION] Failed to reconnect:`, reconnectError);
                     }
                 }
-                  // Emit specific disconnection event
+                // Emit specific disconnection event
                 globalObserver.emit('ui.log.error', `Server disconnected during trade. Please check connection.`);
                 globalObserver.emit('smart_trading.disconnected', { strategy: strategyId });
             } else {
@@ -1659,16 +1662,16 @@ const SmartTradingDisplay = observer(() => {
     // Update the barrier change handler to allow empty inputs
     const handleBarrierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        
+
         // Always update the barrier input state for the UI
         setBarrierInput(value);
-        
+
         // Only update the actual barrier value and send API messages when we have a valid number
         if (value !== '') {
             const newBarrier = parseInt(value, 10);
             if (!isNaN(newBarrier) && newBarrier >= 0 && newBarrier <= 9) {
                 setBarrierValue(newBarrier);
-                
+
                 if (volatilityAnalyzerLoaded.current) {
                     console.log(`Sending barrier update: ${newBarrier}`);
                     window.postMessage({
@@ -1683,13 +1686,13 @@ const SmartTradingDisplay = observer(() => {
     // Update the barrier blur handler to handle empty values
     const handleBarrierBlur = (e: React.FocusEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        
+
         // If empty, set a default value
         if (value === '') {
             const defaultBarrier = 5; // Default barrier value
             setBarrierValue(defaultBarrier);
             setBarrierInput(defaultBarrier.toString());
-            
+
             if (volatilityAnalyzerLoaded.current) {
                 window.postMessage({
                     type: 'UPDATE_BARRIER',
@@ -1702,11 +1705,11 @@ const SmartTradingDisplay = observer(() => {
     // Remove the old handleContractTypeTrade function and replace with handleAutoTrade
     const handleAutoTrade = (strategyId: string) => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
-        
+
         if (!strategy) return;
-        
+
         const { activeContractType } = strategy;
-        
+
         // If already trading, stop trading
         if (activeContractType) {
             setAnalysisStrategies(prevStrategies =>
@@ -1729,14 +1732,14 @@ const SmartTradingDisplay = observer(() => {
     };
 
     // Update the AnimatedPercentageBar component with improved UI and animations
-    const AnimatedPercentageBar = ({ 
-        leftValue, 
-        rightValue, 
-        leftLabel, 
-        rightLabel, 
-        leftClass = '', 
-        rightClass = '' 
-    }: { 
+    const AnimatedPercentageBar = ({
+        leftValue,
+        rightValue,
+        leftLabel,
+        rightLabel,
+        leftClass = '',
+        rightClass = ''
+    }: {
         leftValue: string | number;
         rightValue: string | number;
         leftLabel: string;
@@ -1747,42 +1750,42 @@ const SmartTradingDisplay = observer(() => {
         // Store previous values to detect changes for animation
         const prevLeftValueRef = useRef<string | number>(leftValue);
         const prevRightValueRef = useRef<string | number>(rightValue);
-        
+
         // State to track value changes for highlight animation
         const [leftHighlight, setLeftHighlight] = useState(false);
         const [rightHighlight, setRightHighlight] = useState(false);
-        
+
         // Effect to detect value changes and trigger animations
         useEffect(() => {
             if (prevLeftValueRef.current !== leftValue) {
                 setLeftHighlight(true);
                 setTimeout(() => setLeftHighlight(false), 500);
             }
-            
+
             if (prevRightValueRef.current !== rightValue) {
                 setRightHighlight(true);
                 setTimeout(() => setRightHighlight(false), 500);
             }
-            
+
             prevLeftValueRef.current = leftValue;
             prevRightValueRef.current = rightValue;
         }, [leftValue, rightValue]);
-        
+
         // Convert values to numbers if they're strings
         const leftNum = typeof leftValue === 'string' ? parseFloat(leftValue) : leftValue;
         const rightNum = typeof rightValue === 'string' ? parseFloat(rightValue) : rightValue;
-        
+
         // Calculate percentages for bar widths
         const leftPercent = Math.min(Math.max(leftNum, 0), 100);
         const rightPercent = Math.min(Math.max(rightNum, 0), 100);
-        
+
         return (
             <div className="animated-percentage-bar__container">
                 {/* First row for the first value */}
                 <div className="animated-percentage-bar__row">
                     <div className="animated-percentage-bar__label">{leftLabel}</div>
                     <div className="animated-percentage-bar__bar-container">
-                        <div 
+                        <div
                             className={`animated-percentage-bar__bar animated-percentage-bar__bar--${leftClass}`}
                             style={{ width: `${leftPercent}%` }}
                         >
@@ -1794,12 +1797,12 @@ const SmartTradingDisplay = observer(() => {
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Second row for the second value */}
                 <div className="animated-percentage-bar__row">
                     <div className="animated-percentage-bar__label">{rightLabel}</div>
                     <div className="animated-percentage-bar__bar-container">
-                        <div 
+                        <div
                             className={`animated-percentage-bar__bar animated-percentage-bar__bar--${rightClass}`}
                             style={{ width: `${rightPercent}%` }}
                         >
@@ -1819,7 +1822,7 @@ const SmartTradingDisplay = observer(() => {
     const renderRiseFallAnalysis = (analysis: any, strategyId: string) => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
         if (!strategy) return null;
-        
+
         return (
             <div className="analysis-data">
                 {analysis.recommendation && (
@@ -1832,7 +1835,7 @@ const SmartTradingDisplay = observer(() => {
                         </div>
                     </div>
                 )}
-                
+
                 <AnimatedPercentageBar
                     leftValue={analysis.riseRatio || '50.00'}
                     rightValue={analysis.fallRatio || '50.00'}
@@ -1841,13 +1844,13 @@ const SmartTradingDisplay = observer(() => {
                     leftClass="rise"
                     rightClass="fall"
                 />
-                
+
                 {/* Add Trading Condition component */}
                 <div className="trading-condition enabled">
                     <div className="condition-header">
                         <Text size="xs" weight="bold">{localize('Trading Condition')}</Text>
                     </div>
-                    
+
                     <div className="condition-content">
                         <div className="condition-row">
                             <div className="condition-label">{localize('If')}</div>
@@ -1860,7 +1863,7 @@ const SmartTradingDisplay = observer(() => {
                                 <option value="rise">{localize('Rise Prob')}</option>
                                 <option value="fall">{localize('Fall Prob')}</option>
                             </select>
-                            
+
                             <select
                                 value={strategy.settings.conditionOperator || '>'}
                                 onChange={(e) => handleConditionOperatorChange(strategyId, e.target.value)}
@@ -1873,15 +1876,15 @@ const SmartTradingDisplay = observer(() => {
                                 <option value="<=">{localize('≤')}</option>
                                 <option value="<">{localize('<')}</option>
                             </select>
-                            
+
                             <div className="condition-value-container">
-                                <input 
+                                <input
                                     type="number"
                                     min="0"
                                     max="100"
                                     step="1"
-                                    value={strategy.settings.conditionValueInput !== undefined ? 
-                                        strategy.settings.conditionValueInput : 
+                                    value={strategy.settings.conditionValueInput !== undefined ?
+                                        strategy.settings.conditionValueInput :
                                         strategy.settings.conditionValue || 65}
                                     onChange={(e) => handleConditionValueChange(strategyId, e.target.value)}
                                     onBlur={(e) => handleConditionValueBlur(strategyId, e.target.value)}
@@ -1891,7 +1894,7 @@ const SmartTradingDisplay = observer(() => {
                                 <span className="condition-percent">%</span>
                             </div>
                         </div>
-                        
+
                         <div className="condition-row">
                             <div className="condition-label">{localize('Then')}</div>
                             <select
@@ -1914,18 +1917,18 @@ const SmartTradingDisplay = observer(() => {
     const handlePatternDigitCountChange = (strategyId: string, value: string) => {
         // Store both the raw input and the parsed value
         const numValue = parseInt(value, 10);
-        
+
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              patternDigitCountInput: value,
-                              patternDigitCount: !isNaN(numValue) ? Math.min(Math.max(numValue, 1), 10) : strategy.settings.patternDigitCount,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            patternDigitCountInput: value,
+                            patternDigitCount: !isNaN(numValue) ? Math.min(Math.max(numValue, 1), 10) : strategy.settings.patternDigitCount,
+                        },
+                    }
                     : strategy
             )
         );
@@ -1933,20 +1936,20 @@ const SmartTradingDisplay = observer(() => {
 
     const handlePatternDigitCountBlur = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
-        
+
         // On blur, always set a valid numeric value
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy => {
                 if (strategy.id === strategyId) {
                     // Set appropriate default value if invalid
                     let finalValue = numValue;
-                    
+
                     if (value === '' || isNaN(numValue) || numValue < 1) {
                         finalValue = 3; // Default to 3 digits
                     } else if (numValue > 10) {
                         finalValue = 10; // Max 10 digits
                     }
-                    
+
                     return {
                         ...strategy,
                         settings: {
@@ -1966,12 +1969,12 @@ const SmartTradingDisplay = observer(() => {
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              patternType: value,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            patternType: value,
+                        },
+                    }
                     : strategy
             )
         );
@@ -1982,12 +1985,12 @@ const SmartTradingDisplay = observer(() => {
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              patternAction: value,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            patternAction: value,
+                        },
+                    }
                     : strategy
             )
         );
@@ -1997,20 +2000,20 @@ const SmartTradingDisplay = observer(() => {
     const handleOverUnderPatternDigitCountChange = (strategyId: string, value: string) => {
         // Store both the raw input and the parsed value
         const numValue = parseInt(value, 10);
-        
+
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              overUnderPatternDigitCountInput: value,
-                              overUnderPatternDigitCount: !isNaN(numValue) ? 
-                                  Math.min(Math.max(numValue, 1), 10) : 
-                                  strategy.settings.overUnderPatternDigitCount,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            overUnderPatternDigitCountInput: value,
+                            overUnderPatternDigitCount: !isNaN(numValue) ?
+                                Math.min(Math.max(numValue, 1), 10) :
+                                strategy.settings.overUnderPatternDigitCount,
+                        },
+                    }
                     : strategy
             )
         );
@@ -2018,20 +2021,20 @@ const SmartTradingDisplay = observer(() => {
 
     const handleOverUnderPatternDigitCountBlur = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
-        
+
         // On blur, always set a valid numeric value
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy => {
                 if (strategy.id === strategyId) {
                     // Set appropriate default value if invalid
                     let finalValue = numValue;
-                    
+
                     if (value === '' || isNaN(numValue) || numValue < 1) {
                         finalValue = 3; // Default to 3 digits
                     } else if (numValue > 10) {
                         finalValue = 10; // Max 10 digits
                     }
-                    
+
                     return {
                         ...strategy,
                         settings: {
@@ -2051,12 +2054,12 @@ const SmartTradingDisplay = observer(() => {
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              overUnderPatternType: value,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            overUnderPatternType: value,
+                        },
+                    }
                     : strategy
             )
         );
@@ -2065,20 +2068,20 @@ const SmartTradingDisplay = observer(() => {
     const handleOverUnderPatternBarrierChange = (strategyId: string, value: string) => {
         // Store both the raw input and the parsed value
         const numValue = parseInt(value, 10);
-        
+
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              overUnderPatternBarrierInput: value,
-                              overUnderPatternBarrier: !isNaN(numValue) ? 
-                                  Math.min(Math.max(numValue, 0), 9) : 
-                                  strategy.settings.overUnderPatternBarrier,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            overUnderPatternBarrierInput: value,
+                            overUnderPatternBarrier: !isNaN(numValue) ?
+                                Math.min(Math.max(numValue, 0), 9) :
+                                strategy.settings.overUnderPatternBarrier,
+                        },
+                    }
                     : strategy
             )
         );
@@ -2086,20 +2089,20 @@ const SmartTradingDisplay = observer(() => {
 
     const handleOverUnderPatternBarrierBlur = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
-        
+
         // On blur, always set a valid numeric value
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy => {
                 if (strategy.id === strategyId) {
                     // Set appropriate default value if invalid
                     let finalValue = numValue;
-                    
+
                     if (value === '' || isNaN(numValue) || numValue < 0) {
                         finalValue = 5; // Default to 5
                     } else if (numValue > 9) {
                         finalValue = 9; // Max 9
                     }
-                    
+
                     return {
                         ...strategy,
                         settings: {
@@ -2119,12 +2122,12 @@ const SmartTradingDisplay = observer(() => {
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              overUnderPatternAction: value,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            overUnderPatternAction: value,
+                        },
+                    }
                     : strategy
             )
         );
@@ -2136,7 +2139,7 @@ const SmartTradingDisplay = observer(() => {
             // Even/Odd pattern card - adding the trading condition
             const strategy = analysisStrategies.find(s => s.id === strategyId);
             if (!strategy) return null;
-            
+
             return (
                 <div className="analysis-data">
                     <div className="digit-distribution">
@@ -2157,7 +2160,7 @@ const SmartTradingDisplay = observer(() => {
                                 })
                             ) : (
                                 // Fallback to random data
-                                Array.from({length: 10}, (_, i) => {
+                                Array.from({ length: 10 }, (_, i) => {
                                     const isEven = Math.random() > 0.5;
                                     return (
                                         <span key={i} className={`digit-label ${isEven ? 'even' : 'odd'}`}>
@@ -2171,35 +2174,35 @@ const SmartTradingDisplay = observer(() => {
                             <Text size="2xs">{localize('Recent digit pattern (E=Even, O=Odd)')}</Text>
                         </div>
                     </div>
-                    
+
                     {analysis?.streak && (
                         <div className="streak-indicator">
                             <Text size="xs">
-                                {localize('Current streak')}: 
+                                {localize('Current streak')}:
                                 <span className="streak-count">
                                     {analysis.streak} {localize(analysis.streakType === 'even' ? 'Even' : 'Odd')}
                                 </span>
                             </Text>
                         </div>
                     )}
-                    
+
                     {/* Add Pattern Trading Condition component */}
                     <div className="trading-condition enabled">
                         <div className="condition-header">
                             <Text size="xs" weight="bold">{localize('Trading Condition')}</Text>
                         </div>
-                        
+
                         <div className="condition-content">
                             <div className="condition-row">
                                 <div className="condition-label">{localize('Check if the last')}</div>
                                 <div className="condition-value-container">
-                                    <input 
+                                    <input
                                         type="number"
                                         min="1"
                                         max="10"
                                         step="1"
-                                        value={strategy.settings.patternDigitCountInput !== undefined ? 
-                                            strategy.settings.patternDigitCountInput : 
+                                        value={strategy.settings.patternDigitCountInput !== undefined ?
+                                            strategy.settings.patternDigitCountInput :
                                             strategy.settings.patternDigitCount || 3}
                                         onChange={(e) => handlePatternDigitCountChange(strategyId, e.target.value)}
                                         onBlur={(e) => handlePatternDigitCountBlur(strategyId, e.target.value)}
@@ -2218,7 +2221,7 @@ const SmartTradingDisplay = observer(() => {
                                     <option value="odd">{localize('Odd')}</option>
                                 </select>
                             </div>
-                            
+
                             <div className="condition-row">
                                 <div className="condition-label">{localize('Then')}</div>
                                 <select
@@ -2239,11 +2242,11 @@ const SmartTradingDisplay = observer(() => {
             // First Even/Odd card - keep existing code with trading conditions
             const evenPercentage = analysis?.evenProbability || '50.00';
             const oddPercentage = analysis?.oddProbability || '50.00';
-            
+
             // Find the current strategy object
             const strategy = analysisStrategies.find(s => s.id === strategyId);
             if (!strategy) return null;
-            
+
             return (
                 <div className="analysis-data">
                     {analysis?.recommendation && (
@@ -2256,7 +2259,7 @@ const SmartTradingDisplay = observer(() => {
                             </div>
                         </div>
                     )}
-                    
+
                     <AnimatedPercentageBar
                         leftValue={evenPercentage}
                         rightValue={oddPercentage}
@@ -2265,13 +2268,13 @@ const SmartTradingDisplay = observer(() => {
                         leftClass="even"
                         rightClass="odd"
                     />
-                    
+
                     {/* Add Trading Condition component */}
                     <div className="trading-condition enabled">
                         <div className="condition-header">
                             <Text size="xs" weight="bold">{localize('Trading Condition')}</Text>
                         </div>
-                        
+
                         <div className="condition-content">
                             <div className="condition-row">
                                 <div className="condition-label">{localize('If')}</div>
@@ -2284,7 +2287,7 @@ const SmartTradingDisplay = observer(() => {
                                     <option value="even">{localize('Even Prob')}</option>
                                     <option value="odd">{localize('Odd Prob')}</option>
                                 </select>
-                                
+
                                 <select
                                     value={strategy.settings.conditionOperator || '>'}
                                     onChange={(e) => handleConditionOperatorChange(strategyId, e.target.value)}
@@ -2297,15 +2300,15 @@ const SmartTradingDisplay = observer(() => {
                                     <option value="<=">{localize('≤')}</option>
                                     <option value="<">{localize('<')}</option>
                                 </select>
-                                
+
                                 <div className="condition-value-container">
-                                    <input 
+                                    <input
                                         type="number"
                                         min="0"
                                         max="100"
                                         step="1"
-                                        value={strategy.settings.conditionValueInput !== undefined ? 
-                                            strategy.settings.conditionValueInput : 
+                                        value={strategy.settings.conditionValueInput !== undefined ?
+                                            strategy.settings.conditionValueInput :
                                             strategy.settings.conditionValue || 60}
                                         onChange={(e) => handleConditionValueChange(strategyId, e.target.value)}
                                         onBlur={(e) => handleConditionValueBlur(strategyId, e.target.value)}
@@ -2315,7 +2318,7 @@ const SmartTradingDisplay = observer(() => {
                                     <span className="condition-percent">%</span>
                                 </div>
                             </div>
-                            
+
                             <div className="condition-row">
                                 <div className="condition-label">{localize('Then')}</div>
                                 <select
@@ -2341,10 +2344,10 @@ const SmartTradingDisplay = observer(() => {
             // Over/Under pattern card - adding the trading condition
             const strategy = analysisStrategies.find(s => s.id === strategyId);
             if (!strategy) return null;
-            
+
             // Get the barrier value from strategy settings (independent from over-under-1)
             const displayBarrier = strategy.settings.overUnderPatternBarrier || 5;
-            
+
             return (
                 <div className="analysis-data">
                     <div className="digit-distribution">
@@ -2359,19 +2362,19 @@ const SmartTradingDisplay = observer(() => {
                                     const isOver = digit > displayBarrier;
                                     const isEqual = digit === displayBarrier;
                                     const isUnder = digit < displayBarrier;
-                                    
+
                                     // Determine the display class
                                     const displayClass = isOver ? 'over' : isEqual ? 'equal' : 'under';
-                                    
+
                                     // Determine the pattern indicator (O, E, U)
                                     const patternIndicator = isOver ? 'O' : isEqual ? 'E' : 'U';
-                                    
+
                                     // Create detailed tooltip
                                     const tooltipText = `Digit: ${digit} (${isOver ? '>' : isEqual ? '=' : '<'}${displayBarrier})`;
-                                    
+
                                     return (
-                                        <span 
-                                            key={i} 
+                                        <span
+                                            key={i}
                                             className={`digit-label ${displayClass}`}
                                             title={tooltipText}
                                         >
@@ -2381,17 +2384,17 @@ const SmartTradingDisplay = observer(() => {
                                 })
                             ) : (
                                 // Fallback to random data when no actual digits available
-                                Array.from({length: 10}, (_, i) => {
+                                Array.from({ length: 10 }, (_, i) => {
                                     // Generate a random digit 0-9
                                     const randomDigit = Math.floor(Math.random() * 10);
                                     const isOver = randomDigit > displayBarrier;
                                     const isEqual = randomDigit === displayBarrier;
                                     const displayClass = isOver ? 'over' : isEqual ? 'equal' : 'under';
                                     const patternIndicator = isOver ? 'O' : isEqual ? 'E' : 'U';
-                                    
+
                                     return (
-                                        <span 
-                                            key={i} 
+                                        <span
+                                            key={i}
                                             className={`digit-label ${displayClass}`}
                                             title={`Digit: ${randomDigit} (${isOver ? '>' : isEqual ? '=' : '<'}${displayBarrier})`}
                                         >
@@ -2412,13 +2415,13 @@ const SmartTradingDisplay = observer(() => {
                     {analysis?.streak && (
                         <div className="streak-indicator">
                             <Text size="xs">
-                                {localize('Current streak')}: 
+                                {localize('Current streak')}:
                                 <span className="streak-count">
                                     {analysis.streak} {localize(
-                                        analysis.streakType === 'over' 
-                                            ? 'Over' 
-                                            : analysis.streakType === 'equal' 
-                                                ? 'Equal' 
+                                        analysis.streakType === 'over'
+                                            ? 'Over'
+                                            : analysis.streakType === 'equal'
+                                                ? 'Equal'
                                                 : 'Under'
                                     )}
                                 </span>
@@ -2428,18 +2431,18 @@ const SmartTradingDisplay = observer(() => {
 
                     <div className="digit-frequency">
                         <div className="digit-grid">
-                            {Array.from({length: 10}, (_, i) => {
+                            {Array.from({ length: 10 }, (_, i) => {
                                 // Use the strategy's own barrier for classification
                                 const isOver = i > displayBarrier;
                                 const isEqual = i === displayBarrier;
                                 const isUnder = i < displayBarrier;
-                                const percentage = analysis?.digitPercentages ? 
-                                    parseFloat(analysis.digitPercentages[i]) : 
+                                const percentage = analysis?.digitPercentages ?
+                                    parseFloat(analysis.digitPercentages[i]) :
                                     Math.floor(Math.random() * 5) + 8;
-                                    
+
                                 return (
-                                    <span 
-                                        key={i} 
+                                    <span
+                                        key={i}
                                         className={`digit-box ${isOver ? 'over' : isEqual ? 'equal' : 'under'}`}
                                         title={`Frequency: ${percentage}%`}
                                     >
@@ -2450,24 +2453,24 @@ const SmartTradingDisplay = observer(() => {
                             })}
                         </div>
                     </div>
-                    
+
                     {/* Trading Condition component remains unchanged */}
                     <div className="trading-condition enabled">
                         <div className="condition-header">
                             <Text size="xs" weight="bold">{localize('Trading Condition')}</Text>
                         </div>
-                        
+
                         <div className="condition-content">
                             <div className="condition-row">
                                 <div className="condition-label">{localize('Check if the last')}</div>
                                 <div className="condition-value-container">
-                                    <input 
+                                    <input
                                         type="number"
                                         min="1"
                                         max="10"
                                         step="1"
-                                        value={strategy.settings.overUnderPatternDigitCountInput !== undefined ? 
-                                            strategy.settings.overUnderPatternDigitCountInput : 
+                                        value={strategy.settings.overUnderPatternDigitCountInput !== undefined ?
+                                            strategy.settings.overUnderPatternDigitCountInput :
                                             strategy.settings.overUnderPatternDigitCount || 3}
                                         onChange={(e) => handleOverUnderPatternDigitCountChange(strategyId, e.target.value)}
                                         onBlur={(e) => handleOverUnderPatternDigitCountBlur(strategyId, e.target.value)}
@@ -2487,13 +2490,13 @@ const SmartTradingDisplay = observer(() => {
                                     <option value="under">{localize('Under')}</option>
                                 </select>
                                 <div className="condition-value-container">
-                                    <input 
+                                    <input
                                         type="number"
                                         min="0"
                                         max="9"
                                         step="1"
-                                        value={strategy.settings.overUnderPatternBarrierInput !== undefined ? 
-                                            strategy.settings.overUnderPatternBarrierInput : 
+                                        value={strategy.settings.overUnderPatternBarrierInput !== undefined ?
+                                            strategy.settings.overUnderPatternBarrierInput :
                                             strategy.settings.overUnderPatternBarrier || 5}
                                         onChange={(e) => handleOverUnderPatternBarrierChange(strategyId, e.target.value)}
                                         onBlur={(e) => handleOverUnderPatternBarrierBlur(strategyId, e.target.value)}
@@ -2502,7 +2505,7 @@ const SmartTradingDisplay = observer(() => {
                                     />
                                 </div>
                             </div>
-                              <div className="condition-row">
+                            <div className="condition-row">
                                 <div className="condition-label">{localize('Then')}</div>
                                 <select
                                     value={strategy.settings.overUnderPatternAction || 'Over'}
@@ -2514,16 +2517,16 @@ const SmartTradingDisplay = observer(() => {
                                     <option value="Equals">{localize('Buy Equals')}</option>
                                     <option value="Under">{localize('Buy Under')}</option>
                                 </select>
-                                
+
                                 <div className="condition-label">{localize('digit')}</div>
                                 <div className="condition-value-container">
-                                    <input 
+                                    <input
                                         type="number"
                                         min="0"
                                         max="9"
                                         step="1"
-                                        value={strategy.settings.overUnderPatternTradingBarrierInput !== undefined ? 
-                                            strategy.settings.overUnderPatternTradingBarrierInput : 
+                                        value={strategy.settings.overUnderPatternTradingBarrierInput !== undefined ?
+                                            strategy.settings.overUnderPatternTradingBarrierInput :
                                             strategy.settings.overUnderPatternTradingBarrier || 5}
                                         onChange={(e) => handleOverUnderPatternTradingBarrierChange(strategyId, e.target.value)}
                                         onBlur={(e) => handleOverUnderPatternTradingBarrierBlur(strategyId, e.target.value)}
@@ -2541,16 +2544,16 @@ const SmartTradingDisplay = observer(() => {
             // First Over/Under card - no changes needed here
             const overPercentage = analysis?.overProbability || '50.00';
             const underPercentage = analysis?.underProbability || '50.00';
-            
+
             // Find the current strategy object
             const strategy = analysisStrategies.find(s => s.id === strategyId);
             if (!strategy) return null;
-            
+
             return (
                 <div className="analysis-data">
                     <div className="barrier-input-container">
                         <label htmlFor="barrier-value">{localize('Barrier')}:</label>
-                        <input 
+                        <input
                             id="barrier-value"
                             type="number"
                             min="0"
@@ -2562,11 +2565,11 @@ const SmartTradingDisplay = observer(() => {
                         />
                         <div className="barrier-explanation">
                             <Text size="2xs">
-                                {localize('Under')}: 0-{barrierValue-1}, {localize('Equals')}: {barrierValue}, {localize('Over')}: {barrierValue+1}-9
+                                {localize('Under')}: 0-{barrierValue - 1}, {localize('Equals')}: {barrierValue}, {localize('Over')}: {barrierValue + 1}-9
                             </Text>
                         </div>
                     </div>
-                    
+
                     {analysis?.recommendation && (
                         <div className={`recommendation ${analysis.recommendation?.toLowerCase() || ''}`}>
                             <div className="recommendation-header">
@@ -2577,7 +2580,7 @@ const SmartTradingDisplay = observer(() => {
                             </div>
                         </div>
                     )}
-                    
+
                     <AnimatedPercentageBar
                         leftValue={overPercentage}
                         rightValue={underPercentage}
@@ -2586,13 +2589,13 @@ const SmartTradingDisplay = observer(() => {
                         leftClass="over"
                         rightClass="under"
                     />
-                    
+
                     {/* Add Trading Condition component */}
                     <div className="trading-condition enabled">
                         <div className="condition-header">
                             <Text size="xs" weight="bold">{localize('Trading Condition')}</Text>
                         </div>
-                        
+
                         <div className="condition-content">
                             <div className="condition-row">
                                 <div className="condition-label">{localize('If')}</div>
@@ -2606,7 +2609,7 @@ const SmartTradingDisplay = observer(() => {
                                     <option value="equals">{localize('Equals Prob')}</option>
                                     <option value="under">{localize('Under Prob')}</option>
                                 </select>
-                                
+
                                 <select
                                     value={strategy.settings.conditionOperator || '>'}
                                     onChange={(e) => handleConditionOperatorChange(strategyId, e.target.value)}
@@ -2619,15 +2622,15 @@ const SmartTradingDisplay = observer(() => {
                                     <option value="<=">{localize('≤')}</option>
                                     <option value="<">{localize('<')}</option>
                                 </select>
-                                
+
                                 <div className="condition-value-container">
-                                    <input 
+                                    <input
                                         type="number"
                                         min="0"
                                         max="100"
                                         step="1"
-                                        value={strategy.settings.conditionValueInput !== undefined ? 
-                                            strategy.settings.conditionValueInput : 
+                                        value={strategy.settings.conditionValueInput !== undefined ?
+                                            strategy.settings.conditionValueInput :
                                             strategy.settings.conditionValue || 55}
                                         onChange={(e) => handleConditionValueChange(strategyId, e.target.value)}
                                         onBlur={(e) => handleConditionValueBlur(strategyId, e.target.value)}
@@ -2637,7 +2640,7 @@ const SmartTradingDisplay = observer(() => {
                                     <span className="condition-percent">%</span>
                                 </div>
                             </div>
-                              <div className="condition-row">
+                            <div className="condition-row">
                                 <div className="condition-label">{localize('Then')}</div>
                                 <select
                                     value={strategy.settings.conditionAction || 'Over'}
@@ -2648,16 +2651,16 @@ const SmartTradingDisplay = observer(() => {
                                     <option value="Over">{localize('Buy Over')}</option>
                                     <option value="Under">{localize('Buy Under')}</option>
                                 </select>
-                                
+
                                 <div className="condition-label">{localize('digit')}</div>
                                 <div className="condition-value-container">
-                                    <input 
+                                    <input
                                         type="number"
                                         min="0"
                                         max="9"
                                         step="1"
-                                        value={strategy.settings.tradingBarrierInput !== undefined ? 
-                                            strategy.settings.tradingBarrierInput : 
+                                        value={strategy.settings.tradingBarrierInput !== undefined ?
+                                            strategy.settings.tradingBarrierInput :
                                             strategy.settings.tradingBarrier || 5}
                                         onChange={(e) => handleTradingBarrierChange(strategyId, e.target.value)}
                                         onBlur={(e) => handleTradingBarrierBlur(strategyId, e.target.value)}
@@ -2679,20 +2682,20 @@ const SmartTradingDisplay = observer(() => {
         // Find the current strategy object
         const strategy = analysisStrategies.find(s => s.id === strategyId);
         if (!strategy) return null;
-        
+
         // Get the selected digit or use a default
         const selectedDigit = strategy.settings.conditionDigit !== undefined ? strategy.settings.conditionDigit : 5;
-        
+
         return (
             <div className="analysis-data">
                 {analysis.recommendation && (
                     <div className={`recommendation ${analysis.recommendation?.toLowerCase()}`}>
                         <div className="recommendation-header">
                             <Text size="xs" weight="bold">
-                                {localize('{{recommendation}} digit {{target}}', { 
+                                {localize('{{recommendation}} digit {{target}}', {
                                     recommendation: analysis.recommendation,
                                     target: analysis.target !== undefined ? analysis.target : ''
-                            })}
+                                })}
                             </Text>
                             {analysis.confidence && (
                                 <span className="confidence-badge">{analysis.confidence}%</span>
@@ -2700,20 +2703,20 @@ const SmartTradingDisplay = observer(() => {
                         </div>
                     </div>
                 )}
-                
+
                 <div className="digit-frequency-display">
                     {/* Digital frequency visualization would go here */}
                     <div className="digit-freq-bars">
-                        {Array.from({length: 10}, (_, i) => {
+                        {Array.from({ length: 10 }, (_, i) => {
                             // Highlight the selected digit
                             const isSelected = i === selectedDigit;
-                            const height = analysis?.digitProbabilities?.[i] || 
+                            const height = analysis?.digitProbabilities?.[i] ||
                                 Math.floor(Math.random() * 50 + 10);
-                            
+
                             return (
                                 <div key={i} className={`digit-freq-item ${isSelected ? 'selected-digit' : ''}`}>
-                                    <div 
-                                        className="digit-freq-bar" 
+                                    <div
+                                        className="digit-freq-bar"
                                         style={{
                                             height: `${height}%`,
                                             backgroundColor: isSelected ? 'var(--brand-red-coral)' : undefined
@@ -2725,13 +2728,13 @@ const SmartTradingDisplay = observer(() => {
                         })}
                     </div>
                 </div>
-                
+
                 {/* Add Trading Condition component */}
                 <div className="trading-condition enabled">
                     <div className="condition-header">
                         <Text size="xs" weight="bold">{localize('Trading Condition')}</Text>
                     </div>
-                    
+
                     <div className="condition-content">
                         <div className="condition-row">
                             <div className="condition-label">{localize('If')}</div>
@@ -2744,22 +2747,22 @@ const SmartTradingDisplay = observer(() => {
                                 <option value="matches">{localize('Matches Prob')}</option>
                                 <option value="differs">{localize('Differs Prob')}</option>
                             </select>
-                            
+
                             <div className="condition-label">{localize('for')}</div>
                             <div className="condition-value-container">
-                                <input 
+                                <input
                                     type="number"
                                     min="0"
                                     max="9"
                                     step="1"
-                                    value={strategy.settings.conditionDigit !== undefined ? 
+                                    value={strategy.settings.conditionDigit !== undefined ?
                                         strategy.settings.conditionDigit : 5}
                                     onChange={(e) => handleConditionDigitChange(strategyId, e.target.value)}
                                     className="condition-value digit-input"
                                     disabled={!!strategy.activeContractType}
                                 />
                             </div>
-                            
+
                             <select
                                 value={strategy.settings.conditionOperator || '>'}
                                 onChange={(e) => handleConditionOperatorChange(strategyId, e.target.value)}
@@ -2772,15 +2775,15 @@ const SmartTradingDisplay = observer(() => {
                                 <option value="<=">{localize('≤')}</option>
                                 <option value="<">{localize('<')}</option>
                             </select>
-                            
+
                             <div className="condition-value-container">
-                                <input 
+                                <input
                                     type="number"
                                     min="0"
                                     max="100"
                                     step="1"
-                                    value={strategy.settings.conditionValueInput !== undefined ? 
-                                        strategy.settings.conditionValueInput : 
+                                    value={strategy.settings.conditionValueInput !== undefined ?
+                                        strategy.settings.conditionValueInput :
                                         strategy.settings.conditionValue || 55}
                                     onChange={(e) => handleConditionValueChange(strategyId, e.target.value)}
                                     onBlur={(e) => handleConditionValueBlur(strategyId, e.target.value)}
@@ -2790,7 +2793,7 @@ const SmartTradingDisplay = observer(() => {
                                 <span className="condition-percent">%</span>
                             </div>
                         </div>
-                        
+
                         <div className="condition-row">
                             <div className="condition-label">{localize('Then')}</div>
                             <select
@@ -2815,12 +2818,12 @@ const SmartTradingDisplay = observer(() => {
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              conditionType: value,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            conditionType: value,
+                        },
+                    }
                     : strategy
             )
         );
@@ -2831,12 +2834,12 @@ const SmartTradingDisplay = observer(() => {
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              conditionOperator: value,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            conditionOperator: value,
+                        },
+                    }
                     : strategy
             )
         );
@@ -2845,18 +2848,18 @@ const SmartTradingDisplay = observer(() => {
     const handleConditionValueChange = (strategyId: string, value: string) => {
         // Store both the raw input and the parsed value
         const numValue = parseFloat(value);
-        
+
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              conditionValueInput: value,
-                              conditionValue: !isNaN(numValue) ? Math.min(Math.max(numValue, 0), 100) : strategy.settings.conditionValue,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            conditionValueInput: value,
+                            conditionValue: !isNaN(numValue) ? Math.min(Math.max(numValue, 0), 100) : strategy.settings.conditionValue,
+                        },
+                    }
                     : strategy
             )
         );
@@ -2864,20 +2867,20 @@ const SmartTradingDisplay = observer(() => {
 
     const handleConditionValueBlur = (strategyId: string, value: string) => {
         const numValue = parseFloat(value);
-        
+
         // On blur, always set a valid numeric value
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy => {
                 if (strategy.id === strategyId) {
                     // Set appropriate default value if invalid
                     let finalValue = numValue;
-                    
+
                     if (value === '' || isNaN(numValue) || numValue < 0) {
                         finalValue = 55; // Default to 55%
                     } else if (numValue > 100) {
                         finalValue = 100; // Max 100%
                     }
-                    
+
                     return {
                         ...strategy,
                         settings: {
@@ -2897,26 +2900,26 @@ const SmartTradingDisplay = observer(() => {
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              conditionAction: value,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            conditionAction: value,
+                        },
+                    }
                     : strategy
             )
         );
-    };    const handleConditionDigitChange = (strategyId: string, value: string) => {
+    }; const handleConditionDigitChange = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
-        
+
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy => {
                 if (strategy.id === strategyId) {
                     // If the value is valid, update it; otherwise keep the old value
-                    const newDigit = !isNaN(numValue) ? 
+                    const newDigit = !isNaN(numValue) ?
                         Math.min(Math.max(numValue, 0), 9) : // Clamp between 0 and 9
                         strategy.settings.conditionDigit || 5; // Default to 5
-                        
+
                     return {
                         ...strategy,
                         settings: {
@@ -2933,18 +2936,18 @@ const SmartTradingDisplay = observer(() => {
     // Trading barrier handlers for over/under cards
     const handleTradingBarrierChange = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
-        
+
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              tradingBarrierInput: value,
-                              tradingBarrier: !isNaN(numValue) ? Math.min(Math.max(numValue, 0), 9) : strategy.settings.tradingBarrier,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tradingBarrierInput: value,
+                            tradingBarrier: !isNaN(numValue) ? Math.min(Math.max(numValue, 0), 9) : strategy.settings.tradingBarrier,
+                        },
+                    }
                     : strategy
             )
         );
@@ -2952,20 +2955,20 @@ const SmartTradingDisplay = observer(() => {
 
     const handleTradingBarrierBlur = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
-        
+
         // On blur, always set a valid numeric value
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy => {
                 if (strategy.id === strategyId) {
                     // Set appropriate default value if invalid
                     let finalValue = numValue;
-                    
+
                     if (value === '' || isNaN(numValue) || numValue < 0) {
                         finalValue = 5; // Default to 5
                     } else if (numValue > 9) {
                         finalValue = 9; // Max 9
                     }
-                    
+
                     return {
                         ...strategy,
                         settings: {
@@ -2976,23 +2979,23 @@ const SmartTradingDisplay = observer(() => {
                     };
                 }
                 return strategy;
-            })        );
+            }));
     };
     // Over/Under Pattern Trading barrier handlers for over-under-2 cards
     const handleOverUnderPatternTradingBarrierChange = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
-        
+
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy =>
                 strategy.id === strategyId
                     ? {
-                          ...strategy,
-                          settings: {
-                              ...strategy.settings,
-                              overUnderPatternTradingBarrierInput: value,
-                              overUnderPatternTradingBarrier: !isNaN(numValue) ? Math.min(Math.max(numValue, 0), 9) : strategy.settings.overUnderPatternTradingBarrier,
-                          },
-                      }
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            overUnderPatternTradingBarrierInput: value,
+                            overUnderPatternTradingBarrier: !isNaN(numValue) ? Math.min(Math.max(numValue, 0), 9) : strategy.settings.overUnderPatternTradingBarrier,
+                        },
+                    }
                     : strategy
             )
         );
@@ -3000,20 +3003,20 @@ const SmartTradingDisplay = observer(() => {
 
     const handleOverUnderPatternTradingBarrierBlur = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
-        
+
         // On blur, always set a valid numeric value
         setAnalysisStrategies(prevStrategies =>
             prevStrategies.map(strategy => {
                 if (strategy.id === strategyId) {
                     // Set appropriate default value if invalid
                     let finalValue = numValue;
-                    
+
                     if (value === '' || isNaN(numValue) || numValue < 0) {
                         finalValue = 5; // Default to 5
                     } else if (numValue > 9) {
                         finalValue = 9; // Max 9
                     }
-                    
+
                     return {
                         ...strategy,
                         settings: {
@@ -3049,7 +3052,7 @@ const SmartTradingDisplay = observer(() => {
     // Render analysis content based on available data
     const renderAnalysisContent = (strategyId: string) => {
         const analysis = analysisData[strategyId];
-        
+
         if (!analysis) {
             return (
                 <Text size="xs" color="less-prominent">
@@ -3076,18 +3079,18 @@ const SmartTradingDisplay = observer(() => {
     };    // Add a debug button component for troubleshooting
     const DebugButton = () => {
         if (process.env.NODE_ENV === 'production') return null;
-        
+
         return (
-            <div style={{ 
-                position: 'fixed', 
-                bottom: '10px', 
+            <div style={{
+                position: 'fixed',
+                bottom: '10px',
                 right: '10px',
                 zIndex: 1000,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '5px'
             }}>
-                <button 
+                <button
                     onClick={() => {
                         console.log('🔍 Debug: Current state:', {
                             hasAnalyzer: volatilityAnalyzerLoaded.current,
@@ -3100,7 +3103,7 @@ const SmartTradingDisplay = observer(() => {
                             analysisData,
                             activeStrategies: analysisStrategies.filter(s => s.activeContractType).map(s => s.id)
                         });
-                        
+
                         // Check conditions for all strategies
                         analysisStrategies.forEach(strategy => {
                             const hasData = !!analysisData[strategy.id];
@@ -3108,7 +3111,7 @@ const SmartTradingDisplay = observer(() => {
                             console.log(`Strategy ${strategy.id}: Data=${hasData}, Active=${!!strategy.activeContractType}, Condition=${conditionMet}`);
                         });
                     }}
-                    style={{ 
+                    style={{
                         padding: '5px 10px',
                         background: '#ff7043',
                         color: 'white',
@@ -3118,12 +3121,12 @@ const SmartTradingDisplay = observer(() => {
                 >
                     Debug
                 </button>
-                
-                <button 
+
+                <button
                     onClick={() => {
                         // Force request status
                         window.postMessage({ type: 'REQUEST_STATUS' }, '*');
-                        
+
                         // Force refresh all data
                         analysisStrategies.forEach(strategy => {
                             window.postMessage({
@@ -3132,7 +3135,7 @@ const SmartTradingDisplay = observer(() => {
                             }, '*');
                         });
                     }}
-                    style={{ 
+                    style={{
                         padding: '5px 10px',
                         background: '#4caf50',
                         color: 'white',
@@ -3149,36 +3152,36 @@ const SmartTradingDisplay = observer(() => {
     // Add a more robust reconnect function
     const reconnectAnalyzer = () => {
         console.log('Manually reconnecting analyzer');
-        
+
         if (window.volatilityAnalyzer && window.volatilityAnalyzer.reconnect) {
             window.volatilityAnalyzer.reconnect();
         }
-        
+
         // Clear analysis data
         setAnalysisData({});
-        
+
         // Re-send configuration with delay to ensure connection is established
         setTimeout(() => {
             console.log('Re-sending configuration after reconnect');
-            
+
             window.postMessage({
                 type: 'UPDATE_SYMBOL',
                 symbol: selectedSymbol
             }, '*');
-            
+
             setTimeout(() => {
                 window.postMessage({
                     type: 'UPDATE_TICK_COUNT',
                     tickCount: tickCount,
                     count: tickCount // For compatibility
                 }, '*');
-                
+
                 setTimeout(() => {
                     window.postMessage({
                         type: 'UPDATE_BARRIER',
                         barrier: barrierValue
                     }, '*');
-                    
+
                     // Force refresh analysis data
                     analysisStrategies.forEach(strategy => {
                         window.postMessage({
@@ -3193,10 +3196,10 @@ const SmartTradingDisplay = observer(() => {
     const isConditionMet = (strategyId: string) => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
         const analysis = analysisData[strategyId];
-        
+
         if (!strategy || !analysis) {
-            console.log(`No strategy or analysis data for ${strategyId}:`, { 
-                strategy: !!strategy, 
+            console.log(`No strategy or analysis data for ${strategyId}:`, {
+                strategy: !!strategy,
                 analysis: !!analysis,
                 analysisDataKeys: Object.keys(analysisData),
                 availableStrategies: analysisStrategies.map(s => s.id)
@@ -3208,50 +3211,50 @@ const SmartTradingDisplay = observer(() => {
         if (strategyId === 'rise-fall') {
             console.log(`📈 [DETAILED] Rise/Fall analysis data:`, analysis);
             console.log(`📈 [DETAILED] Rise/Fall settings:`, { conditionType, conditionOperator, conditionValue });
-            
+
             const riseRatio = parseFloat(analysis.riseRatio || '0');
             const fallRatio = parseFloat(analysis.fallRatio || '0');
             const metric = conditionType === 'rise' ? riseRatio : fallRatio;
-            
+
             console.log(`📈 [DETAILED] Rise ratio: ${riseRatio}%, Fall ratio: ${fallRatio}%`);
             console.log(`📈 [DETAILED] Using ${conditionType} metric: ${metric}%`);
             console.log(`📈 [DETAILED] Comparing: ${metric} ${conditionOperator} ${conditionValue}`);
-            
+
             const result = (() => {
                 switch (conditionOperator) {
-                    case '>':  
+                    case '>':
                         const gtResult = metric > (conditionValue ?? 0);
                         console.log(`📈 [DETAILED] ${metric} > ${conditionValue} = ${gtResult}`);
                         return gtResult;
-                    case '<':  
+                    case '<':
                         const ltResult = metric < (conditionValue ?? 0);
                         console.log(`📈 [DETAILED] ${metric} < ${conditionValue} = ${ltResult}`);
                         return ltResult;
-                    case '>=': 
+                    case '>=':
                         const gteResult = metric >= (conditionValue ?? 0);
                         console.log(`📈 [DETAILED] ${metric} >= ${conditionValue} = ${gteResult}`);
                         return gteResult;
-                    case '<=': 
+                    case '<=':
                         const lteResult = metric <= (conditionValue ?? 0);
                         console.log(`📈 [DETAILED] ${metric} <= ${conditionValue} = ${lteResult}`);
                         return lteResult;
-                    case '=':  
+                    case '=':
                         const eqResult = metric === (conditionValue ?? 0);
                         console.log(`📈 [DETAILED] ${metric} === ${conditionValue} = ${eqResult}`);
                         return eqResult;
-                    default:   
+                    default:
                         console.log(`📈 [DETAILED] Unknown operator: ${conditionOperator}`);
                         return false;
                 }
             })();
-            
+
             console.log(`📈 [DETAILED] Final Rise/Fall condition result: ${result}`);
-            
+
             // Additional validation
             if (!analysis.riseRatio && !analysis.fallRatio) {
                 console.warn(`⚠️ Rise/Fall strategy missing ratio data. Available properties:`, Object.keys(analysis));
             }
-            
+
             return result;
         }
 
@@ -3259,15 +3262,15 @@ const SmartTradingDisplay = observer(() => {
         if (strategyId === 'even-odd') {
             const metric = conditionType === 'even'
                 ? parseFloat(analysis.evenProbability || '0')
-                : parseFloat(analysis.oddProbability  || '0');
+                : parseFloat(analysis.oddProbability || '0');
             const result = (() => {
                 switch (conditionOperator) {
-                    case '>':  return metric >  (conditionValue ?? 0);
-                    case '<':  return metric <  (conditionValue ?? 0);
+                    case '>': return metric > (conditionValue ?? 0);
+                    case '<': return metric < (conditionValue ?? 0);
                     case '>=': return metric >= (conditionValue ?? 0);
                     case '<=': return metric <= (conditionValue ?? 0);
-                    case '=':  return metric === (conditionValue ?? 0);
-                    default:   return false;
+                    case '=': return metric === (conditionValue ?? 0);
+                    default: return false;
                 }
             })();
             console.log(`Even/Odd condition check: ${metric} ${conditionOperator} ${conditionValue} = ${result}`);
@@ -3277,16 +3280,16 @@ const SmartTradingDisplay = observer(() => {
         // over/under first card
         if (strategyId === 'over-under') {
             const metric = conditionType === 'over'
-                ? parseFloat(analysis.overProbability  || '0')
+                ? parseFloat(analysis.overProbability || '0')
                 : parseFloat(analysis.underProbability || '0');
             const result = (() => {
                 switch (conditionOperator) {
-                    case '>':  return metric >  (conditionValue ?? 0);
-                    case '<':  return metric <  (conditionValue ?? 0);
+                    case '>': return metric > (conditionValue ?? 0);
+                    case '<': return metric < (conditionValue ?? 0);
                     case '>=': return metric >= (conditionValue ?? 0);
                     case '<=': return metric <= (conditionValue ?? 0);
-                    case '=':  return metric === (conditionValue ?? 0);
-                    default:   return false;
+                    case '=': return metric === (conditionValue ?? 0);
+                    default: return false;
                 }
             })();
             console.log(`Over/Under condition check: ${metric} ${conditionOperator} ${conditionValue} = ${result}`);
@@ -3298,28 +3301,28 @@ const SmartTradingDisplay = observer(() => {
             const { patternDigitCount, patternType } = strategy.settings;
             console.log(`Even/Odd-2 analysis data:`, analysis);
             console.log(`Pattern settings:`, { patternDigitCount, patternType });
-            
+
             // First try streak-based approach
             if (analysis.streak && patternDigitCount) {
                 const streakResult = analysis.streakType === patternType && analysis.streak >= patternDigitCount;
                 console.log(`Streak check: ${analysis.streakType} === ${patternType} && ${analysis.streak} >= ${patternDigitCount} = ${streakResult}`);
                 if (streakResult) return true;
             }
-            
+
             // Fallback: Check recent digits pattern if actualDigits are available
             if (analysis.actualDigits && patternDigitCount) {
                 const lastNDigits = analysis.actualDigits.slice(-patternDigitCount);
                 console.log(`Last ${patternDigitCount} digits:`, lastNDigits);
-                
+
                 const allMatch = lastNDigits.every((digit: number) => {
                     const isEven = digit % 2 === 0;
                     return patternType === 'even' ? isEven : !isEven;
                 });
-                
+
                 console.log(`Pattern match check: all digits ${patternType} = ${allMatch}`);
                 if (allMatch) return true;
             }
-              // No lenient fallback - pattern must be strict
+            // No lenient fallback - pattern must be strict
             console.log(`❌ Even/Odd-2 condition NOT met - no valid pattern found`);
             return false;
         }        // over/under-2 pattern card (streak-based)
@@ -3327,23 +3330,23 @@ const SmartTradingDisplay = observer(() => {
             const { overUnderPatternDigitCount, overUnderPatternType, overUnderPatternBarrier } = strategy.settings;
             console.log(`Over/Under-2 analysis data:`, analysis);
             console.log(`Pattern settings:`, { overUnderPatternDigitCount, overUnderPatternType, overUnderPatternBarrier });
-            
+
             if (!overUnderPatternDigitCount || overUnderPatternBarrier === undefined) {
                 console.log('Missing pattern configuration');
                 return false;
             }
-            
+
             // Require minimum pattern length of 2
             if (overUnderPatternDigitCount < 2) {
                 console.log('Pattern count too small, using minimum of 2');
                 return false;
             }
-            
+
             // Primary: Check for strict digit pattern matching
             if (analysis.actualDigits && analysis.actualDigits.length >= overUnderPatternDigitCount) {
                 const lastNDigits = analysis.actualDigits.slice(-overUnderPatternDigitCount);
                 console.log(`Last ${overUnderPatternDigitCount} digits:`, lastNDigits);
-                
+
                 // Require ALL digits to match the pattern
                 const allMatch = lastNDigits.every((digit: number) => {
                     if (overUnderPatternType === 'over') {
@@ -3354,22 +3357,22 @@ const SmartTradingDisplay = observer(() => {
                         return digit < overUnderPatternBarrier;
                     }
                 });
-                
+
                 console.log(`Strict pattern match: all ${lastNDigits.length} digits ${overUnderPatternType} ${overUnderPatternBarrier} = ${allMatch}`);
                 if (allMatch) {
                     console.log(`✅ Over/Under-2 condition met: ${lastNDigits.join(',')} all ${overUnderPatternType} ${overUnderPatternBarrier}`);
                     return true;
                 }
             }
-            
+
             // Secondary: Check for strong streak (minimum 3 consecutive)
-            if (analysis.streak && analysis.streakType === overUnderPatternType && 
+            if (analysis.streak && analysis.streakType === overUnderPatternType &&
                 analysis.streak >= Math.max(overUnderPatternDigitCount, 3)) {
                 console.log(`Strong streak match: ${analysis.streakType} streak of ${analysis.streak} >= ${Math.max(overUnderPatternDigitCount, 3)}`);
                 console.log(`✅ Over/Under-2 condition met: ${analysis.streakType} streak of ${analysis.streak}`);
                 return true;
             }
-            
+
             // No lenient fallback - pattern must be strict
             console.log(`❌ Over/Under-2 condition NOT met - no valid pattern found`);
             return false;
@@ -3380,12 +3383,12 @@ const SmartTradingDisplay = observer(() => {
             const { conditionDigit } = strategy.settings;
             console.log(`Matches/Differs analysis data:`, analysis);
             console.log(`Condition digit:`, conditionDigit);
-            
+
             if (conditionDigit === undefined) {
                 console.log('No condition digit specified');
                 return false;
             }
-            
+
             // Check if we have digit frequency data
             if (analysis.digitFrequencies) {
                 const digitFreq = analysis.digitFrequencies[conditionDigit] || 0;
@@ -3394,12 +3397,12 @@ const SmartTradingDisplay = observer(() => {
                 console.log(`Digit ${conditionDigit} frequency: ${digitFreq}% > ${threshold}% = ${result}`);
                 return result;
             }
-            
+
             // Check current last digit if available
             if (analysis.currentLastDigit !== undefined) {
                 const matchesCondition = analysis.currentLastDigit === conditionDigit;
                 console.log(`Current digit ${analysis.currentLastDigit} matches ${conditionDigit} = ${matchesCondition}`);
-                
+
                 // For matches strategy, we want the digit to match
                 // For differs strategy, we want it to be different
                 const isMatches = strategy.settings.conditionAction === 'Matches';
@@ -3423,8 +3426,8 @@ const SmartTradingDisplay = observer(() => {
                 <div className="controls-container">
                     <div className="control-item">
                         <label htmlFor="symbol-select">{localize('Symbol')}:</label>
-                        <select 
-                            id="symbol-select" 
+                        <select
+                            id="symbol-select"
                             value={selectedSymbol}
                             onChange={handleSymbolChange}
                             className="symbol-select"
@@ -3458,7 +3461,7 @@ const SmartTradingDisplay = observer(() => {
                     </button>
                 </div>
             </div>
-            
+
             <div className="smart-trading-strategies">
                 {analysisStrategies.map(strategy => {
                     const met = isConditionMet(strategy.id);
@@ -3477,7 +3480,7 @@ const SmartTradingDisplay = observer(() => {
                                     />
                                 </div>
                             </div>
-                            
+
                             <div className="strategy-card__analysis-content">
                                 {renderAnalysisContent(strategy.id)}
                             </div>
@@ -3502,7 +3505,7 @@ const SmartTradingDisplay = observer(() => {
                                         id={`${strategy.id}-ticks`}
                                         type="number"
                                         min="1"
-                                        step="1"                                        value={strategy.settings?.ticksInput !== undefined ? strategy.settings.ticksInput : strategy.settings.ticks}
+                                        step="1" value={strategy.settings?.ticksInput !== undefined ? strategy.settings.ticksInput : strategy.settings.ticks}
                                         onChange={(e) => handleSettingChange(strategy.id, 'ticks', e.target.value)}
                                         onBlur={(e) => handleInputBlur(strategy.id, 'ticks', e.target.value)}
                                         disabled={!!strategy.activeContractType}
@@ -3515,7 +3518,7 @@ const SmartTradingDisplay = observer(() => {
                                         type="number"
                                         min="1"
                                         step="0.1"
-                                        value={strategy.settings?.martingaleMultiplierInput !== undefined ? 
+                                        value={strategy.settings?.martingaleMultiplierInput !== undefined ?
                                             strategy.settings.martingaleMultiplierInput : strategy.settings.martingaleMultiplier}
                                         onChange={(e) => handleSettingChange(strategy.id, 'martingaleMultiplier', e.target.value)}
                                         onBlur={(e) => handleInputBlur(strategy.id, 'martingaleMultiplier', e.target.value)}
@@ -3530,14 +3533,14 @@ const SmartTradingDisplay = observer(() => {
                                     variant={strategy.activeContractType ? "contained" : "outlined"}
                                     disabled={!currentPrice} // Disable button when no price data is available
                                 >
-                                    {strategy.activeContractType 
-                                        ? localize('Stop Auto Trading') 
+                                    {strategy.activeContractType
+                                        ? localize('Stop Auto Trading')
                                         : localize('Start Auto Trading')}
                                 </Button>
                             </div>
 
-                            {/* Enhanced Trading Status Display */}
-                           {/* {strategy.activeContractType && (
+                            {/* Enhanced Trading Status Display 
+                            {strategy.activeContractType && (
                                 <div className="strategy-card__status">
                                     <div className="status-info">
                                         <Text size="xs" weight="bold">
@@ -3578,8 +3581,8 @@ const SmartTradingDisplay = observer(() => {
                                             </div>
                                         )}
                                     </div>
-                                </div> */}
-                            )}
+                                </div> 
+                            )} */}
                         </div>
                     );
                 })}
