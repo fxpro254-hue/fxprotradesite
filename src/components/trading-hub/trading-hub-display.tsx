@@ -1,20 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Text, Button, Input } from '@deriv-com/ui';
 import './trading-hub-display.scss';
 import { api_base } from '../../external/bot-skeleton/services/api/api-base';
 import { doUntilDone } from '../../external/bot-skeleton/services/tradeEngine/utils/helpers';
 import { observer as globalObserver } from '../../external/bot-skeleton/utils/observer';
 import { useStore } from '@/hooks/useStore';
+import useThemeSwitcher from '@/hooks/useThemeSwitcher';
 import marketAnalyzer, { TradeRecommendation } from '../../services/market-analyzer';
 
 const TradingHubDisplay: React.FC = () => {
     const MINIMUM_STAKE = '0.35';
+    const { is_dark_mode_on } = useThemeSwitcher();
 
     const [isAutoDifferActive, setIsAutoDifferActive] = useState(false);
     const [isAutoOverUnderActive, setIsAutoOverUnderActive] = useState(false);
     const [recommendation, setRecommendation] = useState<TradeRecommendation | null>(null);
     const [marketStats, setMarketStats] = useState<Record<string, any>>({});
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [stake, setStake] = useState(MINIMUM_STAKE);
     const [martingale, setMartingale] = useState('2');
     const [isTrading, setIsTrading] = useState(false);
@@ -854,251 +854,323 @@ const TradingHubDisplay: React.FC = () => {
         }
     };
 
-    const getThemeClass = () => 'trading-hub-container purple-theme';
-
     return (
-        <div className={getThemeClass()}>
-            <div className='trading-hub-header'>
-                <div className="header-content">
-                    <h3 className='trading-hub-title'>TRADING STRATEGIES</h3>
-                    <div className="header-accent"></div>
+        <div className={`trading-hub-modern ${is_dark_mode_on ? 'theme--dark' : 'theme--light'}`}>
+            <div className="trading-hub-content">
+                {/* Header Section */}
+            <div className="hub-header">
+                <div className="header-main">
+                    <div className="logo-section">
+                        <div className="logo-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#gradient1)"/>
+                                <defs>
+                                    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#6366F1"/>
+                                        <stop offset="100%" stopColor="#8B5CF6"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div className="title-group">
+                            <h1 className="hub-title">Trading Hub</h1>
+                            <p className="hub-subtitle">AI-Powered Strategies</p>
+                        </div>
+                    </div>
+                    
+                    <div className="settings-controls">
+                        <div className="control-group">
+                            <label htmlFor="stake-input">Stake ($)</label>
+                            <input
+                                id="stake-input"
+                                type="number"
+                                min={MINIMUM_STAKE}
+                                step="0.01"
+                                value={stake}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    manageStake('update', { newValue: value });
+                                }}
+                                onBlur={handleSaveSettings}
+                                disabled={isContinuousTrading}
+                                className="compact-input"
+                            />
+                        </div>
+                        
+                        <div className="control-group">
+                            <label htmlFor="martingale-input">Martingale</label>
+                            <input
+                                id="martingale-input"
+                                type="number"
+                                min="1"
+                                step="0.1"
+                                value={martingale}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    manageMartingale('update', { newValue: value });
+                                }}
+                                onBlur={handleSaveSettings}
+                                disabled={isContinuousTrading}
+                                className="compact-input"
+                            />
+                        </div>
+                    </div>
                 </div>
-                <button 
-                    className='settings-button' 
-                    onClick={() => setIsSettingsOpen(true)}
-                    aria-label="Settings"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24">
-                        <path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2-1.5 16.2-8.7 18.2-17.8l12.5 57.1c15.8-6.5 30.6-15.1 44-25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1-9.8 15.5-20.2 22.1-31.2l4.7-8.1c6.1-11 11.4-22.4 15.8-34.3zM256 336c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z" fill="currentColor"/>
-                    </svg>
-                </button>
+                
+                {/* Status Bar */}
+                <div className="status-bar">
+                    <div className="status-item">
+                        <div className="status-dot"></div>
+                        <span>Market Connected</span>
+                    </div>
+                    <div className="status-separator"></div>
+                    <div className="status-item">
+                        <span>Stake: {displayStake()}</span>
+                    </div>
+                    {Object.keys(activeContracts).length > 0 && (
+                        <>
+                            <div className="status-separator"></div>
+                            <div className="status-item active-trade">
+                                <div className="pulse-dot"></div>
+                                <span>Live Trade</span>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
-            <div className='trading-strategies'>
-                <Button 
-                    className={`strategy-button ${isAutoDifferActive ? 'active' : ''}`} 
-                    onClick={toggleAutoDiffer}
-                    variant={isAutoDifferActive ? 'primary' : 'secondary'}
-                    size="lg"
-                    disabled={isContinuousTrading}
-                >
-                    <div className="button-content">
-                        <span className="strategy-name">AUTODIFFER</span>
-                        <div className="status-container">
-                            <span className={`status-indicator ${isAutoDifferActive ? 'on' : 'off'}`}>
-                                {isAutoDifferActive ? 'ACTIVE' : 'INACTIVE'}
-                            </span>
+
+            {/* Strategy Cards */}
+            <div className="strategy-grid">
+                <div className={`strategy-card ${isAutoDifferActive ? 'active' : ''}`}>
+                    <div className="card-header">
+                        <div className="strategy-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 9.96.17.01.33.04.5.04.17 0 .33-.03.5-.04C17.16 26.74 21 22.55 21 17V7L12 2z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div className="strategy-title">
+                            <h3>AutoDiffer</h3>
+                            <p>Random Digit Analysis</p>
+                        </div>
+                        <div className={`strategy-status ${isAutoDifferActive ? 'on' : 'off'}`}>
+                            {isAutoDifferActive ? 'ON' : 'OFF'}
                         </div>
                     </div>
-                </Button>
-                <Button 
-                    className={`strategy-button ${isAutoOverUnderActive ? 'active' : ''}`} 
-                    onClick={toggleAutoOverUnder}
-                    variant={isAutoOverUnderActive ? 'primary' : 'secondary'}
-                    size="lg"
-                    disabled={isContinuousTrading}
-                >
-                    <div className="button-content">
-                        <span className="strategy-name">AUTO OVER/UNDER</span>
-                        <div className="status-container">
-                            <span className={`status-indicator ${isAutoOverUnderActive ? 'on' : 'off'}`}>
-                                {isAutoOverUnderActive ? 'ACTIVE' : 'INACTIVE'}
-                            </span>
+                    <div className="card-content">
+                        <p>Automatically analyzes random barriers and symbols for optimal digit differ trades.</p>
+                        {isAutoDifferActive && currentBarrier !== null && (
+                            <div className="active-info">
+                                <span className="info-label">Current Target:</span>
+                                <span className="info-value">Barrier {currentBarrier} on {currentSymbol}</span>
+                            </div>
+                        )}
+                    </div>
+                    <button 
+                        className={`strategy-toggle ${isAutoDifferActive ? 'active' : ''}`}
+                        onClick={toggleAutoDiffer}
+                        disabled={isContinuousTrading}
+                    >
+                        {isAutoDifferActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                </div>
+
+                <div className={`strategy-card ${isAutoOverUnderActive ? 'active' : ''}`}>
+                    <div className="card-header">
+                        <div className="strategy-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div className="strategy-title">
+                            <h3>Auto Over/Under</h3>
+                            <p>AI Pattern Recognition</p>
+                        </div>
+                        <div className={`strategy-status ${isAutoOverUnderActive ? 'on' : 'off'}`}>
+                            {isAutoOverUnderActive ? 'ON' : 'OFF'}
                         </div>
                     </div>
-                </Button>
+                    <div className="card-content">
+                        <p>Uses advanced AI to identify patterns and recommend optimal over/under positions.</p>
+                        {isAutoOverUnderActive && !isAnalysisReady && (
+                            <div className="analyzing-state">
+                                <div className="spinner"></div>
+                                <span>Analyzing markets...</span>
+                            </div>
+                        )}
+                        {isAutoOverUnderActive && isAnalysisReady && recommendation && (
+                            <div className="recommendation-card">
+                                <div className="rec-header">
+                                    <span className="rec-label">Recommendation</span>
+                                    <span className="rec-confidence">High Confidence</span>
+                                </div>
+                                <div className="rec-details">
+                                    <div className="rec-item">
+                                        <span>Strategy:</span>
+                                        <strong>{recommendation.strategy === 'over' ? 'OVER 2' : 'UNDER 7'}</strong>
+                                    </div>
+                                    <div className="rec-item">
+                                        <span>Symbol:</span>
+                                        <strong>{recommendation.symbol}</strong>
+                                    </div>
+                                    <div className="rec-item">
+                                        <span>Pattern:</span>
+                                        <span className="pattern-text">{recommendation.reason}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <button 
+                        className={`strategy-toggle ${isAutoOverUnderActive ? 'active' : ''}`}
+                        onClick={toggleAutoOverUnder}
+                        disabled={isContinuousTrading}
+                    >
+                        {isAutoOverUnderActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                </div>
             </div>
-            <div className="trade-button-container">
+
+            {/* Trading Controls */}
+            <div className="trading-controls">
                 <button
-                    className={`trade-button ${isStrategyActive ? 'enabled' : 'disabled'} ${isTrading ? 'trading' : ''}`}
+                    className={`main-trade-btn ${!isStrategyActive ? 'disabled' : ''} ${isContinuousTrading ? 'stop' : 'start'}`}
                     onClick={handleTrade}
                     disabled={!isStrategyActive || isTrading}
                 >
-                    <div className="trade-button-inner">
-                        <div className="trade-icon">
+                    <div className="btn-content">
+                        <div className="btn-icon">
                             {isContinuousTrading ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor"/>
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                                    <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
                                 </svg>
                             ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                                    <path d="M3 1h18v2H3V1zm0 8h18v2H3V9zm0 8h18v2H3v-2zM15 5l-5 3-5-3v6l5 3 5-3V5z" fill="currentColor"/>
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <polygon points="5,3 19,12 5,21" fill="currentColor"/>
                                 </svg>
                             )}
                         </div>
-                        <span className="trade-text">
-                            {isContinuousTrading ? 'STOP TRADING' : isTrading ? 'TRADING...' : 'PLACE TRADE'}
+                        <span className="btn-text">
+                            {isContinuousTrading ? 'STOP TRADING' : isTrading ? 'STARTING...' : 'START TRADING'}
                         </span>
                     </div>
-                    <div className="pulse-ring"></div>
+                    <div className="btn-glow"></div>
                 </button>
             </div>
 
-            <div className="trading-hub-display__stake-info">
-                <Text size="xs" weight="bold">Current Stake: {displayStake()}</Text>
-                {Object.keys(activeContracts).length > 0 && (
-                    <Text size="2xs" className="active-contracts">
-                        Active Trade: Contract #{Object.keys(activeContracts)[0]}
-                    </Text>
+            {/* Stats Dashboard */}
+            <div className="stats-dashboard">
+                {(winCount > 0 || lossCount > 0) && (
+                    <div className="stats-grid">
+                        <div className="stat-card wins">
+                            <div className="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div className="stat-content">
+                                <span className="stat-value">{winCount}</span>
+                                <span className="stat-label">Wins</span>
+                            </div>
+                        </div>
+                        
+                        <div className="stat-card losses">
+                            <div className="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div className="stat-content">
+                                <span className="stat-value">{lossCount}</span>
+                                <span className="stat-label">Losses</span>
+                            </div>
+                        </div>
+                        
+                        <div className="stat-card winrate">
+                            <div className="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div className="stat-content">
+                                <span className="stat-value">
+                                    {winCount + lossCount > 0 ? Math.round(winCount / (winCount + lossCount) * 100) : 0}%
+                                </span>
+                                <span className="stat-label">Win Rate</span>
+                            </div>
+                        </div>
+                        
+                        {consecutiveLosses > 0 && (
+                            <div className="stat-card martingale">
+                                <div className="stat-icon">
+                                    <svg viewBox="0 0 24 24" width="20" height="20">
+                                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
+                                    </svg>
+                                </div>
+                                <div className="stat-content">
+                                    <span className="stat-value">{consecutiveLosses}</span>
+                                    <span className="stat-label">Martingale</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
-                {consecutiveLosses > 0 && (
-                    <Text size="2xs" className="martingale-info">
-                        Martingale Active: {consecutiveLosses} consecutive loss{consecutiveLosses > 1 ? 'es' : ''}
-                    </Text>
-                )}
+                
                 {lastTradeResult && (
-                    <div className="trade-stats">
-                        <Text size="2xs" className={`trade-result ${lastTradeResult === 'WIN' ? 'win' : 'loss'}`}>
-                            Last Trade: {lastTradeResult}
-                        </Text>
-                        <Text size="2xs">
-                            W: {winCount} / L: {lossCount} ({winCount + lossCount > 0 ? Math.round(winCount / (winCount + lossCount) * 100) : 0}% Win)
-                        </Text>
+                    <div className={`last-trade-result ${lastTradeResult.toLowerCase()}`}>
+                        <div className="result-icon">
+                            {lastTradeResult === 'WIN' ? (
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                </svg>
+                            ) : (
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                </svg>
+                            )}
+                        </div>
+                        <span>Last Trade: {lastTradeResult}</span>
                     </div>
                 )}
             </div>
 
-            {currentBarrier !== null && (
-                <div className="trading-hub-display__current-stake">
-                    <span>Current {isAutoDifferActive ? 'Digit Differ' : 
-                        currentStrategy === 'over' ? 'Digit Over' : 'Digit Under'}: </span>
-                    <strong>{currentBarrier}</strong>
-                    {isAutoDifferActive && (
-                        <>
-                            <span> on symbol: </span>
-                            <strong>{currentSymbol}</strong>
-                        </>
-                    )}
-                    {isAutoOverUnderActive && (
-                        <>
-                            <span> on symbol: </span>
-                            <strong>{currentSymbol}</strong>
-                            {recommendation && (
-                                <span className="recommendation-info">
-                                    {' '}(Recommended: {recommendation.strategy.toUpperCase()} {recommendation.strategy === 'over' ? '2' : '7'} on {recommendation.symbol})
+            {/* AI Analysis Info */}
+            {isAutoOverUnderActive && isAnalysisReady && (
+                <div className="analysis-info">
+                    <div className="analysis-header">
+                        <div className="ai-badge">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="currentColor"/>
+                                <path d="M8 12l2 2 4-4" fill="white"/>
+                            </svg>
+                            AI Analysis
+                        </div>
+                        <span className="analysis-time">
+                            {analysisCount} analyses • Last: {lastAnalysisTime || 'N/A'}
+                        </span>
+                    </div>
+                    <div className="analysis-details">
+                        <div className="detail-item">
+                            <span>Most Frequent Digit:</span>
+                            <strong>{recommendation?.mostFrequentDigit}</strong>
+                        </div>
+                        <div className="detail-item">
+                            <span>Current Last Digit:</span>
+                            <strong>{recommendation?.currentLastDigit}</strong>
+                        </div>
+                        <div className="detail-item">
+                            <span>Total Trades:</span>
+                            <strong>{tradeCount}</strong>
+                            {isTradeInProgress && (
+                                <span className="trade-lock">
+                                    <div className="lock-icon">🔒</div>
+                                    Trade in progress
                                 </span>
                             )}
-                        </>
-                    )}
-                </div>
-            )}
-
-            {isAutoOverUnderActive && !isAnalysisReady && (
-                <div className="trading-hub-display__analysis">
-                    <Text size="xs" weight="bold">Analyzing Markets</Text>
-                    <div className="analysis-details">
-                        <Text size="2xs">Collecting data from all markets...</Text>
-                        <Text size="2xs">This will improve trade accuracy.</Text>
+                        </div>
                     </div>
                 </div>
             )}
-
-            {isAutoOverUnderActive && isAnalysisReady && recommendation && (
-                <div className="trading-hub-display__analysis">
-                    <Text size="xs" weight="bold">Pattern Analysis</Text>
-                    <div className="analysis-details">
-                        <Text size="2xs">Strategy: {recommendation.strategy === 'over' ? 'OVER 2' : 'UNDER 7'}</Text>
-                        <Text size="2xs">
-                            <strong>Best Symbol: {recommendation.symbol}</strong>
-                        </Text>
-                        <Text size="2xs">Most Frequent Digit: {recommendation.mostFrequentDigit}</Text>
-                        <Text size="2xs">Current Last Digit: {recommendation.currentLastDigit}</Text>
-                        <Text size="2xs" className="analysis-method">
-                            Pattern Match: {recommendation.reason}
-                        </Text>
-                        <Text size="2xs" className="analysis-stats">
-                            Analyses: {analysisCount} (Last: {lastAnalysisTime || 'N/A'}).
-                        </Text>
-                        <Text size="2xs" className="trade-info">
-                            Trades: {tradeCount} {isTradeInProgress && <span className="trade-lock">🔒 Trade in progress</span>}
-                        </Text>
-                    </div>
-                </div>
-            )}
-            <div 
-                className={`trading-hub-modal-overlay ${isSettingsOpen ? 'active' : ''}`} 
-                onClick={() => setIsSettingsOpen(false)}
-            >
-                <div 
-                    className="trading-hub-modal" 
-                    onClick={e => e.stopPropagation()}
-                    aria-modal="true"
-                    role="dialog"
-                >
-                    <div className="trading-hub-modal-header">
-                        <h3>Trading Settings</h3>
-                        <button 
-                            className="trading-hub-modal-close" 
-                            onClick={() => setIsSettingsOpen(false)}
-                            aria-label="Close"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
-                    </div>
-                    <div className="trading-hub-modal-content">
-                        <div className="settings-field">
-                            <div className="settings-label-container">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 1V23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                                <label htmlFor="stake">Stake Amount</label>
-                            </div>
-                            <div className="settings-input-container">
-                                <input
-                                    id="stake" 
-                                    type="text"
-                                    value={stake}
-                                    onChange={(e) => manageStake('update', { newValue: e.target.value })}
-                                    className="settings-input"
-                                />
-                                <div className="settings-input-suffix">USD</div>
-                            </div>
-                            <div className="settings-input-hint">Minimum stake: {MINIMUM_STAKE} USD</div>
-                        </div>
-                        <div className="settings-field">
-                            <div className="settings-label-container">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M19 5L5 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M6.5 9C7.88071 9 9 7.88071 9 6.5C9 5.11929 7.88071 4 6.5 4C5.11929 4 4 5.11929 4 6.5C4 7.88071 5.11929 9 6.5 9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M17.5 20C18.8807 20 20 18.8807 20 17.5C20 16.1193 18.8807 15 17.5 15C16.1193 15 15 16.1193 15 17.5C15 18.8807 16.1193 20 17.5 20Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                                <label htmlFor="martingale">Martingale Multiplier</label>
-                            </div>
-                            <div className="settings-input-container">
-                                <input
-                                    id="martingale"
-                                    type="text"
-                                    value={martingale}
-                                    onChange={(e) => manageMartingale('update', { newValue: e.target.value })}
-                                    className="settings-input"
-                                />
-                                <div className="settings-input-suffix">×</div>
-                            </div>
-                            <div className="settings-input-hint">Multiplies stake after loss</div>
-                        </div>
-                        
-                        <div className="settings-divider">
-                            <span>Trading Parameters</span>
-                        </div>
-                    </div>
-                    <div className="trading-hub-modal-footer">
-                        <button 
-                            className="modal-btn modal-btn-cancel" 
-                            onClick={() => setIsSettingsOpen(false)}
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            className="modal-btn modal-btn-save" 
-                            onClick={handleSaveSettings}
-                        >
-                            Save Changes
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     );
