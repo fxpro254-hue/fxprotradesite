@@ -2,24 +2,52 @@
 import React from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
-import GoogleDrive from '@/components/load-modal/google-drive';
-import Dialog from '@/components/shared_ui/dialog';
-import MobileFullPageModal from '@/components/shared_ui/mobile-full-page-modal';
 import Text from '@/components/shared_ui/text';
 import { DBOT_TABS } from '@/constants/bot-contents';
 import { useStore } from '@/hooks/useStore';
 import {
     DerivLightBotBuilderIcon,
-    DerivLightGoogleDriveIcon,
     DerivLightLocalDeviceIcon,
     DerivLightMyComputerIcon,
     DerivLightQuickStrategyIcon,
 } from '@deriv/quill-icons/Illustration';
-import { Localize, localize } from '@deriv-com/translations';
-import { useDevice } from '@deriv-com/ui';
+import { Localize } from '@deriv-com/translations';
 import { rudderStackSendOpenEvent } from '../../analytics/rudderstack-common-events';
 import { rudderStackSendDashboardClickEvent } from '../../analytics/rudderstack-dashboard';
 import DashboardBotList from './bot-list/dashboard-bot-list';
+
+// Custom icons for new buttons
+const FreeBotsIcon = ({ height = '48px', width = '48px' }) => (
+    <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C13.1046 2 14 2.89543 14 4V6H18C19.1046 6 20 6.89543 20 8V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V8C4 6.89543 4.89543 6 6 6H10V4C10 2.89543 10.8954 2 12 2Z" fill="var(--text-general)" />
+        <circle cx="12" cy="10" r="1.5" fill="var(--general-main-1)" />
+        <path d="M8 14H16" stroke="var(--general-main-1)" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 16H14" stroke="var(--general-main-1)" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+);
+
+const SignalsIcon = ({ height = '48px', width = '48px' }) => (
+    <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 12L8 7L13 12L21 4" stroke="var(--text-general)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18 4H21V7" stroke="var(--text-general)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="8" cy="7" r="2" fill="var(--text-general)" />
+        <circle cx="13" cy="12" r="2" fill="var(--text-general)" />
+        <circle cx="21" cy="4" r="2" fill="var(--text-general)" />
+        <circle cx="3" cy="12" r="2" fill="var(--text-general)" />
+    </svg>
+);
+
+const AnalysisToolIcon = ({ height = '48px', width = '48px' }) => (
+    <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="var(--text-general)" strokeWidth="2" fill="none" />
+        <path d="M7 8V16" stroke="var(--text-general)" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M12 6V16" stroke="var(--text-general)" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M17 10V16" stroke="var(--text-general)" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="7" cy="8" r="1.5" fill="var(--text-general)" />
+        <circle cx="12" cy="6" r="1.5" fill="var(--text-general)" />
+        <circle cx="17" cy="10" r="1.5" fill="var(--text-general)" />
+    </svg>
+);
 
 type TCardProps = {
     has_dashboard_strategies: boolean;
@@ -36,15 +64,8 @@ type TCardArray = {
 const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => {
     const { dashboard, load_modal, quick_strategy } = useStore();
     const { toggleLoadModal, setActiveTabIndex } = load_modal;
-    const { isDesktop } = useDevice();
-    const { onCloseDialog, dialog_options, is_dialog_open, setActiveTab, setPreviewOnPopup } = dashboard;
+    const { setActiveTab } = dashboard;
     const { setFormVisibility } = quick_strategy;
-
-    const openGoogleDriveDialog = () => {
-        toggleLoadModal();
-        setActiveTabIndex(is_mobile ? 1 : 2);
-        setActiveTab(DBOT_TABS.BOT_BUILDER);
-    };
 
     const openFileLoader = () => {
         toggleLoadModal();
@@ -56,7 +77,7 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
         {
             id: 'my-computer',
             icon: is_mobile ? (
-                <DerivLightLocalDeviceIcon height='48px' width='48px' />
+                <DerivLightLocalDeviceIcon height='32px' width='32px' />
             ) : (
                 <DerivLightMyComputerIcon height='48px' width='48px' />
             ),
@@ -66,40 +87,49 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
                 rudderStackSendOpenEvent({
                     subpage_name: 'bot_builder',
                     subform_source: 'dashboard',
-                    subform_name: 'load_strategy',
-                    load_strategy_tab: 'local',
+                    subform_name: 'quick_strategy',
                 });
             },
         },
         {
-            id: 'google-drive',
-            icon: <DerivLightGoogleDriveIcon height='48px' width='48px' />,
-            content: <Localize i18n_default_text='Google Drive' />,
+            id: 'free-bots',
+            icon: <FreeBotsIcon height={is_mobile ? '32px' : '48px'} width={is_mobile ? '32px' : '48px'} />,
+            content: <Localize i18n_default_text='Free bots' />,
             callback: () => {
-                openGoogleDriveDialog();
-                rudderStackSendOpenEvent({
-                    subpage_name: 'bot_builder',
-                    subform_source: 'dashboard',
-                    subform_name: 'load_strategy',
-                    load_strategy_tab: 'google drive',
-                });
+                setActiveTab(DBOT_TABS.FREE_BOTS);
+                rudderStackSendDashboardClickEvent({});
+            },
+        },
+        {
+            id: 'signals',
+            icon: <SignalsIcon height={is_mobile ? '32px' : '48px'} width={is_mobile ? '32px' : '48px'} />,
+            content: <Localize i18n_default_text='Signals' />,
+            callback: () => {
+                setActiveTab(DBOT_TABS.SIGNALS);
+                rudderStackSendDashboardClickEvent({});
+            },
+        },
+        {
+            id: 'analysis-tool',
+            icon: <AnalysisToolIcon height={is_mobile ? '32px' : '48px'} width={is_mobile ? '32px' : '48px'} />,
+            content: <Localize i18n_default_text='Analysis tool' />,
+            callback: () => {
+                setActiveTab(DBOT_TABS.ANALYSIS_TOOL);
+                rudderStackSendDashboardClickEvent({});
             },
         },
         {
             id: 'bot-builder',
-            icon: <DerivLightBotBuilderIcon height='48px' width='48px' />,
+            icon: <DerivLightBotBuilderIcon height={is_mobile ? '32px' : '48px'} width={is_mobile ? '32px' : '48px'} />,
             content: <Localize i18n_default_text='Bot builder' />,
             callback: () => {
                 setActiveTab(DBOT_TABS.BOT_BUILDER);
-                rudderStackSendDashboardClickEvent({
-                    dashboard_click_name: 'bot_builder',
-                    subpage_name: 'bot_builder',
-                });
+                rudderStackSendDashboardClickEvent({});
             },
         },
         {
             id: 'quick-strategy',
-            icon: <DerivLightQuickStrategyIcon height='48px' width='48px' />,
+            icon: <DerivLightQuickStrategyIcon height={is_mobile ? '32px' : '48px'} width={is_mobile ? '32px' : '48px'} />,
             content: <Localize i18n_default_text='Quick strategy' />,
             callback: () => {
                 setActiveTab(DBOT_TABS.BOT_BUILDER);
@@ -139,9 +169,6 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
                                     className={classNames('tab__dashboard__table__images', {
                                         'tab__dashboard__table__images--minimized': has_dashboard_strategies,
                                     })}
-                                    width='8rem'
-                                    height='8rem'
-                                    icon={icon}
                                     id={id}
                                     onClick={() => {
                                         callback();
@@ -155,41 +182,11 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
                             </div>
                         );
                     })}
-
-                    {!isDesktop ? (
-                        <Dialog
-                            title={dialog_options.title}
-                            is_visible={is_dialog_open}
-                            onCancel={onCloseDialog}
-                            is_mobile_full_width
-                            className='dc-dialog__wrapper--google-drive'
-                            has_close_icon
-                        >
-                            <GoogleDrive />
-                        </Dialog>
-                    ) : (
-                        <MobileFullPageModal
-                            is_modal_open={is_dialog_open}
-                            className='load-strategy__wrapper'
-                            header={localize('Load strategy')}
-                            onClickClose={() => {
-                                setPreviewOnPopup(false);
-                                onCloseDialog();
-                            }}
-                            height_offset='80px'
-                            page_overlay
-                        >
-                            <div label='Google Drive' className='google-drive-label'>
-                                <GoogleDrive />
-                            </div>
-                        </MobileFullPageModal>
-                    )}
                 </div>
                 <DashboardBotList />
             </div>
         ),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [is_dialog_open, has_dashboard_strategies]
+        [has_dashboard_strategies]
     );
 });
 

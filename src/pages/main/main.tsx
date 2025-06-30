@@ -153,6 +153,7 @@ const AppWrapper = observer(() => {
     useEffect(() => {
         const fetchBots = async () => {
             const botFiles = [
+                { file: 'Market wizard v1.5.xml', category: 'automated' },
                 { file: 'Tradezilla.xml', category: 'automated' },
                 { file: 'Upgraded Candlemine.xml', category: 'popular' },
                 { file: 'Envy-differ.xml', category: 'automated' },
@@ -229,7 +230,7 @@ const AppWrapper = observer(() => {
         setAnalysisToolUrl(url);
     };
 
-    const showRunPanel = [DBOT_TABS.BOT_BUILDER, DBOT_TABS.CHART, DBOT_TABS.AUTO, DBOT_TABS.ANALYSIS_TOOL, DBOT_TABS.SIGNALS, DBOT_TABS.TRADING_HUB].includes(active_tab);
+    const showRunPanel = [DBOT_TABS.BOT_BUILDER, DBOT_TABS.CHART, DBOT_TABS.AUTO, DBOT_TABS.ANALYSIS_TOOL, DBOT_TABS.SIGNALS, DBOT_TABS.TRADING_HUB, DBOT_TABS.FREE_BOTS].includes(active_tab);
 
     return (
         <React.Fragment>
