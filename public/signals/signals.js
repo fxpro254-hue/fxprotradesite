@@ -3,7 +3,12 @@ const ticksStorage = {
     R_25: [],
     R_50: [],
     R_75: [],
-    R_100: []
+    R_100: [],
+    '1HZ10V': [],
+    '1HZ25V': [],
+    '1HZ50V': [],
+    '1HZ75V': [],
+    '1HZ100V': []
 };
 
 const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=52152');
@@ -19,7 +24,7 @@ const subscribeTicks = (symbol) => {
 };
 
 ws.onopen = () => {
-    ['R_10', 'R_25', 'R_50', 'R_75', 'R_100'].forEach(subscribeTicks);
+    ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'].forEach(subscribeTicks);
 };
 
 const calculateTrendPercentage = (symbol, ticksCount) => {
@@ -77,8 +82,11 @@ function updateTables() {
         const fallClass = isSell ? "fall" : "neutral";
 
         // Generate rise/fall table row
+        const displayName = symbol.startsWith('1HZ') 
+            ? `Volatility ${symbol.replace("1HZ", "").replace("V", "")} (1s) Index`
+            : `Volatility ${symbol.replace("R_", "")} Index`;
         riseFallTable.innerHTML += `<tr>
-            <td>Volatility ${symbol.replace("R_", "")} index</td>
+            <td>${displayName} index</td>
             <td><span class="signal-box ${riseClass}">${isBuy ? "Rise" : "----"}</span></td>
             <td><span class="signal-box ${fallClass}">${isSell ? "Fall" : "----"}</span></td>
         </tr>`;
@@ -98,7 +106,7 @@ function updateTables() {
 
         // Generate over/under table row
         overUnderTable.innerHTML += `<tr>
-            <td>Volatility ${symbol.replace("R_", "")} index</td>
+            <td>${displayName} index</td>
             <td><span class="signal-box ${overClass}">${overClass === "over" ? "Over 2" : "----"}</span></td>
             <td><span class="signal-box ${underClass}">${underClass === "under" ? "Under 7" : "----"}</span></td>
         </tr>`;

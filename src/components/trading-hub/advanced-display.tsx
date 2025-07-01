@@ -8,7 +8,7 @@ import { observer as globalObserver } from '../../external/bot-skeleton/utils/ob
 import { useStore } from '@/hooks/useStore';
 
 // Symbol type for multi-symbol analysis
-type SymbolType = 'R_10' | 'R_25' | 'R_50' | 'R_75' | 'R_100';
+type SymbolType = 'R_10' | 'R_25' | 'R_50' | 'R_75' | 'R_100' | '1HZ10V' | '1HZ25V' | '1HZ50V' | '1HZ75V' | '1HZ100V';
 type SymbolTickData = {
     tickHistory: Array<{ time: number; quote: number }>;
     decimalPlaces: number;
@@ -177,6 +177,11 @@ const AdvancedDisplay = observer(() => {
         R_50: { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
         R_75: { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
         R_100: { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
+        '1HZ10V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
+        '1HZ25V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
+        '1HZ50V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
+        '1HZ75V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
+        '1HZ100V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
     });
     const [activeSymbols, setActiveSymbols] = useState<SymbolType[]>([]);
     const [tickCount, setTickCount] = useState(120);
@@ -186,6 +191,11 @@ const AdvancedDisplay = observer(() => {
         R_50: null,
         R_75: null,
         R_100: null,
+        '1HZ10V': null,
+        '1HZ25V': null,
+        '1HZ50V': null,
+        '1HZ75V': null,
+        '1HZ100V': null,
     });
 
     // Add trading states
@@ -532,7 +542,7 @@ const AdvancedDisplay = observer(() => {
             // --- Start: Extract Symbol from longcode ---
             let parsedSymbol: SymbolType = 'R_10'; // Default fallback
             const symbolMatch = longcode.match(/^([^_]+)/); // Match characters from the start until the first underscore
-            if (symbolMatch && ['R_10', 'R_25', 'R_50', 'R_75', 'R_100'].includes(symbolMatch[1])) {
+            if (symbolMatch && ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'].includes(symbolMatch[1])) {
                 parsedSymbol = symbolMatch[1] as SymbolType;
                 console.log(`Parsed symbol from longcode: ${parsedSymbol}`);
             } else {
@@ -1532,6 +1542,23 @@ const AdvancedDisplay = observer(() => {
         });
     };
 
+    // Add utility function to get readable symbol names
+    const getSymbolDisplayName = (symbol: SymbolType): string => {
+        const symbolMap: Record<SymbolType, string> = {
+            'R_10': 'Volatility 10',
+            'R_25': 'Volatility 25', 
+            'R_50': 'Volatility 50',
+            'R_75': 'Volatility 75',
+            'R_100': 'Volatility 100',
+            '1HZ10V': 'Volatility 10 (1s)',
+            '1HZ25V': 'Volatility 25 (1s)',
+            '1HZ50V': 'Volatility 50 (1s)', 
+            '1HZ75V': 'Volatility 75 (1s)',
+            '1HZ100V': 'Volatility 100 (1s)',
+        };
+        return symbolMap[symbol] || symbol;
+    };
+
     // Function to create digit distribution display for a symbol
     const renderDigitDistribution = (symbol: SymbolType) => {
         const digits = getLastDigitsForSymbol(symbol);
@@ -1566,7 +1593,7 @@ const AdvancedDisplay = observer(() => {
         return (
             <div className="digit-analysis-card">
                 <h3>
-                    {symbol} Analysis{' '}
+                    {getSymbolDisplayName(symbol)} Analysis{' '}
                     {currentDigit !== undefined && `- Current: ${currentDigit}`}
                 </h3>
 
@@ -1961,7 +1988,7 @@ const AdvancedDisplay = observer(() => {
                 <button className="auth-status__logout" onClick={handleLogout}>
                     Log Out
                 </button>
-            </div>
+                       </div>
         );
     };
 
@@ -2068,15 +2095,16 @@ const AdvancedDisplay = observer(() => {
                             Active Symbols:
                         </Text>
                         <div className="symbol-buttons">
-                            {(['R_10', 'R_25', 'R_50', 'R_75', 'R_100'] as SymbolType[]).map((symbol) => (
+                            {(['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'] as SymbolType[]).map((symbol) => (
                                 <button
                                     key={symbol}
                                     className={`symbol-button ${
                                         activeSymbols.includes(symbol) ? 'active' : ''
                                     }`}
                                     onClick={() => toggleSymbol(symbol)}
+                                    title={`${getSymbolDisplayName(symbol)} (${symbol})`}
                                 >
-                                    {symbol}
+                                    {getSymbolDisplayName(symbol)}
                                 </button>
                             ))}
                         </div>
