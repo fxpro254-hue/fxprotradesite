@@ -23,6 +23,93 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const dailyData = [];
     let completedRequests = 0;
+    let usdToKes = 130; // Default exchange rate, will be updated with real rate
+    let lastUpdated = null; // Track when the rate was last updated
+
+    // Fetch current USD to KES exchange rate
+    async function fetchExchangeRate() {
+        try {
+            // Using CurrencyAPI service
+            const apiKey = 'cur_live_qvPEAOO91Efa6GVvG5KCELMg2YV2sJrhd8DTZ7Jf'; // Replace with your actual CurrencyAPI key
+            const response = await fetch(`https://api.currencyapi.com/v3/latest?apikey=${apiKey}&currencies=KES&base_currency=USD`);
+            const data = await response.json();
+            
+            if (data.data && data.data.KES) {
+                usdToKes = data.data.KES.value;
+                lastUpdated = data.meta?.last_updated_at;
+                console.log(`💱 Exchange rate updated via CurrencyAPI: 1 USD = ${usdToKes} KES`);
+                console.log(`📅 Last updated: ${lastUpdated || 'Unknown'}`);
+            } else {
+                throw new Error('KES rate not found in response');
+            }
+            
+            updateStatisticsUI(); // Update UI with new rate
+        } catch (error) {
+            console.warn('⚠ Failed to fetch exchange rate from CurrencyAPI, trying fallback:', error);
+            
+            // Fallback to exchangerate-api.com
+            try {
+                const fallbackResponse = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const fallbackData = await fallbackResponse.json();
+                usdToKes = fallbackData.rates.KES || 130;
+                lastUpdated = fallbackData.date || new Date().toISOString();
+                console.log(`💱 Fallback exchange rate: 1 USD = ${usdToKes} KES`);
+                updateStatisticsUI();
+            } catch (fallbackError) {
+                console.warn('⚠ Both APIs failed, using default rate of 130 KES per USD');
+                usdToKes = 130;
+                lastUpdated = 'Default rate';
+                updateStatisticsUI();
+            }
+        }
+    }
+
+    // Convert USD to KES
+    function convertToKes(usdAmount) {
+        return usdAmount * usdToKes;
+    }
+
+    // Format currency
+    function formatCurrency(amount, currency = 'USD') {
+        if (currency === 'KES') {
+            return `KES ${amount.toLocaleString('en-KE', { maximumFractionDigits: 0 })}`;
+        }
+        return `$${amount.toFixed(2)}`;
+    }
+
+    // Format update time for exchange rate
+    function formatUpdateTime(timestamp) {
+        if (timestamp === 'Default rate') return 'Default rate';
+        
+        try {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+            
+            if (diffInHours < 1) {
+                return 'Just now';
+            } else if (diffInHours < 24) {
+                return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+            } else {
+                return date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+                });
+            }
+        } catch (error) {
+            return 'Unknown';
+        }
+    }
+
+    // Initialize exchange rate
+    fetchExchangeRate();
+
+    // Show loading state initially
+    wallet.innerHTML = `
+        <div class="wallet-header">Portfolio Overview</div>
+        <div class="loading">Loading data...</div>
+    `;
 
     ws.onopen = function () {
         console.log("✅ WebSocket connected, authorizing...");
@@ -117,83 +204,100 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const ctx = document.getElementById("markupGraph").getContext("2d");
-        const labels = data.map(entry => entry.date.split(" ")[0]); // Extract only the date part
-        const values = data.map(entry => entry.markup); // Markup values for each day
+        const labels = data.map(entry => {
+            const date = new Date(entry.date);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        const values = data.map(entry => entry.markup);
 
         console.log("📊 Rendering Graph with Labels:", labels);
         console.log("📊 Rendering Graph with Values:", values);
 
         new Chart(ctx, {
-            type: "line", // Use a line graph
+            type: "line",
             data: {
                 labels,
                 datasets: [{
-                    label: "30 Days Markup",
+                    label: "Daily Markup (USD)",
                     data: values,
-                    borderColor: "rgba(54, 162, 235, 1)",
-                    backgroundColor: "rgba(54, 162, 235, 0.2)",
-                    borderWidth: 2,
-                    tension: 0.4, // Smooth curves
-                    pointBackgroundColor: "rgba(54, 162, 235, 1)",
+                    borderColor: "#667eea",
+                    backgroundColor: "rgba(102, 126, 234, 0.1)",
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointBackgroundColor: "#667eea",
                     pointBorderColor: "#fff",
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    fill: true,
                 }],
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10,
+                        bottom: 10,
+                        left: 10,
+                        right: 10
+                    }
+                },
                 plugins: {
                     legend: {
-                        display: true,
-                        labels: {
-                            color: "#000", // Changed to a lighter color for better visibility
-                            font: {
-                                size: 14,
-                            },
-                        },
+                        display: false,
                     },
                     tooltip: {
-                        enabled: true,
-                        backgroundColor: "#333",
+                        backgroundColor: "rgba(0, 0, 0, 0.8)",
                         titleColor: "#fff",
                         bodyColor: "#fff",
-                        borderColor: "#36a2eb",
+                        borderColor: "#667eea",
                         borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                const usd = context.parsed.y;
+                                const kes = convertToKes(usd);
+                                return [
+                                    `USD: $${usd.toFixed(2)}`,
+                                    `KES: ${kes.toLocaleString('en-KE', { maximumFractionDigits: 0 })}`
+                                ];
+                            }
+                        }
                     },
                 },
                 scales: {
                     x: {
-                        title: {
-                            display: true,
-                            text: "Date",
-                            color: "#000", // Changed to a lighter color for better visibility
-                            font: {
-                                size: 14,
-                            },
-                        },
                         grid: {
                             display: false,
                         },
                         ticks: {
-                            color: "#000", // Changed to a lighter color for better visibility
+                            color: "#666",
+                            font: {
+                                size: 12,
+                            },
                         },
                     },
                     y: {
-                        title: {
-                            display: true,
-                            text: "Markup (USD)",
-                            color: "#000", // Changed to a lighter color for better visibility
-                            font: {
-                                size: 14,
-                            },
-                        },
                         grid: {
-                            color: "rgba(255, 255, 255, 0.1)", // Adjusted for better contrast
+                            color: "rgba(102, 126, 234, 0.1)",
+                            borderDash: [5, 5],
                         },
                         ticks: {
-                            color: "#000", // Changed to a lighter color for better visibility
+                            color: "#666",
+                            font: {
+                                size: 12,
+                            },
+                            callback: function(value) {
+                                return '$' + value.toFixed(0);
+                            }
                         },
                     },
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
                 },
             },
         });
@@ -261,29 +365,81 @@ document.addEventListener("DOMContentLoaded", () => {
         const predictedMarkup = predictCurrentMonthMarkup();
 
         wallet.innerHTML = `
-            <div class="wallet-header">My Wallet</div>
-            <div class="current-month">
-                Current Month: $${statistics.currentMonth.toFixed(2)}
+            <div class="wallet-header">Portfolio Overview</div>
+            
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <h3>Current Month</h3>
+                    <div class="usd">${formatCurrency(statistics.currentMonth)}</div>
+                    <div class="kes">${formatCurrency(convertToKes(statistics.currentMonth), 'KES')}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Predicted Month</h3>
+                    <div class="usd">${formatCurrency(predictedMarkup)}</div>
+                    <div class="kes">${formatCurrency(convertToKes(predictedMarkup), 'KES')}</div>
+                </div>
             </div>
-            <div class="predicted-month">
-                Predicted Month: $${predictedMarkup.toFixed(2)}
+            
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-header">
+                        <div class="stat-title">Daily Performance</div>
+                        <div class="stat-period">Today</div>
+                    </div>
+                    <div class="stat-values">
+                        <div class="stat-value">
+                            <div class="label">USD</div>
+                            <div class="amount usd">${formatCurrency(statistics.daily.markup)}</div>
+                        </div>
+                        <div class="stat-value">
+                            <div class="label">KES</div>
+                            <div class="amount kes">${formatCurrency(convertToKes(statistics.daily.markup), 'KES')}</div>
+                        </div>
+                    </div>
+                    <div class="stat-runs">Transactions: ${statistics.daily.runs}</div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-header">
+                        <div class="stat-title">Weekly Performance</div>
+                        <div class="stat-period">7 Days</div>
+                    </div>
+                    <div class="stat-values">
+                        <div class="stat-value">
+                            <div class="label">USD</div>
+                            <div class="amount usd">${formatCurrency(statistics.weekly.markup)}</div>
+                        </div>
+                        <div class="stat-value">
+                            <div class="label">KES</div>
+                            <div class="amount kes">${formatCurrency(convertToKes(statistics.weekly.markup), 'KES')}</div>
+                        </div>
+                    </div>
+                    <div class="stat-runs">Transactions: ${statistics.weekly.runs}</div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-header">
+                        <div class="stat-title">Monthly Performance</div>
+                        <div class="stat-period">30 Days</div>
+                    </div>
+                    <div class="stat-values">
+                        <div class="stat-value">
+                            <div class="label">USD</div>
+                            <div class="amount usd">${formatCurrency(statistics.monthly.markup)}</div>
+                        </div>
+                        <div class="stat-value">
+                            <div class="label">KES</div>
+                            <div class="amount kes">${formatCurrency(convertToKes(statistics.monthly.markup), 'KES')}</div>
+                        </div>
+                    </div>
+                    <div class="stat-runs">Transactions: ${statistics.monthly.runs}</div>
+                </div>
             </div>
-            <div class="stat">
-                <div class="stat-title">Daily Markup</div>
-                <div class="stat-value">$${statistics.daily.markup.toFixed(2)}</div>
-                <div class="stat-runs">Transactions: ${statistics.daily.runs}</div>
-            </div>
-            <div class="stat">
-                <div class="stat-title">Weekly Markup</div>
-                <div class="stat-value">$${statistics.weekly.markup.toFixed(2)}</div>
-                <div class="stat-runs">Transactions: ${statistics.weekly.runs}</div>
-            </div>
-            <div class="stat">
-                <div class="stat-title">Monthly Markup</div>
-                <div class="stat-value">$${statistics.monthly.markup.toFixed(2)}</div>
-                <div class="stat-runs">Transactions: ${statistics.monthly.runs}</div>
-            </div>
-        `;
+            
+            <div style="margin-top: 20px; text-align: center; font-size: 0.8rem; color: #666;">
+                Exchange Rate: 1 USD = ${usdToKes.toFixed(2)} KES
+                ${lastUpdated ? `<br><span style="font-size: 0.7rem; opacity: 0.8;">Updated: ${formatUpdateTime(lastUpdated)}</span>` : ''}
+            </div>`;
     }
 
     function getDateRange(type) {
