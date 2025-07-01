@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/hooks/useStore';
 import SmartTradingDisplay from './smart-trading-display';
+import SpeedBotDisplay from './speed-bot-display';
 import './chart-toggle.scss';
 
 const ChartToggle = observer(({ children }) => {
@@ -22,6 +23,12 @@ const ChartToggle = observer(({ children }) => {
                     Smart Trading
                 </button>
                 <button 
+                    className={`chart-display-toggle__button ${activeDisplay === 'speed-bot' ? 'active' : ''}`}
+                    onClick={() => setActiveDisplay('speed-bot')}
+                >
+                    Speed Bot
+                </button>
+                <button 
                     className={`chart-display-toggle__button ${activeDisplay === 'charts' ? 'active' : ''}`}
                     onClick={() => setActiveDisplay('charts')}
                 >
@@ -29,8 +36,9 @@ const ChartToggle = observer(({ children }) => {
                 </button>
             </div>
             <div className="chart-display-content">
-                {/* Updated condition to match the new default */}
-                {activeDisplay === 'charts' ? children : <SmartTradingDisplay />}
+                {activeDisplay === 'charts' ? children : 
+                 activeDisplay === 'speed-bot' ? <SpeedBotDisplay /> :
+                 <SmartTradingDisplay />}
             </div>
         </div>
     );

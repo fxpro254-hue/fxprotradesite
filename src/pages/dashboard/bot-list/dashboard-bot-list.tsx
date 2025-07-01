@@ -58,35 +58,7 @@ const DashboardBotList = observer(() => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    if (!dashboard_strategies?.length) return null;
-    return (
-        <div className='bot-list__container'>
-            <div className='bot-list__wrapper'>
-                <div className='bot-list__title'>
-                    <Text size={isDesktop ? 's' : 'xs'} weight='bold'>
-                        <Localize i18n_default_text='Your bots:' />
-                    </Text>
-                </div>
-                <div className='bot-list__header'>
-                    {HEADERS.map(({ label, className }) => {
-                        return (
-                            <div className={className} key={label}>
-                                <Text size={isDesktop ? 'xs' : 'xxs'} weight='bold'>
-                                    {label}
-                                </Text>
-                            </div>
-                        );
-                    })}
-                </div>
-                <div className='bot-list__table'>
-                    {dashboard_strategies.map(workspace => (
-                        <RecentWorkspace key={workspace.id} workspace={workspace} />
-                    ))}
-                </div>
-            </div>
-            <DeleteDialog />
-        </div>
-    );
+    
 });
 
 export default DashboardBotList;

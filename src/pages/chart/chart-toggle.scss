@@ -30,7 +30,7 @@
     &__button {
         padding: 10px 20px;
         margin: 0 5px;
-        min-width: 140px;
+        min-width: 120px;
         font-weight: 700;
         font-size: 14px;
         letter-spacing: 0.25px;
@@ -81,9 +81,10 @@
 @media screen and (max-width: 768px) {
     .chart-display-toggle {
         &__button {
-            min-width: 100px;
-            padding: 8px 12px;
-            font-size: 13px;
+            min-width: 90px;
+            padding: 8px 10px;
+            font-size: 12px;
+            margin: 0 2px;
         }
     }
 }
