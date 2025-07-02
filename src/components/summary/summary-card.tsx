@@ -6,7 +6,7 @@ import { getContractTypeDisplay } from '@/constants/contract';
 import { useStore } from '@/hooks/useStore';
 import { localize } from '@deriv-com/translations';
 import { useDevice } from '@deriv-com/ui';
-import ContractCardLoader from '../contract-card-loading';
+import ContractCardLoader from '../loader/contract-card-loader';
 import { getCardLabels } from '../shared';
 import ContractCard from '../shared_ui/contract-card';
 import { TSummaryCardProps } from './summary-card.types';

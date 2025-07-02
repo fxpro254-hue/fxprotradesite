@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-
+import BrandedLoader from '../../loader/branded-loader';
 import Text from '../text/text';
 
 export type TLoadingProps = React.HTMLProps<HTMLDivElement> & {
@@ -11,7 +11,18 @@ export type TLoadingProps = React.HTMLProps<HTMLDivElement> & {
 };
 
 const Loading = ({ className, id, is_fullscreen = true, is_slow_loading, status, theme }: Partial<TLoadingProps>) => {
-    // Theme is now automatically determined from CSS variables, but we maintain the prop for backward compatibility
+    // If fullscreen, use the new branded loader
+    if (is_fullscreen) {
+        return (
+            <BrandedLoader 
+                message={status?.[0] || "Loading..."}
+                subMessage="BinaryFX - Professional Trading Platform"
+                showProgress={true}
+            />
+        );
+    }
+
+    // For non-fullscreen (inline) loading, keep the existing bar spinner
     const theme_class = 'barspinner-auto-theme';
     return (
         <div

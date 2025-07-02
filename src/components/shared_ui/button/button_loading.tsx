@@ -1,11 +1,20 @@
-import Loading, { TLoadingProps } from '../loading/loading';
+import React from 'react';
+import './button-loading.scss';
 
-import '../loading/loading.scss';
+type ButtonLoadingProps = {
+    size?: 'small' | 'medium' | 'large';
+    color?: 'primary' | 'secondary' | 'white';
+};
 
-const ButtonLoading = (
-    props: Omit<TLoadingProps, 'is_fullscreen' | 'className' | 'is_slow_loading' | 'status' | 'theme'>
-) => {
-    return <Loading {...props} is_fullscreen={false} className='initial-loader--btn' />;
+const ButtonLoading: React.FC<ButtonLoadingProps> = ({ 
+    size = 'medium',
+    color = 'white'
+}) => {
+    return (
+        <div className={`button-loading button-loading--${size} button-loading--${color}`}>
+            <div className="spinner"></div>
+        </div>
+    );
 };
 
 export default ButtonLoading;
