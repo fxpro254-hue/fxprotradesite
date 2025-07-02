@@ -200,7 +200,6 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
                         );
                     })}
                 </div>
-                <DashboardBotList />
             </div>
         ),
         [has_dashboard_strategies]
