@@ -391,22 +391,43 @@ html {
     }
 
     .condition-indicator-container {
-        position: absolute;
-        top: 12px;
-        right: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .condition-indicator {
         display: block;
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
         background-color: var(--border-normal); // subtle default
-        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+        border: 2px solid transparent;
+        position: relative;
 
         &.active {
             background-color: var(--status-success); // green
-            box-shadow: 0 0 4px var(--status-success);
+            box-shadow: 0 0 6px var(--status-success);
+            border-color: rgba(var(--status-success-rgb), 0.3);
+            transform: scale(1.1);
+            
+            &::after {
+                content: '';
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background-color: rgba(255, 255, 255, 0.8);
+                border-radius: 50%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+        }
+        
+        &:not(.active) {
+            background-color: var(--border-disabled);
+            opacity: 0.6;
         }
     }
 
@@ -537,6 +558,43 @@ html {
     }
 }
 
+// Additional recommendation styling for matches/differs
+.recommendation {
+    &.matches {
+        background: linear-gradient(135deg, 
+            rgba(var(--status-success-rgb), 0.15),
+            rgba(var(--status-success-rgb), 0.08)
+        );
+        border: 1px solid rgba(var(--status-success-rgb), 0.3);
+        
+        .recommendation-header {
+            color: var(--status-success);
+        }
+        
+        .confidence-badge {
+            background: var(--status-success);
+            color: white;
+        }
+    }
+    
+    &.differs {
+        background: linear-gradient(135deg, 
+            rgba(var(--brand-secondary-rgb), 0.15),
+            rgba(var(--brand-secondary-rgb), 0.08)
+        );
+        border: 1px solid rgba(var(--brand-secondary-rgb), 0.3);
+        
+        .recommendation-header {
+            color: var(--brand-secondary);
+        }
+        
+        .confidence-badge {
+            background: var(--brand-secondary);
+            color: white;
+        }
+    }
+}
+
 .trend-meter, .distribution-meter {
     height: 8px;
     background-color: #e0e0e0;
@@ -651,6 +709,49 @@ html {
     }
 }
 
+// Enhanced styles for Matches/Differs barrier digit display
+.barrier-digit-info {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: rgba(var(--brand-red-coral-rgb), 0.08);
+    border-radius: 6px;
+    border: 1px solid rgba(var(--brand-red-coral-rgb), 0.2);
+    text-align: center;
+    
+    .text {
+        color: var(--text-prominent);
+        font-weight: 500;
+    }
+}
+
+.target-digit-info, .barrier-digit-info {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background-color: rgba(0,0,0,0.03);
+    border-radius: 4px;
+    text-align: center;
+    border: 1px solid rgba(var(--border-normal-rgb), 0.3);
+    
+    .target-digit-value {
+        font-weight: bold;
+        color: var(--brand-red-coral);
+        background-color: rgba(var(--brand-red-coral-rgb), 0.1);
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin-left: 4px;
+    }
+}
+
+// Enhanced animated percentage bars for matches/differs - label styling
+.animated-percentage-bar {
+    &__label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-prominent);
+        margin-bottom: 4px;
+    }
+}
+
 // Digit Frequency Display for Matches/Differs
 .digit-frequency-display {
     margin-top: 8px;
@@ -700,6 +801,103 @@ html {
         font-size: 9px;
         color: var(--text-less-prominent);
         margin-top: 2px;
+    }
+}
+
+// Enhanced digit frequency visualization
+.digit-frequency-display {
+    margin-top: 12px;
+    padding: 8px;
+    background: rgba(0,0,0,0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(var(--border-normal-rgb), 0.2);
+    
+    .frequency-title {
+        color: var(--text-prominent);
+        margin-bottom: 8px;
+        text-align: center;
+        display: block;
+    }
+    
+    .digit-freq-bars {
+        display: flex;
+        align-items: flex-end;
+        height: 50px;
+        gap: 3px;
+        padding: 0 4px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 4px;
+        border: 1px solid rgba(var(--border-normal-rgb), 0.1);
+    }
+    
+    .digit-freq-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        position: relative;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            transform: translateY(-1px);
+        }
+        
+        &.barrier-digit {
+            position: relative;
+            
+            // Add a highlight indicator for the barrier digit
+            &:before {
+                content: '●';
+                position: absolute;
+                top: -12px;
+                left: 50%;
+                transform: translateX(-50%);
+                color: var(--brand-red-coral);
+                font-size: 8px;
+                font-weight: bold;
+            }
+            
+            .digit-freq-label {
+                font-weight: bold;
+                color: var(--brand-red-coral);
+                background: rgba(var(--brand-red-coral-rgb), 0.1);
+                border-radius: 3px;
+                padding: 1px 3px;
+            }
+            
+            .digit-freq-percent {
+                color: var(--brand-red-coral);
+                font-weight: 600;
+            }
+        }
+    }
+    
+    .digit-freq-bar {
+        width: 100%;
+        min-height: 4px;
+        border-radius: 2px 2px 0 0;
+        margin-bottom: 2px;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        
+        &:hover {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    }
+    
+    .digit-freq-label {
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--text-prominent);
+        margin-bottom: 1px;
+        line-height: 1;
+    }
+    
+    .digit-freq-percent {
+        font-size: 8px;
+        color: var(--text-less-prominent);
+        line-height: 1;
     }
 }
 
@@ -815,10 +1013,12 @@ html {
         // Remove spinner buttons
         &[type="number"] {
             -moz-appearance: textfield;
+            appearance: textfield;
             
             &::-webkit-outer-spin-button,
             &::-webkit-inner-spin-button {
                 -webkit-appearance: none;
+                appearance: none;
                 margin: 0;
             }
         }
@@ -885,13 +1085,16 @@ html {
     }
     
     &__label {
-        width: 45px;
+        width: 65px; // Increased width to accommodate "Matches X" and "Differs from X" labels
         text-align: right;
         margin-right: 12px;
         font-size: 13px;
         font-weight: 500;
         color: var(--text-less-prominent);
         flex-shrink: 0;
+        white-space: nowrap; // Prevent text wrapping
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     &__bar-container {
@@ -907,7 +1110,7 @@ html {
     
     &__bar {
         height: 100%;
-        transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); // Bouncy animation
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); // Bouncy animation for width changes
         position: absolute;
         top: 0;
         left: 0;
@@ -916,6 +1119,7 @@ html {
         justify-content: flex-end;
         padding-right: 10px;
         box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        cursor: pointer; // Add cursor pointer for interactivity
         
         &--rise {
             background: linear-gradient(to right, #63D471, #8BEDA6);
@@ -956,6 +1160,32 @@ html {
             background: linear-gradient(to right, #C6426E, #e91e63);
             &::before {
                 background-color: rgba(233, 30, 99, 0.4); // #e91e63
+            }
+        }
+        
+        &--matches {
+            background: linear-gradient(to right, #63D471, #8BEDA6);
+            &::before {
+                background-color: rgba(139, 237, 166, 0.4); // #8BEDA6
+            }
+            
+            &:hover {
+                background: linear-gradient(to right, #4CAF50, #63D471);
+                box-shadow: 0 4px 8px rgba(99, 212, 113, 0.3);
+                transform: translateY(-1px);
+            }
+        }
+        
+        &--differs {
+            background: linear-gradient(to right, #FF5F6D, #FF7F7F);
+            &::before {
+                background-color: rgba(255, 127, 127, 0.4); // #FF7F7F
+            }
+            
+            &:hover {
+                background: linear-gradient(to right, #F44336, #FF5F6D);
+                box-shadow: 0 4px 8px rgba(255, 95, 109, 0.3);
+                transform: translateY(-1px);
             }
         }
         
@@ -1123,9 +1353,11 @@ html {
         }
         
         &__label {
-            width: 36px;
+            width: 50px; // Increased for matches/differs labels on mobile
             margin-right: 6px;
-            font-size: 11px;
+            font-size: 10px; // Slightly smaller font
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
         
         &__bar-container {
@@ -1262,10 +1494,12 @@ html {
         // Remove spinner buttons
         &[type="number"] {
             -moz-appearance: textfield;
+            appearance: textfield;
             
             &::-webkit-outer-spin-button,
             &::-webkit-inner-spin-button {
                 -webkit-appearance: none;
+                appearance: none;
                 margin: 0;
             }
         }

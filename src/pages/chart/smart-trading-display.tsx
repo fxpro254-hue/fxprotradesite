@@ -2683,8 +2683,24 @@ const SmartTradingDisplay = observer(() => {
         const strategy = analysisStrategies.find(s => s.id === strategyId);
         if (!strategy) return null;
 
-        // Get the selected digit or use a default
-        const selectedDigit = strategy.settings.conditionDigit !== undefined ? strategy.settings.conditionDigit : 5;
+        // Get the selected barrier digit (user-selected digit)
+        const barrierDigit = strategy.settings.conditionDigit !== undefined ? strategy.settings.conditionDigit : 5;
+        
+        // Get the target digit (most frequent) from the analysis for display only
+        const targetDigit = analysis?.target !== undefined ? analysis.target : barrierDigit;
+        
+        // Calculate matches and differs percentages for the BARRIER DIGIT, not the most frequent
+        let barrierDigitPercentage = '10.00'; // Default fallback
+        
+        if (analysis?.digitFrequencies && Array.isArray(analysis.digitFrequencies)) {
+            const barrierData = analysis.digitFrequencies.find((freq: any) => freq.digit === barrierDigit);
+            if (barrierData) {
+                barrierDigitPercentage = barrierData.percentage;
+            }
+        }
+        
+        const matchesPercentage = barrierDigitPercentage;
+        const differsPercentage = (100 - parseFloat(matchesPercentage)).toFixed(2);
 
         return (
             <div className="analysis-data">
@@ -2692,42 +2708,63 @@ const SmartTradingDisplay = observer(() => {
                     <div className={`recommendation ${analysis.recommendation?.toLowerCase()}`}>
                         <div className="recommendation-header">
                             <Text size="xs" weight="bold">
-                                {localize('{{recommendation}} digit {{target}}', {
-                                    recommendation: analysis.recommendation,
-                                    target: analysis.target !== undefined ? analysis.target : ''
+                                {localize('Most frequent: {{target}} ({{confidence}}%)', {
+                                    target: targetDigit !== undefined ? targetDigit : '',
+                                    confidence: analysis.confidence || '0'
                                 })}
                             </Text>
-                            {analysis.confidence && (
-                                <span className="confidence-badge">{analysis.confidence}%</span>
-                            )}
                         </div>
                     </div>
                 )}
 
-                <div className="digit-frequency-display">
-                    {/* Digital frequency visualization would go here */}
-                    <div className="digit-freq-bars">
-                        {Array.from({ length: 10 }, (_, i) => {
-                            // Highlight the selected digit
-                            const isSelected = i === selectedDigit;
-                            const height = analysis?.digitProbabilities?.[i] ||
-                                Math.floor(Math.random() * 50 + 10);
+                {/* Display matches vs differs for the BARRIER DIGIT */}
+                <AnimatedPercentageBar
+                    leftValue={matchesPercentage}
+                    rightValue={differsPercentage}
+                    leftLabel={localize('Matches {{digit}}', { digit: barrierDigit })}
+                    rightLabel={localize('Differs from {{digit}}', { digit: barrierDigit })}
+                    leftClass="matches"
+                    rightClass="differs"
+                />
+                
+                <div className="barrier-digit-info">
+                    <Text size="xs">
+                        {localize('Barrier digit {{digit}} appears {{percentage}}% of the time', {
+                            digit: barrierDigit,
+                            percentage: matchesPercentage
+                        })}
+                    </Text>
+                </div>
 
-                            return (
-                                <div key={i} className={`digit-freq-item ${isSelected ? 'selected-digit' : ''}`}>
-                                    <div
+                {/* Add digit frequency visualization */}
+                {analysis?.digitFrequencies && (
+                    <div className="digit-frequency-display">
+                        <Text size="xs" weight="bold" className="frequency-title">
+                            {localize('Digit Frequency Distribution')}
+                        </Text>
+                        <div className="digit-freq-bars">
+                            {analysis.digitFrequencies.map((freq: any) => (
+                                <div 
+                                    key={freq.digit} 
+                                    className={`digit-freq-item ${freq.digit === barrierDigit ? 'barrier-digit' : ''}`}
+                                    title={`Digit ${freq.digit}: ${freq.percentage}%`}
+                                >
+                                    <div 
                                         className="digit-freq-bar"
-                                        style={{
-                                            height: `${height}%`,
-                                            backgroundColor: isSelected ? 'var(--brand-red-coral)' : undefined
+                                        style={{ 
+                                            height: `${Math.max(parseFloat(freq.percentage) * 2, 4)}px`,
+                                            backgroundColor: freq.digit === barrierDigit 
+                                                ? 'var(--brand-red-coral)' 
+                                                : 'var(--general-section-2)'
                                         }}
                                     ></div>
-                                    <div className="digit-freq-label">{i}</div>
+                                    <div className="digit-freq-label">{freq.digit}</div>
+                                    <div className="digit-freq-percent">{freq.percentage}%</div>
                                 </div>
-                            );
-                        })}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Add Trading Condition component */}
                 <div className="trading-condition enabled">
@@ -3380,36 +3417,44 @@ const SmartTradingDisplay = observer(() => {
 
         // matches/differs strategy
         if (strategyId === 'matches-differs') {
-            const { conditionDigit } = strategy.settings;
+            const { conditionDigit, conditionType } = strategy.settings;
             console.log(`Matches/Differs analysis data:`, analysis);
-            console.log(`Condition digit:`, conditionDigit);
+            console.log(`Condition settings:`, { conditionDigit, conditionType, conditionValue, conditionOperator });
 
             if (conditionDigit === undefined) {
                 console.log('No condition digit specified');
                 return false;
             }
 
-            // Check if we have digit frequency data
-            if (analysis.digitFrequencies) {
-                const digitFreq = analysis.digitFrequencies[conditionDigit] || 0;
-                const threshold = conditionValue || 10; // Default 10% threshold
-                const result = digitFreq > threshold;
-                console.log(`Digit ${conditionDigit} frequency: ${digitFreq}% > ${threshold}% = ${result}`);
-                return result;
+            // Get the frequency data for the specified digit
+            if (analysis.digitFrequencies && Array.isArray(analysis.digitFrequencies)) {
+                const targetDigitData = analysis.digitFrequencies.find(item => item.digit === conditionDigit);
+                if (targetDigitData) {
+                    const digitFreq = parseFloat(targetDigitData.percentage || '0');
+                    console.log(`Digit ${conditionDigit} frequency: ${digitFreq}%`);
+                    
+                    // Use the frequency as the metric to compare
+                    const metric = conditionType === 'matches' ? digitFreq : (100 - digitFreq);
+                    console.log(`Using ${conditionType} metric: ${metric}% (comparing ${metric} ${conditionOperator} ${conditionValue})`);
+                    
+                    const result = (() => {
+                        switch (conditionOperator) {
+                            case '>': return metric > (conditionValue ?? 0);
+                            case '<': return metric < (conditionValue ?? 0);
+                            case '>=': return metric >= (conditionValue ?? 0);
+                            case '<=': return metric <= (conditionValue ?? 0);
+                            case '=': return Math.abs(metric - (conditionValue ?? 0)) < 0.1; // Allow small tolerance for equality
+                            default: return false;
+                        }
+                    })();
+                    
+                    console.log(`Matches/Differs condition check: ${metric} ${conditionOperator} ${conditionValue} = ${result}`);
+                    return result;
+                }
             }
 
-            // Check current last digit if available
-            if (analysis.currentLastDigit !== undefined) {
-                const matchesCondition = analysis.currentLastDigit === conditionDigit;
-                console.log(`Current digit ${analysis.currentLastDigit} matches ${conditionDigit} = ${matchesCondition}`);
-
-                // For matches strategy, we want the digit to match
-                // For differs strategy, we want it to be different
-                const isMatches = strategy.settings.conditionAction === 'Matches';
-                const result = isMatches ? matchesCondition : !matchesCondition;
-                console.log(`Strategy is ${strategy.settings.conditionAction}, result = ${result}`);
-                return result;
-            }
+            console.log('❌ Matches/Differs: No valid frequency data found');
+            return false;
         }
 
         console.log(`No condition logic found for strategy: ${strategyId}`);

@@ -526,7 +526,7 @@ function sendAnalysisData(specificStrategy = null) {
     
         // Matches/Differs Analysis
         if (!specificStrategy || specificStrategy === 'matches-differs') {
-            // Find most frequent digit
+            // Find most frequent digit for recommendation
             let maxCount = 0;
             let maxDigit = 0;
             digitCounts.forEach((count, digit) => {
@@ -536,25 +536,37 @@ function sendAnalysisData(specificStrategy = null) {
                 }
             });
         
-            const matchesProbability = (maxCount / totalTicks * 100).toFixed(2);
+            const mostFrequentProbability = (maxCount / totalTicks * 100).toFixed(2);
+
+            // Create digit frequencies map for easy lookup
+            const digitFrequencies = digitCounts.map((count, digit) => ({
+                digit,
+                percentage: (count / totalTicks * 100).toFixed(2),
+                count: count
+            }));
+
+            // Get the current last digit for real-time condition checking
+            const currentLastDigit = tickHistory && tickHistory.length > 0 
+                ? getLastDigit(tickHistory[tickHistory.length - 1].quote)
+                : undefined;
         
             window.postMessage({
                 type: 'ANALYSIS_DATA',
                 strategyId: 'matches-differs',
                 data: {
-                    recommendation: parseFloat(matchesProbability) > 15 ? 'Matches' : 'Differs',
-                    confidence: (parseFloat(matchesProbability) > 15 ? 
-                        parseFloat(matchesProbability) : 
-                        (100 - parseFloat(matchesProbability))).toFixed(2),
+                    recommendation: parseFloat(mostFrequentProbability) > 15 ? 'Matches' : 'Differs',
+                    confidence: (parseFloat(mostFrequentProbability) > 15 ? 
+                        parseFloat(mostFrequentProbability) : 
+                        (100 - parseFloat(mostFrequentProbability))).toFixed(2),
                     target: maxDigit,
-                    digitFrequencies: digitCounts.map((count, digit) => ({
-                        digit,
-                        percentage: (count / totalTicks * 100).toFixed(2)
-                    }))
+                    mostFrequentProbability: mostFrequentProbability,
+                    digitFrequencies: digitFrequencies,
+                    currentLastDigit: currentLastDigit,
+                    totalTicks: totalTicks
                 }
             }, '*');
             
-            console.log(`📊 Matches/Differs analysis sent: Target=${maxDigit}, Probability=${matchesProbability}%`);
+            console.log(`📊 Matches/Differs analysis sent: Target=${maxDigit}, Current=${currentLastDigit}, Probability=${mostFrequentProbability}%`);
         }
 
     } catch (error) {
