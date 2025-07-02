@@ -149,7 +149,7 @@ const BrandedLoader: React.FC<BrandedLoaderProps> = ({
             </div>
 
             <div className='version-info'>
-                <span>v3.0.0 - Professional Trading Suite</span>
+                <span>v3.0.0 - Professional Trading Site</span>
             </div>
         </div>
     );

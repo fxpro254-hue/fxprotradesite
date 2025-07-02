@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { SkeletonLoader } from '../loader';
+import ContentLoader from 'react-content-loader';
 import Money from '@/components/shared_ui/money';
 import { TContractInfo } from '@/components/summary/summary-card.types';
 import { popover_zindex } from '@/constants/z-indexes';
@@ -51,13 +51,16 @@ const TransactionIconWithText = ({ icon, title, message, className }: TTransacti
 );
 
 const TransactionFieldLoader = () => (
-    <SkeletonLoader 
-        width={80} 
-        height={12} 
-        variant="text" 
-        animation="pulse" 
-        className="transactions__loader-text"
-    />
+    <ContentLoader
+        className='transactions__loader-text'
+        height={10}
+        width={80}
+        speed={3}
+        backgroundColor={'var(--general-section-2)'}
+        foregroundColor={'var(--general-hover)'}
+    >
+        <rect x='0' y='0' rx='0' ry='0' width='100' height='12' />
+    </ContentLoader>
 );
 
 const TransactionIconLoader = () => (
