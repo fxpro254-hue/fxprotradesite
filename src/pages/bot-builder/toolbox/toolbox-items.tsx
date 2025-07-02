@@ -780,14 +780,14 @@ export const ToolboxItems = () =>
             </Category>
             <Category id='binaryfx' name={localize('binaryfx')}>
                 <Block type='notify'>
-                        <Field name='NOTIFICATION_TYPE'>success</Field>
-                        <Value name='MESSAGE'>
-                            <Shadow type='text'>
-                                <Field name='TEXT'>abc</Field>
-                            </Shadow>
-                        </Value>
-                    </Block>
-                    <Block type='switcher' />
+                    <Field name='NOTIFICATION_TYPE'>success</Field>
+                    <Value name='MESSAGE'>
+                        <Shadow type='text'>
+                            <Field name='TEXT'>abc</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
+                <Block type='switcher' />
             </Category>
 
             <Examples id='examples'>

@@ -52,26 +52,26 @@ const TransactionDetails = ({ contract_info, is_link_disabled }: TTransactionDet
         if (display_message) {
             return display_message;
         }
-        
+
         const symbol_display = symbol || underlying || '';
-        
+
         if (parameter_type === 'differ_barrier') {
             return `Digit ${contract_parameter} differs from last digit on ${symbol_display}`;
         }
-        
+
         if (parameter_type === 'over_barrier') {
             return `Digit over ${contract_parameter} on ${symbol_display}`;
         }
-        
+
         if (contract_type?.startsWith('DIGIT')) {
             const barrier_value = barrier_display_value || barrier;
             return `${barrier_value ? `Barrier: ${barrier_value}` : ''} ${symbol_display ? `on ${symbol_display}` : ''}`;
         }
-        
+
         if (entry_tick !== undefined) {
             return `Entry spot: ${entry_tick} ${symbol_display ? `on ${symbol_display}` : ''}`;
         }
-        
+
         return '';
     };
 

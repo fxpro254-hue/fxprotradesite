@@ -257,8 +257,12 @@ body {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Responsive Design */
@@ -267,12 +271,12 @@ body {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .summary-cards {
         grid-template-columns: 1fr;
         gap: 10px;
     }
-    
+
     .chart-container {
         height: 350px;
     }
@@ -282,25 +286,25 @@ body {
     .container {
         padding: 15px;
     }
-    
+
     .header h1 {
         font-size: 2rem;
     }
-    
+
     .wallet-section,
     .chart-section {
         padding: 20px;
     }
-    
+
     .stat-values {
         grid-template-columns: 1fr;
         gap: 10px;
     }
-    
+
     #markupGraph {
         height: 300px;
     }
-    
+
     .chart-container {
         height: 300px;
     }
@@ -310,28 +314,28 @@ body {
     .container {
         padding: 10px;
     }
-    
+
     .header h1 {
         font-size: 1.8rem;
     }
-    
+
     .wallet-section,
     .chart-section {
         padding: 15px;
     }
-    
+
     .summary-card {
         padding: 15px;
     }
-    
+
     .stat {
         padding: 15px;
     }
-    
+
     #markupGraph {
         height: 250px;
     }
-    
+
     .chart-container {
         height: 250px;
     }

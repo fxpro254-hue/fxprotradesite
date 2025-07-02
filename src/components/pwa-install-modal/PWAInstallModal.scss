@@ -46,7 +46,10 @@
             font-size: 1em;
             font-weight: bold;
             min-width: 120px; // Ensure buttons have a good minimum width
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            transition:
+                background-color 0.2s ease-in-out,
+                color 0.2s ease-in-out,
+                border-color 0.2s ease-in-out;
             flex-grow: 1; // Allow buttons to grow
             max-width: 180px; // Max width for buttons
         }

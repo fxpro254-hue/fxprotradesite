@@ -274,7 +274,7 @@ const RunPanel = observer(() => {
             total_profit,
             total_stake,
             total_payout,
-            number_of_runs
+            number_of_runs,
         });
     }, [won_contracts, lost_contracts, total_profit, total_stake, total_payout, number_of_runs]);
 
@@ -307,7 +307,8 @@ const RunPanel = observer(() => {
         />
     );
 
-    const show_run_panel = [BOT_BUILDER, CHART, AUTO, ANALYSIS_TOOL, SIGNALS, TRADING_HUB].includes(active_tab) || active_tour;
+    const show_run_panel =
+        [BOT_BUILDER, CHART, AUTO, ANALYSIS_TOOL, SIGNALS, TRADING_HUB].includes(active_tab) || active_tour;
     if ((!show_run_panel && isDesktop) || active_tour === 'bot_builder') return null;
 
     return (
@@ -331,7 +332,7 @@ const RunPanel = observer(() => {
                 </Drawer>
                 {!isDesktop && <MobileDrawerFooter />}
             </div>
-            
+
             <SelfExclusion onRunButtonClick={onRunButtonClick} />
             <StatisticsInfoModal
                 is_mobile={!isDesktop}

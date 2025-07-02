@@ -2,8 +2,8 @@ body {
     background: linear-gradient(45deg, #0a0a2e, #1a1a3a);
     min-height: 600px;
     height: 100vh;
-    overflow:auto;
-    display:flex;
+    overflow: auto;
+    display: flex;
     align-items: flex-start; /* Changed from center to flex-start */
     justify-content: center;
     font-family: 'Segoe UI', sans-serif;
@@ -45,7 +45,7 @@ body {
 .container::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.3);
 }
-.main-container{
+.main-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -57,7 +57,7 @@ body {
 @media (min-width: 768px) {
     .container {
         max-width: 1200px;
-        display:block;
+        display: block;
         grid-template-columns: 2fr 1fr 1fr;
         gap: 20px;
         align-items: start;
@@ -67,12 +67,14 @@ body {
         padding: 20px;
     }
 
-    .analysis-container, .form-card, .results-card {
+    .analysis-container,
+    .form-card,
+    .results-card {
         height: auto;
         max-height: calc(100vh - 80px);
         overflow-y: auto;
     }
-    .main-container{
+    .main-container {
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -83,7 +85,9 @@ body {
     }
 }
 
-.analysis-container, .form-card, .chart-section {
+.analysis-container,
+.form-card,
+.chart-section {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 20px;
@@ -98,7 +102,8 @@ body {
     margin: 0 auto;
 }
 
-.form-card, .results-card {
+.form-card,
+.results-card {
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
@@ -184,7 +189,8 @@ body {
     display: block;
 }
 
-input, select {
+input,
+select {
     width: 100%;
     padding: 12px;
     background: rgba(255, 255, 255, 0.1);
@@ -197,13 +203,15 @@ input, select {
     backdrop-filter: blur(10px);
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
     outline: none;
     border-color: #00ff9d;
     box-shadow: 0 0 15px rgba(0, 255, 157, 0.3);
 }
 
-input:hover, select:hover {
+input:hover,
+select:hover {
     border-color: #88ccff;
     box-shadow: 0 0 10px rgba(136, 204, 255, 0.2);
 }
@@ -243,7 +251,8 @@ button:hover {
     box-shadow: 0 5px 15px rgba(0, 255, 157, 0.4);
 }
 
-h2, h3 {
+h2,
+h3 {
     color: #fff;
     text-align: center;
     margin-bottom: 20px;
@@ -454,7 +463,8 @@ label {
     font-size: 13px;
 }
 
-.stake, .payout {
+.stake,
+.payout {
     color: #fff;
     opacity: 0.8;
 }
@@ -544,5 +554,5 @@ label {
 }
 
 #ws-status.connected {
-    background-color: #4CAF50;
+    background-color: #4caf50;
 }

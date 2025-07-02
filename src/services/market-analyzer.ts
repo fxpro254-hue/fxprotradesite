@@ -162,7 +162,7 @@ class MarketAnalyzer {
     }
 
     public waitForAnalysisReady(): Promise<void> {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             if (this.isAnalysisReady) {
                 resolve();
                 return;
@@ -197,11 +197,13 @@ class MarketAnalyzer {
         }
 
         // Ensure we've collected data for minimum time period
-        const hasMinAnalysisTime = (Date.now() - this.analysisStartTime) >= this.minAnalysisPeriodMs;
+        const hasMinAnalysisTime = Date.now() - this.analysisStartTime >= this.minAnalysisPeriodMs;
 
         // More detailed logging on readiness status
         if (!this.isAnalysisReady && this.isRunning) {
-            console.log(`Analysis readiness check - Markets ready: ${readyCount}/${this.symbols.length}, Time condition: ${hasMinAnalysisTime}`);
+            console.log(
+                `Analysis readiness check - Markets ready: ${readyCount}/${this.symbols.length}, Time condition: ${hasMinAnalysisTime}`
+            );
         }
 
         if (allMarketsReady && hasMinAnalysisTime) {
@@ -231,18 +233,20 @@ class MarketAnalyzer {
             this.requestTickHistory(symbol, ws);
         };
 
-        ws.onmessage = (event) => {
+        ws.onmessage = event => {
             const data = JSON.parse(event.data);
 
             if (data.history) {
                 // Process historical data
                 this.historyLoadedCount++;
                 const tickCount = data.history.prices.length;
-                console.log(`Received ${tickCount} historical ticks for ${symbol} (${this.historyLoadedCount}/${this.symbols.length})`);
+                console.log(
+                    `Received ${tickCount} historical ticks for ${symbol} (${this.historyLoadedCount}/${this.symbols.length})`
+                );
 
                 this.tickHistories[symbol] = data.history.prices.map((price: string, index: number) => ({
                     time: data.history.times[index],
-                    quote: parseFloat(price)
+                    quote: parseFloat(price),
                 }));
 
                 this.detectDecimalPlaces(symbol);
@@ -272,7 +276,7 @@ class MarketAnalyzer {
             }
         };
 
-        ws.onerror = (error) => {
+        ws.onerror = error => {
             console.error(`WebSocket error for ${symbol}:`, error);
         };
 
@@ -292,9 +296,9 @@ class MarketAnalyzer {
         const request = {
             ticks_history: symbol,
             count: this.tickCount, // Request exactly 100 ticks
-            end: "latest",
-            style: "ticks",
-            subscribe: 1
+            end: 'latest',
+            style: 'ticks',
+            subscribe: 1,
         };
         console.log(`Requesting ${this.tickCount} ticks of history for ${symbol}`);
         ws.send(JSON.stringify(request));
@@ -305,7 +309,7 @@ class MarketAnalyzer {
         if (tickHistory.length === 0) return;
 
         const decimalCounts = tickHistory.map(tick => {
-            const decimalPart = tick.quote.toString().split(".")[1] || "";
+            const decimalPart = tick.quote.toString().split('.')[1] || '';
             return decimalPart.length;
         });
 
@@ -324,11 +328,11 @@ class MarketAnalyzer {
 
     private getLastDigit(price: number, symbol: string): number {
         const priceStr = price.toString();
-        const priceParts = priceStr.split(".");
-        let decimals = priceParts[1] || "";
+        const priceParts = priceStr.split('.');
+        let decimals = priceParts[1] || '';
 
         while (decimals.length < this.decimalPlaces[symbol]) {
-            decimals += "0";
+            decimals += '0';
         }
 
         return Number(decimals.slice(-1));
@@ -364,14 +368,13 @@ class MarketAnalyzer {
             const digitCounts = new Array(10).fill(0);
 
             tickHistory.forEach(tick => {
-                const lastDigit = tick.last_digit !== undefined ?
-                    tick.last_digit : this.getLastDigit(tick.quote, symbol);
+                const lastDigit =
+                    tick.last_digit !== undefined ? tick.last_digit : this.getLastDigit(tick.quote, symbol);
                 digitCounts[lastDigit]++;
             });
 
             // Calculate percentages for each digit
-            const digitPercentages = digitCounts.map(count =>
-                (count / tickHistory.length) * 100);
+            const digitPercentages = digitCounts.map(count => (count / tickHistory.length) * 100);
 
             // Find the most frequent digit
             let mostFrequentDigit = 0;
@@ -385,20 +388,20 @@ class MarketAnalyzer {
             }
 
             // Get the current last digit from the most recent tick
-            const currentLastDigit = tickHistory.length > 0 ?
-                (tickHistory[tickHistory.length - 1].last_digit ??
-                    this.getLastDigit(tickHistory[tickHistory.length - 1].quote, symbol)) : -1;
+            const currentLastDigit =
+                tickHistory.length > 0
+                    ? (tickHistory[tickHistory.length - 1].last_digit ??
+                      this.getLastDigit(tickHistory[tickHistory.length - 1].quote, symbol))
+                    : -1;
 
             // Calculate over 2 and under 7 percentages (keep for backward compatibility)
             const overTwoDigits = [3, 4, 5, 6, 7, 8, 9];
             const underSevenDigits = [0, 1, 2, 3, 4, 5, 6];
 
-            const overTwoCount = overTwoDigits.reduce(
-                (sum, digit) => sum + digitCounts[digit], 0);
+            const overTwoCount = overTwoDigits.reduce((sum, digit) => sum + digitCounts[digit], 0);
             const overTwoPercentage = (overTwoCount / tickHistory.length) * 100;
 
-            const underSevenCount = underSevenDigits.reduce(
-                (sum, digit) => sum + digitCounts[digit], 0);
+            const underSevenCount = underSevenDigits.reduce((sum, digit) => sum + digitCounts[digit], 0);
             const underSevenPercentage = (underSevenCount / tickHistory.length) * 100;
 
             // Determine recommendation based on the new pattern logic
@@ -461,7 +464,7 @@ class MarketAnalyzer {
                 symbol,
                 stats,
                 tradingOpportunity,
-                signalStrength
+                signalStrength,
             };
         });
 
@@ -471,8 +474,8 @@ class MarketAnalyzer {
             const { symbol, stats, tradingOpportunity, signalStrength } = analysis;
             console.log(
                 `${symbol}: Most frequent digit: ${stats.mostFrequentDigit} (${stats.digitPercentages[stats.mostFrequentDigit].toFixed(1)}%), ` +
-                `Current last digit: ${stats.currentLastDigit}, ` +
-                `Opportunity: ${tradingOpportunity}, Strength: ${signalStrength.toFixed(1)}`
+                    `Current last digit: ${stats.currentLastDigit}, ` +
+                    `Opportunity: ${tradingOpportunity}, Strength: ${signalStrength.toFixed(1)}`
             );
         });
 
@@ -491,9 +494,11 @@ class MarketAnalyzer {
         // First check if there are any opportunities at all
         if (under7Opportunities.length > 0 || over2Opportunities.length > 0) {
             // Decide which is stronger
-            if (under7Opportunities.length > 0 &&
+            if (
+                under7Opportunities.length > 0 &&
                 (over2Opportunities.length === 0 ||
-                    under7Opportunities[0].signalStrength > over2Opportunities[0].signalStrength)) {
+                    under7Opportunities[0].signalStrength > over2Opportunities[0].signalStrength)
+            ) {
                 const best = under7Opportunities[0];
                 recommendation = {
                     symbol: best.symbol,
@@ -503,7 +508,7 @@ class MarketAnalyzer {
                     underPercentage: best.stats.underSevenPercentage,
                     mostFrequentDigit: best.stats.mostFrequentDigit,
                     currentLastDigit: best.stats.currentLastDigit,
-                    reason: `Most frequent digit ${best.stats.mostFrequentDigit} (low) with last digit ${best.stats.currentLastDigit} (high)`
+                    reason: `Most frequent digit ${best.stats.mostFrequentDigit} (low) with last digit ${best.stats.currentLastDigit} (high)`,
                 };
             } else if (over2Opportunities.length > 0) {
                 const best = over2Opportunities[0];
@@ -515,22 +520,23 @@ class MarketAnalyzer {
                     underPercentage: best.stats.underSevenPercentage,
                     mostFrequentDigit: best.stats.mostFrequentDigit,
                     currentLastDigit: best.stats.currentLastDigit,
-                    reason: `Most frequent digit ${best.stats.mostFrequentDigit} (high) with last digit ${best.stats.currentLastDigit} (low)`
+                    reason: `Most frequent digit ${best.stats.mostFrequentDigit} (high) with last digit ${best.stats.currentLastDigit} (low)`,
                 };
             }
         }
 
-        // IMPORTANT: Update the current recommendation 
+        // IMPORTANT: Update the current recommendation
         const oldRec = this.currentRecommendation;
         this.currentRecommendation = recommendation;
 
         // Log when recommendation changes
-        if (recommendation && (!oldRec ||
-            oldRec.symbol !== recommendation.symbol ||
-            oldRec.strategy !== recommendation.strategy)) {
+        if (
+            recommendation &&
+            (!oldRec || oldRec.symbol !== recommendation.symbol || oldRec.strategy !== recommendation.strategy)
+        ) {
             console.log(
                 `New pattern recommendation: ${recommendation.strategy.toUpperCase()} ${recommendation.barrier} on ${recommendation.symbol} - ` +
-                `${recommendation.reason} (Strength: ${analyses.find(a => a.symbol === recommendation.symbol)?.signalStrength.toFixed(1)}%)`
+                    `${recommendation.reason} (Strength: ${analyses.find(a => a.symbol === recommendation.symbol)?.signalStrength.toFixed(1)}%)`
             );
         } else if (!recommendation) {
             console.log('No valid pattern-based trading opportunities found');
@@ -552,7 +558,7 @@ class MarketAnalyzer {
      * This ensures we have fresh data before each trade
      */
     public getLatestRecommendation(): Promise<TradeRecommendation | null> {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             if (!this.isAnalysisReady) {
                 this.waitForAnalysisReady().then(() => {
                     console.log('Running fresh analysis after becoming ready');
@@ -570,8 +576,8 @@ class MarketAnalyzer {
     /**
      * Returns analytics about the analyzer's performance
      */
-    public getAnalyticsInfo(): { 
-        analysisCount: number; 
+    public getAnalyticsInfo(): {
+        analysisCount: number;
         lastAnalysisTime: number;
         ticksPerSymbol: Record<string, number>;
     } {
@@ -583,7 +589,7 @@ class MarketAnalyzer {
         return {
             analysisCount: this.analysisCount,
             lastAnalysisTime: this.lastAnalysisTime,
-            ticksPerSymbol
+            ticksPerSymbol,
         };
     }
 }

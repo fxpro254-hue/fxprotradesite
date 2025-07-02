@@ -8,15 +8,15 @@
     background-color: var(--general-main-1);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    
+
     &::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     &::-webkit-scrollbar-track {
         background: transparent;
     }
-    
+
     &::-webkit-scrollbar-thumb {
         background-color: rgba(0, 0, 0, 0.2);
         border-radius: 10px;
@@ -142,11 +142,21 @@
             transform: translateY(20px);
             animation: slideInUp 0.6s ease forwards;
 
-            &:nth-child(1) { animation-delay: 0.1s; }
-            &:nth-child(2) { animation-delay: 0.2s; }
-            &:nth-child(3) { animation-delay: 0.3s; }
-            &:nth-child(4) { animation-delay: 0.4s; }
-            &:nth-child(5) { animation-delay: 0.5s; }
+            &:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+            &:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            &:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+            &:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+            &:nth-child(5) {
+                animation-delay: 0.5s;
+            }
 
             &:last-child {
                 border-bottom: none;
@@ -181,7 +191,8 @@
 
 // Animations
 @keyframes float {
-    0%, 100% {
+    0%,
+    100% {
         transform: translateY(0);
     }
     50% {
@@ -197,7 +208,8 @@
 }
 
 @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
     }
     50% {
@@ -214,7 +226,7 @@
 
     .speed-bot-header {
         margin-bottom: 24px;
-        
+
         h2 {
             font-size: 24px;
         }

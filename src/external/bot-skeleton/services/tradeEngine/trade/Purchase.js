@@ -31,18 +31,21 @@ export default Engine =>
 
             // Standard option for current account
             const standard_option = tradeOptionToBuy(contract_type, this.tradeOptions);
-            trades.push(doUntilDone(() => {
-                if (['MULTUP', 'MULTDOWN'].includes(contract_type)) {
-                    console.warn(`Trade type ${contract_type} is not supported.`);
-                    return Promise.resolve();
-                }
-                return api_base.api.send(standard_option);
-            }).catch(e => console.warn(e)));
+            trades.push(
+                doUntilDone(() => {
+                    if (['MULTUP', 'MULTDOWN'].includes(contract_type)) {
+                        console.warn(`Trade type ${contract_type} is not supported.`);
+                        return Promise.resolve();
+                    }
+                    return api_base.api.send(standard_option);
+                }).catch(e => console.warn(e))
+            );
 
             const savedTokens = localStorage.getItem(`extratokens_${this.accountInfo.loginid}`);
             const tokens = savedTokens ? JSON.parse(savedTokens) : [];
             const copyTradeEnabled = localStorage.getItem(`copytradeenabled_${this.accountInfo.loginid}`) === 'true';
-            const copyToReal = this.accountInfo.loginid?.startsWith('VR') &&
+            const copyToReal =
+                this.accountInfo.loginid?.startsWith('VR') &&
                 localStorage.getItem(`copytoreal_${this.accountInfo.loginid}`) === 'true';
 
             // Copy trading logic for multiple accounts
@@ -58,8 +61,8 @@ export default Engine =>
                         currency: this.tradeOptions.currency,
                         duration: this.tradeOptions.duration,
                         duration_unit: this.tradeOptions.duration_unit,
-                        symbol: this.tradeOptions.symbol
-                    }
+                        symbol: this.tradeOptions.symbol,
+                    },
                 };
 
                 if (this.tradeOptions.prediction !== undefined) {
@@ -92,8 +95,8 @@ export default Engine =>
                                 currency: this.tradeOptions.currency,
                                 duration: this.tradeOptions.duration,
                                 duration_unit: this.tradeOptions.duration_unit,
-                                symbol: this.tradeOptions.symbol
-                            }
+                                symbol: this.tradeOptions.symbol,
+                            },
                         };
 
                         if (this.tradeOptions.prediction !== undefined) {
@@ -117,18 +120,17 @@ export default Engine =>
                 return Promise.resolve();
             }
 
-            return Promise.all(trades)
-                .then(responses => {
-                    const successfulTrades = responses.filter(response => response && response.buy);
-                    if (successfulTrades.length > 0) {
-                        return Promise.all(
-                            successfulTrades.map(response =>
-                                this.handlePurchaseSuccess(response, contract_type, this.tradeOptions.amount)
-                            )
-                        );
-                    }
-                    return responses;
-                });
+            return Promise.all(trades).then(responses => {
+                const successfulTrades = responses.filter(response => response && response.buy);
+                if (successfulTrades.length > 0) {
+                    return Promise.all(
+                        successfulTrades.map(response =>
+                            this.handlePurchaseSuccess(response, contract_type, this.tradeOptions.amount)
+                        )
+                    );
+                }
+                return responses;
+            });
         }
 
         handlePurchaseSuccess(response, contract_type, stake) {
@@ -176,7 +178,7 @@ export default Engine =>
         regeneratePurchaseReference = () => {
             purchase_reference = getUUID();
         };
-        
+
         // New methods for trade listening
         listenToTrades(callback) {
             if (typeof callback !== 'function') {

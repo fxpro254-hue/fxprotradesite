@@ -8,7 +8,7 @@ window.Blockly.Blocks.switcher = {
 
         // Ensure one of this type per statement-stack
         this.setNextStatement(true);
-        
+
         // Track the market block for registration
         this.market_block = null;
     },
@@ -57,13 +57,13 @@ window.Blockly.Blocks.switcher = {
     findAndRegisterWithMarketBlock() {
         const trade_definition_block = this.workspace.getTradeDefinitionBlock();
         if (!trade_definition_block) return;
-        
+
         const market_block = trade_definition_block.getChildByType('trade_definition_market');
         if (!market_block) return;
-        
+
         // Store reference to market block
         this.market_block = market_block;
-        
+
         // Register this switcher with market block for change notifications
         if (typeof market_block.registerSwitcherBlock === 'function') {
             market_block.registerSwitcherBlock(this);
@@ -75,18 +75,18 @@ window.Blockly.Blocks.switcher = {
             this.findAndRegisterWithMarketBlock();
             if (!this.market_block) return;
         }
-        
+
         const symbol_dropdown = this.market_block.getField('SYMBOL_LIST');
         if (!symbol_dropdown) return;
-        
+
         const symbol_options = symbol_dropdown.menuGenerator_; // eslint-disable-line
         if (!symbol_options || symbol_options.length === 0) return;
-        
+
         const current_market_symbol = symbol_dropdown.getValue();
-        
+
         const switcher_symbol_list = this.getField('SYMBOL_LIST');
         const current_selected_symbol = switcher_symbol_list.getValue();
-        
+
         // Update with all available symbols
         switcher_symbol_list.updateOptions(symbol_options, {
             default_value: current_selected_symbol || current_market_symbol,

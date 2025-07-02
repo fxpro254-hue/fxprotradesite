@@ -1,7 +1,7 @@
 let derivWs;
 let tickWs; // Add websocket for ticks only
 let tickHistory = [];
-let currentSymbol = "R_100";
+let currentSymbol = 'R_100';
 let decimalPlaces = 2;
 let stakeAmount = 0;
 let activeContracts = new Map(); // Track active contracts
@@ -18,7 +18,7 @@ let totalLosses = 0;
 // Add new variables at top
 let pendingProposals = {
     DIGITOVER: null,
-    DIGITUNDER: null
+    DIGITUNDER: null,
 };
 
 // Add contract subscription tracking
@@ -40,13 +40,13 @@ const storage = {
             console.warn('Storage access failed:', e);
             return null;
         }
-    }
+    },
 };
 
 // Update token manager to handle active account token
 const tokenManager = {
     storage: localStorage,
-    
+
     getActiveToken() {
         const active_loginid = this.getActiveLoginId();
         const accountsList = JSON.parse(this.storage.getItem('accountsList') || '{}');
@@ -58,8 +58,7 @@ const tokenManager = {
         if (!token || token === 'null') return 'CR6360772';
 
         const accountsList = JSON.parse(this.storage.getItem('accountsList') || '{}');
-        const activeLoginId = Object.keys(accountsList)
-            .find(key => accountsList[key] === token);
+        const activeLoginId = Object.keys(accountsList).find(key => accountsList[key] === token);
 
         return activeLoginId || 'CR6360772';
     },
@@ -82,7 +81,7 @@ const tokenManager = {
                     token,
                     currency: 'USD',
                     loginid,
-                    accountType: loginid.startsWith('VRTC') ? 'virtual' : 'real'
+                    accountType: loginid.startsWith('VRTC') ? 'virtual' : 'real',
                 };
                 return acc;
             }, {});
@@ -95,17 +94,17 @@ const tokenManager = {
     getDefaultAccounts() {
         return {
             CR6360772: {
-                token: "a1-1oLpIRm48jSZ0EGphJ27HwZwnkA9a",
+                token: 'a1-1oLpIRm48jSZ0EGphJ27HwZwnkA9a',
                 currency: 'USD',
                 loginid: 'CR6360772',
-                accountType: 'real'
+                accountType: 'real',
             },
             VRTC9432913: {
-                token: "a1-ltbv1sQMdv9O4LKESPexp7hIwrqRf",
+                token: 'a1-ltbv1sQMdv9O4LKESPexp7hIwrqRf',
                 currency: 'USD',
                 loginid: 'VRTC9432913',
-                accountType: 'virtual'
-            }
+                accountType: 'virtual',
+            },
         };
     },
 
@@ -114,7 +113,7 @@ const tokenManager = {
         const client_accounts = JSON.parse(this.storage.getItem('accountsList')) || {};
         return {
             token: client_accounts[active_loginid] || null,
-            account_id: active_loginid
+            account_id: active_loginid,
         };
     },
 
@@ -122,7 +121,7 @@ const tokenManager = {
         if (typeof window.useIntercom === 'function') {
             window.useIntercom(token);
         }
-    }
+    },
 };
 
 // Update clientStore token handling
@@ -161,7 +160,7 @@ let clientStore = {
     async validateToken() {
         try {
             const token = this.getToken();
-            
+
             if (!token) {
                 showNotification('Please log in to continue', 'error');
                 return false;
@@ -172,7 +171,7 @@ let clientStore = {
                 showNotification(error?.message || 'Token validation failed', 'error');
                 return false;
             }
-            
+
             return true;
         } catch (error) {
             console.error('Token validation error:', error);
@@ -184,7 +183,7 @@ let clientStore = {
             const active_loginid = tokenManager.getActiveLoginId();
             const accounts = tokenManager.getAccounts();
             const account = accounts[active_loginid];
-            
+
             if (!account) {
                 console.warn('No active account found, defaulting to CR account');
                 return accounts['CR6360772'];
@@ -196,14 +195,14 @@ let clientStore = {
             this.is_logged_in = true;
             this.balance = account.balance || '0';
             this.accountType = account.accountType;
-            
+
             console.log('Active account:', {
                 loginid: this.loginid,
                 currency: this.currency,
                 is_logged_in: this.is_logged_in,
-                accountType: this.accountType
+                accountType: this.accountType,
             });
-            
+
             return account;
         } catch (error) {
             console.error('Error getting active account:', error);
@@ -217,7 +216,7 @@ let clientStore = {
             return false;
         }
         return true;
-    }
+    },
 };
 
 // Update tradeStore to be read-only
@@ -229,7 +228,7 @@ const tradeStore = {
             console.warn('Error getting trade history:', error);
             return [];
         }
-    }
+    },
 };
 
 // Add Survicate initialization
@@ -277,7 +276,7 @@ function validateToken() {
 const APP_CONFIG = {
     local: '36300', // Local/test app ID
     staging: '68848', // Staging environment
-    production: '68848' // Production app ID
+    production: '68848', // Production app ID
 };
 
 // Helper to get appropriate app ID based on environment
@@ -301,11 +300,11 @@ const WS_URL = 'wss://ws.binaryws.com/websockets/v3';
 const auth = {
     ws: null,
     connecting: false,
-    
+
     async connect() {
         if (this.connecting) return;
         if (this.ws?.readyState === WebSocket.OPEN) return;
-        
+
         this.connecting = true;
         try {
             this.ws = new WebSocket(`${WS_URL}?app_id=${APP_ID}`);
@@ -320,7 +319,7 @@ const auth = {
 
     async authorize(token) {
         if (!token) return { authorize: null, error: 'No token provided' };
-        
+
         try {
             await this.connect();
             const response = await new Promise(resolve => {
@@ -328,7 +327,7 @@ const auth = {
                     resolve({ authorize: null, error: 'Authorization timeout' });
                 }, 10000);
 
-                const handleMessage = (msg) => {
+                const handleMessage = msg => {
                     clearTimeout(timeoutId);
                     const data = JSON.parse(msg.data);
                     this.ws.removeEventListener('message', handleMessage);
@@ -350,7 +349,7 @@ const auth = {
             this.ws.close();
             this.ws = null;
         }
-    }
+    },
 };
 
 // Add WebSocket manager implementation
@@ -378,8 +377,8 @@ const wsManager = {
         const delay = this.getDelay();
         this.attempts++;
 
-        showNotification(`Reconnecting in ${delay/1000} seconds... (Attempt ${this.attempts})`, 'warning');
-        
+        showNotification(`Reconnecting in ${delay / 1000} seconds... (Attempt ${this.attempts})`, 'warning');
+
         setTimeout(() => {
             startWebSocket()
                 .then(() => {
@@ -392,7 +391,7 @@ const wsManager = {
                     }
                 });
         }, delay);
-    }
+    },
 };
 
 // Update WebSocket initialization
@@ -413,22 +412,21 @@ async function startWebSocket() {
                 clearTimeout(timeoutId);
                 console.log('Trading WebSocket connected');
                 initializeWebSocket();
-                
+
                 // Authenticate immediately if token exists
                 const token = clientStore.getToken();
                 if (token) {
                     derivWs.send(JSON.stringify({ authorize: token }));
                 }
-                
+
                 resolve();
             };
 
-            derivWs.onerror = (error) => {
+            derivWs.onerror = error => {
                 clearTimeout(timeoutId);
                 console.error('WebSocket connection failed:', error);
                 reject(error);
             };
-
         } catch (error) {
             reject(error);
         }
@@ -449,9 +447,9 @@ function initializeWebSocket() {
         }
     };
 
-    derivWs.onmessage = (event) => {
+    derivWs.onmessage = event => {
         const data = JSON.parse(event.data);
-        
+
         if (data.error) {
             showNotification(data.error.message, 'error');
             return;
@@ -479,7 +477,7 @@ function initializeWebSocket() {
         if (data.proposal) handleProposalResponse(data.proposal);
     };
 
-    derivWs.onclose = (event) => {
+    derivWs.onclose = event => {
         console.log('WebSocket disconnected', event.code);
         updateConnectionStatus(false);
         if (!event.wasClean) {
@@ -487,7 +485,7 @@ function initializeWebSocket() {
         }
     };
 
-    derivWs.onerror = (error) => {
+    derivWs.onerror = error => {
         console.error('WebSocket error:', error);
         updateConnectionStatus(false);
     };
@@ -516,7 +514,7 @@ function startTickAnalysis(symbol = 'R_100') {
 
         try {
             tickWs = new WebSocket(`${WS_URL}?app_id=${APP_ID}`);
-            
+
             const timeoutId = setTimeout(() => {
                 reject(new Error('Tick WebSocket connection timeout'));
             }, 10000);
@@ -528,19 +526,19 @@ function startTickAnalysis(symbol = 'R_100') {
                 resolve();
             };
 
-            tickWs.onclose = (event) => {
+            tickWs.onclose = event => {
                 console.log('Tick WebSocket closed:', event.code);
                 if (!event.wasClean) {
                     reject(new Error('Tick WebSocket closed unexpectedly'));
                 }
             };
 
-            tickWs.onerror = (error) => {
+            tickWs.onerror = error => {
                 console.error('Tick WebSocket error:', error);
                 reject(error);
             };
 
-            tickWs.onmessage = (event) => {
+            tickWs.onmessage = event => {
                 try {
                     const data = JSON.parse(event.data);
                     processTickData(data);
@@ -562,15 +560,15 @@ function subscribeTicks(symbol) {
         ticks_history: symbol,
         adjust_start_time: 1,
         count: 100,
-        end: "latest",
+        end: 'latest',
         start: Math.floor(Date.now() / 1000) - 3600, // Last hour
-        style: "ticks"
+        style: 'ticks',
     };
-    
+
     // Then subscribe to ongoing ticks
     const tickRequest = {
         ticks: symbol,
-        subscribe: 1
+        subscribe: 1,
     };
 
     tickWs.send(JSON.stringify(historyRequest));
@@ -590,21 +588,21 @@ function processTickData(data) {
         tickHistory = data.history.prices.map((price, index) => ({
             time: data.history.times[index] * 1000, // Convert to milliseconds
             quote: parseFloat(price),
-            digit: getLastDigit(price)
+            digit: getLastDigit(price),
         }));
         detectDecimalPlaces();
         updateDigitAnalysis();
     }
-    
+
     // Handle live tick updates
     if (data.tick) {
         const quote = parseFloat(data.tick.quote);
         const tick = {
             time: data.tick.epoch * 1000,
             quote: quote,
-            digit: getLastDigit(quote)
+            digit: getLastDigit(quote),
         };
-        
+
         tickHistory.push(tick);
         if (tickHistory.length > 100) tickHistory.shift();
         updateDigitAnalysis();
@@ -615,9 +613,9 @@ function updateDigitAnalysis() {
     if (!tickHistory.length) return;
 
     const lastTick = tickHistory[tickHistory.length - 1];
-    
+
     // Update current price display
-    const priceElement = document.getElementById("current-price");
+    const priceElement = document.getElementById('current-price');
     if (priceElement) {
         priceElement.textContent = lastTick.quote.toFixed(decimalPlaces);
     }
@@ -642,18 +640,20 @@ function calculateDigitStats() {
 
     return stats.map(count => ({
         count,
-        percentage: (count / recentTicks.length) * 100
+        percentage: (count / recentTicks.length) * 100,
     }));
 }
 
 function updateDigitDisplay(digitStats, currentDigit) {
-    const container = document.getElementById("digit-display-container");
+    const container = document.getElementById('digit-display-container');
     if (!container) return;
 
     const maxCount = Math.max(...digitStats.map(s => s.count));
     const minCount = Math.min(...digitStats.map(s => s.count));
 
-    container.innerHTML = digitStats.map((stat, digit) => `
+    container.innerHTML = digitStats
+        .map(
+            (stat, digit) => `
         <div class="digit-container ${digit === currentDigit ? 'current' : ''}">
             <div class="digit-box ${stat.count === maxCount ? 'highest' : ''} 
                                ${stat.count === minCount ? 'lowest' : ''}">
@@ -664,7 +664,9 @@ function updateDigitDisplay(digitStats, currentDigit) {
             </div>
             ${digit === currentDigit ? '<div class="arrow"></div>' : ''}
         </div>
-    `).join('');
+    `
+        )
+        .join('');
 }
 
 // Add after WebSocket initialization
@@ -674,10 +676,10 @@ function requestTradeHistory() {
     }
 
     const request = {
-        "profit_table": 1,
-        "description": 1,
-        "sort": "DESC",
-        "limit": 10
+        profit_table: 1,
+        description: 1,
+        sort: 'DESC',
+        limit: 10,
     };
 
     derivWs.send(JSON.stringify(request));
@@ -696,15 +698,15 @@ function requestProposal(contractType, symbol, stake) {
         proposal: 1,
         subscribe: 1,
         amount: halfStake, // Use half stake
-        basis: "stake",
+        basis: 'stake',
         contract_type: contractType,
-        currency: "USD",
+        currency: 'USD',
         duration: 1,
-        duration_unit: "t",
+        duration_unit: 't',
         symbol: symbol,
-        barrier: "4"
+        barrier: '4',
     };
-    
+
     derivWs.send(JSON.stringify(request));
 }
 
@@ -725,14 +727,14 @@ function placeTrades(stake, symbol) {
         price: halfStake, // Use half stake
         parameters: {
             amount: halfStake, // Use half stake
-            basis: "stake",
-            contract_type: "DIGITOVER",
-            currency: "USD",
+            basis: 'stake',
+            contract_type: 'DIGITOVER',
+            currency: 'USD',
             duration: 1,
-            duration_unit: "t",
+            duration_unit: 't',
             symbol: symbol,
-            barrier: "5"
-        }
+            barrier: '5',
+        },
     };
 
     // Place DIGITUNDER trade at 4
@@ -742,14 +744,14 @@ function placeTrades(stake, symbol) {
         price: halfStake, // Use half stake
         parameters: {
             amount: halfStake, // Use half stake
-            basis: "stake",
-            contract_type: "DIGITUNDER",
-            currency: "USD",
+            basis: 'stake',
+            contract_type: 'DIGITUNDER',
+            currency: 'USD',
             duration: 1,
-            duration_unit: "t",
+            duration_unit: 't',
             symbol: symbol,
-            barrier: "5"
-        }
+            barrier: '5',
+        },
     };
 
     derivWs.send(JSON.stringify(overRequest));
@@ -767,26 +769,26 @@ function handleTradeExecution(signal) {
         proposal: 1,
         subscribe: 1,
         amount: stake,
-        basis: "stake",
-        contract_type: "DIGITOVER",
-        currency: "USD",
+        basis: 'stake',
+        contract_type: 'DIGITOVER',
+        currency: 'USD',
         duration: 1,
-        duration_unit: "t",
+        duration_unit: 't',
         symbol: currentSymbol,
-        barrier: "5"  // Fixed at 5
+        barrier: '5', // Fixed at 5
     };
 
     const underRequest = {
         proposal: 1,
         subscribe: 1,
         amount: stake,
-        basis: "stake",
-        contract_type: "DIGITUNDER",
-        currency: "USD",
+        basis: 'stake',
+        contract_type: 'DIGITUNDER',
+        currency: 'USD',
         duration: 1,
-        duration_unit: "t",
+        duration_unit: 't',
         symbol: currentSymbol,
-        barrier: "5"  // Fixed at 4
+        barrier: '5', // Fixed at 4
     };
 
     derivWs.send(JSON.stringify(overRequest));
@@ -802,15 +804,15 @@ function handleProposalResponse(proposal) {
         price: proposal.ask_price,
         type: proposal.contract_type,
         barrier: proposal.barrier,
-        timestamp: Date.now()
+        timestamp: Date.now(),
     };
 
     const buyRequest = {
         buy: proposal.id,
-        price: proposal.ask_price
+        price: proposal.ask_price,
     };
 
-    if (proposal.contract_type === "DIGITOVER" || proposal.contract_type === "DIGITUNDER") {
+    if (proposal.contract_type === 'DIGITOVER' || proposal.contract_type === 'DIGITUNDER') {
         derivWs.send(JSON.stringify(buyRequest));
         showNotification(`Placing ${proposal.contract_type} trade at barrier ${proposal.barrier}`, 'info');
     }
@@ -820,17 +822,17 @@ function handleProposalResponse(proposal) {
 function handleContractUpdate(contract) {
     if (!contract?.contract_id) return;
 
-    if (contract.status === "open") {
+    if (contract.status === 'open') {
         activeContracts.set(contract.contract_id, {
             type: contract.contract_type,
             entrySpot: contract.entry_spot,
             barrier: contract.barrier,
             buyPrice: contract.buy_price,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
-    if (contract.status === "won" || contract.status === "lost") {
+    if (contract.status === 'won' || contract.status === 'lost') {
         const tradeData = activeContracts.get(contract.contract_id);
         if (tradeData) {
             const result = {
@@ -843,9 +845,9 @@ function handleContractUpdate(contract) {
                 buyPrice: contract.buy_price,
                 payout: contract.payout,
                 profit: contract.profit,
-                isWin: contract.status === "won",
+                isWin: contract.status === 'won',
                 duration: ((contract.sell_time - contract.purchase_time) / 1000).toFixed(1),
-                contractId: contract.contract_id
+                contractId: contract.contract_id,
             };
 
             tradeResults.unshift(result);
@@ -886,13 +888,13 @@ function cleanupTrades() {
     // Reset pending proposals
     pendingProposals = {
         DIGITOVER: null,
-        DIGITUNDER: null
+        DIGITUNDER: null,
     };
 
     // Forget all proposals
     activeProposals.forEach((proposal, id) => {
         const request = {
-            forget: id
+            forget: id,
         };
         derivWs.send(JSON.stringify(request));
     });
@@ -901,8 +903,8 @@ function cleanupTrades() {
     // Close all active contract subscriptions
     activeContracts.forEach((_, contractId) => {
         const request = {
-            forget_all: ["proposal_open_contract"],
-            contract_id: contractId
+            forget_all: ['proposal_open_contract'],
+            contract_id: contractId,
         };
         derivWs.send(JSON.stringify(request));
     });
@@ -930,7 +932,7 @@ function subscribeToContract(contractId) {
     const request = {
         proposal_open_contract: 1,
         subscribe: 1,
-        contract_id: contractId
+        contract_id: contractId,
     };
 
     derivWs.send(JSON.stringify(request));
@@ -942,7 +944,7 @@ function subscribeToBalance() {
     if (derivWs && derivWs.readyState === WebSocket.OPEN) {
         const request = {
             balance: 1,
-            subscribe: 1
+            subscribe: 1,
         };
         derivWs.send(JSON.stringify(request));
     }
@@ -954,9 +956,9 @@ function requestTickHistory() {
         const request = {
             ticks_history: currentSymbol,
             count: 100,
-            end: "latest",
-            style: "ticks",
-            subscribe: 1
+            end: 'latest',
+            style: 'ticks',
+            subscribe: 1,
         };
         derivWs.send(JSON.stringify(request));
     }
@@ -966,7 +968,7 @@ function requestTickHistory() {
 function detectDecimalPlaces() {
     if (tickHistory.length === 0) return;
     let decimalCounts = tickHistory.map(tick => {
-        let decimalPart = tick.quote.toString().split(".")[1] || "";
+        let decimalPart = tick.quote.toString().split('.')[1] || '';
         return decimalPart.length;
     });
     decimalPlaces = Math.max(...decimalCounts, 2);
@@ -977,9 +979,9 @@ function getLastDigit(price) {
 
     try {
         let priceStr = price.toString();
-        let priceParts = priceStr.split(".");
-        let decimals = priceParts[1] || "";
-        while (decimals.length < decimalPlaces) decimals += "0";
+        let priceParts = priceStr.split('.');
+        let decimals = priceParts[1] || '';
+        while (decimals.length < decimalPlaces) decimals += '0';
         return Number(decimals.slice(-1));
     } catch (error) {
         console.error('Error getting last digit:', error);
@@ -991,10 +993,9 @@ function getLastDigit(price) {
 function updateDigitAnalysis() {
     try {
         const currentPrice = tickHistory[tickHistory.length - 1]?.quote;
-        const priceElement = document.getElementById("current-price");
+        const priceElement = document.getElementById('current-price');
         if (priceElement) {
-            priceElement.textContent = currentPrice !== undefined ?
-                currentPrice.toFixed(decimalPlaces) : "N/A";
+            priceElement.textContent = currentPrice !== undefined ? currentPrice.toFixed(decimalPlaces) : 'N/A';
         }
 
         updateDigitDisplay();
@@ -1005,7 +1006,7 @@ function updateDigitAnalysis() {
 
 function updateUI() {
     try {
-        const balanceElement = document.getElementById("account-balance");
+        const balanceElement = document.getElementById('account-balance');
         if (balanceElement) {
             balanceElement.textContent = `Balance: ${clientStore.currency} ${Number(clientStore.balance).toFixed(2)}`;
         }
@@ -1027,7 +1028,7 @@ function updateDigitDisplay() {
         return;
     }
 
-    const container = document.getElementById("digit-display-container");
+    const container = document.getElementById('digit-display-container');
     if (!container) {
         console.warn('Digit container not found');
         return;
@@ -1044,33 +1045,33 @@ function updateDigitDisplay() {
     });
 
     const total = digitCounts.reduce((sum, count) => sum + count, 0);
-    const digitPercentages = digitCounts.map(count => total > 0 ? (count / total) * 100 : 0);
+    const digitPercentages = digitCounts.map(count => (total > 0 ? (count / total) * 100 : 0));
     const maxPercentage = Math.max(...digitPercentages);
     const minPercentage = Math.min(...digitPercentages);
 
     const currentQuote = tickHistory[tickHistory.length - 1]?.quote;
     const currentDigit = currentQuote !== undefined ? getLastDigit(currentQuote) : null;
 
-    container.innerHTML = "";
+    container.innerHTML = '';
     digitPercentages.forEach((percentage, digit) => {
-        const digitContainer = document.createElement("div");
-        digitContainer.classList.add("digit-container");
+        const digitContainer = document.createElement('div');
+        digitContainer.classList.add('digit-container');
 
         if (digit === currentDigit) {
-            digitContainer.classList.add("current");
-            const arrow = document.createElement("div");
-            arrow.classList.add("arrow");
+            digitContainer.classList.add('current');
+            const arrow = document.createElement('div');
+            arrow.classList.add('arrow');
             digitContainer.appendChild(arrow);
         }
 
-        const digitBox = document.createElement("div");
-        digitBox.classList.add("digit-box");
-        if (percentage === maxPercentage) digitBox.classList.add("highest");
-        if (percentage === minPercentage) digitBox.classList.add("lowest");
+        const digitBox = document.createElement('div');
+        digitBox.classList.add('digit-box');
+        if (percentage === maxPercentage) digitBox.classList.add('highest');
+        if (percentage === minPercentage) digitBox.classList.add('lowest');
         digitBox.textContent = digit;
 
-        const percentageText = document.createElement("div");
-        percentageText.classList.add("digit-percentage");
+        const percentageText = document.createElement('div');
+        percentageText.classList.add('digit-percentage');
         percentageText.textContent = `${percentage.toFixed(2)}%`;
 
         digitContainer.appendChild(digitBox);
@@ -1094,7 +1095,7 @@ function updateTradeResults(digit, isWin, contractDetails) {
         buyPrice: contractDetails.buyPrice,
         payout: contractDetails.payout,
         duration: contractDetails.duration,
-        timestamp: Date.now()
+        timestamp: Date.now(),
     };
 
     tradeResults.unshift(result);
@@ -1135,7 +1136,9 @@ function updateResultsDisplay() {
             </div>
         </div>
         <div class="trade-results">
-            ${tradeResults.map(result => `
+            ${tradeResults
+                .map(
+                    result => `
                 <div class="trade-result ${result.isWin ? 'win' : 'loss'}">
                     <div class="trade-details">
                         <span>Exit: ${result.exitSpot}</span>
@@ -1146,7 +1149,9 @@ function updateResultsDisplay() {
                         ${result.profit >= 0 ? '+' : ''}$${parseFloat(result.profit).toFixed(2)}
                     </span>
                 </div>
-            `).join('')}
+            `
+                )
+                .join('')}
         </div>
     `;
 
@@ -1156,16 +1161,16 @@ function updateResultsDisplay() {
 // Add this new function to sync symbol dropdown and analyzer
 function syncSymbol(newSymbol) {
     if (!newSymbol) return;
-    
+
     // Update current symbol globally
     currentSymbol = newSymbol;
-    
+
     // Update dropdown if it exists
     const symbolDropdown = document.getElementById('symbol');
     if (symbolDropdown && symbolDropdown.value !== newSymbol) {
         symbolDropdown.value = newSymbol;
     }
-    
+
     // Reset tick history and start new analysis
     tickHistory = [];
     startTickAnalysis(newSymbol);
@@ -1177,12 +1182,12 @@ function syncSymbol(newSymbol) {
 }
 
 // Update the symbol change handler
-document.getElementById('symbol').addEventListener('change', function(e) {
+document.getElementById('symbol').addEventListener('change', function (e) {
     syncSymbol(e.target.value);
 });
 
 // Modify the form submission handler
-document.getElementById('tradingForm').addEventListener('submit', function(e) {
+document.getElementById('tradingForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
     const activeAccount = clientStore.getActiveAccount();
@@ -1216,15 +1221,15 @@ document.getElementById('tradingForm').addEventListener('submit', function(e) {
 });
 
 // Update the DOMContentLoaded event listener
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     try {
         // Sync symbol dropdown with current symbol
         syncSymbol(currentSymbol);
-        
+
         // Initialize WebSocket connections immediately
         let connectionAttempts = 0;
         const maxAttempts = 3;
-        
+
         while (connectionAttempts < maxAttempts) {
             try {
                 await Promise.all([
@@ -1235,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     startTickAnalysis(currentSymbol).catch(e => {
                         console.warn('Tick analysis connection failed, retrying...', e);
                         throw e;
-                    })
+                    }),
                 ]);
                 break; // Exit loop if successful
             } catch (error) {
@@ -1264,7 +1269,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Initialize UI
         updateUI();
-        
     } catch (error) {
         console.error('Failed to initialize:', error);
         showNotification('Failed to connect to trading server. Please refresh.', 'error');
@@ -1273,10 +1277,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Add fullscreen functionality
 function toggleFullscreen() {
-    if (!document.fullscreenElement &&
+    if (
+        !document.fullscreenElement &&
         !document.mozFullScreenElement &&
         !document.webkitFullscreenElement &&
-        !document.msFullscreenElement) {
+        !document.msFullscreenElement
+    ) {
         // Enter fullscreen
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen();

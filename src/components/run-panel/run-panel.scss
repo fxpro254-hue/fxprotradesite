@@ -189,7 +189,7 @@
         margin-bottom: 4px;
         border-radius: 4px;
         background-color: var(--general-section-1);
-        
+
         &.pending {
             background-color: var(--general-hover);
         }
@@ -197,7 +197,7 @@
         &.profit--positive {
             border-left: 3px solid var(--status-success);
         }
-        
+
         &.profit--negative {
             border-left: 3px solid var(--status-danger);
         }
@@ -221,15 +221,15 @@
     &__trade-result-profit {
         font-size: 14px;
         font-weight: bold;
-        
+
         &.pending {
             color: var(--text-less-prominent);
         }
-        
+
         &.profit--positive {
             color: var(--status-success);
         }
-        
+
         &.profit--negative {
             color: var(--status-danger);
         }

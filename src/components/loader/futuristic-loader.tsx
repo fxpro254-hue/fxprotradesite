@@ -11,12 +11,12 @@ const FuturisticLoader: React.FC<FuturisticLoaderProps> = ({ message }) => {
 
     useEffect(() => {
         const startTime = Date.now();
-        
+
         const timer = setInterval(() => {
             const elapsedTime = Date.now() - startTime;
             const progressValue = Math.min((elapsedTime / MINIMUM_LOADING_TIME) * 100, 100);
             setProgress(Math.floor(progressValue));
-            
+
             if (progressValue >= 100) {
                 clearInterval(timer);
             }
@@ -28,7 +28,9 @@ const FuturisticLoader: React.FC<FuturisticLoaderProps> = ({ message }) => {
     return (
         <div className='futuristic-loader'>
             <div className='loader-content'>
-                <h1 className='logo'>BINARY<span>FX</span></h1>
+                <h1 className='logo'>
+                    BINARY<span>FX</span>
+                </h1>
                 <div className='progress-bar'>
                     <div className='progress' style={{ width: `${progress}%` }}></div>
                     <div className='percentage'>{progress}%</div>

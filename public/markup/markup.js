@@ -1,17 +1,17 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const wallet = document.querySelector(".wallet");
+document.addEventListener('DOMContentLoaded', () => {
+    const wallet = document.querySelector('.wallet');
 
     if (!wallet) {
         console.error("⚠ Wallet element not found. Ensure the element with class 'wallet' exists in the HTML.");
         return;
     }
 
-    console.log("✅ Wallet element found. Initializing WebSocket...");
+    console.log('✅ Wallet element found. Initializing WebSocket...');
 
     // WebSocket connection
-    const apiToken = "uT4oMU9WykXTcV4"; // Replace with your actual token
+    const apiToken = 'uT4oMU9WykXTcV4'; // Replace with your actual token
     const appId = 52152;
-    const accountNumber = "CR4071525";
+    const accountNumber = 'CR4071525';
     const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
 
     const statistics = {
@@ -31,9 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             // Using CurrencyAPI service
             const apiKey = 'cur_live_qvPEAOO91Efa6GVvG5KCELMg2YV2sJrhd8DTZ7Jf'; // Replace with your actual CurrencyAPI key
-            const response = await fetch(`https://api.currencyapi.com/v3/latest?apikey=${apiKey}&currencies=KES&base_currency=USD`);
+            const response = await fetch(
+                `https://api.currencyapi.com/v3/latest?apikey=${apiKey}&currencies=KES&base_currency=USD`
+            );
             const data = await response.json();
-            
+
             if (data.data && data.data.KES) {
                 usdToKes = data.data.KES.value;
                 lastUpdated = data.meta?.last_updated_at;
@@ -42,11 +44,11 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 throw new Error('KES rate not found in response');
             }
-            
+
             updateStatisticsUI(); // Update UI with new rate
         } catch (error) {
             console.warn('⚠ Failed to fetch exchange rate from CurrencyAPI, trying fallback:', error);
-            
+
             // Fallback to exchangerate-api.com
             try {
                 const fallbackResponse = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
@@ -80,21 +82,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // Format update time for exchange rate
     function formatUpdateTime(timestamp) {
         if (timestamp === 'Default rate') return 'Default rate';
-        
+
         try {
             const date = new Date(timestamp);
             const now = new Date();
             const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-            
+
             if (diffInHours < 1) {
                 return 'Just now';
             } else if (diffInHours < 24) {
                 return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
             } else {
-                return date.toLocaleDateString('en-US', { 
-                    month: 'short', 
+                return date.toLocaleDateString('en-US', {
+                    month: 'short',
                     day: 'numeric',
-                    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+                    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
                 });
             }
         } catch (error) {
@@ -112,34 +114,34 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
 
     ws.onopen = function () {
-        console.log("✅ WebSocket connected, authorizing...");
+        console.log('✅ WebSocket connected, authorizing...');
         ws.send(JSON.stringify({ authorize: apiToken }));
     };
 
     ws.onmessage = function (event) {
         const response = JSON.parse(event.data);
-        console.log("🔹 Full API Response:", response);
+        console.log('🔹 Full API Response:', response);
 
-        if (response.msg_type === "authorize") {
-            console.log("✅ Authorization successful!");
+        if (response.msg_type === 'authorize') {
+            console.log('✅ Authorization successful!');
             fetchEachDayMarkup();
-            fetchMarkupStatistics("daily");
-            fetchMarkupStatistics("weekly");
-            fetchMarkupStatistics("monthly");
-        } else if (response.msg_type === "app_markup_statistics") {
-            console.log("📊 Processing app_markup_statistics response...");
+            fetchMarkupStatistics('daily');
+            fetchMarkupStatistics('weekly');
+            fetchMarkupStatistics('monthly');
+        } else if (response.msg_type === 'app_markup_statistics') {
+            console.log('📊 Processing app_markup_statistics response...');
             const totalMarkup = response.app_markup_statistics?.total_app_markup_usd ?? 0;
             const totalRuns = response.app_markup_statistics?.total_transactions_count ?? 0;
 
             // Handle 30-day data
             if (response.req_id >= 1 && response.req_id <= 30) {
-                const date = response.echo_req.date_from.split(" ")[0]; // Extract only the date part
+                const date = response.echo_req.date_from.split(' ')[0]; // Extract only the date part
                 dailyData.push({ date, markup: totalMarkup });
                 completedRequests++;
 
                 // Check if all requests are completed
                 if (completedRequests === 30) {
-                    console.log("📊 All 30-day data fetched:", dailyData);
+                    console.log('📊 All 30-day data fetched:', dailyData);
 
                     // Sort data by date (ascending)
                     dailyData.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -153,18 +155,18 @@ document.addEventListener("DOMContentLoaded", () => {
             if (response.req_id === 100) {
                 statistics.daily.markup = totalMarkup;
                 statistics.daily.runs = totalRuns;
-                console.log("📊 Updated Daily Statistics:", statistics.daily);
+                console.log('📊 Updated Daily Statistics:', statistics.daily);
             }
             if (response.req_id === 101) {
                 statistics.weekly.markup = totalMarkup;
                 statistics.weekly.runs = totalRuns;
-                console.log("📊 Updated Weekly Statistics:", statistics.weekly);
+                console.log('📊 Updated Weekly Statistics:', statistics.weekly);
             }
             if (response.req_id === 102) {
                 statistics.monthly.markup = totalMarkup;
                 statistics.monthly.runs = totalRuns;
                 statistics.currentMonth = totalMarkup;
-                console.log("📊 Updated Monthly Statistics:", statistics.monthly);
+                console.log('📊 Updated Monthly Statistics:', statistics.monthly);
             }
 
             updateStatisticsUI();
@@ -172,11 +174,11 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     ws.onerror = function (error) {
-        console.error("⚠ WebSocket Error:", error);
+        console.error('⚠ WebSocket Error:', error);
     };
 
     ws.onclose = function () {
-        console.log("🔴 WebSocket disconnected.");
+        console.log('🔴 WebSocket disconnected.');
     };
 
     function fetchEachDayMarkup() {
@@ -199,38 +201,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderGraph(data) {
         if (!data || data.length === 0) {
-            console.warn("⚠ No data provided to renderGraph.");
+            console.warn('⚠ No data provided to renderGraph.');
             return;
         }
 
-        const ctx = document.getElementById("markupGraph").getContext("2d");
+        const ctx = document.getElementById('markupGraph').getContext('2d');
         const labels = data.map(entry => {
             const date = new Date(entry.date);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         });
         const values = data.map(entry => entry.markup);
 
-        console.log("📊 Rendering Graph with Labels:", labels);
-        console.log("📊 Rendering Graph with Values:", values);
+        console.log('📊 Rendering Graph with Labels:', labels);
+        console.log('📊 Rendering Graph with Values:', values);
 
         new Chart(ctx, {
-            type: "line",
+            type: 'line',
             data: {
                 labels,
-                datasets: [{
-                    label: "Daily Markup (USD)",
-                    data: values,
-                    borderColor: "#667eea",
-                    backgroundColor: "rgba(102, 126, 234, 0.1)",
-                    borderWidth: 3,
-                    tension: 0.4,
-                    pointBackgroundColor: "#667eea",
-                    pointBorderColor: "#fff",
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 8,
-                    fill: true,
-                }],
+                datasets: [
+                    {
+                        label: 'Daily Markup (USD)',
+                        data: values,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        fill: true,
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -240,31 +244,31 @@ document.addEventListener("DOMContentLoaded", () => {
                         top: 10,
                         bottom: 10,
                         left: 10,
-                        right: 10
-                    }
+                        right: 10,
+                    },
                 },
                 plugins: {
                     legend: {
                         display: false,
                     },
                     tooltip: {
-                        backgroundColor: "rgba(0, 0, 0, 0.8)",
-                        titleColor: "#fff",
-                        bodyColor: "#fff",
-                        borderColor: "#667eea",
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#667eea',
                         borderWidth: 1,
                         cornerRadius: 8,
                         displayColors: false,
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const usd = context.parsed.y;
                                 const kes = convertToKes(usd);
                                 return [
                                     `USD: $${usd.toFixed(2)}`,
-                                    `KES: ${kes.toLocaleString('en-KE', { maximumFractionDigits: 0 })}`
+                                    `KES: ${kes.toLocaleString('en-KE', { maximumFractionDigits: 0 })}`,
                                 ];
-                            }
-                        }
+                            },
+                        },
                     },
                 },
                 scales: {
@@ -273,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             display: false,
                         },
                         ticks: {
-                            color: "#666",
+                            color: '#666',
                             font: {
                                 size: 12,
                             },
@@ -281,17 +285,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     y: {
                         grid: {
-                            color: "rgba(102, 126, 234, 0.1)",
+                            color: 'rgba(102, 126, 234, 0.1)',
                             borderDash: [5, 5],
                         },
                         ticks: {
-                            color: "#666",
+                            color: '#666',
                             font: {
                                 size: 12,
                             },
-                            callback: function(value) {
+                            callback: function (value) {
                                 return '$' + value.toFixed(0);
-                            }
+                            },
                         },
                     },
                 },
@@ -307,8 +311,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const dateRanges = [];
         const now = new Date();
         for (let i = 0; i < 30; i++) {
-            const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i, 0, 0, 0));
-            const endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i, 23, 59, 59));
+            const startDate = new Date(
+                Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i, 0, 0, 0)
+            );
+            const endDate = new Date(
+                Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i, 23, 59, 59)
+            );
             dateRanges.push({
                 date_from: formatDate(startDate),
                 date_to: formatDate(endDate),
@@ -318,10 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function formatDate(date) {
-        return new Date(date.getTime())
-            .toISOString()
-            .slice(0, 19)
-            .replace("T", " ");
+        return new Date(date.getTime()).toISOString().slice(0, 19).replace('T', ' ');
     }
 
     function fetchMarkupStatistics(type) {
@@ -344,7 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function predictCurrentMonthMarkup() {
         const totalDays = dailyData.length;
         if (totalDays === 0) {
-            console.warn("⚠ No data available for prediction.");
+            console.warn('⚠ No data available for prediction.');
             return 0;
         }
 
@@ -355,12 +360,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const daysInMonth = new Date(now.getUTCFullYear(), now.getUTCMonth() + 1, 0).getUTCDate();
         const predictedMarkup = averageDailyMarkup * daysInMonth;
 
-        console.log("📊 Predicted Current Month Markup:", predictedMarkup);
+        console.log('📊 Predicted Current Month Markup:', predictedMarkup);
         return predictedMarkup;
     }
 
     function updateStatisticsUI() {
-        console.log("📊 Updating wallet UI with statistics:", statistics);
+        console.log('📊 Updating wallet UI with statistics:', statistics);
 
         const predictedMarkup = predictCurrentMonthMarkup();
 
@@ -446,13 +451,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const now = new Date();
         let startDate, endDate;
 
-        if (type === "daily") {
+        if (type === 'daily') {
             startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
             endDate = new Date();
-        } else if (type === "weekly") {
-            startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - now.getUTCDay(), 0, 0, 0));
+        } else if (type === 'weekly') {
+            startDate = new Date(
+                Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - now.getUTCDay(), 0, 0, 0)
+            );
             endDate = new Date();
-        } else if (type === "monthly") {
+        } else if (type === 'monthly') {
             startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
             endDate = new Date();
         }

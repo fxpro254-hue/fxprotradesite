@@ -138,7 +138,7 @@ const AdvancedDisplay = observer(() => {
         } catch (error) {
             console.error('Error loading trading settings from localStorage:', error);
         }
-        
+
         // Default settings if nothing in localStorage or error occurs
         return {
             stake: 1,
@@ -279,29 +279,29 @@ const AdvancedDisplay = observer(() => {
 
     // Function to toggle settings modal with useCallback to prevent recreating on every render
     const toggleSettingsModal = useCallback(() => {
-        setIsSettingsModalOpen((prev) => !prev);
+        setIsSettingsModalOpen(prev => !prev);
     }, []);
 
     // Function to handle settings changes with useCallback - updated to save to localStorage
     const handleSettingChange = useCallback((field: keyof TradingSettings, value: string | boolean) => {
-        setTradingSettings((prev) => {
+        setTradingSettings(prev => {
             // For numeric fields
             let updatedSettings = { ...prev };
-            
+
             if (typeof value === 'string') {
                 const numValue = parseFloat(value);
                 if (!isNaN(numValue)) {
                     updatedSettings[field] = numValue;
                 }
             }
-            
+
             // Save to localStorage
             try {
                 localStorage.setItem(STORAGE_KEYS.TRADING_SETTINGS, JSON.stringify(updatedSettings));
             } catch (error) {
                 console.error('Error saving trading settings to localStorage:', error);
             }
-            
+
             return updatedSettings;
         });
     }, []);
@@ -327,78 +327,78 @@ const AdvancedDisplay = observer(() => {
         if (!isSettingsModalOpen) return null;
 
         return (
-            <div className="settings-modal-overlay" onClick={toggleSettingsModal}>
-                <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
-                    <div className="settings-modal__header">
+            <div className='settings-modal-overlay' onClick={toggleSettingsModal}>
+                <div className='settings-modal' onClick={e => e.stopPropagation()}>
+                    <div className='settings-modal__header'>
                         <h3>Trading Settings</h3>
-                        <button className="settings-modal__close-btn" onClick={toggleSettingsModal}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M6 18L18 6M6 6l12 12" />
+                        <button className='settings-modal__close-btn' onClick={toggleSettingsModal}>
+                            <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+                                <path d='M6 18L18 6M6 6l12 12' />
                             </svg>
                         </button>
                     </div>
-                    <div className="settings-modal__content">
-                        <div className="settings-group">
-                            <div className="settings-group-title">Trade Parameters</div>
+                    <div className='settings-modal__content'>
+                        <div className='settings-group'>
+                            <div className='settings-group-title'>Trade Parameters</div>
 
-                            <div className="settings-field">
-                                <label htmlFor="stake">Stake Amount</label>
+                            <div className='settings-field'>
+                                <label htmlFor='stake'>Stake Amount</label>
                                 <input
-                                    type="number"
-                                    id="stake"
+                                    type='number'
+                                    id='stake'
                                     value={tradingSettings.stake}
-                                    onChange={(e) => handleSettingChange('stake', e.target.value)}
-                                    min="0.35"
-                                    step="0.01"
+                                    onChange={e => handleSettingChange('stake', e.target.value)}
+                                    min='0.35'
+                                    step='0.01'
                                 />
                             </div>
 
-                            <div className="settings-field">
-                                <label htmlFor="martingale">Martingale Factor</label>
+                            <div className='settings-field'>
+                                <label htmlFor='martingale'>Martingale Factor</label>
                                 <input
-                                    type="number"
-                                    id="martingale"
+                                    type='number'
+                                    id='martingale'
                                     value={tradingSettings.martingale}
-                                    onChange={(e) => handleSettingChange('martingale', e.target.value)}
-                                    min="1"
-                                    step="0.1"
+                                    onChange={e => handleSettingChange('martingale', e.target.value)}
+                                    min='1'
+                                    step='0.1'
                                 />
                             </div>
                         </div>
 
-                        <div className="settings-group">
-                            <div className="settings-group-title">Risk Management</div>
+                        <div className='settings-group'>
+                            <div className='settings-group-title'>Risk Management</div>
 
-                            <div className="settings-field">
-                                <label htmlFor="takeProfit">Take Profit (USD)</label>
+                            <div className='settings-field'>
+                                <label htmlFor='takeProfit'>Take Profit (USD)</label>
                                 <input
-                                    type="number"
-                                    id="takeProfit"
+                                    type='number'
+                                    id='takeProfit'
                                     value={tradingSettings.takeProfit}
-                                    onChange={(e) => handleSettingChange('takeProfit', e.target.value)}
-                                    min="0"
-                                    step="1"
+                                    onChange={e => handleSettingChange('takeProfit', e.target.value)}
+                                    min='0'
+                                    step='1'
                                 />
                             </div>
 
-                            <div className="settings-field">
-                                <label htmlFor="stopLoss">Stop Loss (USD)</label>
+                            <div className='settings-field'>
+                                <label htmlFor='stopLoss'>Stop Loss (USD)</label>
                                 <input
-                                    type="number"
-                                    id="stopLoss"
+                                    type='number'
+                                    id='stopLoss'
                                     value={tradingSettings.stopLoss}
-                                    onChange={(e) => handleSettingChange('stopLoss', e.target.value)}
-                                    min="0"
-                                    step="1"
+                                    onChange={e => handleSettingChange('stopLoss', e.target.value)}
+                                    min='0'
+                                    step='1'
                                 />
                             </div>
                         </div>
                     </div>
-                    <div className="settings-modal__footer">
-                        <Button onClick={toggleSettingsModal} variant="secondary">
+                    <div className='settings-modal__footer'>
+                        <Button onClick={toggleSettingsModal} variant='secondary'>
                             Cancel
                         </Button>
-                        <Button onClick={saveSettings} className="futuristic-button">
+                        <Button onClick={saveSettings} className='futuristic-button'>
                             Save Settings
                         </Button>
                     </div>
@@ -418,7 +418,7 @@ const AdvancedDisplay = observer(() => {
             details,
         };
 
-        setNotifications((prevNotifications) => [...prevNotifications, newNotification]);
+        setNotifications(prevNotifications => [...prevNotifications, newNotification]);
 
         // Auto-dismiss after a delay (longer for important notifications)
         const dismissDelay = type === 'error' ? 8000 : type === 'success' ? 5000 : 4000;
@@ -429,7 +429,7 @@ const AdvancedDisplay = observer(() => {
 
     // Dismiss notification function
     const dismissNotification = useCallback((id: number) => {
-        setNotifications((prevNotifications) => prevNotifications.filter((notification) => notification.id !== id));
+        setNotifications(prevNotifications => prevNotifications.filter(notification => notification.id !== id));
     }, []);
 
     // Add a debug helper function to log contract activity
@@ -449,21 +449,23 @@ const AdvancedDisplay = observer(() => {
             ws.send(JSON.stringify({ authorize: token }));
         };
 
-        ws.onmessage = (event) => {
+        ws.onmessage = event => {
             const data = JSON.parse(event.data);
 
             // Improved buy response handling
             if (data.buy !== undefined) {
                 logContractActivity('Trade success response', data.buy);
-                
+
                 if (data.buy && typeof data.buy === 'object' && 'contract_id' in data.buy) {
                     // Immediately subscribe to this contract to ensure we get updates
-                    ws.send(JSON.stringify({
-                        proposal_open_contract: 1,
-                        contract_id: data.buy.contract_id,
-                        subscribe: 1
-                    }));
-                    
+                    ws.send(
+                        JSON.stringify({
+                            proposal_open_contract: 1,
+                            contract_id: data.buy.contract_id,
+                            subscribe: 1,
+                        })
+                    );
+
                     handleTradeSuccess(data);
                 } else {
                     console.error('Received malformed buy response:', data);
@@ -483,9 +485,9 @@ const AdvancedDisplay = observer(() => {
                     entry: contract.entry_tick,
                     exit: contract.exit_tick,
                     profit: contract.profit,
-                    is_sold: contract.is_sold
+                    is_sold: contract.is_sold,
                 });
-                
+
                 handleContractUpdate(contract);
             }
 
@@ -501,14 +503,14 @@ const AdvancedDisplay = observer(() => {
                 console.log('WebSocket authorized.');
                 setTradeStatus('idle');
                 setTradeMessage('Authenticated for trading');
-                Array.from(activeContracts.keys()).forEach((contractId) => {
+                Array.from(activeContracts.keys()).forEach(contractId => {
                     ws.send(JSON.stringify({ proposal_open_contract: 1, contract_id: contractId, subscribe: 1 }));
                 });
                 setTimeout(() => setTradeMessage(''), 3000);
             }
         };
 
-        ws.onerror = (error) => {
+        ws.onerror = error => {
             console.error('WebSocket error:', error);
             setTradeStatus('error');
             setTradeMessage('Connection error. Please try again.');
@@ -542,12 +544,19 @@ const AdvancedDisplay = observer(() => {
             // --- Start: Extract Symbol from longcode ---
             let parsedSymbol: SymbolType = 'R_10'; // Default fallback
             const symbolMatch = longcode.match(/^([^_]+)/); // Match characters from the start until the first underscore
-            if (symbolMatch && ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'].includes(symbolMatch[1])) {
+            if (
+                symbolMatch &&
+                ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'].includes(
+                    symbolMatch[1]
+                )
+            ) {
                 parsedSymbol = symbolMatch[1] as SymbolType;
                 console.log(`Parsed symbol from longcode: ${parsedSymbol}`);
             } else {
                 // Fallback to activeTradeSymbol if parsing fails, but log a warning
-                console.warn(`Could not parse symbol from longcode: ${longcode}. Falling back to activeTradeSymbol: ${activeTradeSymbol}`);
+                console.warn(
+                    `Could not parse symbol from longcode: ${longcode}. Falling back to activeTradeSymbol: ${activeTradeSymbol}`
+                );
                 parsedSymbol = activeTradeSymbol || 'R_10'; // Use state as fallback
             }
             // --- End: Extract Symbol from longcode ---
@@ -604,7 +613,9 @@ const AdvancedDisplay = observer(() => {
             let display_name = getReadableContractType(contractType); // Now uses the parsed contractType
             let display_message = `Contract parameter: ${display_name} ${barrier || ''} on ${parsedSymbol}`;
 
-            switch (contractType) { // Switch now uses the correctly parsed contractType
+            switch (
+                contractType // Switch now uses the correctly parsed contractType
+            ) {
                 case 'DIGITDIFF':
                     parameter_type = 'differ_barrier';
                     display_name = 'Digit Differs';
@@ -695,11 +706,7 @@ const AdvancedDisplay = observer(() => {
             // Now perform other state updates for this component's UI
             setTradeStatus('success');
             setTradeMessage(`Trade successful! Contract ID: ${contractId} - ${buy.longcode}`);
-            showNotification(
-                `Trade placed successfully!`,
-                'success',
-                `Contract ID: ${contractId} - Amount: $${stake}`
-            );
+            showNotification(`Trade placed successfully!`, 'success', `Contract ID: ${contractId} - Amount: $${stake}`);
 
             // Store contract in activeContracts map for internal tracking
             const internalTradeData = {
@@ -708,7 +715,7 @@ const AdvancedDisplay = observer(() => {
                 timestamp: purchaseTime,
                 status: 'pending',
             };
-            setActiveContracts((prev) => {
+            setActiveContracts(prev => {
                 const updated = new Map(prev);
                 updated.set(contractId, internalTradeData);
                 return updated;
@@ -725,11 +732,13 @@ const AdvancedDisplay = observer(() => {
             // Explicitly request an update for this contract (keep this)
             if (tradeWs && tradeWs.readyState === WebSocket.OPEN) {
                 console.log(`Explicitly requesting updates for contract: ${contractId}`);
-                tradeWs.send(JSON.stringify({
-                    proposal_open_contract: 1,
-                    contract_id: contractId,
-                    subscribe: 1
-                }));
+                tradeWs.send(
+                    JSON.stringify({
+                        proposal_open_contract: 1,
+                        contract_id: contractId,
+                        subscribe: 1,
+                    })
+                );
             }
 
             // Reset status after 5 seconds (keep this)
@@ -754,8 +763,8 @@ const AdvancedDisplay = observer(() => {
         const contractId = contract.contract_id;
 
         // Update internal activeContracts state
-        if (contract.status === "open" || !contract.is_sold) {
-            setActiveContracts((prev) => {
+        if (contract.status === 'open' || !contract.is_sold) {
+            setActiveContracts(prev => {
                 const updated = new Map(prev);
                 updated.set(contractId, {
                     ...(updated.get(contractId) || {}),
@@ -769,10 +778,18 @@ const AdvancedDisplay = observer(() => {
                     currentSpotTime: contract.current_spot_time,
                     entryTime: contract.entry_tick_time,
                     exitTime: contract.exit_tick_time,
-                    remainingTime: contract.date_expiry ? (contract.date_expiry - Math.floor(Date.now() / 1000)) : undefined,
-                    progress: contract.purchase_time && contract.date_expiry ?
-                        Math.min(100, ((Math.floor(Date.now() / 1000) - contract.purchase_time) / (contract.date_expiry - contract.purchase_time)) * 100)
+                    remainingTime: contract.date_expiry
+                        ? contract.date_expiry - Math.floor(Date.now() / 1000)
                         : undefined,
+                    progress:
+                        contract.purchase_time && contract.date_expiry
+                            ? Math.min(
+                                  100,
+                                  ((Math.floor(Date.now() / 1000) - contract.purchase_time) /
+                                      (contract.date_expiry - contract.purchase_time)) *
+                                      100
+                              )
+                            : undefined,
                 });
                 return updated;
             });
@@ -791,7 +808,7 @@ const AdvancedDisplay = observer(() => {
 
             setCompletedContract(contract);
 
-            setActiveContracts((prev) => {
+            setActiveContracts(prev => {
                 const updated = new Map(prev);
                 const initialTradeData = updated.get(contract.contract_id);
 
@@ -813,7 +830,10 @@ const AdvancedDisplay = observer(() => {
                         timestamp: initialTradeData.timestamp || Date.now(),
                         status: status,
                         barrier: contract.barrier,
-                        duration: contract.sell_time && contract.purchase_time ? ((contract.sell_time - contract.purchase_time)).toFixed(1) : 'N/A',
+                        duration:
+                            contract.sell_time && contract.purchase_time
+                                ? (contract.sell_time - contract.purchase_time).toFixed(1)
+                                : 'N/A',
                         purchaseTime: contract.purchase_time * 1000,
                         entryTime: contract.entry_tick_time * 1000,
                         exitTime: contract.exit_tick_time * 1000,
@@ -821,19 +841,19 @@ const AdvancedDisplay = observer(() => {
 
                     console.log('Trade result processed:', result);
 
-                    setTradeHistory((prevHistory) => [result, ...prevHistory.slice(0, 49)]);
+                    setTradeHistory(prevHistory => [result, ...prevHistory.slice(0, 49)]);
 
                     const currentTotalProfit = parseFloat(localStorage.getItem(STORAGE_KEYS.TOTAL_PROFIT) || '0');
                     const newTotalProfit = currentTotalProfit + parseFloat(String(result.profit || 0));
                     localStorage.setItem(STORAGE_KEYS.TOTAL_PROFIT, newTotalProfit.toString());
 
                     if (result.isWin) {
-                        setTotalWins((prev) => prev + 1);
+                        setTotalWins(prev => prev + 1);
                         setConsecutiveLosses(0);
-                        setConsecutiveWins((prev) => prev + 1);
+                        setConsecutiveWins(prev => prev + 1);
                     } else {
-                        setTotalLosses((prev) => prev + 1);
-                        setConsecutiveLosses((prev) => prev + 1);
+                        setTotalLosses(prev => prev + 1);
+                        setConsecutiveLosses(prev => prev + 1);
                         setConsecutiveWins(0);
                     }
                     setTotalProfit(newTotalProfit);
@@ -854,7 +874,7 @@ const AdvancedDisplay = observer(() => {
                         exit_tick_display_value: contract.exit_tick_display_value,
                         transaction_ids: {
                             buy: initialTradeData.transaction_ids?.buy || contract.transaction_ids?.buy,
-                            sell: contract.transaction_ids?.sell
+                            sell: contract.transaction_ids?.sell,
                         },
                         is_expired: contract.is_expired ? 1 : 0,
                         is_intraday: contract.is_intraday ? 1 : 0,
@@ -872,8 +892,14 @@ const AdvancedDisplay = observer(() => {
                         symbol: contract.underlying || initialTradeData.symbol || 'R_10',
                         underlying: contract.underlying || initialTradeData.underlying || 'R_10',
                         barrier: contract.barrier !== undefined ? String(contract.barrier) : initialTradeData.barrier,
-                        barrier_display_value: contract.barrier !== undefined ? String(contract.barrier) : initialTradeData.barrier_display_value,
-                        contract_parameter: contract.barrier !== undefined ? String(contract.barrier) : initialTradeData.contract_parameter,
+                        barrier_display_value:
+                            contract.barrier !== undefined
+                                ? String(contract.barrier)
+                                : initialTradeData.barrier_display_value,
+                        contract_parameter:
+                            contract.barrier !== undefined
+                                ? String(contract.barrier)
+                                : initialTradeData.contract_parameter,
                         parameter_type: initialTradeData.parameter_type,
                         entry_tick_time: contract.entry_tick_time || initialTradeData.entry_tick_time,
                         run_id: sessionRunId,
@@ -905,7 +931,9 @@ const AdvancedDisplay = observer(() => {
 
                     updated.delete(contract.contract_id);
                 } else {
-                     console.warn(`Received sold update for unknown or already processed contract ID: ${contract.contract_id}`);
+                    console.warn(
+                        `Received sold update for unknown or already processed contract ID: ${contract.contract_id}`
+                    );
                 }
                 return updated;
             });
@@ -937,24 +965,28 @@ const AdvancedDisplay = observer(() => {
     // Enhanced debugging indicator in the UI to show active contracts
     const renderDebugInfo = () => {
         if (activeContracts.size === 0 && tradeHistory.length === 0) return null;
-        
+
         return (
-            <div className="debug-info">
+            <div className='debug-info'>
                 {activeContracts.size > 0 && (
                     <>
-                        <div><strong>Pending Contracts: {activeContracts.size}</strong></div>
+                        <div>
+                            <strong>Pending Contracts: {activeContracts.size}</strong>
+                        </div>
                         {Array.from(activeContracts.entries()).map(([id, data]) => (
-                            <div key={id} className="pending-contract-item">
-                                <span className="contract-id">#{id}</span>
-                                <span className="contract-type">{data.display_name || data.type}</span>
-                                <span className="contract-time">{new Date(data.timestamp).toLocaleTimeString()}</span>
+                            <div key={id} className='pending-contract-item'>
+                                <span className='contract-id'>#{id}</span>
+                                <span className='contract-type'>{data.display_name || data.type}</span>
+                                <span className='contract-time'>{new Date(data.timestamp).toLocaleTimeString()}</span>
                             </div>
                         ))}
                         <hr style={{ margin: '8px 0', border: '0', borderTop: '1px dashed #ccc' }} />
                     </>
                 )}
-                <div className="completed-count">
-                    <span>Completed Trades: {tradeHistory.filter(t => t.status === 'won' || t.status === 'lost').length}</span>
+                <div className='completed-count'>
+                    <span>
+                        Completed Trades: {tradeHistory.filter(t => t.status === 'won' || t.status === 'lost').length}
+                    </span>
                 </div>
             </div>
         );
@@ -967,8 +999,10 @@ const AdvancedDisplay = observer(() => {
                 {/* Display latest trade result similar to trading-hub-display */}
                 {completedContract && (
                     <div className='advanced-display__latest-result'>
-                        <Text size='sm' weight='bold'>Last Trade ({getReadableContractType(completedContract.contract_type)}):</Text>
-                        <Text 
+                        <Text size='sm' weight='bold'>
+                            Last Trade ({getReadableContractType(completedContract.contract_type)}):
+                        </Text>
+                        <Text
                             size='sm'
                             weight='bold'
                             className={classNames({
@@ -980,49 +1014,56 @@ const AdvancedDisplay = observer(() => {
                         </Text>
                     </div>
                 )}
-                
+
                 {/* Trade history list - show both pending and completed trades */}
-                <div className="trade-history">
+                <div className='trade-history'>
                     {tradeHistory.length === 0 && activeContracts.size === 0 ? (
-                        <div className="trade-history-empty">No trades yet. Place a trade to see results here.</div>
+                        <div className='trade-history-empty'>No trades yet. Place a trade to see results here.</div>
                     ) : (
                         <>
                             {/* Show pending trades first with animation */}
-                            {Array.from(activeContracts.values()).map((contract) => (
+                            {Array.from(activeContracts.values()).map(contract => (
                                 <div
                                     key={`pending-${contract.contractId || contract.id}`}
-                                    className="trade-item pending"
+                                    className='trade-item pending'
                                 >
-                                    <div className="trade-item-header">
-                                        <div className="trade-symbol">{getReadableContractType(contract.type)}</div>
-                                        <div className="trade-time">{new Date(contract.timestamp).toLocaleTimeString()}</div>
+                                    <div className='trade-item-header'>
+                                        <div className='trade-symbol'>{getReadableContractType(contract.type)}</div>
+                                        <div className='trade-time'>
+                                            {new Date(contract.timestamp).toLocaleTimeString()}
+                                        </div>
                                     </div>
-                                    <div className="trade-item-details">
-                                        <div className="trade-detail">
-                                            <span className="label">Stake:</span>
-                                            <span className="value">
+                                    <div className='trade-item-details'>
+                                        <div className='trade-detail'>
+                                            <span className='label'>Stake:</span>
+                                            <span className='value'>
                                                 {formatMoney(contract.stake || contract.buyPrice || 0)}
                                             </span>
                                         </div>
-                                        <div className="trade-detail">
-                                            <span className="label">Status:</span>
-                                            <span className="value" style={{ color: '#ff9800' }}>
+                                        <div className='trade-detail'>
+                                            <span className='label'>Status:</span>
+                                            <span className='value' style={{ color: '#ff9800' }}>
                                                 Processing
                                             </span>
                                         </div>
-                                        <div className="trade-detail">
-                                            <span className="label">Barrier:</span>
-                                            <span className="value">{contract.barrier || 'N/A'}</span>
+                                        <div className='trade-detail'>
+                                            <span className='label'>Barrier:</span>
+                                            <span className='value'>{contract.barrier || 'N/A'}</span>
                                         </div>
-                                        <div className="trade-detail">
-                                            <span className="label">Contract ID:</span>
-                                            <span className="value" style={{ fontSize: '12px' }}>{contract.contractId}</span>
+                                        <div className='trade-detail'>
+                                            <span className='label'>Contract ID:</span>
+                                            <span className='value' style={{ fontSize: '12px' }}>
+                                                {contract.contractId}
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="progress-bar" style={{ width: `${Math.min((Date.now() - contract.timestamp) / 100, 100)}%` }}></div>
+                                    <div
+                                        className='progress-bar'
+                                        style={{ width: `${Math.min((Date.now() - contract.timestamp) / 100, 100)}%` }}
+                                    ></div>
                                 </div>
                             ))}
-                            
+
                             {/* Show completed trades with filter */}
                             {tradeHistory
                                 .filter(trade => trade.status === 'won' || trade.status === 'lost')
@@ -1031,19 +1072,21 @@ const AdvancedDisplay = observer(() => {
                                         key={trade.contractId || trade.id}
                                         className={`trade-item ${trade.isWin ? 'win' : 'loss'} ${index === 0 ? 'newly-completed' : ''}`}
                                     >
-                                        <div className="trade-item-header">
-                                            <div className="trade-symbol">{getReadableContractType(trade.type)}</div>
-                                            <div className="trade-time">{trade.purchaseTime ? new Date(trade.purchaseTime).toLocaleTimeString() : new Date(trade.timestamp).toLocaleTimeString()}</div>
-                                        </div>
-                                        <div className="trade-item-details">
-                                            <div className="trade-detail">
-                                                <span className="label">Stake:</span>
-                                                <span className="value">
-                                                    {formatMoney(trade.stake || 0)}
-                                                </span>
+                                        <div className='trade-item-header'>
+                                            <div className='trade-symbol'>{getReadableContractType(trade.type)}</div>
+                                            <div className='trade-time'>
+                                                {trade.purchaseTime
+                                                    ? new Date(trade.purchaseTime).toLocaleTimeString()
+                                                    : new Date(trade.timestamp).toLocaleTimeString()}
                                             </div>
-                                            <div className="trade-detail">
-                                                <span className="label">Profit/Loss:</span>
+                                        </div>
+                                        <div className='trade-item-details'>
+                                            <div className='trade-detail'>
+                                                <span className='label'>Stake:</span>
+                                                <span className='value'>{formatMoney(trade.stake || 0)}</span>
+                                            </div>
+                                            <div className='trade-detail'>
+                                                <span className='label'>Profit/Loss:</span>
                                                 <span
                                                     className={`value ${
                                                         (trade.profit || 0) >= 0 ? 'positive' : 'negative'
@@ -1053,32 +1096,31 @@ const AdvancedDisplay = observer(() => {
                                                     {formatMoney(Math.abs(trade.profit || 0))}
                                                 </span>
                                             </div>
-                                            <div className="trade-detail">
-                                                <span className="label">Barrier:</span>
-                                                <span className="value">{trade.barrier || 'N/A'}</span>
+                                            <div className='trade-detail'>
+                                                <span className='label'>Barrier:</span>
+                                                <span className='value'>{trade.barrier || 'N/A'}</span>
                                             </div>
-                                            <div className="trade-detail">
-                                                <span className="label">Duration:</span>
-                                                <span className="value">{trade.duration || 'N/A'}s</span>
+                                            <div className='trade-detail'>
+                                                <span className='label'>Duration:</span>
+                                                <span className='value'>{trade.duration || 'N/A'}s</span>
                                             </div>
                                         </div>
                                     </div>
-                                ))
-                            }
+                                ))}
                         </>
                     )}
                 </div>
-                
+
                 {/* Display trade summary stats */}
                 {tradeHistory.filter(t => t.status === 'won' || t.status === 'lost').length > 0 && (
-                    <div className="trade-history-summary">
-                        <div className="summary-item wins">
+                    <div className='trade-history-summary'>
+                        <div className='summary-item wins'>
                             <span>Wins: {totalWins}</span>
                         </div>
-                        <div className="summary-item losses">
+                        <div className='summary-item losses'>
                             <span>Losses: {totalLosses}</span>
                         </div>
-                        <div className="summary-item profit">
+                        <div className='summary-item profit'>
                             <span>Total Profit: </span>
                             <span className={totalProfit >= 0 ? 'positive' : 'negative'}>
                                 {formatMoney(totalProfit)}
@@ -1103,7 +1145,7 @@ const AdvancedDisplay = observer(() => {
                 console.log(`Checking ${activeContractIds.length} active contracts`);
 
                 // Re-subscribe to any active contracts to ensure we get updates
-                activeContractIds.forEach((contractId) => {
+                activeContractIds.forEach(contractId => {
                     if (!processedContracts.current.has(contractId)) {
                         tradeWs.send(
                             JSON.stringify({
@@ -1123,12 +1165,7 @@ const AdvancedDisplay = observer(() => {
     // Add this function to check and resubscribe to contracts if needed
     useEffect(() => {
         // Skip if no trade websocket or no active contracts
-        if (
-            !tradeWs ||
-            tradeWs.readyState !== WebSocket.OPEN ||
-            activeContracts.size === 0
-        )
-            return;
+        if (!tradeWs || tradeWs.readyState !== WebSocket.OPEN || activeContracts.size === 0) return;
 
         // Set up interval to check contracts
         const checkInterval = setInterval(() => {
@@ -1163,7 +1200,7 @@ const AdvancedDisplay = observer(() => {
             if (!tradeWs || tradeWs.readyState !== WebSocket.OPEN) return;
 
             // Track more contract details
-            setActiveContracts((prev) => {
+            setActiveContracts(prev => {
                 const updated = new Map(prev);
                 updated.set(contractId, {
                     ...contractData,
@@ -1210,7 +1247,7 @@ const AdvancedDisplay = observer(() => {
             ws.send(JSON.stringify(request));
         };
 
-        ws.onmessage = (event) => {
+        ws.onmessage = event => {
             const data = JSON.parse(event.data);
 
             if (data.history) {
@@ -1225,11 +1262,9 @@ const AdvancedDisplay = observer(() => {
 
                 // Get the current digit from the last tick
                 const currentDigit =
-                    history.length > 0
-                        ? getLastDigit(history[history.length - 1].quote, decimalPlaces)
-                        : undefined;
+                    history.length > 0 ? getLastDigit(history[history.length - 1].quote, decimalPlaces) : undefined;
 
-                setSymbolTickData((prevData) => ({
+                setSymbolTickData(prevData => ({
                     ...prevData,
                     [symbol]: {
                         ...prevData[symbol],
@@ -1241,23 +1276,20 @@ const AdvancedDisplay = observer(() => {
 
                 // Update the general ticksHistory for backward compatibility
                 if (symbol === 'R_10') {
-                    setTicksHistory(history.map((h) => getLastDigit(h.quote, decimalPlaces)));
+                    setTicksHistory(history.map(h => getLastDigit(h.quote, decimalPlaces)));
                 }
             } else if (data.tick) {
                 // Process tick updates
                 const tickQuote = parseFloat(data.tick.quote);
 
-                setSymbolTickData((prevData) => {
+                setSymbolTickData(prevData => {
                     const updatedHistory = [
                         ...prevData[symbol].tickHistory,
                         { time: data.tick.epoch, quote: tickQuote },
                     ];
 
                     // Get the current digit from the new tick
-                    const currentDigit = getLastDigit(
-                        tickQuote,
-                        prevData[symbol].decimalPlaces
-                    );
+                    const currentDigit = getLastDigit(tickQuote, prevData[symbol].decimalPlaces);
 
                     // Keep only the last 'tickCount' ticks
                     if (updatedHistory.length > tickCount) {
@@ -1275,11 +1307,7 @@ const AdvancedDisplay = observer(() => {
 
                     // Update the general ticksHistory for backward compatibility
                     if (symbol === 'R_10') {
-                        setTicksHistory(
-                            updatedHistory.map((h) =>
-                                getLastDigit(h.quote, prevData[symbol].decimalPlaces)
-                            )
-                        );
+                        setTicksHistory(updatedHistory.map(h => getLastDigit(h.quote, prevData[symbol].decimalPlaces)));
                     }
 
                     return updatedData;
@@ -1287,7 +1315,7 @@ const AdvancedDisplay = observer(() => {
             }
         };
 
-        ws.onerror = (error) => {
+        ws.onerror = error => {
             console.error(`WebSocket error for ${symbol}:`, error);
         };
 
@@ -1302,7 +1330,7 @@ const AdvancedDisplay = observer(() => {
     const detectDecimalPlaces = (history: Array<{ time: number; quote: number }>) => {
         if (history.length === 0) return 2;
 
-        const decimalCounts = history.map((tick) => {
+        const decimalCounts = history.map(tick => {
             const decimalPart = tick.quote.toString().split('.')[1] || '';
             return decimalPart.length;
         });
@@ -1327,7 +1355,7 @@ const AdvancedDisplay = observer(() => {
     const calculateParityPercentage = (digits: number[], parityType: ParityType): number => {
         if (digits.length === 0) return 0;
 
-        const matchingDigits = digits.filter((digit) => {
+        const matchingDigits = digits.filter(digit => {
             if (parityType === 'even') {
                 return digit % 2 === 0; // Check for even digits (0,2,4,6,8)
             } else {
@@ -1381,7 +1409,7 @@ const AdvancedDisplay = observer(() => {
         let under = 0;
         let equal = 0;
 
-        digits.forEach((digit) => {
+        digits.forEach(digit => {
             if (digit > referenceDigit) over++;
             else if (digit < referenceDigit) under++;
             else equal++;
@@ -1402,11 +1430,9 @@ const AdvancedDisplay = observer(() => {
         if (!data || data.tickHistory.length === 0) return [];
 
         const history =
-            count > 0 && count < data.tickHistory.length
-                ? data.tickHistory.slice(-count)
-                : data.tickHistory;
+            count > 0 && count < data.tickHistory.length ? data.tickHistory.slice(-count) : data.tickHistory;
 
-        return history.map((tick) => getLastDigit(tick.quote, data.decimalPlaces));
+        return history.map(tick => getLastDigit(tick.quote, data.decimalPlaces));
     };
 
     // Function to handle reference digit change - now allows empty values
@@ -1441,7 +1467,7 @@ const AdvancedDisplay = observer(() => {
         // Update trading settings if valid
         const value = parseFloat(input);
         if (!isNaN(value) && value >= 0.35) {
-            setTradingSettings((prev) => {
+            setTradingSettings(prev => {
                 const updated = { ...prev, stake: value };
                 try {
                     localStorage.setItem(STORAGE_KEYS.TRADING_SETTINGS, JSON.stringify(updated));
@@ -1472,7 +1498,7 @@ const AdvancedDisplay = observer(() => {
         setAnalysisCount(countValue);
 
         // Refresh WebSocket connections with the current settings
-        activeSymbols.forEach((symbol) => {
+        activeSymbols.forEach(symbol => {
             startWebSocket(symbol);
         });
         setStatus('Settings applied successfully');
@@ -1482,7 +1508,7 @@ const AdvancedDisplay = observer(() => {
     // Initialize WebSockets when activeSymbols change
     useEffect(() => {
         // Clean up previous connections
-        Object.keys(webSocketRefs.current).forEach((symbol) => {
+        Object.keys(webSocketRefs.current).forEach(symbol => {
             if (webSocketRefs.current[symbol as SymbolType]) {
                 webSocketRefs.current[symbol as SymbolType]?.close();
                 webSocketRefs.current[symbol as SymbolType] = null;
@@ -1490,13 +1516,13 @@ const AdvancedDisplay = observer(() => {
         });
 
         // Start new connections for active symbols
-        activeSymbols.forEach((symbol) => {
+        activeSymbols.forEach(symbol => {
             startWebSocket(symbol);
         });
 
         // Clean up function
         return () => {
-            Object.keys(webSocketRefs.current).forEach((symbol) => {
+            Object.keys(webSocketRefs.current).forEach(symbol => {
                 if (webSocketRefs.current[symbol as SymbolType]) {
                     webSocketRefs.current[symbol as SymbolType]?.close();
                 }
@@ -1512,14 +1538,14 @@ const AdvancedDisplay = observer(() => {
 
         const tickInterval = setInterval(() => {
             const newTick = Math.floor(Math.random() * 10);
-            setTicksHistory((prev) => {
+            setTicksHistory(prev => {
                 const updated = [...prev, newTick];
                 // Keep the last 20 ticks at most to avoid growing too large
                 return updated.length > 20 ? updated.slice(-20) : updated;
             });
 
             // Also update the current digit for R_10 in mock data
-            setSymbolTickData((prevData) => ({
+            setSymbolTickData(prevData => ({
                 ...prevData,
                 R_10: {
                     ...prevData.R_10,
@@ -1533,9 +1559,9 @@ const AdvancedDisplay = observer(() => {
 
     // Toggle a symbol in the active symbols list
     const toggleSymbol = (symbol: SymbolType) => {
-        setActiveSymbols((prev) => {
+        setActiveSymbols(prev => {
             if (prev.includes(symbol)) {
-                return prev.filter((s) => s !== symbol);
+                return prev.filter(s => s !== symbol);
             } else {
                 return [...prev, symbol];
             }
@@ -1545,14 +1571,14 @@ const AdvancedDisplay = observer(() => {
     // Add utility function to get readable symbol names
     const getSymbolDisplayName = (symbol: SymbolType): string => {
         const symbolMap: Record<SymbolType, string> = {
-            'R_10': 'Volatility 10',
-            'R_25': 'Volatility 25', 
-            'R_50': 'Volatility 50',
-            'R_75': 'Volatility 75',
-            'R_100': 'Volatility 100',
+            R_10: 'Volatility 10',
+            R_25: 'Volatility 25',
+            R_50: 'Volatility 50',
+            R_75: 'Volatility 75',
+            R_100: 'Volatility 100',
             '1HZ10V': 'Volatility 10 (1s)',
             '1HZ25V': 'Volatility 25 (1s)',
-            '1HZ50V': 'Volatility 50 (1s)', 
+            '1HZ50V': 'Volatility 50 (1s)',
             '1HZ75V': 'Volatility 75 (1s)',
             '1HZ100V': 'Volatility 100 (1s)',
         };
@@ -1566,12 +1592,12 @@ const AdvancedDisplay = observer(() => {
 
         // Count occurrences of each digit
         const digitCounts = Array(10).fill(0);
-        digits.forEach((digit) => {
+        digits.forEach(digit => {
             digitCounts[digit]++;
         });
 
         // Calculate percentages
-        const digitPercentages = digitCounts.map((count) => (count / digits.length) * 100);
+        const digitPercentages = digitCounts.map(count => (count / digits.length) * 100);
 
         // Find max and min percentages
         const maxPercentage = Math.max(...digitPercentages);
@@ -1591,13 +1617,12 @@ const AdvancedDisplay = observer(() => {
         const overUnderStats = calculateOverUnder(symbol);
 
         return (
-            <div className="digit-analysis-card">
+            <div className='digit-analysis-card'>
                 <h3>
-                    {getSymbolDisplayName(symbol)} Analysis{' '}
-                    {currentDigit !== undefined && `- Current: ${currentDigit}`}
+                    {getSymbolDisplayName(symbol)} Analysis {currentDigit !== undefined && `- Current: ${currentDigit}`}
                 </h3>
 
-                <div className="digit-grid">
+                <div className='digit-grid'>
                     {digitPercentages.map((percentage, digit) => {
                         // Create class name based on conditions
                         const classNames = ['digit-box'];
@@ -1614,22 +1639,18 @@ const AdvancedDisplay = observer(() => {
                             <div
                                 key={digit}
                                 className={classNames.join(' ')}
-                                title={`${percentage.toFixed(1)}% ${
-                                    digit === currentDigit ? '(Current)' : ''
-                                }`}
+                                title={`${percentage.toFixed(1)}% ${digit === currentDigit ? '(Current)' : ''}`}
                             >
-                                <span className="digit">{digit}</span>
-                                <span className="percentage">{percentage.toFixed(1)}%</span>
+                                <span className='digit'>{digit}</span>
+                                <span className='percentage'>{percentage.toFixed(1)}%</span>
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="direction-stats">
-                    <div className="direction-stat rise">
-                        Rise: {directionStats.rise.toFixed(1)}%
-                    </div>
-                    <div className="direction-buttons">
+                <div className='direction-stats'>
+                    <div className='direction-stat rise'>Rise: {directionStats.rise.toFixed(1)}%</div>
+                    <div className='direction-buttons'>
                         <button
                             className={`stat-button rise-button ${
                                 activeTradeSymbol === symbol && tradeStatus === 'pending' ? 'loading' : ''
@@ -1649,16 +1670,12 @@ const AdvancedDisplay = observer(() => {
                             Fall
                         </button>
                     </div>
-                    <div className="direction-stat fall">
-                        Fall: {directionStats.fall.toFixed(1)}%
-                    </div>
+                    <div className='direction-stat fall'>Fall: {directionStats.fall.toFixed(1)}%</div>
                 </div>
 
-                <div className="parity-stats">
-                    <div className="parity-stat even">
-                        Even: {evenPercentage.toFixed(1)}%
-                    </div>
-                    <div className="parity-buttons">
+                <div className='parity-stats'>
+                    <div className='parity-stat even'>Even: {evenPercentage.toFixed(1)}%</div>
+                    <div className='parity-buttons'>
                         <button
                             className={`stat-button even-button ${
                                 activeTradeSymbol === symbol && tradeStatus === 'pending' ? 'loading' : ''
@@ -1678,14 +1695,14 @@ const AdvancedDisplay = observer(() => {
                             Odd
                         </button>
                     </div>
-                    <div className="parity-stat odd">Odd: {oddPercentage.toFixed(1)}%</div>
+                    <div className='parity-stat odd'>Odd: {oddPercentage.toFixed(1)}%</div>
                 </div>
 
-                <div className="overunder-stats">
-                    <div className="overunder-stat over">
+                <div className='overunder-stats'>
+                    <div className='overunder-stat over'>
                         Over {referenceDigit}: {overUnderStats.over.toFixed(1)}%
                     </div>
-                    <div className="overunder-buttons">
+                    <div className='overunder-buttons'>
                         <button
                             className={`stat-button over-button ${
                                 activeTradeSymbol === symbol && tradeStatus === 'pending' ? 'loading' : ''
@@ -1705,17 +1722,14 @@ const AdvancedDisplay = observer(() => {
                             Under
                         </button>
                     </div>
-                    <div className="overunder-stat under">
+                    <div className='overunder-stat under'>
                         Under {referenceDigit}: {overUnderStats.under.toFixed(1)}%
                     </div>
                 </div>
 
-                <div className="recent-digits">
+                <div className='recent-digits'>
                     {digits.slice(-10).map((digit, idx) => (
-                        <span
-                            key={idx}
-                            className={`recent-digit ${digit % 2 === 0 ? 'even' : 'odd'}`}
-                        >
+                        <span key={idx} className={`recent-digit ${digit % 2 === 0 ? 'even' : 'odd'}`}>
                             {digit}
                         </span>
                     ))}
@@ -1775,11 +1789,7 @@ const AdvancedDisplay = observer(() => {
         });
     };
 
-    const placeTrade = (
-        symbol: SymbolType,
-        tradeType: TradeType,
-        params: Record<string, any> = {}
-    ) => {
+    const placeTrade = (symbol: SymbolType, tradeType: TradeType, params: Record<string, any> = {}) => {
         try {
             console.log('Placing trade:', { symbol, tradeType, params });
 
@@ -1788,7 +1798,7 @@ const AdvancedDisplay = observer(() => {
                 symbol,
                 tradeType,
                 params,
-                timestamp: Date.now()
+                timestamp: Date.now(),
             });
 
             if (!tradeWs || tradeWs.readyState !== WebSocket.OPEN) {
@@ -1862,50 +1872,53 @@ const AdvancedDisplay = observer(() => {
     }, []);
 
     // Function to verify if a token is valid
-    const verifyToken = useCallback((token: string) => {
-        setIsAuthLoading(true);
-        setAuthError(null);
-        
-        const appId = getAppId();
-        const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
-        
-        ws.onopen = () => {
-            ws.send(JSON.stringify({ authorize: token }));
-        };
-        
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            
-            if (data.error) {
-                console.error('Token verification failed:', data.error);
-                setAuthError(data.error.message || 'Authentication failed');
-                setIsAuthenticated(false);
-                localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    const verifyToken = useCallback(
+        (token: string) => {
+            setIsAuthLoading(true);
+            setAuthError(null);
+
+            const appId = getAppId();
+            const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ authorize: token }));
+            };
+
+            ws.onmessage = event => {
+                const data = JSON.parse(event.data);
+
+                if (data.error) {
+                    console.error('Token verification failed:', data.error);
+                    setAuthError(data.error.message || 'Authentication failed');
+                    setIsAuthenticated(false);
+                    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+                    setShowAuthModal(true);
+                } else if (data.authorize) {
+                    console.log('Token verified, user authenticated');
+                    setIsAuthenticated(true);
+                    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+                    initTradeWebSocket(token);
+                    setShowAuthModal(false);
+
+                    // Show welcome notification
+                    showNotification(
+                        `Welcome, ${data.authorize.email || 'Trader'}!`,
+                        'success',
+                        'You are now authenticated and ready to trade.'
+                    );
+                }
+                setIsAuthLoading(false);
+                ws.close();
+            };
+
+            ws.onerror = () => {
+                setAuthError('Connection error. Please try again.');
+                setIsAuthLoading(false);
                 setShowAuthModal(true);
-            } else if (data.authorize) {
-                console.log('Token verified, user authenticated');
-                setIsAuthenticated(true);
-                localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-                initTradeWebSocket(token);
-                setShowAuthModal(false);
-                
-                // Show welcome notification
-                showNotification(
-                    `Welcome, ${data.authorize.email || 'Trader'}!`,
-                    'success',
-                    'You are now authenticated and ready to trade.'
-                );
-            }
-            setIsAuthLoading(false);
-            ws.close();
-        };
-        
-        ws.onerror = () => {
-            setAuthError('Connection error. Please try again.');
-            setIsAuthLoading(false);
-            setShowAuthModal(true);
-        };
-    }, [getAppId, showNotification]);
+            };
+        },
+        [getAppId, showNotification]
+    );
 
     // Handle authentication
     const handleAuthenticate = useCallback(() => {
@@ -1913,7 +1926,7 @@ const AdvancedDisplay = observer(() => {
             setAuthError('Please enter a valid API token');
             return;
         }
-        
+
         verifyToken(apiToken);
     }, [apiToken, verifyToken]);
 
@@ -1932,28 +1945,28 @@ const AdvancedDisplay = observer(() => {
     // Authentication modal component
     const renderAuthModal = () => {
         if (!showAuthModal) return null;
-        
+
         return (
-            <div className="auth-modal-overlay">
-                <div className="auth-modal">
-                    <div className="auth-modal__header">
+            <div className='auth-modal-overlay'>
+                <div className='auth-modal'>
+                    <div className='auth-modal__header'>
                         <h3>Authentication Required</h3>
-                        <button className="settings-modal__close-btn" onClick={() => setShowAuthModal(false)}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M6 18L18 6M6 6l12 12" />
+                        <button className='settings-modal__close-btn' onClick={() => setShowAuthModal(false)}>
+                            <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+                                <path d='M6 18L18 6M6 6l12 12' />
                             </svg>
                         </button>
                     </div>
-                    <div className="auth-modal__content">
-                        <p className="auth-modal__description">
+                    <div className='auth-modal__content'>
+                        <p className='auth-modal__description'>
                             Please log in with your Deriv account to access trading features.
                         </p>
-                        
-                        {authError && <div className="auth-modal__error">{authError}</div>}
-                        
-                        <div className="auth-modal__login-section">
+
+                        {authError && <div className='auth-modal__error'>{authError}</div>}
+
+                        <div className='auth-modal__login-section'>
                             <Button
-                                className="auth-modal__login-button"
+                                className='auth-modal__login-button'
                                 onClick={() => {
                                     const app_id = getAppId();
                                     const oauth_url = 'https://oauth.deriv.com/oauth2/authorize';
@@ -1966,8 +1979,8 @@ const AdvancedDisplay = observer(() => {
                                 {isAuthLoading ? 'Processing...' : 'Log in with Deriv'}
                             </Button>
                         </div>
-                        
-                        <div className="auth-modal__helper-text">
+
+                        <div className='auth-modal__helper-text'>
                             <p>Secure authentication through Deriv's official login system.</p>
                             <p>You will be redirected to Deriv to complete the authentication process.</p>
                         </div>
@@ -1976,29 +1989,29 @@ const AdvancedDisplay = observer(() => {
             </div>
         );
     };
-    
+
     // Add auth status component in header
     const renderAuthStatus = () => {
         if (!isAuthenticated) return null;
-        
+
         return (
-            <div className="auth-status">
-                <span className="auth-status__indicator"></span>
-                <span className="auth-status__text">Authenticated</span>
-                <button className="auth-status__logout" onClick={handleLogout}>
+            <div className='auth-status'>
+                <span className='auth-status__indicator'></span>
+                <span className='auth-status__text'>Authenticated</span>
+                <button className='auth-status__logout' onClick={handleLogout}>
                     Log Out
                 </button>
-                       </div>
+            </div>
         );
     };
 
     return (
-        <div className="advanced-display">
+        <div className='advanced-display'>
             {/* Authentication Modal */}
             {renderAuthModal()}
 
-            <div className="advanced-display__header">
-                <Text size="md" weight="bold" className="advanced-display__title">
+            <div className='advanced-display__header'>
+                <Text size='md' weight='bold' className='advanced-display__title'>
                     Market Analysis Tools
                 </Text>
                 {renderAuthStatus()}
@@ -2007,31 +2020,20 @@ const AdvancedDisplay = observer(() => {
             {/* Only show the main content if authenticated */}
             {isAuthenticated ? (
                 <>
-                    <div className="advanced-display__action-bar">
-                        <div className="action-buttons-group">
+                    <div className='advanced-display__action-bar'>
+                        <div className='action-buttons-group'>
                             <Button
-                                className={`futuristic-button ${
-                                    isRunning ? 'futuristic-button--active' : ''
-                                }`}
+                                className={`futuristic-button ${isRunning ? 'futuristic-button--active' : ''}`}
                                 onClick={toggleAnalysis}
                             >
                                 {isRunning ? 'Stop Analysis' : 'Start Analysis'}
                             </Button>
 
                             {/* Add settings gear icon */}
-                            <div
-                                className="settings-icon"
-                                onClick={toggleSettingsModal}
-                                title="Trading Settings"
-                            >
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                >
-                                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" />
-                                    <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" />
+                            <div className='settings-icon' onClick={toggleSettingsModal} title='Trading Settings'>
+                                <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+                                    <path d='M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z' />
+                                    <path d='M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z' />
                                 </svg>
                             </div>
                         </div>
@@ -2041,66 +2043,74 @@ const AdvancedDisplay = observer(() => {
                     {settingsModalComponent}
 
                     {/* Analysis settings - Updated for better editability */}
-                    <div className="analysis-settings">
-                        <div className="analysis-settings__input-group">
-                            <label htmlFor="stake-amount">Stake Amount (USD):</label>
+                    <div className='analysis-settings'>
+                        <div className='analysis-settings__input-group'>
+                            <label htmlFor='stake-amount'>Stake Amount (USD):</label>
                             <input
-                                id="stake-amount"
-                                type="text"
+                                id='stake-amount'
+                                type='text'
                                 value={stakeInput}
                                 onChange={handleStakeChange}
-                                className="analysis-settings__input editable-input"
-                                data-testid="stake-amount-input"
-                                aria-label="Stake amount for trades"
-                                placeholder="Min: 0.35"
+                                className='analysis-settings__input editable-input'
+                                data-testid='stake-amount-input'
+                                aria-label='Stake amount for trades'
+                                placeholder='Min: 0.35'
                             />
                         </div>
-                        <div className="analysis-settings__input-group">
-                            <label htmlFor="reference-digit">Reference Digit (0-9):</label>
+                        <div className='analysis-settings__input-group'>
+                            <label htmlFor='reference-digit'>Reference Digit (0-9):</label>
                             <input
-                                id="reference-digit"
-                                type="text"
+                                id='reference-digit'
+                                type='text'
                                 value={referenceDigitInput}
                                 onChange={handleReferenceDigitChange}
-                                className="analysis-settings__input editable-input"
-                                data-testid="reference-digit-input"
-                                aria-label="Reference digit for over/under analysis"
-                                placeholder="Enter digit (0-9)"
+                                className='analysis-settings__input editable-input'
+                                data-testid='reference-digit-input'
+                                aria-label='Reference digit for over/under analysis'
+                                placeholder='Enter digit (0-9)'
                             />
                         </div>
-                        <div className="analysis-settings__input-group">
-                            <label htmlFor="analysis-count">Analysis Count:</label>
+                        <div className='analysis-settings__input-group'>
+                            <label htmlFor='analysis-count'>Analysis Count:</label>
                             <input
-                                id="analysis-count"
-                                type="text"
+                                id='analysis-count'
+                                type='text'
                                 value={analysisCountInput}
                                 onChange={handleAnalysisCountChange}
-                                className="analysis-settings__input editable-input"
-                                data-testid="analysis-count-input"
-                                aria-label="Number of ticks to analyze"
-                                placeholder="Min: 10"
+                                className='analysis-settings__input editable-input'
+                                data-testid='analysis-count-input'
+                                aria-label='Number of ticks to analyze'
+                                placeholder='Min: 10'
                             />
                         </div>
-                        <Button
-                            className="analysis-settings__apply-button futuristic-button"
-                            onClick={applySettings}
-                        >
+                        <Button className='analysis-settings__apply-button futuristic-button' onClick={applySettings}>
                             Apply Settings
                         </Button>
                     </div>
 
                     {/* Symbol selector for multi-symbol analysis */}
-                    <div className="symbol-selector">
-                        <Text size="sm" weight="bold">
+                    <div className='symbol-selector'>
+                        <Text size='sm' weight='bold'>
                             Active Symbols:
                         </Text>
-                        <div className="symbol-buttons">
-                            {(['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'] as SymbolType[]).map((symbol) => (
+                        <div className='symbol-buttons'>
+                            {(
+                                [
+                                    'R_10',
+                                    'R_25',
+                                    'R_50',
+                                    'R_75',
+                                    'R_100',
+                                    '1HZ10V',
+                                    '1HZ25V',
+                                    '1HZ50V',
+                                    '1HZ75V',
+                                    '1HZ100V',
+                                ] as SymbolType[]
+                            ).map(symbol => (
                                 <button
                                     key={symbol}
-                                    className={`symbol-button ${
-                                        activeSymbols.includes(symbol) ? 'active' : ''
-                                    }`}
+                                    className={`symbol-button ${activeSymbols.includes(symbol) ? 'active' : ''}`}
                                     onClick={() => toggleSymbol(symbol)}
                                     title={`${getSymbolDisplayName(symbol)} (${symbol})`}
                                 >
@@ -2111,8 +2121,8 @@ const AdvancedDisplay = observer(() => {
                     </div>
 
                     {/* Multi-symbol digit analysis */}
-                    <div className="digit-analysis-container">
-                        {activeSymbols.map((symbol) => renderDigitDistribution(symbol))}
+                    <div className='digit-analysis-container'>
+                        {activeSymbols.map(symbol => renderDigitDistribution(symbol))}
                     </div>
 
                     {status && (
@@ -2129,11 +2139,7 @@ const AdvancedDisplay = observer(() => {
                     {tradeMessage && (
                         <div
                             className={`advanced-display__status advanced-display__status--${
-                                tradeStatus === 'error'
-                                    ? 'error'
-                                    : tradeStatus === 'success'
-                                    ? 'success'
-                                    : 'info'
+                                tradeStatus === 'error' ? 'error' : tradeStatus === 'success' ? 'success' : 'info'
                             }`}
                         >
                             {tradeMessage}
@@ -2142,34 +2148,23 @@ const AdvancedDisplay = observer(() => {
 
                     {/* Display current ticks history for user reference */}
                     {ticksHistory.length > 0 && (
-                        <div className="ticks-history-container">
-                            <Text size="xs" weight="bold">
+                        <div className='ticks-history-container'>
+                            <Text size='xs' weight='bold'>
                                 Recent Ticks:
                             </Text>
-                            <div className="ticks-display">
+                            <div className='ticks-display'>
                                 {ticksHistory.slice(-10).map((tick, i) => (
-                                    <span
-                                        key={i}
-                                        className={`tick-digit ${tick % 2 === 0 ? 'even' : 'odd'}`}
-                                    >
+                                    <span key={i} className={`tick-digit ${tick % 2 === 0 ? 'even' : 'odd'}`}>
                                         {tick}
                                     </span>
                                 ))}
                             </div>
                             {ticksHistory.length >= 5 && (
-                                <div className="parity-stats">
-                                    <Text size="xs">
+                                <div className='parity-stats'>
+                                    <Text size='xs'>
                                         Last {Math.min(ticksHistory.length, 10)} digits: Even:{' '}
-                                        {calculateParityPercentage(
-                                            ticksHistory.slice(-10),
-                                            'even'
-                                        ).toFixed(1)}
-                                        % | Odd:{' '}
-                                        {calculateParityPercentage(
-                                            ticksHistory.slice(-10),
-                                            'odd'
-                                        ).toFixed(1)}
-                                        %
+                                        {calculateParityPercentage(ticksHistory.slice(-10), 'even').toFixed(1)}% | Odd:{' '}
+                                        {calculateParityPercentage(ticksHistory.slice(-10), 'odd').toFixed(1)}%
                                     </Text>
                                 </div>
                             )}
@@ -2177,8 +2172,8 @@ const AdvancedDisplay = observer(() => {
                     )}
 
                     {/* Add Trade History Section with updated rendering */}
-                    <div className="trade-history-container">
-                        <Text size="md" weight="bold" className="trade-history-title">
+                    <div className='trade-history-container'>
+                        <Text size='md' weight='bold' className='trade-history-title'>
                             <div>
                                 <span className={`title-dot ${activeContracts.size > 0 ? 'active' : ''}`}></span>
                                 Trade Results
@@ -2193,14 +2188,24 @@ const AdvancedDisplay = observer(() => {
                     </div>
                 </>
             ) : (
-                <div className="advanced-display__placeholder">
-                    <div className="advanced-display__placeholder-content">
-                        <svg className="lock-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <rect x="3" y="11" width="18" height="11" rx="2" />
-                            <path d="M7 11V7a5 5 0 0110 0v4" />
+                <div className='advanced-display__placeholder'>
+                    <div className='advanced-display__placeholder-content'>
+                        <svg
+                            className='lock-icon'
+                            viewBox='0 0 24 24'
+                            width='48'
+                            height='48'
+                            fill='none'
+                            stroke='currentColor'
+                            strokeWidth='1.5'
+                        >
+                            <rect x='3' y='11' width='18' height='11' rx='2' />
+                            <path d='M7 11V7a5 5 0 0110 0v4' />
                         </svg>
-                        <Text size="md" weight="bold">Authentication Required</Text>
-                        <Text size="sm">Please log in to access trading features</Text>
+                        <Text size='md' weight='bold'>
+                            Authentication Required
+                        </Text>
+                        <Text size='sm'>Please log in to access trading features</Text>
                     </div>
                 </div>
             )}

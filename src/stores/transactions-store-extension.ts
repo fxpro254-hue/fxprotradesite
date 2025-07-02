@@ -7,11 +7,11 @@ import { TContractInfo } from '@/components/summary/summary-card.types';
  */
 export function enhanceContractInfo(contract_info: TContractInfo): TContractInfo {
     const { contract_type, barrier } = contract_info;
-    
+
     if (!contract_type) return contract_info;
-    
+
     const enhanced_info: TContractInfo = { ...contract_info };
-    
+
     // Add display properties based on contract type
     switch (contract_type) {
         case 'DIGITDIFF':
@@ -39,12 +39,12 @@ export function enhanceContractInfo(contract_info: TContractInfo): TContractInfo
             enhanced_info.parameter_type = 'odd';
             enhanced_info.display_message = 'Contract parameter: Odd digit';
             break;
-        case 'DIGITMAT': 
+        case 'DIGITMAT':
             enhanced_info.display_name = 'Digit Matches';
             enhanced_info.parameter_type = 'match_barrier';
             enhanced_info.display_message = `Contract parameter: Match ${barrier}`;
             break;
     }
-    
+
     return enhanced_info;
 }

@@ -137,7 +137,8 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
     if (trade_option.prediction !== undefined) buy.parameters.selected_tick = trade_option.prediction;
     if (trade_option.barrierOffset !== undefined) buy.parameters.barrier = trade_option.barrierOffset;
     if (trade_option.secondBarrierOffset !== undefined) buy.parameters.barrier2 = trade_option.secondBarrierOffset;
-    if (!isEmptyObject(trade_option.app_markup_percentage)) buy.parameters.app_markup_percentage = trade_option.app_markup_percentage;
+    if (!isEmptyObject(trade_option.app_markup_percentage))
+        buy.parameters.app_markup_percentage = trade_option.app_markup_percentage;
 
     // Handle specific contract types
     if (['MULTUP', 'MULTDOWN'].includes(contract_type)) {

@@ -17,7 +17,7 @@ body {
     padding: 10px;
     height: 100%;
     min-height: auto;
-    
+
     @media (max-width: 768px) {
         width: 100%;
     }
@@ -38,7 +38,7 @@ header h1 {
 }
 
 header .controls {
-    display: flex;    
+    display: flex;
     margin-top: 1rem;
     justify-content: center;
     gap: 10px;
@@ -49,7 +49,7 @@ header .controls {
 header .control-group {
     display: flex;
     max-height: 32px;
-    margin: 0 5px;  /* Add margin for spacing */
+    margin: 0 5px; /* Add margin for spacing */
 }
 
 header label {
@@ -57,13 +57,14 @@ header label {
     margin-bottom: 0.5rem;
 }
 
-header select, header input {
+header select,
+header input {
     padding: 0.5rem;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 12px;
-    width: 160px;  /* Set fixed width to match dropdown */
-    height: 33px ; /* Ensure height is consistently applied */
+    width: 160px; /* Set fixed width to match dropdown */
+    height: 33px; /* Ensure height is consistently applied */
     text-align: center;
     transition: all 0.3s ease;
     background-color: white;
@@ -78,7 +79,8 @@ header input::-webkit-inner-spin-button {
     margin: 0;
 }
 
-header select:hover, header input:hover {
+header select:hover,
+header input:hover {
     border-color: #0056a3;
     box-shadow: 0 0 5px rgba(0, 86, 163, 0.5);
 }
@@ -114,7 +116,7 @@ p1 {
 }
 
 p2 {
-    color: #FF6F00;
+    color: #ff6f00;
     margin-bottom: 1rem;
     font-size: 18px;
     font-weight: 600;
@@ -128,9 +130,9 @@ canvas {
 }
 
 #digit-display-container {
-    display:flex;
-    justify-content:center;
-    flex-wrap:wrap;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 3px;
     margin-top: 1rem;
 }
@@ -140,10 +142,10 @@ canvas {
     height: 40px;
     padding-top: 1px;
     display: flex;
-    justify-content:center;
+    justify-content: center;
     align-items: center;
     font-size: 24px;
-    font-weight:400;
+    font-weight: 400;
     border-radius: 20%;
     border: 4px solid #d3d3d3;
     background-color: white;
@@ -227,20 +229,20 @@ canvas {
 }
 
 .oe-box.even {
-    background-color: #8BEDA6;
+    background-color: #8beda6;
 }
 
 .oe-box.odd {
-    background-color: #FF7F7F;
+    background-color: #ff7f7f;
 }
 
 #current-price {
     font-size: 20px;
-    font-weight:600;
-    color: #FF6F00;
+    font-weight: 600;
+    color: #ff6f00;
     margin-bottom: 1rem;
     display: block;
-    text-align: center;;
+    text-align: center;
 }
 
 /* Responsive styles */
@@ -274,15 +276,16 @@ canvas {
         gap: 5px;
         padding: 0 10px;
     }
-    
-    header select, header input {
+
+    header select,
+    header input {
         font-size: 12px;
         padding: 0.3rem;
         width: auto;
-        width: 140px;  /* Slightly smaller on mobile */
+        width: 140px; /* Slightly smaller on mobile */
         font-size: 12px;
     }
-    
+
     .container {
         padding: 5px;
     }

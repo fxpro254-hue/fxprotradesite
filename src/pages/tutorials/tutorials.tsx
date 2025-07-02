@@ -109,14 +109,14 @@ const TutorialsTab = observer(({ handleTabChange }: TTutorialsTab) => {
     };
 
     return isDesktop ? (
-        <TutorialsTabDesktop 
-            tutorial_tabs={tutorial_tabs} 
+        <TutorialsTabDesktop
+            tutorial_tabs={tutorial_tabs}
             prev_active_tutorials={prev_active_tutorials}
             onTabChange={handleTutorialTabChange}
         />
     ) : (
-        <TutorialsTabMobile 
-            tutorial_tabs={tutorial_tabs} 
+        <TutorialsTabMobile
+            tutorial_tabs={tutorial_tabs}
             prev_active_tutorials={prev_active_tutorials}
             onTabChange={handleTutorialTabChange}
         />

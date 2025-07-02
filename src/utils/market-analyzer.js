@@ -1,11 +1,11 @@
 class MarketAnalyzer {
     constructor() {
         this.markets = {
-            'R_10': { history: [], analysis: null },
-            'R_25': { history: [], analysis: null },
-            'R_50': { history: [], analysis: null },
-            'R_75': { history: [], analysis: null },
-            'R_100': { history: [], analysis: null }
+            R_10: { history: [], analysis: null },
+            R_25: { history: [], analysis: null },
+            R_50: { history: [], analysis: null },
+            R_75: { history: [], analysis: null },
+            R_100: { history: [], analysis: null },
         };
         this.ws = null;
         this.tickCount = 100;
@@ -15,7 +15,7 @@ class MarketAnalyzer {
     start() {
         if (this.ws) this.ws.close();
         this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=68848');
-        
+
         this.ws.onopen = () => {
             // Subscribe to all markets
             Object.keys(this.markets).forEach(symbol => {
@@ -23,7 +23,7 @@ class MarketAnalyzer {
             });
         };
 
-        this.ws.onmessage = (event) => {
+        this.ws.onmessage = event => {
             const data = JSON.parse(event.data);
             this.handleMessage(data);
         };
@@ -33,13 +33,15 @@ class MarketAnalyzer {
     }
 
     requestHistory(symbol) {
-        this.ws.send(JSON.stringify({
-            ticks_history: symbol,
-            count: this.tickCount,
-            end: 'latest',
-            style: 'ticks',
-            subscribe: 1
-        }));
+        this.ws.send(
+            JSON.stringify({
+                ticks_history: symbol,
+                count: this.tickCount,
+                end: 'latest',
+                style: 'ticks',
+                subscribe: 1,
+            })
+        );
     }
 
     handleMessage(data) {
@@ -48,7 +50,7 @@ class MarketAnalyzer {
             if (this.markets[symbol]) {
                 this.markets[symbol].history.push({
                     time: data.tick.epoch,
-                    quote: parseFloat(data.tick.quote)
+                    quote: parseFloat(data.tick.quote),
                 });
                 if (this.markets[symbol].history.length > this.tickCount) {
                     this.markets[symbol].history.shift();
@@ -59,7 +61,7 @@ class MarketAnalyzer {
             if (this.markets[symbol]) {
                 this.markets[symbol].history = data.history.prices.map((price, index) => ({
                     time: data.history.times[index],
-                    quote: parseFloat(price)
+                    quote: parseFloat(price),
                 }));
             }
         }
@@ -71,7 +73,7 @@ class MarketAnalyzer {
         let bestMarketForUnder = null;
         let maxOverDiff = -Infinity;
         let maxUnderDiff = -Infinity;
-        
+
         Object.entries(this.markets).forEach(([symbol, data]) => {
             if (data.history.length > 0) {
                 const analysis = this.analyzeMarket(data.history);
@@ -99,9 +101,9 @@ class MarketAnalyzer {
             bestMarketForOver: bestMarketForOver || 'R_10',
             bestMarketForUnder: bestMarketForUnder || 'R_10',
             timestamp: Date.now(),
-            results
+            results,
         };
-        
+
         localStorage.setItem('market_analysis', JSON.stringify(analysisResult));
         console.log('Analysis updated - Over:', bestMarketForOver, 'Under:', bestMarketForUnder);
     }
@@ -114,14 +116,14 @@ class MarketAnalyzer {
         });
 
         const digitPercentages = digitCounts.map(count => (count / history.length) * 100);
-        
+
         // Calculate over/under percentages for barriers 2 and 7
         const overTwoPercentage = digitPercentages.slice(3).reduce((a, b) => a + b, 0);
         const underSevenPercentage = digitPercentages.slice(0, 7).reduce((a, b) => a + b, 0);
 
         const highestPercentage = Math.max(overTwoPercentage, underSevenPercentage);
         const lowestPercentage = Math.min(overTwoPercentage, underSevenPercentage);
-        
+
         return {
             highestDigit: overTwoPercentage > underSevenPercentage ? 'over' : 'under',
             lowestDigit: overTwoPercentage < underSevenPercentage ? 'over' : 'under',
@@ -129,7 +131,7 @@ class MarketAnalyzer {
             lowestPercentage,
             digitPercentages,
             overTwoPercentage,
-            underSevenPercentage
+            underSevenPercentage,
         };
     }
 
