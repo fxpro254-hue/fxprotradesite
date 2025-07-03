@@ -750,7 +750,7 @@ function placeTrades(stake, symbol) {
             duration: 1,
             duration_unit: 't',
             symbol: symbol,
-            barrier: '5',
+            barrier: '4',
         },
     };
 
