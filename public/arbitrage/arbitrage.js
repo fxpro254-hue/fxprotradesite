@@ -788,7 +788,7 @@ function handleTradeExecution(signal) {
         duration: 1,
         duration_unit: 't',
         symbol: currentSymbol,
-        barrier: '5', // Fixed at 4
+        barrier: '4', // Fixed at 4
     };
 
     derivWs.send(JSON.stringify(overRequest));
