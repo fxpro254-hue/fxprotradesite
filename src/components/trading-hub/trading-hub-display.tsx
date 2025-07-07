@@ -47,7 +47,7 @@ const TradingHubDisplay: React.FC = () => {
     const activeContractRef = useRef<string | null>(null);
     const [lastTradeResult, setLastTradeResult] = useState<string>('');
 
-    const availableSymbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100'];
+    const availableSymbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', 'RDBEAR', 'RDBULL', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'];
 
     const lastMartingaleActionRef = useRef<string>('initial');
     const lastWinTimeRef = useRef<number>(0);
@@ -90,6 +90,9 @@ const TradingHubDisplay: React.FC = () => {
         symbolsAnalysis: {},
         readySymbols: []
     });
+
+    // Symbols grid toggle state (hidden by default)
+    const [isSymbolsGridVisible, setIsSymbolsGridVisible] = useState(false);
 
     const manageMartingale = (
         action: 'init' | 'update' | 'get',
@@ -602,6 +605,14 @@ const TradingHubDisplay: React.FC = () => {
         currentStakeRef.current = initialStake;
     }, [initialStake]);
 
+    // Load symbols grid visibility preference from localStorage
+    useEffect(() => {
+        const savedPreference = localStorage.getItem('trading-hub-symbols-grid-visible');
+        if (savedPreference !== null) {
+            setIsSymbolsGridVisible(savedPreference === 'true');
+        }
+    }, []);
+
     useEffect(() => {
         if (isContinuousTrading) {
             // Use a faster interval for more responsive trading
@@ -726,6 +737,13 @@ const TradingHubDisplay: React.FC = () => {
         if (isContinuousTrading) {
             stopTrading();
         }
+    };
+
+    // Toggle symbols grid visibility
+    const toggleSymbolsGrid = () => {
+        setIsSymbolsGridVisible(prev => !prev);
+        // Optionally save preference to localStorage
+        localStorage.setItem('trading-hub-symbols-grid-visible', (!isSymbolsGridVisible).toString());
     };
 
     const handleSaveSettings = () => {
@@ -1713,7 +1731,7 @@ const TradingHubDisplay: React.FC = () => {
                                 </svg>
                             </div>
                             <div className='strategy-title'>
-                                <h3>AutoDiffer</h3>
+                                <h4>AutoDiffer</h4>
                                 <p>Random Digit Analysis</p>
                             </div>
                             <div className={`strategy-status ${isAutoDifferActive ? 'on' : 'off'}`}>
@@ -1752,14 +1770,14 @@ const TradingHubDisplay: React.FC = () => {
                                     <circle cx='12' cy='7' r='1' fill='currentColor'/>
                                     <circle cx='16' cy='7' r='1' fill='currentColor'/>
                                     <path
-                                        d='M20 16v-1.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5V16c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-3c0-.55-.45-1-1-1z'
+                                        d='M20 16v-1.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5V16c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-3c0-.55-.45-1-1-1z'
                                         fill='currentColor'
                                         opacity='0.7'
                                     />
                                 </svg>
                             </div>
                             <div className='strategy-title'>
-                                <h3>Auto Over/Under</h3>
+                                <h4>Auto Over/Under</h4>
                                 <p>AI Pattern Recognition</p>
                             </div>
                             <div className={`strategy-status ${isAutoOverUnderActive ? 'on' : 'off'}`}>
@@ -1835,7 +1853,7 @@ const TradingHubDisplay: React.FC = () => {
                                 </svg>
                             </div>
                             <div className='strategy-title'>
-                                <h3>Auto O5 U4</h3>
+                                <h4>Auto O5 U4</h4>
                                 <p>Dual Digit Strategy</p>
                             </div>
                             <div className={`strategy-status ${isAutoO5U4Active ? 'on' : 'off'}`}>
@@ -1856,12 +1874,35 @@ const TradingHubDisplay: React.FC = () => {
                                         <>
                                             <div className='symbols-overview'>
                                                 <div className='overview-header'>
-                                                    <span>Market Analysis ({o5u4Analysis.readySymbols.length}/5 ready)</span>
-                                                    {o5u4Analysis.bestSymbol && (
-                                                        <span className='best-symbol'>Best: {o5u4Analysis.bestSymbol}</span>
-                                                    )}
+                                                    <span>Market Analysis ({o5u4Analysis.readySymbols.length}/12 ready)</span>
+                                                    <div className='header-actions'>
+                                                        {o5u4Analysis.bestSymbol && (
+                                                            <span className='best-symbol'>Best: {o5u4Analysis.bestSymbol}</span>
+                                                        )}
+                                                        <button 
+                                                            className='symbols-grid-toggle'
+                                                            onClick={toggleSymbolsGrid}
+                                                            title={isSymbolsGridVisible ? 'Hide symbols grid' : 'Show symbols grid'}
+                                                        >
+                                                            <svg 
+                                                                width='16' 
+                                                                height='16' 
+                                                                viewBox='0 0 24 24' 
+                                                                fill='none'
+                                                                className={`toggle-icon ${isSymbolsGridVisible ? 'expanded' : 'collapsed'}`}
+                                                            >
+                                                                <path 
+                                                                    d='M7 10L12 15L17 10' 
+                                                                    stroke='currentColor' 
+                                                                    strokeWidth='2' 
+                                                                    strokeLinecap='round' 
+                                                                    strokeLinejoin='round'
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div className='symbols-grid'>
+                                                <div className={`symbols-grid ${isSymbolsGridVisible ? '' : 'collapsed'}`}>
                                                     {availableSymbols.map(symbol => {
                                                         const analysis = o5u4Analysis.symbolsAnalysis[symbol];
                                                         const isBest = symbol === o5u4Analysis.bestSymbol;
@@ -1873,7 +1914,6 @@ const TradingHubDisplay: React.FC = () => {
                                                                         <>
                                                                             <div className='digit-info'>
                                                                                 <span>Last: {analysis.lastDigit}</span>
-                                                                                <span>Size: {analysis.sampleSize}</span>
                                                                             </div>
                                                                             <div className={`condition-indicator ${analysis.meetsConditions ? 'met' : 'not-met'}`}>
                                                                                 {analysis.meetsConditions ? '✓' : '✗'}
@@ -1910,9 +1950,7 @@ const TradingHubDisplay: React.FC = () => {
                                             {!o5u4Analysis.bestSymbol && o5u4Analysis.readySymbols.length > 0 && (
                                                 <div className='no-opportunities'>
                                                     <span className='warning-text'>No trading opportunities found</span>
-                                                    <div className='conditions-help'>
-                                                        Waiting for: Last digit 4/5, Least frequent 4/5, Most frequent &gt;5 or &lt;4
-                                                    </div>
+                                                    
                                                 </div>
                                             )}
                                         </>
