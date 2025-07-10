@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { ToastContainer } from 'react-toastify';
 import useLiveChat from '@/components/chat/useLiveChat';
 import ChunkLoader from '@/components/loader/chunk-loader';
+import LoginRequiredModal from '@/components/login-required-modal';
 import { getUrlBase } from '@/components/shared';
 import TncStatusUpdateModal from '@/components/tnc-status-update-modal';
 import TransactionDetailsModal from '@/components/transaction-details';
@@ -193,6 +194,7 @@ const AppContent = observer(() => {
                     <ToastContainer limit={3} draggable={false} />
                     <TncStatusUpdateModal />
                 </div>
+                <LoginRequiredModal />
             </ThemeProvider>
         </>
     );
