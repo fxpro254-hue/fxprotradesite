@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import Button from '@/components/shared_ui/button';
 import { useStore } from '@/hooks/useStore';
 import { DerivLightLocalDeviceIcon, DerivLightMyComputerIcon } from '@deriv/quill-icons/Illustration';
-import { LegacyClose1pxIcon, LegacyInfo1pxIcon } from '@deriv/quill-icons/Legacy';
+import { LegacyClose1pxIcon } from '@deriv/quill-icons/Legacy';
 import { Localize, localize } from '@deriv-com/translations';
 import { useDevice } from '@deriv-com/ui';
 import { botNotification } from '../bot-notification/bot-notification';
@@ -21,6 +21,7 @@ const LocalComponent = observer(() => {
 
     const file_input_ref = React.useRef<HTMLInputElement>(null);
     const [is_file_supported, setIsFileSupported] = React.useState(true);
+    const [isDragging, setIsDragging] = React.useState(false);
     const { isDesktop } = useDevice();
     const { is_loading } = blockly_store;
 
@@ -33,6 +34,31 @@ const LocalComponent = observer(() => {
             }
         }
     }, [loaded_local_file, is_file_supported, imported_strategy_type, is_open_button_loading, is_loading]);
+
+    const handleDragEnter = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isDragging) setIsDragging(true);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        handleFileChange(e, false);
+    };
 
     if (loaded_local_file && is_file_supported) {
         return (
@@ -84,10 +110,13 @@ const LocalComponent = observer(() => {
 
                 <div
                     data-testid='dt__local-dropzone-area'
-                    className='load-strategy__local-dropzone-area'
-                    onDrop={e => {
-                        handleFileChange(e, false);
-                    }}
+                    className={classNames('load-strategy__local-dropzone-area', {
+                        'load-strategy__local-dropzone-area--dragging': isDragging
+                    })}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
                 >
                     {!isDesktop ? (
                         <DerivLightLocalDeviceIcon height='96px' width='96px' className='load-strategy__local-icon' />
@@ -117,8 +146,15 @@ const LocalComponent = observer(() => {
                         has_effect
                         primary
                         large
+
                     />
                 </div>
+                
+                {!is_file_supported && (
+                    <div className="load-strategy__error-message">
+                        <SectionMessage message={localize('Only XML files are supported')} />
+                    </div>
+                )}
             </div>
         </div>
     );
