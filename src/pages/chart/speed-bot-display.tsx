@@ -58,10 +58,10 @@ const SpeedBotDisplay = observer(() => {
     const [selectedSymbol, setSelectedSymbol] = useState('R_100');
     const [selectedContractType, setSelectedContractType] = useState('CALL');
     const [currentPrice, setCurrentPrice] = useState('Loading...');
-    const [numberOfTicks, setNumberOfTicks] = useState(1);
-    const [stake, setStake] = useState(1.00);
-    const [numberOfTrades, setNumberOfTrades] = useState(1);
-    const [barrier, setBarrier] = useState(5); // For over/under/matches/differs contracts
+    const [numberOfTicks, setNumberOfTicks] = useState<number | ''>('');
+    const [stake, setStake] = useState<number | ''>('');
+    const [numberOfTrades, setNumberOfTrades] = useState<number | ''>('');
+    const [barrier, setBarrier] = useState<number | ''>(''); // For over/under/matches/differs contracts
     const [tradeEachTick, setTradeEachTick] = useState(false); // Toggle for continuous trading
     
     // Trading state
@@ -96,6 +96,20 @@ const SpeedBotDisplay = observer(() => {
         const defaultSymbolExists = AVAILABLE_SYMBOLS.find(sym => sym.value === selectedSymbol);
         if (!defaultSymbolExists) {
             setSelectedSymbol(AVAILABLE_SYMBOLS[0].value); // Set to first available symbol
+        }
+        
+        // Set default values for inputs if they're empty
+        if (numberOfTicks === '') {
+            setNumberOfTicks(1);
+        }
+        if (stake === '') {
+            setStake(1.00);
+        }
+        if (numberOfTrades === '') {
+            setNumberOfTrades(1);
+        }
+        if (barrier === '') {
+            setBarrier(5);
         }
         
         console.log('Speed Bot: Component initialized with defaults:', {
@@ -214,18 +228,19 @@ const SpeedBotDisplay = observer(() => {
             }
             
             const contractParameters: ContractParameters = {
-                amount: stake,
+                amount: typeof stake === 'number' ? stake : 1.00,
                 basis: 'stake',
                 contract_type: selectedContractType,
                 currency: 'USD',
-                duration: numberOfTicks,
+                duration: typeof numberOfTicks === 'number' ? numberOfTicks : 1,
                 duration_unit: 't',
                 symbol: selectedSymbol,
             };
             
             // Add barrier for contracts that need it
             if (requiresBarrier()) {
-                contractParameters.barrier = barrier.toString();
+                const barrierValue = typeof barrier === 'number' ? barrier : 5;
+                contractParameters.barrier = barrierValue.toString();
             }
             
             const tradePromise = doUntilDone(() => 
@@ -363,6 +378,16 @@ const SpeedBotDisplay = observer(() => {
         }
     };
     
+    // Validation helper
+    const isFormValid = () => {
+        const hasValidStake = typeof stake === 'number' && stake >= 0.35;
+        const hasValidTicks = typeof numberOfTicks === 'number' && numberOfTicks >= 1;
+        const hasValidTrades = tradeEachTick || (typeof numberOfTrades === 'number' && numberOfTrades >= 1);
+        const hasValidBarrier = !requiresBarrier() || (typeof barrier === 'number' && barrier >= 0 && barrier <= 9);
+        
+        return hasValidStake && hasValidTicks && hasValidTrades && hasValidBarrier;
+    };
+
     const stopTrading = () => {
         setIsTrading(false);
         continuousTradingRef.current = false;
@@ -477,8 +502,19 @@ const SpeedBotDisplay = observer(() => {
                                         min='0'
                                         max='9'
                                         value={barrier}
-                                        onChange={(e) => setBarrier(parseInt(e.target.value) || 0)}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (value === '') {
+                                                setBarrier('');
+                                            } else {
+                                                const numValue = parseInt(value);
+                                                if (!isNaN(numValue)) {
+                                                    setBarrier(numValue);
+                                                }
+                                            }
+                                        }}
                                         className='config-input'
+                                        placeholder='Enter digit 0-9'
                                     />
                                 </>
                             ) : (
@@ -490,8 +526,19 @@ const SpeedBotDisplay = observer(() => {
                                         min='1'
                                         max='20'
                                         value={numberOfTicks}
-                                        onChange={(e) => setNumberOfTicks(parseInt(e.target.value) || 1)}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (value === '') {
+                                                setNumberOfTicks('');
+                                            } else {
+                                                const numValue = parseInt(value);
+                                                if (!isNaN(numValue)) {
+                                                    setNumberOfTicks(numValue);
+                                                }
+                                            }
+                                        }}
                                         className='config-input'
+                                        placeholder='Enter number of ticks'
                                     />
                                 </>
                             )}
@@ -508,8 +555,19 @@ const SpeedBotDisplay = observer(() => {
                                 min='0.35'
                                 step='0.01'
                                 value={stake}
-                                onChange={(e) => setStake(parseFloat(e.target.value) || 0.35)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                        setStake('');
+                                    } else {
+                                        const numValue = parseFloat(value);
+                                        if (!isNaN(numValue)) {
+                                            setStake(numValue);
+                                        }
+                                    }
+                                }}
                                 className='config-input'
+                                placeholder='Enter stake amount'
                             />
                         </div>
                         
@@ -522,8 +580,19 @@ const SpeedBotDisplay = observer(() => {
                                     min='1'
                                     max='100'
                                     value={numberOfTrades}
-                                    onChange={(e) => setNumberOfTrades(parseInt(e.target.value) || 1)}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                            setNumberOfTrades('');
+                                        } else {
+                                            const numValue = parseInt(value);
+                                            if (!isNaN(numValue)) {
+                                                setNumberOfTrades(numValue);
+                                            }
+                                        }
+                                    }}
                                     className='config-input'
+                                    placeholder='Enter number of trades'
                                 />
                             </div>
                         )}
@@ -540,8 +609,19 @@ const SpeedBotDisplay = observer(() => {
                                     min='1'
                                     max='20'
                                     value={numberOfTicks}
-                                    onChange={(e) => setNumberOfTicks(parseInt(e.target.value) || 1)}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                            setNumberOfTicks('');
+                                        } else {
+                                            const numValue = parseInt(value);
+                                            if (!isNaN(numValue)) {
+                                                setNumberOfTicks(numValue);
+                                            }
+                                        }
+                                    }}
                                     className='config-input'
+                                    placeholder='Enter number of ticks'
                                 />
                             </div>
                             <div className='config-group flex-1'>
@@ -555,7 +635,7 @@ const SpeedBotDisplay = observer(() => {
                         <Button
                             onClick={isTrading ? stopTrading : executeAllTrades}
                             className={`execute-button ${isTrading ? 'stop-button' : 'start-button'}`}
-                            disabled={!api_base?.api}
+                            disabled={!api_base?.api || (!isTrading && !isFormValid())}
                         >
                             {isTrading 
                                 ? localize('Stop Trading') 
@@ -568,6 +648,12 @@ const SpeedBotDisplay = observer(() => {
                         {!api_base?.api && (
                             <div className='api-status-warning'>
                                 {localize('Waiting for API connection...')}
+                            </div>
+                        )}
+                        
+                        {api_base?.api && !isTrading && !isFormValid() && (
+                            <div className='validation-warning'>
+                                {localize('Please fill in all required fields with valid values to start trading')}
                             </div>
                         )}
                         

@@ -891,6 +891,15 @@
     opacity: 0.8;
 }
 
+.validation-warning {
+    color: var(--status-warning);
+    font-size: 12px;
+    margin-top: 8px;
+    text-align: center;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
 // Animations
 @keyframes float {
     0%,
