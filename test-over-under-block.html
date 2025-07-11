@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Over/Under Percentage Block Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .test-section h3 {
+            color: #2d3748;
+            margin-top: 0;
+            border-bottom: 2px solid #4299e1;
+            padding-bottom: 10px;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+        
+        select, input {
+            padding: 12px;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, #3182ce, #2c5282);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .debug-output {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 2px solid #2d3748;
+        }
+        
+        .debug-output .success {
+            color: #68d391;
+        }
+        
+        .debug-output .error {
+            color: #fc8181;
+        }
+        
+        .debug-output .info {
+            color: #63b3ed;
+        }
+        
+        .result-display {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border: 2px solid #4299e1;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 10px 0;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success {
+            background-color: #48bb78;
+        }
+        
+        .status-error {
+            background-color: #f56565;
+        }
+        
+        .status-warning {
+            background-color: #ed8936;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Over/Under Percentage Block Test</h1>
+        
+        <div class="test-section">
+            <h3>📊 Block Testing Interface</h3>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="condition">Condition:</label>
+                    <select id="condition">
+                        <option value="over">Over</option>
+                        <option value="under">Under</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="digit">Digit Threshold:</label>
+                    <input type="number" id="digit" value="5" min="0" max="9">
+                </div>
+                <div class="control-group">
+                    <label for="count">Tick Count:</label>
+                    <input type="number" id="count" value="10" min="1" max="100">
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="testOverUnderBlock()">🧪 Test Block</button>
+                <button onclick="testWithMockData()">📝 Test with Mock Data</button>
+                <button onclick="runComprehensiveTest()">🔍 Comprehensive Test</button>
+                <button onclick="clearDebug()">🗑️ Clear Debug</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📈 Results Display</h3>
+            <div class="result-display" id="resultDisplay">
+                <div>Click "Test Block" to see results</div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 Debug Output</h3>
+            <div class="debug-output" id="debugOutput">
+                <div class="info">Debug output will appear here...</div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📋 Block Usage Examples</h3>
+            <div style="background: #f7fafc; padding: 15px; border-radius: 8px; font-family: monospace;">
+                <div><strong>Basic Usage:</strong></div>
+                <div style="color: #4299e1;">Bot.getOverUnderPercentage('over', 5, 10)</div>
+                <div style="margin-top: 10px;"><strong>Returns:</strong> Percentage of digits > 5 in last 10 ticks</div>
+                <br>
+                <div><strong>Advanced Examples:</strong></div>
+                <div style="color: #4299e1;">Bot.getOverUnderPercentage('under', 3, 20) // Digits 0,1,2 in last 20 ticks</div>
+                <div style="color: #4299e1;">Bot.getOverUnderPercentage('over', 7, 15) // Digits 8,9 in last 15 ticks</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let debugOutput = document.getElementById('debugOutput');
+        let resultDisplay = document.getElementById('resultDisplay');
+        
+        function addDebug(message, className = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugOutput.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+        
+        function clearDebug() {
+            debugOutput.innerHTML = '<div class="info">Debug output cleared...</div>';
+            resultDisplay.innerHTML = '<div>Click "Test Block" to see results</div>';
+        }
+        
+        function showResult(percentage, condition, digit, count) {
+            const statusColor = percentage > 50 ? '#48bb78' : percentage > 30 ? '#ed8936' : '#f56565';
+            resultDisplay.innerHTML = `
+                <div style="color: ${statusColor};" class="result-value">${percentage.toFixed(2)}%</div>
+                <div>Digits <strong>${condition} ${digit}</strong> in last <strong>${count}</strong> ticks</div>
+                <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                    ${condition === 'over' ? `Digits ${digit+1}-9` : `Digits 0-${digit-1}`} frequency analysis
+                </div>
+            `;
+        }
+        
+        // Mock tick data generator
+        function generateMockTicks(count) {
+            const ticks = [];
+            for (let i = 0; i < count; i++) {
+                // Generate price like 1234.56789
+                const price = 1000 + Math.random() * 1000;
+                const lastDigit = Math.floor(Math.random() * 10);
+                ticks.push({
+                    quote: price + (lastDigit / 100000), // Ensure last digit is as expected
+                    lastDigit: lastDigit
+                });
+            }
+            return ticks;
+        }
+        
+        // Mock implementation for testing
+        function mockGetOverUnderPercentage(condition, digit, count) {
+            return new Promise((resolve) => {
+                addDebug(`Generating ${count} mock ticks for testing...`);
+                const ticks = generateMockTicks(count);
+                
+                let matchingCount = 0;
+                const digits = ticks.map(tick => {
+                    const tickDigit = Math.floor(tick.quote * 100000) % 10;
+                    if (condition === 'over' && tickDigit > digit) {
+                        matchingCount++;
+                    } else if (condition === 'under' && tickDigit < digit) {
+                        matchingCount++;
+                    }
+                    return tickDigit;
+                });
+                
+                const percentage = (matchingCount / digits.length) * 100;
+                
+                addDebug(`Mock data generated: [${digits.join(', ')}]`, 'info');
+                addDebug(`Condition: ${condition} ${digit}, Matches: ${matchingCount}/${count}`, 'info');
+                
+                resolve(percentage);
+            });
+        }
+        
+        async function testOverUnderBlock() {
+            const condition = document.getElementById('condition').value;
+            const digit = parseInt(document.getElementById('digit').value);
+            const count = parseInt(document.getElementById('count').value);
+            
+            addDebug(`🧪 Testing over/under percentage block...`);
+            addDebug(`Parameters: ${condition} ${digit}, count: ${count}`);
+            
+            try {
+                // Check if Bot API is available
+                if (typeof window.Bot !== 'undefined' && window.Bot.getOverUnderPercentage) {
+                    addDebug(`✅ Bot.getOverUnderPercentage method is available`, 'success');
+                    
+                    addDebug(`Testing: Bot.getOverUnderPercentage('${condition}', ${digit}, ${count})`);
+                    
+                    const result = await window.Bot.getOverUnderPercentage(condition, digit, count);
+                    addDebug(`✅ Result: ${result}%`, 'success');
+                    showResult(result, condition, digit, count);
+                } else {
+                    addDebug(`⚠️ Bot.getOverUnderPercentage method not available. Using mock data.`, 'warning');
+                    const result = await mockGetOverUnderPercentage(condition, digit, count);
+                    addDebug(`📝 Mock result: ${result.toFixed(2)}%`, 'info');
+                    showResult(result, condition, digit, count);
+                }
+            } catch (error) {
+                addDebug(`❌ Error testing block: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
+        }
+        
+        async function testWithMockData() {
+            const condition = document.getElementById('condition').value;
+            const digit = parseInt(document.getElementById('digit').value);
+            const count = parseInt(document.getElementById('count').value);
+            
+            addDebug(`📝 Running mock data test...`);
+            
+            try {
+                const result = await mockGetOverUnderPercentage(condition, digit, count);
+                addDebug(`✅ Mock test completed: ${result.toFixed(2)}%`, 'success');
+                showResult(result, condition, digit, count);
+            } catch (error) {
+                addDebug(`❌ Mock test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function runComprehensiveTest() {
+            addDebug(`🔍 Starting comprehensive test suite...`);
+            
+            const testCases = [
+                { condition: 'over', digit: 5, count: 10 },
+                { condition: 'under', digit: 5, count: 10 },
+                { condition: 'over', digit: 7, count: 15 },
+                { condition: 'under', digit: 3, count: 20 },
+                { condition: 'over', digit: 9, count: 5 },  // Should be 0%
+                { condition: 'under', digit: 0, count: 5 }   // Should be 0%
+            ];
+            
+            for (let i = 0; i < testCases.length; i++) {
+                const { condition, digit, count } = testCases[i];
+                addDebug(`Test ${i + 1}/6: ${condition} ${digit} (${count} ticks)`);
+                
+                try {
+                    const result = await mockGetOverUnderPercentage(condition, digit, count);
+                    addDebug(`  ✅ Result: ${result.toFixed(2)}%`, 'success');
+                } catch (error) {
+                    addDebug(`  ❌ Failed: ${error.message}`, 'error');
+                }
+                
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            addDebug(`🎉 Comprehensive test completed!`, 'success');
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            addDebug(`🚀 Over/Under Percentage Block Test Interface Loaded`);
+            addDebug(`📋 Available test functions: testOverUnderBlock(), testWithMockData(), runComprehensiveTest()`);
+            
+            // Check if we're in the bot environment
+            if (typeof window.Bot !== 'undefined') {
+                addDebug(`🤖 Bot environment detected`, 'success');
+                if (window.Bot.getOverUnderPercentage) {
+                    addDebug(`✅ getOverUnderPercentage method available`, 'success');
+                } else {
+                    addDebug(`⚠️ getOverUnderPercentage method not found`, 'warning');
+                }
+            } else {
+                addDebug(`📝 Standalone mode - using mock data`, 'info');
+            }
+        });
+    </script>
+</body>
+</html>

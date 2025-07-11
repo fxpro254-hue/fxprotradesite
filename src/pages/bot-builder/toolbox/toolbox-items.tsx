@@ -384,6 +384,56 @@ export const ToolboxItems = () =>
                     <Block type='ticks' />
                     <Block type='lastDigitList' />
                     <Block type='check_direction' />
+                    <Block type='even_odd_percentage'>
+                        <Field name='PATTERN'>even</Field>
+                        <Value name='COUNT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>10</Field>
+                            </Shadow>
+                        </Value>
+                    </Block>
+                    <Block type='over_under_percentage'>
+                        <Field name='CONDITION'>over</Field>
+                        <Value name='DIGIT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>5</Field>
+                            </Shadow>
+                        </Value>
+                        <Value name='COUNT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>10</Field>
+                            </Shadow>
+                        </Value>
+                    </Block>
+                    <Block type='digit_frequency_rank'>
+                        <Field name='RANK'>most</Field>
+                        <Value name='COUNT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>15</Field>
+                            </Shadow>
+                        </Value>
+                    </Block>
+                    <Block type='all_same_pattern'>
+                        <Value name='COUNT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>5</Field>
+                            </Shadow>
+                        </Value>
+                        <Field name='PATTERN'>all_even</Field>
+                    </Block>
+                    <Block type='digit_comparison'>
+                        <Value name='COUNT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>5</Field>
+                            </Shadow>
+                        </Value>
+                        <Field name='OPERATOR'>equal</Field>
+                        <Value name='DIGIT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>7</Field>
+                            </Shadow>
+                        </Value>
+                    </Block>
                     <Block type='is_candle_black' />
                     <Block type='read_ohlc'>
                         <Field name='OHLCFIELD_LIST'>open</Field>
@@ -779,6 +829,56 @@ export const ToolboxItems = () =>
                 </Category>
             </Category>
             <Category id='binaryfx' name={localize('binaryfx')}>
+                <Block type='even_odd_percentage'>
+                    <Field name='PATTERN'>even</Field>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>10</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
+                <Block type='over_under_percentage'>
+                    <Field name='CONDITION'>over</Field>
+                    <Value name='DIGIT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>5</Field>
+                        </Shadow>
+                    </Value>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>10</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
+                <Block type='digit_frequency_rank'>
+                    <Field name='RANK'>most</Field>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>15</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
+                <Block type='all_same_pattern'>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>5</Field>
+                        </Shadow>
+                    </Value>
+                    <Field name='PATTERN'>all_even</Field>
+                </Block>
+                <Block type='digit_comparison'>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>5</Field>
+                        </Shadow>
+                    </Value>
+                    <Field name='OPERATOR'>equal</Field>
+                    <Value name='DIGIT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>7</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
                 <Block type='notify'>
                     <Field name='NOTIFICATION_TYPE'>success</Field>
                     <Value name='MESSAGE'>

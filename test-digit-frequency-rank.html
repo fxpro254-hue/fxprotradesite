@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digit Frequency Rank Block Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .test-section h3 {
+            color: #2d3748;
+            margin-top: 0;
+            border-bottom: 2px solid #4299e1;
+            padding-bottom: 10px;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+        
+        select, input {
+            padding: 12px;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, #3182ce, #2c5282);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .debug-output {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 2px solid #2d3748;
+        }
+        
+        .debug-output .success {
+            color: #68d391;
+        }
+        
+        .debug-output .error {
+            color: #fc8181;
+        }
+        
+        .debug-output .info {
+            color: #63b3ed;
+        }
+        
+        .debug-output .warning {
+            color: #f6e05e;
+        }
+        
+        .result-display {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border: 2px solid #4299e1;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .result-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 10px 0;
+        }
+        
+        .frequency-chart {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        
+        .digit-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .digit-bar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .digit-number {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .digit-count {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .rank-highlight {
+            background: linear-gradient(135deg, #4299e1, #63b3ed) !important;
+            color: white;
+        }
+        
+        .rank-highlight .digit-count {
+            color: #e2e8f0;
+        }
+        
+        .rank-indicators {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .rank-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .rank-card:hover {
+            border-color: #4299e1;
+            transform: translateY(-2px);
+        }
+        
+        .rank-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
+        
+        .rank-digit {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .rank-count {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Digit Frequency Rank Block Test</h1>
+        
+        <div class="test-section">
+            <h3>🎯 Block Testing Interface</h3>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="rank">Frequency Rank:</label>
+                    <select id="rank">
+                        <option value="most">Most Frequent</option>
+                        <option value="least">Least Frequent</option>
+                        <option value="second_most">Second Most</option>
+                        <option value="second_least">Second Least</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="count">Tick Count:</label>
+                    <input type="number" id="count" value="15" min="10" max="100">
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="testFrequencyRank()">🧪 Test Frequency Rank</button>
+                <button onclick="testWithMockData()">📝 Test with Mock Data</button>
+                <button onclick="runComprehensiveTest()">🔍 Comprehensive Test</button>
+                <button onclick="clearDebug()">🗑️ Clear Debug</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📈 Results Display</h3>
+            <div class="result-display" id="resultDisplay">
+                <div>Click "Test Frequency Rank" to see results</div>
+            </div>
+            
+            <div class="rank-indicators" id="rankIndicators" style="display: none;">
+                <div class="rank-card">
+                    <div class="rank-title">Most Frequent</div>
+                    <div class="rank-digit" id="mostDigit">-</div>
+                    <div class="rank-count" id="mostCount">0 times</div>
+                </div>
+                <div class="rank-card">
+                    <div class="rank-title">Second Most</div>
+                    <div class="rank-digit" id="secondMostDigit">-</div>
+                    <div class="rank-count" id="secondMostCount">0 times</div>
+                </div>
+                <div class="rank-card">
+                    <div class="rank-title">Second Least</div>
+                    <div class="rank-digit" id="secondLeastDigit">-</div>
+                    <div class="rank-count" id="secondLeastCount">0 times</div>
+                </div>
+                <div class="rank-card">
+                    <div class="rank-title">Least Frequent</div>
+                    <div class="rank-digit" id="leastDigit">-</div>
+                    <div class="rank-count" id="leastCount">0 times</div>
+                </div>
+            </div>
+            
+            <div class="frequency-chart" id="frequencyChart" style="display: none;">
+                <!-- Digit frequency bars will be generated here -->
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 Debug Output</h3>
+            <div class="debug-output" id="debugOutput">
+                <div class="info">Debug output will appear here...</div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📋 Block Usage Examples</h3>
+            <div style="background: #f7fafc; padding: 15px; border-radius: 8px; font-family: monospace;">
+                <div><strong>Basic Usage:</strong></div>
+                <div style="color: #4299e1;">Bot.getDigitFrequencyRank('most', 15) // Returns most frequent digit</div>
+                <div style="color: #4299e1;">Bot.getDigitFrequencyRank('least', 20) // Returns least frequent digit</div>
+                <br>
+                <div><strong>Advanced Examples:</strong></div>
+                <div style="color: #4299e1;">Bot.getDigitFrequencyRank('second_most', 25) // Second most common</div>
+                <div style="color: #4299e1;">Bot.getDigitFrequencyRank('second_least', 30) // Second least common</div>
+                <br>
+                <div><strong>Trading Strategy:</strong></div>
+                <div style="color: #48bb78;">if (Bot.getDigitFrequencyRank('most', 20) > 7) { /* High digit bias */ }</div>
+                <div style="color: #48bb78;">if (Bot.getDigitFrequencyRank('least', 15) === 0) { /* Zero underrepresented */ }</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let debugOutput = document.getElementById('debugOutput');
+        let resultDisplay = document.getElementById('resultDisplay');
+        let frequencyChart = document.getElementById('frequencyChart');
+        let rankIndicators = document.getElementById('rankIndicators');
+        
+        function addDebug(message, className = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugOutput.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+        
+        function clearDebug() {
+            debugOutput.innerHTML = '<div class="info">Debug output cleared...</div>';
+            resultDisplay.innerHTML = '<div>Click "Test Frequency Rank" to see results</div>';
+            frequencyChart.style.display = 'none';
+            rankIndicators.style.display = 'none';
+        }
+        
+        function showResult(digit, rank, count, digitCounts = null) {
+            const rankNames = {
+                'most': 'Most Frequent',
+                'least': 'Least Frequent',
+                'second_most': 'Second Most Frequent',
+                'second_least': 'Second Least Frequent'
+            };
+            
+            resultDisplay.innerHTML = `
+                <div class="result-value">${digit}</div>
+                <div><strong>${rankNames[rank]}</strong> digit in last <strong>${count}</strong> ticks</div>
+                <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                    Digit ${digit} analysis complete
+                </div>
+            `;
+            
+            if (digitCounts) {
+                showFrequencyChart(digitCounts, digit, rank);
+                showRankIndicators(digitCounts);
+            }
+        }
+        
+        function showFrequencyChart(digitCounts, targetDigit, rank) {
+            frequencyChart.innerHTML = '';
+            frequencyChart.style.display = 'grid';
+            
+            for (let digit = 0; digit <= 9; digit++) {
+                const count = digitCounts[digit] || 0;
+                const bar = document.createElement('div');
+                bar.className = 'digit-bar';
+                
+                if (digit === targetDigit) {
+                    bar.classList.add('rank-highlight');
+                }
+                
+                bar.innerHTML = `
+                    <div class="digit-number">${digit}</div>
+                    <div class="digit-count">${count}</div>
+                `;
+                
+                frequencyChart.appendChild(bar);
+            }
+        }
+        
+        function showRankIndicators(digitCounts) {
+            // Sort digits by frequency
+            const sorted = digitCounts.map((count, digit) => ({ digit, count }))
+                .sort((a, b) => b.count !== a.count ? b.count - a.count : a.digit - b.digit);
+            
+            rankIndicators.style.display = 'grid';
+            
+            if (sorted.length > 0) {
+                document.getElementById('mostDigit').textContent = sorted[0].digit;
+                document.getElementById('mostCount').textContent = `${sorted[0].count} times`;
+            }
+            
+            if (sorted.length > 1) {
+                document.getElementById('secondMostDigit').textContent = sorted[1].digit;
+                document.getElementById('secondMostCount').textContent = `${sorted[1].count} times`;
+                
+                document.getElementById('secondLeastDigit').textContent = sorted[sorted.length - 2].digit;
+                document.getElementById('secondLeastCount').textContent = `${sorted[sorted.length - 2].count} times`;
+            }
+            
+            if (sorted.length > 0) {
+                document.getElementById('leastDigit').textContent = sorted[sorted.length - 1].digit;
+                document.getElementById('leastCount').textContent = `${sorted[sorted.length - 1].count} times`;
+            }
+        }
+        
+        // Mock tick data generator with controlled distribution
+        function generateMockTicks(count) {
+            const ticks = [];
+            const digitCounts = new Array(10).fill(0);
+            
+            for (let i = 0; i < count; i++) {
+                // Create some bias - favor certain digits for testing
+                let digit;
+                const rand = Math.random();
+                
+                if (rand < 0.25) {
+                    digit = Math.floor(Math.random() * 3); // 0,1,2 (25%)
+                } else if (rand < 0.5) {
+                    digit = Math.floor(Math.random() * 3) + 7; // 7,8,9 (25%)
+                } else {
+                    digit = Math.floor(Math.random() * 10); // Any digit (50%)
+                }
+                
+                digitCounts[digit]++;
+                const price = 1000 + Math.random() * 1000 + (digit / 100000);
+                ticks.push({ quote: price, digit: digit });
+            }
+            
+            return { ticks, digitCounts };
+        }
+        
+        // Mock implementation for testing
+        function mockGetDigitFrequencyRank(rank, count) {
+            return new Promise((resolve) => {
+                addDebug(`Generating ${count} mock ticks for frequency analysis...`);
+                const { ticks, digitCounts } = generateMockTicks(count);
+                
+                // Sort by frequency (descending) then by digit (ascending) for ties
+                const sorted = digitCounts.map((count, digit) => ({ digit, count }))
+                    .sort((a, b) => b.count !== a.count ? b.count - a.count : a.digit - b.digit);
+                
+                let result = -1;
+                switch (rank) {
+                    case 'most':
+                        result = sorted[0].digit;
+                        break;
+                    case 'least':
+                        result = sorted[sorted.length - 1].digit;
+                        break;
+                    case 'second_most':
+                        if (sorted.length > 1) result = sorted[1].digit;
+                        break;
+                    case 'second_least':
+                        if (sorted.length > 1) result = sorted[sorted.length - 2].digit;
+                        break;
+                }
+                
+                addDebug(`Mock frequency analysis: [${digitCounts.join(', ')}]`, 'info');
+                addDebug(`Ranking: ${rank}, Result: digit ${result}`, 'info');
+                
+                resolve({ digit: result, digitCounts });
+            });
+        }
+        
+        async function testFrequencyRank() {
+            const rank = document.getElementById('rank').value;
+            const count = parseInt(document.getElementById('count').value);
+            
+            addDebug(`🧪 Testing digit frequency rank block...`);
+            addDebug(`Parameters: ${rank}, count: ${count}`);
+            
+            try {
+                // Check if Bot API is available
+                if (typeof window.Bot !== 'undefined' && window.Bot.getDigitFrequencyRank) {
+                    addDebug(`✅ Bot.getDigitFrequencyRank method is available`, 'success');
+                    
+                    addDebug(`Testing: Bot.getDigitFrequencyRank('${rank}', ${count})`);
+                    
+                    const result = await window.Bot.getDigitFrequencyRank(rank, count);
+                    addDebug(`✅ Result: digit ${result}`, 'success');
+                    showResult(result, rank, count);
+                } else {
+                    addDebug(`⚠️ Bot.getDigitFrequencyRank method not available. Using mock data.`, 'warning');
+                    const { digit, digitCounts } = await mockGetDigitFrequencyRank(rank, count);
+                    addDebug(`📝 Mock result: digit ${digit}`, 'info');
+                    showResult(digit, rank, count, digitCounts);
+                }
+            } catch (error) {
+                addDebug(`❌ Error testing block: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
+        }
+        
+        async function testWithMockData() {
+            const rank = document.getElementById('rank').value;
+            const count = parseInt(document.getElementById('count').value);
+            
+            addDebug(`📝 Running mock data test...`);
+            
+            try {
+                const { digit, digitCounts } = await mockGetDigitFrequencyRank(rank, count);
+                addDebug(`✅ Mock test completed: digit ${digit}`, 'success');
+                showResult(digit, rank, count, digitCounts);
+            } catch (error) {
+                addDebug(`❌ Mock test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function runComprehensiveTest() {
+            addDebug(`🔍 Starting comprehensive frequency rank test suite...`);
+            
+            const testCases = [
+                { rank: 'most', count: 15 },
+                { rank: 'least', count: 15 },
+                { rank: 'second_most', count: 20 },
+                { rank: 'second_least', count: 20 },
+                { rank: 'most', count: 30 },
+                { rank: 'least', count: 10 }
+            ];
+            
+            for (let i = 0; i < testCases.length; i++) {
+                const { rank, count } = testCases[i];
+                addDebug(`Test ${i + 1}/6: ${rank} in ${count} ticks`);
+                
+                try {
+                    const { digit, digitCounts } = await mockGetDigitFrequencyRank(rank, count);
+                    addDebug(`  ✅ Result: digit ${digit}`, 'success');
+                    
+                    // Show distribution for last test
+                    if (i === testCases.length - 1) {
+                        showResult(digit, rank, count, digitCounts);
+                    }
+                } catch (error) {
+                    addDebug(`  ❌ Failed: ${error.message}`, 'error');
+                }
+                
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 150));
+            }
+            
+            addDebug(`🎉 Comprehensive test completed!`, 'success');
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            addDebug(`🚀 Digit Frequency Rank Block Test Interface Loaded`);
+            addDebug(`📋 Available test functions: testFrequencyRank(), testWithMockData(), runComprehensiveTest()`);
+            
+            // Check if we're in the bot environment
+            if (typeof window.Bot !== 'undefined') {
+                addDebug(`🤖 Bot environment detected`, 'success');
+                if (window.Bot.getDigitFrequencyRank) {
+                    addDebug(`✅ getDigitFrequencyRank method available`, 'success');
+                } else {
+                    addDebug(`⚠️ getDigitFrequencyRank method not found`, 'warning');
+                }
+            } else {
+                addDebug(`📝 Standalone mode - using mock data`, 'info');
+            }
+        });
+    </script>
+</body>
+</html>

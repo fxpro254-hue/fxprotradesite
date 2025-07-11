@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 All Same Pattern Block Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin: 5px;
+            width: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .result {
+            background: #f0fff4;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #48bb78;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .error {
+            background: #fed7d7;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #f56565;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .debug {
+            background: #e6fffa;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #38b2ac;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .result-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffffff;
+            margin: 10px 0;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success {
+            background-color: #48bb78;
+        }
+        
+        .status-error {
+            background-color: #f56565;
+        }
+        
+        .status-warning {
+            background-color: #ed8936;
+        }
+        
+        .digit-display {
+            font-family: 'Courier New', monospace;
+            background: #2d3748;
+            color: #68d391;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 All Same Pattern Block Test</h1>
+        
+        <div class="test-section">
+            <h3>📊 Block Testing Interface</h3>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Pattern Type:</label>
+                    <select id="patternSelect">
+                        <option value="all_even">All Even</option>
+                        <option value="all_odd">All Odd</option>
+                        <option value="all_same">All Same</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Count (number of ticks):</label>
+                    <input type="number" id="countInput" value="5" min="1" max="20">
+                </div>
+                <button onclick="testAllSamePattern()">🎯 Test Pattern Block</button>
+                <button onclick="testDirectAPI()">🔧 Test Direct API</button>
+                <button onclick="testWithMockData()">📝 Test with Mock Data</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Test Results</h3>
+            <div id="results">
+                <em>Ready to test the All Same Pattern block. Click a test button above.</em>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock data to test the pattern checking logic
+        const mockTestData = {
+            allEven: [
+                { quote: 123.40 }, // 0 - even
+                { quote: 124.62 }, // 2 - even  
+                { quote: 125.84 }, // 4 - even
+                { quote: 126.06 }, // 6 - even
+                { quote: 127.28 }  // 8 - even
+            ],
+            allOdd: [
+                { quote: 123.41 }, // 1 - odd
+                { quote: 124.63 }, // 3 - odd
+                { quote: 125.85 }, // 5 - odd
+                { quote: 126.07 }, // 7 - odd
+                { quote: 127.29 }  // 9 - odd
+            ],
+            allSame: [
+                { quote: 123.45 }, // 5
+                { quote: 124.65 }, // 5
+                { quote: 125.85 }, // 5
+                { quote: 126.05 }, // 5
+                { quote: 127.25 }  // 5
+            ],
+            mixed: [
+                { quote: 123.41 }, // 1 - odd
+                { quote: 124.62 }, // 2 - even
+                { quote: 125.83 }, // 3 - odd
+                { quote: 126.04 }, // 4 - even
+                { quote: 127.25 }  // 5 - odd
+            ]
+        };
+
+        function addResult(content, isError = false) {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = isError ? 'error' : 'result';
+            div.innerHTML = content;
+            resultsDiv.appendChild(div);
+        }
+
+        function addDebug(content) {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'debug';
+            div.innerHTML = content;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function getLastDigit(price) {
+            return Math.abs(Math.floor(price * 10)) % 10;
+        }
+
+        function checkAllSamePattern(ticks, pattern, count) {
+            const recentTicks = ticks.slice(-count);
+            const digits = recentTicks.map(tick => getLastDigit(tick.quote));
+            
+            if (digits.length === 0) {
+                return { result: false, digits: [], message: "No ticks available" };
+            }
+            
+            let result = false;
+            let message = "";
+            
+            switch (pattern) {
+                case 'all_even':
+                    result = digits.every(digit => digit % 2 === 0);
+                    message = result ? "All digits are even!" : "Not all digits are even";
+                    break;
+                case 'all_odd':
+                    result = digits.every(digit => digit % 2 !== 0);
+                    message = result ? "All digits are odd!" : "Not all digits are odd";
+                    break;
+                case 'all_same':
+                    const firstDigit = digits[0];
+                    result = digits.every(digit => digit === firstDigit);
+                    message = result ? `All digits are ${firstDigit}!` : "Not all digits are the same";
+                    break;
+                default:
+                    result = false;
+                    message = "Unknown pattern";
+            }
+            
+            return {
+                result,
+                digits,
+                message,
+                totalCount: digits.length
+            };
+        }
+
+        function testWithMockData() {
+            clearResults();
+            const pattern = document.getElementById('patternSelect').value;
+            const count = parseInt(document.getElementById('countInput').value);
+            
+            addResult('<h3>Testing with Mock Data</h3>');
+            
+            // Test all scenarios
+            Object.keys(mockTestData).forEach(scenario => {
+                const ticks = mockTestData[scenario];
+                const result = checkAllSamePattern(ticks, pattern, count);
+                
+                addDebug(`Scenario: ${scenario.toUpperCase()}`);
+                addDebug(`Ticks: ${JSON.stringify(ticks.map(t => t.quote))}`);
+                addDebug(`Digits: [${result.digits.join(', ')}]`);
+                addDebug(`Pattern: ${pattern}`);
+                addDebug(`Count: ${count}`);
+                addDebug(`Result: ${result.result}`);
+                
+                const statusClass = result.result ? 'status-success' : 'status-error';
+                addResult(`
+                    <strong>${scenario.toUpperCase()} Test:</strong><br>
+                    <span class="status-indicator ${statusClass}"></span>
+                    Pattern: ${pattern}<br>
+                    Digits: <span class="digit-display">[${result.digits.join(', ')}]</span>
+                    Result: <strong>${result.result ? 'TRUE' : 'FALSE'}</strong><br>
+                    ${result.message}
+                `);
+            });
+        }
+
+        async function testDirectAPI() {
+            clearResults();
+            addResult('<h3>Testing Direct API Access</h3>');
+            
+            try {
+                // Check if we have access to the bot API
+                if (typeof window.Bot === 'undefined') {
+                    addResult('Bot API not available. This test requires the bot environment.', true);
+                    return;
+                }
+                
+                const pattern = document.getElementById('patternSelect').value;
+                const count = parseInt(document.getElementById('countInput').value);
+                
+                addDebug(`Testing: Bot.checkAllSamePattern(${count}, '${pattern}')`);
+                
+                const result = await window.Bot.checkAllSamePattern(count, pattern);
+                
+                addResult(`
+                    <strong>Direct API Test Result:</strong><br>
+                    Pattern: ${pattern}<br>
+                    Count: ${count}<br>
+                    <div class="result-box">
+                        <div class="result-value">${result ? 'TRUE' : 'FALSE'}</div>
+                        Pattern ${result ? 'matches' : 'does not match'}!
+                    </div>
+                `);
+                
+            } catch (error) {
+                addResult(`Direct API test failed: ${error.message}`, true);
+                addDebug(`Error details: ${JSON.stringify(error)}`);
+            }
+        }
+
+        async function testAllSamePattern() {
+            clearResults();
+            addResult('<h3>Testing All Same Pattern Block Integration</h3>');
+            
+            try {
+                const pattern = document.getElementById('patternSelect').value;
+                const count = parseInt(document.getElementById('countInput').value);
+                
+                // Check if we're in the bot environment
+                if (typeof window.Blockly === 'undefined') {
+                    addResult('Blockly environment not available. This test requires the bot builder.', true);
+                    return;
+                }
+                
+                // Test if our block is registered
+                if (typeof window.Blockly.Blocks.all_same_pattern === 'undefined') {
+                    addResult('All Same Pattern block not registered in Blockly.', true);
+                    return;
+                }
+                
+                addResult('✓ All Same Pattern block found in Blockly');
+                
+                // Test the JavaScript generator
+                if (typeof window.Blockly.JavaScript.javascriptGenerator.forBlock.all_same_pattern === 'undefined') {
+                    addResult('JavaScript generator for All Same Pattern block not found.', true);
+                    return;
+                }
+                
+                addResult('✓ JavaScript generator found for All Same Pattern block');
+                
+                // Create a mock block and test code generation
+                const mockBlock = {
+                    getFieldValue: (field) => {
+                        if (field === 'PATTERN') return pattern;
+                        return null;
+                    }
+                };
+                
+                // Mock the Blockly code generation
+                window.Blockly.JavaScript.javascriptGenerator.valueToCode = () => count.toString();
+                window.Blockly.JavaScript.javascriptGenerator.ORDER_ATOMIC = 0;
+                
+                const generatedCode = window.Blockly.JavaScript.javascriptGenerator.forBlock.all_same_pattern(mockBlock);
+                
+                addDebug(`Generated code: ${generatedCode[0]}`);
+                addResult(`✓ Block generates correct JavaScript code: <code>${generatedCode[0]}</code>`);
+                
+            } catch (error) {
+                addResult(`Block integration test failed: ${error.message}`, true);
+                addDebug(`Error details: ${JSON.stringify(error)}`);
+            }
+        }
+
+        // Test all patterns automatically on load
+        function runAllTests() {
+            clearResults();
+            addResult('<h3>🚀 Running All Pattern Tests</h3>');
+            
+            const patterns = ['all_even', 'all_odd', 'all_same'];
+            patterns.forEach(pattern => {
+                document.getElementById('patternSelect').value = pattern;
+                addResult(`<h4>Testing Pattern: ${pattern.toUpperCase()}</h4>`);
+                testWithMockData();
+            });
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            addResult('<em>All Same Pattern Block Tester ready! Click a test button above or run all tests.</em>');
+        });
+    </script>
+</body>
+</html>

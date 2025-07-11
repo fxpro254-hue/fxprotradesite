@@ -88,6 +88,182 @@ export default Engine =>
             return digits;
         }
 
+        getEvenOddPercentage(pattern, count) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    const recentTicks = ticks.slice(-count);
+                    const digits = this.getLastDigitsFromList(recentTicks);
+                    
+                    let matchingCount = 0;
+                    digits.forEach(digit => {
+                        const isEven = digit % 2 === 0;
+                        if ((pattern === 'even' && isEven) || (pattern === 'odd' && !isEven)) {
+                            matchingCount++;
+                        }
+                    });
+                    
+                    const percentage = digits.length > 0 ? (matchingCount / digits.length) * 100 : 0;
+                    resolve(percentage);
+                });
+            });
+        }
+
+        getOverUnderPercentage(condition, digit, count) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    const recentTicks = ticks.slice(-count);
+                    const digits = this.getLastDigitsFromList(recentTicks);
+                    
+                    let matchingCount = 0;
+                    digits.forEach(tickDigit => {
+                        if (condition === 'over' && tickDigit > digit) {
+                            matchingCount++;
+                        } else if (condition === 'under' && tickDigit < digit) {
+                            matchingCount++;
+                        }
+                    });
+                    
+                    const percentage = digits.length > 0 ? (matchingCount / digits.length) * 100 : 0;
+                    resolve(percentage);
+                });
+            });
+        }
+
+        getDigitFrequencyRank(rank, count) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    const recentTicks = ticks.slice(-count);
+                    const digits = this.getLastDigitsFromList(recentTicks);
+                    
+                    // Count frequency of each digit (0-9)
+                    const digitCounts = new Array(10).fill(0);
+                    digits.forEach(digit => {
+                        digitCounts[digit]++;
+                    });
+                    
+                    // Create array of {digit, count} pairs and sort by frequency
+                    const digitFrequencies = digitCounts.map((count, digit) => ({
+                        digit,
+                        count
+                    }));
+                    
+                    // Sort by count (descending), then by digit (ascending) for ties
+                    digitFrequencies.sort((a, b) => {
+                        if (b.count !== a.count) {
+                            return b.count - a.count;
+                        }
+                        return a.digit - b.digit;
+                    });
+                    
+                    // Get the digit based on ranking
+                    let result = -1;
+                    switch (rank) {
+                        case 'most':
+                            result = digitFrequencies[0].digit;
+                            break;
+                        case 'least':
+                            // Find the last element (lowest frequency)
+                            result = digitFrequencies[digitFrequencies.length - 1].digit;
+                            break;
+                        case 'second_most':
+                            if (digitFrequencies.length > 1) {
+                                result = digitFrequencies[1].digit;
+                            }
+                            break;
+                        case 'second_least':
+                            if (digitFrequencies.length > 1) {
+                                result = digitFrequencies[digitFrequencies.length - 2].digit;
+                            }
+                            break;
+                        default:
+                            result = digitFrequencies[0].digit;
+                    }
+                    
+                    resolve(result);
+                });
+            });
+        }
+
+        checkAllSamePattern(count, pattern) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    const recentTicks = ticks.slice(-count);
+                    const digits = this.getLastDigitsFromList(recentTicks);
+                    
+                    if (digits.length === 0) {
+                        resolve(false);
+                        return;
+                    }
+                    
+                    let result = false;
+                    
+                    switch (pattern) {
+                        case 'all_even':
+                            // Check if all digits are even
+                            result = digits.every(digit => digit % 2 === 0);
+                            break;
+                        case 'all_odd':
+                            // Check if all digits are odd
+                            result = digits.every(digit => digit % 2 !== 0);
+                            break;
+                        case 'all_same':
+                            // Check if all digits are the same
+                            const firstDigit = digits[0];
+                            result = digits.every(digit => digit === firstDigit);
+                            break;
+                        default:
+                            result = false;
+                    }
+                    
+                    resolve(result);
+                });
+            });
+        }
+
+        checkDigitComparison(count, operator, targetDigit) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    const recentTicks = ticks.slice(-count);
+                    const digits = this.getLastDigitsFromList(recentTicks);
+                    
+                    if (digits.length === 0) {
+                        resolve(false);
+                        return;
+                    }
+                    
+                    const target = parseInt(targetDigit, 10);
+                    let result = false;
+                    
+                    switch (operator) {
+                        case 'equal':
+                            // Check if all digits are equal to target
+                            result = digits.every(digit => digit === target);
+                            break;
+                        case 'greater':
+                            // Check if all digits are greater than target
+                            result = digits.every(digit => digit > target);
+                            break;
+                        case 'less':
+                            // Check if all digits are less than target
+                            result = digits.every(digit => digit < target);
+                            break;
+                        case 'greater_equal':
+                            // Check if all digits are greater than or equal to target
+                            result = digits.every(digit => digit >= target);
+                            break;
+                        case 'less_equal':
+                            // Check if all digits are less than or equal to target
+                            result = digits.every(digit => digit <= target);
+                            break;
+                        default:
+                            result = false;
+                    }
+                    
+                    resolve(result);
+                });
+            });
+        }
+
         checkDirection(dir) {
             return new Promise(resolve =>
                 this.$scope.ticksService
