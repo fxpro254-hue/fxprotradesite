@@ -7,15 +7,15 @@ import { localize } from '@deriv-com/translations';
 
 const AnalysistoolModal = observer(() => {
     const { dashboard } = useStore();
-    const { is_trading_view_modal_visible, setAnalysistoolModalVisibility } = dashboard;
+    const { is_analysis_modal_visible, setAnalysisModalVisibility } = dashboard;
 
     return (
         <React.Fragment>
-            {is_analysis_view_modal_visible && (
+            {is_analysis_modal_visible && (
                 <DraggableResizeWrapper
                     boundary='.main'
                     header={localize('Analysis Tool')}
-                    onClose={setAnalysistoolModalVisibility}
+                    onClose={setAnalysisModalVisibility}
                     modalWidth={526}
                     modalHeight={595}
                     minWidth={526}

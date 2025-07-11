@@ -5,6 +5,7 @@ import {
     LabelPairedArrowRotateLeftMdRegularIcon,
     LabelPairedArrowRotateRightMdRegularIcon,
     LabelPairedArrowsRotateMdRegularIcon,
+    LabelPairedChartAreaMdRegularIcon,
     LabelPairedChartLineMdRegularIcon,
     LabelPairedChartTradingviewMdRegularIcon,
     LabelPairedFloppyDiskMdRegularIcon,
@@ -12,6 +13,7 @@ import {
     LabelPairedMagnifyingGlassMinusMdRegularIcon,
     LabelPairedMagnifyingGlassPlusMdRegularIcon,
     LabelPairedObjectsAlignLeftMdRegularIcon,
+    LabelPairedWifiMdRegularIcon,
 } from '@deriv/quill-icons/LabelPaired';
 import { localize } from '@deriv-com/translations';
 import { useDevice } from '@deriv-com/ui';
@@ -20,7 +22,7 @@ import ToolbarIcon from './toolbar-icon';
 
 const WorkspaceGroup = observer(() => {
     const { dashboard, toolbar, load_modal, save_modal } = useStore();
-    const { setPreviewOnPopup, setChartModalVisibility, setTradingViewModalVisibility } = dashboard;
+    const { setPreviewOnPopup, setChartModalVisibility, setTradingViewModalVisibility, setAnalysisModalVisibility, setSignalsModalVisibility } = dashboard;
     const { has_redo_stack, has_undo_stack, onResetClick, onSortClick, onUndoClick, onZoomInOutClick } = toolbar;
     const { toggleSaveModal } = save_modal;
     const { toggleLoadModal } = load_modal;
@@ -114,6 +116,59 @@ const WorkspaceGroup = observer(() => {
                                     onClick={() => setTradingViewModalVisibility()}
                                 >
                                     <LabelPairedChartTradingviewMdRegularIcon />
+                                </span>
+                            }
+                        />
+                        <ToolbarIcon
+                            popover_message={localize('Analysis Tool')}
+                            icon={
+                                <span
+                                    className='toolbar__icon'
+                                    id='db-toolbar__analysis-button'
+                                    onClick={() => setAnalysisModalVisibility()}
+                                >
+                                    <LabelPairedChartAreaMdRegularIcon />
+                                </span>
+                            }
+                        />
+                        <ToolbarIcon
+                            popover_message={localize('Signals')}
+                            icon={
+                                <span
+                                    className='toolbar__icon'
+                                    id='db-toolbar__signals-button'
+                                    onClick={() => setSignalsModalVisibility()}
+                                >
+                                    <LabelPairedWifiMdRegularIcon />
+                                </span>
+                            }
+                        />
+                    </>
+                )}
+                {!isDesktop && (
+                    <>
+                        <div className='vertical-divider' />
+                        <ToolbarIcon
+                            popover_message={localize('Analysis Tool')}
+                            icon={
+                                <span
+                                    className='toolbar__icon'
+                                    id='db-toolbar__analysis-button-mobile'
+                                    onClick={() => setAnalysisModalVisibility()}
+                                >
+                                    <LabelPairedChartAreaMdRegularIcon />
+                                </span>
+                            }
+                        />
+                        <ToolbarIcon
+                            popover_message={localize('Signals')}
+                            icon={
+                                <span
+                                    className='toolbar__icon'
+                                    id='db-toolbar__signals-button-mobile'
+                                    onClick={() => setSignalsModalVisibility()}
+                                >
+                                    <LabelPairedWifiMdRegularIcon />
                                 </span>
                             }
                         />
