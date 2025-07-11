@@ -43,6 +43,10 @@
 
     // Brand secondary colors
     --brand-secondary: #{constants.$color-green};
+    --brand-blue: #4d84ff;
+    --brand-blue-hover: #3d6eff;
+    --brand-blue-light: rgba(77, 132, 255, 0.1);
+    --brand-blue-dark: #2d56ef;
 
     // App Cards gradient background
     --app-card-virtual: #{constants.$gradient-virtual};
