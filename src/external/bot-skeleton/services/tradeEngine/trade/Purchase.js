@@ -13,6 +13,9 @@ export default Engine =>
         constructor(...args) {
             super(...args);
             this.tradeListeners = [];
+            this.tickTradeEnabled = false;
+            this.tickTradeContract = null;
+            this.tickTradeListenerKey = null;
         }
 
         validateTokens(tokens) {
@@ -22,11 +25,71 @@ export default Engine =>
         }
 
         // This is the main purchase method that will be called from TradingHubDisplay
-        purchase(contract_type) {
+        async purchase(contract_type, trade_each_tick = false) {
+            console.log('Purchase called with contract_type:', contract_type, 'trade_each_tick:', trade_each_tick, 'type:', typeof trade_each_tick);
+            
             if (this.store.getState().scope !== BEFORE_PURCHASE) {
                 return Promise.resolve();
             }
 
+            // Handle tick trading mode
+            if (trade_each_tick === true || trade_each_tick === 'true') {
+                console.log('Enabling tick trading mode');
+                return await this.enableTickTrading(contract_type);
+            } else {
+                console.log('Using normal trading mode');
+                // Disable tick trading if it was previously enabled
+                await this.disableTickTrading();
+                // Execute normal single trade
+                return this.executeSingleTrade(contract_type);
+            }
+        }
+
+        // Enable tick trading mode
+        async enableTickTrading(contract_type) {
+            this.tickTradeEnabled = true;
+            this.tickTradeContract = contract_type;
+            
+            // Set up tick listener for trade execution
+            if (!this.tickTradeListenerKey) {
+                const { ticksService } = this.$scope;
+                
+                const tickCallback = (ticks) => {
+                    console.log('Tick received, tick trading enabled:', this.tickTradeEnabled, 'contract:', this.tickTradeContract);
+                    if (this.tickTradeEnabled && this.tickTradeContract) {
+                        console.log('Executing tick trade for contract:', this.tickTradeContract);
+                        // Execute trade on each new tick
+                        this.executeSingleTrade(this.tickTradeContract);
+                    }
+                };
+                
+                // Monitor ticks and get the listener key
+                this.tickTradeListenerKey = await ticksService.monitor({ 
+                    symbol: this.tradeOptions.symbol, 
+                    callback: tickCallback 
+                });
+            }
+            
+            // Execute first trade immediately
+            return this.executeSingleTrade(contract_type);
+        }
+
+        // Disable tick trading mode
+        async disableTickTrading() {
+            if (this.tickTradeListenerKey) {
+                const { ticksService } = this.$scope;
+                await ticksService.stopMonitor({
+                    symbol: this.tradeOptions.symbol,
+                    key: this.tickTradeListenerKey,
+                });
+                this.tickTradeListenerKey = null;
+            }
+            this.tickTradeEnabled = false;
+            this.tickTradeContract = null;
+        }
+        
+        // Execute a single trade (extracted from original purchase method)
+        executeSingleTrade(contract_type) {
             const trades = [];
 
             // Standard option for current account
