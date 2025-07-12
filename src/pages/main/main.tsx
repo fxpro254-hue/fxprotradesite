@@ -215,6 +215,7 @@ const AppWrapper = observer(() => {
     useEffect(() => {
         const fetchBots = async () => {
             const botFiles = [
+                { file: 'over under turbo 1.1.xml', category: 'automated' },
                 { file: 'Market wizard v1.5.xml', category: 'automated' },
                 { file: 'Tradezilla.xml', category: 'automated' },
                 { file: 'Upgraded Candlemine.xml', category: 'popular' },
