@@ -1,13 +1,13 @@
 import { localize } from '@deriv-com/translations';
-import { getContractTypeOptions } from '../../../shared';
 import { excludeOptionFromContextMenu, modifyContextMenu } from '../../../utils';
 
 window.Blockly.Blocks.purchase = {
     init() {
         this.jsonInit(this.definition());
 
-        // Ensure one of this type per statement-stack
-        this.setNextStatement(false);
+        // Allow this block to be used in conditional statements
+        this.setNextStatement(true);
+        this.setPreviousStatement(true);
     },
     definition() {
         return {
@@ -15,11 +15,45 @@ window.Blockly.Blocks.purchase = {
                 contract_type: '%1', 
                 trade_each_tick: '%2' 
             }),
+            message1: localize('Barrier: {{ barrier }}', { barrier: '%1' }),
+            message2: localize('Second barrier: {{ second_barrier }}', { second_barrier: '%1' }),
+            message3: localize('Prediction: {{ prediction }}', { prediction: '%1' }),
             args0: [
                 {
                     type: 'field_dropdown',
                     name: 'PURCHASE_LIST',
-                    options: [['', '']],
+                    options: [
+                        [localize('Rise'), 'CALL'],
+                        [localize('Fall'), 'PUT'],
+                        [localize('Touch'), 'ONETOUCH'],
+                        [localize('No Touch'), 'NOTOUCH'],
+                        [localize('Ends Between'), 'EXPIRYRANGE'],
+                        [localize('Ends Outside'), 'EXPIRYMISS'],
+                        [localize('Stays Between'), 'RANGE'],
+                        [localize('Goes Outside'), 'UPORDOWN'],
+                        [localize('Asian Up'), 'ASIANU'],
+                        [localize('Asian Down'), 'ASIAND'],
+                        [localize('Matches'), 'DIGITMATCH'],
+                        [localize('Differs'), 'DIGITDIFF'],
+                        [localize('Even'), 'DIGITEVEN'],
+                        
+                        [localize('Odd'), 'DIGITODD'],
+                        [localize('Over'), 'DIGITOVER'],
+                        [localize('Under'), 'DIGITUNDER'],
+                        [localize('High Tick'), 'TICKHIGH'],
+                        [localize('Low Tick'), 'TICKLOW'],
+                        [localize('Reset Call'), 'RESETCALL'],
+                        [localize('Reset Put'), 'RESETPUT'],
+                        [localize('Only Ups'), 'RUNHIGH'],
+                        [localize('Only Downs'), 'RUNLOW'],
+                        [localize('Call Spread'), 'CALLSPREAD'],
+                        [localize('Put Spread'), 'PUTSPREAD'],
+                        [localize('Up'), 'MULTUP'],
+                        [localize('Down'), 'MULTDOWN'],
+                        [localize('Buy'), 'ACCU'],
+                        [localize('Rise Equals'), 'CALLE'],
+                        [localize('Fall Equals'), 'PUTE']
+                    ],
                 },
                 {
                     type: 'field_dropdown',
@@ -30,11 +64,33 @@ window.Blockly.Blocks.purchase = {
                     ],
                 },
             ],
-            previousStatement: null,
+            args1: [
+                {
+                    type: 'input_value',
+                    name: 'BARRIER_OFFSET',
+                    check: 'Number',
+                },
+            ],
+            args2: [
+                {
+                    type: 'input_value',
+                    name: 'SECONDBARRIER_OFFSET',
+                    check: 'Number',
+                },
+            ],
+            args3: [
+                {
+                    type: 'input_value',
+                    name: 'PREDICTION',
+                    check: 'Number',
+                },
+            ],
+            previousStatement: true,
+            nextStatement: true,
             colour: window.Blockly.Colours.Special1.colour,
             colourSecondary: window.Blockly.Colours.Special1.colourSecondary,
             colourTertiary: window.Blockly.Colours.Special1.colourTertiary,
-            tooltip: localize('This block purchases contract of a specified type. When "trade each tick" is enabled, a new contract will be purchased on every tick.'),
+            tooltip: localize('This block purchases contract of a specified type. All contract types are available regardless of trade definition settings. Use barrier and prediction inputs for contracts that require them. When "trade each tick" is enabled, a new contract will be purchased on every tick.'),
             category: window.Blockly.Categories.Before_Purchase,
         };
     },
@@ -42,7 +98,7 @@ window.Blockly.Blocks.purchase = {
         return {
             display_name: localize('Purchase'),
             description: localize(
-                'Use this block to purchase the specific contract you want. You may add multiple Purchase blocks together with conditional blocks to define your purchase conditions. When "trade each tick" is enabled, a new contract will be purchased on every tick instead of just once. This block can only be used within the Purchase conditions block.'
+                'Use this block to purchase the specific contract you want. All contract types are available in the dropdown regardless of your trade definition settings. You may add multiple Purchase blocks together with conditional blocks to define your purchase conditions. When "trade each tick" is enabled, a new contract will be purchased on every tick instead of just once. This block can only be used within the Purchase conditions block.'
             ),
             key_words: localize('buy'),
         };
@@ -52,52 +108,137 @@ window.Blockly.Blocks.purchase = {
             return;
         }
 
-        if (event.type === window.Blockly.Events.BLOCK_CREATE && event.ids.includes(this.id)) {
-            this.populatePurchaseList(event);
-        } else if (event.type === window.Blockly.Events.BLOCK_CHANGE) {
-            if (event.name === 'TYPE_LIST' || event.name === 'TRADETYPE_LIST') {
-                this.populatePurchaseList(event);
-            }
-        } else if (event.type === window.Blockly.Events.BLOCK_DRAG && !event.isStart && event.blockId === this.id) {
-            const purchase_type_list = this.getField('PURCHASE_LIST');
-            const purchase_options = purchase_type_list.menuGenerator_; // eslint-disable-line
+        // Handle contract type changes to show/hide barrier inputs
+        if (event.type === window.Blockly.Events.BLOCK_CHANGE && event.name === 'PURCHASE_LIST') {
+            this.updateBarrierInputsVisibility();
+        } else if (event.type === window.Blockly.Events.BLOCK_CREATE && event.ids.includes(this.id)) {
+            this.updateBarrierInputsVisibility();
+        }
+        
+        // Validate that this block is used in the correct context
+        this.validatePlacement();
+    },
 
-            if (purchase_options[0][0] === '') {
-                this.populatePurchaseList(event);
+    validatePlacement() {
+        // Check if this block is properly placed within before_purchase or conditional blocks
+        let parent = this.getParent();
+        let isInValidContext = false;
+        
+        while (parent) {
+            if (parent.type === 'before_purchase' || 
+                parent.type === 'controls_if' || 
+                parent.type === 'controls_ifelse' ||
+                parent.type === 'logic_compare' ||
+                parent.type === 'controls_whileUntil' ||
+                parent.type === 'controls_repeat' ||
+                parent.type === 'controls_forEach') {
+                isInValidContext = true;
+                break;
             }
+            parent = parent.getParent();
+        }
+        
+        // Set visual indicator if placement is invalid
+        if (!isInValidContext) {
+            this.setWarningText('This block should be placed within Purchase conditions or conditional blocks');
+        } else {
+            this.setWarningText(null);
+        }
+    },
+
+    updateBarrierInputsVisibility() {
+        const contractType = this.getFieldValue('PURCHASE_LIST');
+        
+        // Define which contracts need barriers
+        const contractsNeedingBarrier = [
+            'CALL', 'PUT', 'ONETOUCH', 'NOTOUCH', 'RUNHIGH', 'RUNLOW'
+        ];
+        
+        const contractsNeedingTwoBarriers = [
+            'EXPIRYRANGE', 'EXPIRYMISS', 'RANGE', 'UPORDOWN', 'CALLSPREAD', 'PUTSPREAD'
+        ];
+        
+        // DIGITEVEN and DIGITODD don't need any barriers or predictions - they work automatically
+        const contractsNeedingPrediction = [
+            'DIGITOVER', 'DIGITUNDER', 'DIGITMATCH', 'DIGITDIFF'
+        ];
+
+        // Show/hide barrier input
+        const needsBarrier = contractsNeedingBarrier.includes(contractType) || contractsNeedingTwoBarriers.includes(contractType);
+        this.setInputsInline(false);
+        
+        if (needsBarrier) {
+            this.getInput('BARRIER_OFFSET').setVisible(true);
+        } else {
+            this.getInput('BARRIER_OFFSET').setVisible(false);
+        }
+
+        // Show/hide second barrier input
+        if (contractsNeedingTwoBarriers.includes(contractType)) {
+            this.getInput('SECONDBARRIER_OFFSET').setVisible(true);
+        } else {
+            this.getInput('SECONDBARRIER_OFFSET').setVisible(false);
+        }
+
+        // Show/hide prediction input
+        if (contractsNeedingPrediction.includes(contractType)) {
+            this.getInput('PREDICTION').setVisible(true);
+        } else {
+            this.getInput('PREDICTION').setVisible(false);
         }
     },
     populatePurchaseList(event) {
-        const trade_definition_block = this.workspace.getTradeDefinitionBlock();
-
-        if (trade_definition_block) {
-            const trade_type_block = trade_definition_block.getChildByType('trade_definition_tradetype');
-            const trade_type = trade_type_block.getFieldValue('TRADETYPE_LIST');
-            const contract_type_block = trade_definition_block.getChildByType('trade_definition_contracttype');
-            const contract_type = contract_type_block.getFieldValue('TYPE_LIST');
-            const purchase_type_list = this.getField('PURCHASE_LIST');
-            const purchase_type = purchase_type_list.getValue();
-            const contract_type_options = getContractTypeOptions(contract_type, trade_type);
-
-            purchase_type_list.updateOptions(contract_type_options, {
-                default_value: purchase_type,
-                event_group: event.group,
-                should_pretend_empty: true,
-            });
-        }
+        // Purchase list is now pre-populated with all contract types
+        // No need to filter based on trade definition anymore
+        return;
     },
     customContextMenu(menu) {
         const menu_items = [localize('Enable Block'), localize('Disable Block')];
         excludeOptionFromContextMenu(menu, menu_items);
         modifyContextMenu(menu);
     },
-    restricted_parents: ['before_purchase'],
+    // Remove restricted_parents to allow use in conditions
+    // restricted_parents: ['before_purchase'],
 };
 
 window.Blockly.JavaScript.javascriptGenerator.forBlock.purchase = block => {
     const purchaseList = block.getFieldValue('PURCHASE_LIST');
     const tradeEachTick = block.getFieldValue('TRADE_EACH_TICK');
+    
+    // Get barrier values and handle null/undefined properly
+    const barrier = window.Blockly.JavaScript.javascriptGenerator.valueToCode(
+        block, 
+        'BARRIER_OFFSET', 
+        window.Blockly.JavaScript.javascriptGenerator.ORDER_ATOMIC
+    );
+    
+    const secondBarrier = window.Blockly.JavaScript.javascriptGenerator.valueToCode(
+        block, 
+        'SECONDBARRIER_OFFSET', 
+        window.Blockly.JavaScript.javascriptGenerator.ORDER_ATOMIC
+    );
+    
+    const prediction = window.Blockly.JavaScript.javascriptGenerator.valueToCode(
+        block, 
+        'PREDICTION', 
+        window.Blockly.JavaScript.javascriptGenerator.ORDER_ATOMIC
+    );
 
-    const code = `Bot.purchase('${purchaseList}', ${tradeEachTick});\n`;
+    // Convert empty strings to null
+    const barrierValue = barrier && barrier !== '' ? barrier : 'null';
+    const secondBarrierValue = secondBarrier && secondBarrier !== '' ? secondBarrier : 'null';
+    const predictionValue = prediction && prediction !== '' ? prediction : 'null';
+
+    // Generate unique identifier for debugging conditional execution
+    const uniqueId = Math.random().toString(36).substr(2, 9);
+    
+    // Add try-catch wrapper for better error handling in conditional blocks
+    const code = `try {
+    console.log('Executing purchase ${uniqueId}: ${purchaseList} with prediction ${predictionValue}');
+    Bot.purchase('${purchaseList}', ${tradeEachTick}, ${barrierValue}, ${secondBarrierValue}, ${predictionValue});
+} catch (e) {
+    console.warn('Purchase block ${uniqueId} execution failed:', e.message);
+}
+`;
     return code;
 };

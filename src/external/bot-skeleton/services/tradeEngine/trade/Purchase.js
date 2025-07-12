@@ -16,6 +16,12 @@ export default Engine =>
             this.tickTradeEnabled = false;
             this.tickTradeContract = null;
             this.tickTradeListenerKey = null;
+            this.currentTickTrade = false;
+            this.initialStake = null;
+            this.currentBarrier = null;
+            this.currentSecondBarrier = null;
+            this.currentPrediction = null;
+            this.pendingPurchase = false;
         }
 
         validateTokens(tokens) {
@@ -25,23 +31,78 @@ export default Engine =>
         }
 
         // This is the main purchase method that will be called from TradingHubDisplay
-        async purchase(contract_type, trade_each_tick = false) {
-            console.log('Purchase called with contract_type:', contract_type, 'trade_each_tick:', trade_each_tick, 'type:', typeof trade_each_tick);
+        async purchase(contract_type, trade_each_tick = false, barrier = null, second_barrier = null, prediction = null) {
+            console.log('Purchase called with:', {
+                contract_type, 
+                trade_each_tick, 
+                barrier, 
+                second_barrier, 
+                prediction,
+                types: {
+                    trade_each_tick: typeof trade_each_tick,
+                    barrier: typeof barrier,
+                    second_barrier: typeof second_barrier,
+                    prediction: typeof prediction
+                }
+            });
             
-            if (this.store.getState().scope !== BEFORE_PURCHASE) {
-                return Promise.resolve();
+            const currentScope = this.store.getState().scope;
+            console.log('Current bot scope:', currentScope, 'Required scope:', BEFORE_PURCHASE);
+            
+            if (currentScope !== BEFORE_PURCHASE) {
+                console.log('Purchase skipped - not in BEFORE_PURCHASE scope, current scope:', currentScope);
+                // Instead of rejecting, just resolve silently for conditional blocks
+                if (!currentScope) {
+                    console.warn('Bot scope is not set - bot may not be running');
+                }
+                return Promise.resolve({ skipped: true, reason: 'Invalid scope' });
             }
+
+            // Check if a purchase has already been made in this execution cycle
+            const botState = this.store.getState();
+            if (botState.purchaseInProgress || this.pendingPurchase) {
+                console.log('Purchase skipped - another purchase is already in progress');
+                return Promise.resolve({ skipped: true, reason: 'Purchase already in progress' });
+            }
+
+            // Validate trade options exist and bot is properly started
+            if (!this.tradeOptions) {
+                console.error('Trade options not initialized - bot may not be started properly');
+                console.log('Available properties:', Object.keys(this));
+                console.log('Bot state:', this.store.getState());
+                
+                // For conditional blocks, return resolved promise instead of rejecting
+                console.warn('Skipping purchase due to uninitialized trade options');
+                return Promise.resolve({ skipped: true, reason: 'Trade options not initialized' });
+            }
+
+            console.log('Current trade options:', this.tradeOptions);
+
+            // Store barrier values for use in trade execution
+            this.currentBarrier = barrier;
+            this.currentSecondBarrier = second_barrier;
+            this.currentPrediction = prediction;
 
             // Handle tick trading mode
             if (trade_each_tick === true || trade_each_tick === 'true') {
-                console.log('Enabling tick trading mode');
+                console.log('Enabling tick trading mode with barriers');
                 return await this.enableTickTrading(contract_type);
             } else {
-                console.log('Using normal trading mode');
-                // Disable tick trading if it was previously enabled
-                await this.disableTickTrading();
-                // Execute normal single trade
-                return this.executeSingleTrade(contract_type);
+                console.log('Using normal trading mode with barriers');
+                // Set pending purchase flag to prevent multiple simultaneous purchases
+                this.pendingPurchase = true;
+                
+                try {
+                    // Disable tick trading if it was previously enabled
+                    await this.disableTickTrading();
+                    // Execute normal single trade
+                    const result = await this.executeSingleTrade(contract_type);
+                    this.pendingPurchase = false;
+                    return result;
+                } catch (error) {
+                    this.pendingPurchase = false;
+                    throw error;
+                }
             }
         }
 
@@ -90,18 +151,116 @@ export default Engine =>
         
         // Execute a single trade (extracted from original purchase method)
         executeSingleTrade(contract_type) {
+            console.log('Executing single trade for contract:', contract_type);
+            console.log('Trade options available:', !!this.tradeOptions);
+            
+            if (!this.tradeOptions) {
+                console.error('Cannot execute trade - tradeOptions not available');
+                return Promise.reject(new Error('Trade options not available'));
+            }
+
             const trades = [];
 
+            // Create enhanced trade options with barrier values
+            const enhancedTradeOptions = { ...this.tradeOptions };
+            console.log('Base trade options:', enhancedTradeOptions);
+            
+            // For DIGITEVEN and DIGITODD, immediately clear any barrier inheritance from trading parameters
+            if (['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
+                delete enhancedTradeOptions.barrierOffset;
+                delete enhancedTradeOptions.barrier;
+                delete enhancedTradeOptions.prediction;
+                console.log(`Cleared all barriers for ${contract_type} - this contract type works automatically`);
+            }
+            
+            // Apply barrier values if provided - BUT NEVER for DIGITEVEN/DIGITODD
+            if (this.currentBarrier !== null && this.currentBarrier !== 'null' && this.currentBarrier !== undefined) {
+                const barrierValue = Number(this.currentBarrier);
+                if (!isNaN(barrierValue)) {
+                    // DIGITEVEN and DIGITODD NEVER use barriers - completely skip barrier logic
+                    if (['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
+                        console.log(`Barrier completely ignored for ${contract_type} - contract type does not support barriers`);
+                        // Clear any barrier data that might have been inherited from trading parameters
+                        delete enhancedTradeOptions.barrierOffset;
+                        delete enhancedTradeOptions.barrier;
+                    } else {
+                        // For certain contract types, barriers must be integers 0-9
+                        const digitBarrierContracts = ['CALL', 'PUT', 'DIGITOVER', 'DIGITUNDER', 'DIGITMATCH', 'DIGITDIFF'];
+                        if (digitBarrierContracts.includes(contract_type)) {
+                            const intBarrier = Math.round(barrierValue);
+                            if (intBarrier >= 0 && intBarrier <= 9) {
+                                enhancedTradeOptions.barrierOffset = intBarrier;
+                                console.log('Applied digit barrier:', enhancedTradeOptions.barrierOffset);
+                            } else {
+                                console.warn(`Invalid barrier for ${contract_type}: ${barrierValue}. Must be integer 0-9`);
+                                enhancedTradeOptions.barrierOffset = Math.max(0, Math.min(9, intBarrier));
+                                console.log('Corrected barrier to:', enhancedTradeOptions.barrierOffset);
+                            }
+                        } else {
+                            enhancedTradeOptions.barrierOffset = barrierValue;
+                            console.log('Applied barrier:', enhancedTradeOptions.barrierOffset);
+                        }
+                    }
+                } else {
+                    console.warn('Invalid barrier value:', this.currentBarrier);
+                }
+            }
+            
+            if (this.currentSecondBarrier !== null && this.currentSecondBarrier !== 'null' && this.currentSecondBarrier !== undefined) {
+                const secondBarrierValue = Number(this.currentSecondBarrier);
+                if (!isNaN(secondBarrierValue)) {
+                    enhancedTradeOptions.secondBarrierOffset = secondBarrierValue;
+                    console.log('Applied second barrier:', enhancedTradeOptions.secondBarrierOffset);
+                } else {
+                    console.warn('Invalid second barrier value:', this.currentSecondBarrier);
+                }
+            }
+            
+            if (this.currentPrediction !== null && this.currentPrediction !== 'null' && this.currentPrediction !== undefined) {
+                const predictionValue = Number(this.currentPrediction);
+                if (!isNaN(predictionValue)) {
+                    // DIGITEVEN and DIGITODD don't use predictions either
+                    if (['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
+                        console.log(`Skipping prediction for ${contract_type} - not required`);
+                    } else {
+                        // For digit contracts, prediction must be integer 0-9
+                        const digitContracts = ['DIGITOVER', 'DIGITUNDER', 'DIGITMATCH', 'DIGITDIFF'];
+                        if (digitContracts.includes(contract_type)) {
+                            const intPrediction = Math.round(predictionValue);
+                            if (intPrediction >= 0 && intPrediction <= 9) {
+                                enhancedTradeOptions.prediction = intPrediction;
+                                console.log('Applied digit prediction:', enhancedTradeOptions.prediction);
+                            } else {
+                                console.warn(`Invalid prediction for ${contract_type}: ${predictionValue}. Must be integer 0-9`);
+                                enhancedTradeOptions.prediction = Math.max(0, Math.min(9, intPrediction));
+                                console.log('Corrected prediction to:', enhancedTradeOptions.prediction);
+                            }
+                        } else {
+                            enhancedTradeOptions.prediction = predictionValue;
+                            console.log('Applied prediction:', enhancedTradeOptions.prediction);
+                        }
+                    }
+                } else {
+                    console.warn('Invalid prediction value:', this.currentPrediction);
+                }
+            }
+
             // Standard option for current account
-            const standard_option = tradeOptionToBuy(contract_type, this.tradeOptions);
+            const standard_option = tradeOptionToBuy(contract_type, enhancedTradeOptions);
+            console.log('Generated standard option:', standard_option);
+            
             trades.push(
                 doUntilDone(() => {
                     if (['MULTUP', 'MULTDOWN'].includes(contract_type)) {
                         console.warn(`Trade type ${contract_type} is not supported.`);
                         return Promise.resolve();
                     }
+                    console.log('Sending trade request to API');
                     return api_base.api.send(standard_option);
-                }).catch(e => console.warn(e))
+                }).catch(e => {
+                    console.error('Trade execution error:', e);
+                    return Promise.reject(e);
+                })
             );
 
             const savedTokens = localStorage.getItem(`extratokens_${this.accountInfo.loginid}`);
@@ -115,27 +274,32 @@ export default Engine =>
             if (copyTradeEnabled && tokens.length > 0) {
                 const copy_option = {
                     buy_contract_for_multiple_accounts: '1',
-                    price: this.tradeOptions.amount,
+                    price: enhancedTradeOptions.amount,
                     tokens,
                     parameters: {
-                        amount: this.tradeOptions.amount,
-                        basis: this.tradeOptions.basis,
+                        amount: enhancedTradeOptions.amount,
+                        basis: enhancedTradeOptions.basis,
                         contract_type,
-                        currency: this.tradeOptions.currency,
-                        duration: this.tradeOptions.duration,
-                        duration_unit: this.tradeOptions.duration_unit,
-                        symbol: this.tradeOptions.symbol,
+                        currency: enhancedTradeOptions.currency,
+                        duration: enhancedTradeOptions.duration,
+                        duration_unit: enhancedTradeOptions.duration_unit,
+                        symbol: enhancedTradeOptions.symbol,
                     },
                 };
 
-                if (this.tradeOptions.prediction !== undefined) {
-                    copy_option.parameters.barrier = this.tradeOptions.prediction;
-                }
-                if (this.tradeOptions.barrierOffset !== undefined) {
-                    copy_option.parameters.barrier = this.tradeOptions.barrierOffset;
-                }
-                if (this.tradeOptions.secondBarrierOffset !== undefined) {
-                    copy_option.parameters.barrier2 = this.tradeOptions.secondBarrierOffset;
+                // Only add barriers for contracts that support them (NOT DIGITEVEN/DIGITODD)
+                if (!['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
+                    if (enhancedTradeOptions.prediction !== undefined) {
+                        copy_option.parameters.barrier = enhancedTradeOptions.prediction;
+                    }
+                    if (enhancedTradeOptions.barrierOffset !== undefined) {
+                        copy_option.parameters.barrier = enhancedTradeOptions.barrierOffset;
+                    }
+                    if (enhancedTradeOptions.secondBarrierOffset !== undefined) {
+                        copy_option.parameters.barrier2 = enhancedTradeOptions.secondBarrierOffset;
+                    }
+                } else {
+                    console.log(`Copy trade: No barriers added for ${contract_type}`);
                 }
 
                 trades.push(doUntilDone(() => api_base.api.send(copy_option)));
@@ -149,27 +313,32 @@ export default Engine =>
                     if (realAccountToken) {
                         const real_option = {
                             buy_contract_for_multiple_accounts: '1',
-                            price: this.tradeOptions.amount,
+                            price: enhancedTradeOptions.amount,
                             tokens: [realAccountToken],
                             parameters: {
-                                amount: this.tradeOptions.amount,
-                                basis: this.tradeOptions.basis,
+                                amount: enhancedTradeOptions.amount,
+                                basis: enhancedTradeOptions.basis,
                                 contract_type,
-                                currency: this.tradeOptions.currency,
-                                duration: this.tradeOptions.duration,
-                                duration_unit: this.tradeOptions.duration_unit,
-                                symbol: this.tradeOptions.symbol,
+                                currency: enhancedTradeOptions.currency,
+                                duration: enhancedTradeOptions.duration,
+                                duration_unit: enhancedTradeOptions.duration_unit,
+                                symbol: enhancedTradeOptions.symbol,
                             },
                         };
 
-                        if (this.tradeOptions.prediction !== undefined) {
-                            real_option.parameters.barrier = this.tradeOptions.prediction;
-                        }
-                        if (this.tradeOptions.barrierOffset !== undefined) {
-                            real_option.parameters.barrier = this.tradeOptions.barrierOffset;
-                        }
-                        if (this.tradeOptions.secondBarrierOffset !== undefined) {
-                            real_option.parameters.barrier2 = this.tradeOptions.secondBarrierOffset;
+                        // Only add barriers for contracts that support them (NOT DIGITEVEN/DIGITODD)
+                        if (!['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
+                            if (enhancedTradeOptions.prediction !== undefined) {
+                                real_option.parameters.barrier = enhancedTradeOptions.prediction;
+                            }
+                            if (enhancedTradeOptions.barrierOffset !== undefined) {
+                                real_option.parameters.barrier = enhancedTradeOptions.barrierOffset;
+                            }
+                            if (enhancedTradeOptions.secondBarrierOffset !== undefined) {
+                                real_option.parameters.barrier2 = enhancedTradeOptions.secondBarrierOffset;
+                            }
+                        } else {
+                            console.log(`Real account copy: No barriers added for ${contract_type}`);
                         }
 
                         trades.push(doUntilDone(() => api_base.api.send(real_option)));
@@ -180,19 +349,36 @@ export default Engine =>
             }
 
             if (trades.length === 0) {
+                console.warn('No trades were created - this might indicate an issue');
                 return Promise.resolve();
             }
 
+            console.log(`Created ${trades.length} trade requests`);
+
             return Promise.all(trades).then(responses => {
+                console.log('Trade responses received:', responses);
                 const successfulTrades = responses.filter(response => response && response.buy);
+                console.log(`${successfulTrades.length} successful trades out of ${responses.length} total`);
+                
                 if (successfulTrades.length > 0) {
                     return Promise.all(
                         successfulTrades.map(response =>
-                            this.handlePurchaseSuccess(response, contract_type, this.tradeOptions.amount)
+                            this.handlePurchaseSuccess(response, contract_type, enhancedTradeOptions.amount)
                         )
                     );
+                } else {
+                    console.error('No successful trades - all failed');
+                    // Log detailed error information
+                    responses.forEach((response, index) => {
+                        if (!response || !response.buy) {
+                            console.error(`Trade ${index} failed:`, response);
+                        }
+                    });
                 }
                 return responses;
+            }).catch(error => {
+                console.error('Promise.all failed:', error);
+                throw error;
             });
         }
 

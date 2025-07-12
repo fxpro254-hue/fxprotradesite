@@ -22,3 +22,25 @@ export const getContractTypeOptions = (contract_type, trade_type) => {
 
     return contract_options;
 };
+
+export const getAllContractTypeOptions = () => {
+    const all_contract_types = [];
+    const opposites = config().opposites;
+    
+    // Iterate through all trade types and collect all contract types
+    Object.keys(opposites).forEach(trade_type => {
+        const contracts = opposites[trade_type];
+        contracts.forEach(contract => {
+            const [contract_key, contract_label] = Object.entries(contract)[0];
+            // Add contract in format [label, key] for dropdown
+            all_contract_types.push([contract_label, contract_key]);
+        });
+    });
+    
+    // Remove duplicates and sort alphabetically
+    const unique_contracts = all_contract_types.filter((contract, index, self) => 
+        index === self.findIndex(c => c[1] === contract[1])
+    );
+    
+    return unique_contracts.sort((a, b) => a[0].localeCompare(b[0]));
+};

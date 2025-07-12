@@ -8,7 +8,8 @@ const getBotInterface = tradeEngine => {
         init: (...args) => tradeEngine.init(...args),
         start: (...args) => tradeEngine.start(...args),
         stop: (...args) => tradeEngine.stop(...args),
-        purchase: (contract_type, trade_each_tick = false) => tradeEngine.purchase(contract_type, trade_each_tick),
+        purchase: (contract_type, trade_each_tick = false, barrier = undefined, second_barrier = undefined, prediction = undefined) => 
+            tradeEngine.purchase(contract_type, trade_each_tick, barrier, second_barrier, prediction),
         getAskPrice: contract_type => Number(getProposal(contract_type, tradeEngine).ask_price),
         getPayout: contract_type => Number(getProposal(contract_type, tradeEngine).payout),
         getPurchaseReference: () => tradeEngine.getPurchaseReference(),

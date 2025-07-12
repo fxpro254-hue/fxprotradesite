@@ -126,16 +126,31 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
         },
     };
 
-    // Handle digit prediction contracts
-    if (['DIGITDIFF', 'DIGITEVEN', 'DIGITMATCH', 'DIGITODD', 'DIGITOVER', 'DIGITUNDER'].includes(contract_type)) {
+    // Handle digit prediction contracts (but not DIGITEVEN/DIGITODD which don't need barriers)
+    if (['DIGITDIFF', 'DIGITMATCH', 'DIGITOVER', 'DIGITUNDER'].includes(contract_type)) {
         if (trade_option.prediction !== undefined) {
             buy.parameters.barrier = trade_option.prediction;
         }
+    } else if (['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
+        // DIGITEVEN and DIGITODD don't use barriers or predictions - they work automatically
+        // CRITICAL: Remove any barrier parameters that might exist in trade_option
+        delete buy.parameters.barrier;
+        delete buy.parameters.barrierOffset;
+        delete buy.parameters.prediction;
+        console.log(`Cleaned all barrier parameters for ${contract_type}`);
+        // Don't add any barrier parameters
+    } else {
+        // For non-digit contracts, use barrierOffset for barrier
+        if (trade_option.barrierOffset !== undefined) {
+            buy.parameters.barrier = trade_option.barrierOffset;
+        }
     }
+    
     // Add optional parameters if they exist
     if (trade_option.multiplier) buy.parameters.multiplier = trade_option.multiplier;
-    if (trade_option.prediction !== undefined) buy.parameters.selected_tick = trade_option.prediction;
-    if (trade_option.barrierOffset !== undefined) buy.parameters.barrier = trade_option.barrierOffset;
+    if (trade_option.prediction !== undefined && !['DIGITDIFF', 'DIGITEVEN', 'DIGITMATCH', 'DIGITODD', 'DIGITOVER', 'DIGITUNDER'].includes(contract_type)) {
+        buy.parameters.selected_tick = trade_option.prediction;
+    }
     if (trade_option.secondBarrierOffset !== undefined) buy.parameters.barrier2 = trade_option.secondBarrierOffset;
     if (!isEmptyObject(trade_option.app_markup_percentage))
         buy.parameters.app_markup_percentage = trade_option.app_markup_percentage;
