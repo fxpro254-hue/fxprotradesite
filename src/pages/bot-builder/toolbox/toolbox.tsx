@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import Text from '@/components/shared_ui/text';
+import { DBOT_TABS } from '@/constants/bot-contents';
 import { useStore } from '@/hooks/useStore';
 import { LabelPairedChevronDownMdFillIcon } from '@deriv/quill-icons/LabelPaired';
 import { localize } from '@deriv-com/translations';
@@ -13,7 +14,7 @@ import { ToolboxItems } from './toolbox-items';
 
 const Toolbox = observer(() => {
     const { isDesktop } = useDevice();
-    const { toolbox, flyout, quick_strategy } = useStore();
+    const { toolbox, flyout, quick_strategy, dashboard } = useStore();
     const {
         hasSubCategory,
         is_search_loading,
@@ -31,6 +32,7 @@ const Toolbox = observer(() => {
 
     const { setFormVisibility } = quick_strategy;
     const { setVisibility, selected_category } = flyout;
+    const { setActiveTab } = dashboard;
 
     const toolbox_ref = React.useRef(ToolboxItems());
     const [is_open, setOpen] = React.useState(true);
@@ -51,6 +53,16 @@ const Toolbox = observer(() => {
         });
     };
 
+    const handleFreeBotsOpen = () => {
+        setActiveTab(DBOT_TABS.FREE_BOTS);
+        // Note: Analytics event might need type extension for 'free_bots' subform_name
+        rudderStackSendOpenEvent({
+            subpage_name: 'bot_builder',
+            subform_source: 'bot_builder',
+            subform_name: 'quick_strategy' as any, // Temporary type assertion
+        });
+    };
+
     if (isDesktop) {
         return (
             <div className='db-toolbox' data-testid='dashboard__toolbox'>
@@ -60,6 +72,13 @@ const Toolbox = observer(() => {
                     button_classname='toolbar__btn toolbar__btn--icon toolbar__btn--start'
                     buttonOnClick={handleQuickStrategyOpen}
                     button_text={localize('Quick strategy')}
+                />
+                <ToolbarButton
+                    popover_message={localize('Access free trading bots and strategies.')}
+                    button_id='db-toolbar__free-bots-button'
+                    button_classname='toolbar__btn toolbar__btn--icon toolbar__btn--free-bots'
+                    buttonOnClick={handleFreeBotsOpen}
+                    button_text={localize('Free bots')}
                 />
                 <div id='gtm-toolbox' className='db-toolbox__content'>
                     <div className='db-toolbox__header'>
