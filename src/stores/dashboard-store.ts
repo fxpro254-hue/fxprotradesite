@@ -62,6 +62,7 @@ export interface IDashboardStore {
     is_trading_view_modal_visible: boolean;
     is_analysis_modal_visible: boolean;
     is_signals_modal_visible: boolean;
+    is_advanced_display_modal_visible: boolean;
     setPreviewOnPopup: (is_preview_on_popup: boolean) => void;
 }
 
@@ -123,6 +124,7 @@ export default class DashboardStore implements IDashboardStore {
             is_trading_view_modal_visible: observable,
             is_analysis_modal_visible: observable,
             is_signals_modal_visible: observable,
+            is_advanced_display_modal_visible: observable,
         });
         this.root_store = root_store;
         this.core = core;
@@ -209,6 +211,7 @@ export default class DashboardStore implements IDashboardStore {
     is_trading_view_modal_visible = false;
     is_analysis_modal_visible = false;
     is_signals_modal_visible = false;
+    is_advanced_display_modal_visible = false;
     faq_title = '';
 
     setFaqTitle = (faq_title: string) => {
@@ -296,6 +299,10 @@ export default class DashboardStore implements IDashboardStore {
 
     setSignalsModalVisibility = () => {
         this.is_signals_modal_visible = !this.is_signals_modal_visible;
+    };
+
+    setAdvancedDisplayModalVisibility = () => {
+        this.is_advanced_display_modal_visible = !this.is_advanced_display_modal_visible;
     };
 
     setIsFileSupported = (is_file_supported: boolean) => {

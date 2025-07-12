@@ -8,6 +8,7 @@ import {
     LabelPairedChartAreaMdRegularIcon,
     LabelPairedChartLineMdRegularIcon,
     LabelPairedChartTradingviewMdRegularIcon,
+    LabelPairedDesktopMdRegularIcon,
     LabelPairedFloppyDiskMdRegularIcon,
     LabelPairedFolderOpenMdRegularIcon,
     LabelPairedMagnifyingGlassMinusMdRegularIcon,
@@ -22,7 +23,7 @@ import ToolbarIcon from './toolbar-icon';
 
 const WorkspaceGroup = observer(() => {
     const { dashboard, toolbar, load_modal, save_modal } = useStore();
-    const { setPreviewOnPopup, setChartModalVisibility, setTradingViewModalVisibility, setAnalysisModalVisibility, setSignalsModalVisibility } = dashboard;
+    const { setPreviewOnPopup, setChartModalVisibility, setTradingViewModalVisibility, setAnalysisModalVisibility, setSignalsModalVisibility, setAdvancedDisplayModalVisibility } = dashboard;
     const { has_redo_stack, has_undo_stack, onResetClick, onSortClick, onUndoClick, onZoomInOutClick } = toolbar;
     const { toggleSaveModal } = save_modal;
     const { toggleLoadModal } = load_modal;
@@ -143,6 +144,18 @@ const WorkspaceGroup = observer(() => {
                                 </span>
                             }
                         />
+                        <ToolbarIcon
+                            popover_message={localize('Advanced Display')}
+                            icon={
+                                <span
+                                    className='toolbar__icon'
+                                    id='db-toolbar__advanced-display-button'
+                                    onClick={() => setAdvancedDisplayModalVisibility()}
+                                >
+                                    <LabelPairedDesktopMdRegularIcon />
+                                </span>
+                            }
+                        />
                     </>
                 )}
                 {!isDesktop && (
@@ -169,6 +182,18 @@ const WorkspaceGroup = observer(() => {
                                     onClick={() => setSignalsModalVisibility()}
                                 >
                                     <LabelPairedWifiMdRegularIcon />
+                                </span>
+                            }
+                        />
+                        <ToolbarIcon
+                            popover_message={localize('Advanced Display')}
+                            icon={
+                                <span
+                                    className='toolbar__icon'
+                                    id='db-toolbar__advanced-display-button-mobile'
+                                    onClick={() => setAdvancedDisplayModalVisibility()}
+                                >
+                                    <LabelPairedDesktopMdRegularIcon />
                                 </span>
                             }
                         />

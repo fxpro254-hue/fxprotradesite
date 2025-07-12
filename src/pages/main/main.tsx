@@ -10,6 +10,7 @@ import Tabs from '@/components/shared_ui/tabs/tabs';
 import TradingViewModal from '@/components/trading-view-chart/trading-view-modal';
 import AnalysistoolModal from '@/components/analysistool/analysistool-modal';
 import SignalsModal from '@/components/signals/signals-modal';
+import AdvancedDisplayModal from '@/components/modals/advanced-display-modal';
 import { DBOT_TABS, TAB_IDS } from '@/constants/bot-contents';
 import { api_base, updateWorkspaceName } from '@/external/bot-skeleton';
 import { CONNECTION_STATUS } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
@@ -777,6 +778,7 @@ const AppWrapper = observer(() => {
                 <TradingViewModal />
                 <AnalysistoolModal />
                 <SignalsModal />
+                <AdvancedDisplayModal />
             </DesktopWrapper>
             <MobileWrapper>
                 <RunPanel />
