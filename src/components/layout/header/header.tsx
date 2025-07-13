@@ -1044,10 +1044,11 @@ const AppHeader = observer(() => {
     const UserProfileView = () => {
         if (!userProfileData) return null;
 
-        console.log('Rendering UserProfileView with data:', userProfileData);
+        try {
+            console.log('Rendering UserProfileView with data:', userProfileData);
 
-        // Enhanced function to handle multiple possible field names with case insensitivity
-        const getValue = (possibleFieldNames: string[], fallback: any = 'N/A') => {
+            // Enhanced function to handle multiple possible field names with case insensitivity
+            const getValue = (possibleFieldNames: string[], fallback: any = 'N/A') => {
             // Try each possible field name
             for (const fieldName of possibleFieldNames) {
                 // Check for exact match first
@@ -1183,8 +1184,8 @@ const AppHeader = observer(() => {
                 // If it's a comma-separated string, split and count
                 const tokenArray = copierTokens.split(',').filter(t => t.trim().length > 0);
                 numCopiers = tokenArray.length;
-            } else if (typeof copierTokens === 'object') {
-                // If it's an object, count its keys
+            } else if (typeof copierTokens === 'object' && copierTokens !== null) {
+                // If it's an object (and not null), count its keys
                 numCopiers = Object.keys(copierTokens).length;
             }
         }
@@ -1393,6 +1394,18 @@ const AppHeader = observer(() => {
                 </div>
             </div>
         );
+        } catch (error) {
+            console.error('Error rendering UserProfileView:', error);
+            return (
+                <div className='user-profile-container'>
+                    <h2 className='profile-title'>Profile Error</h2>
+                    <p>There was an error loading your profile. Please try again later.</p>
+                    <button className='auth-modal__button' onClick={() => setActiveView('main')}>
+                        Back
+                    </button>
+                </div>
+            );
+        }
     };
 
     // Add new state for approved providers
@@ -2323,8 +2336,8 @@ const AppHeader = observer(() => {
                                     // If it's a comma-separated string, split and count
                                     const tokenArray = copierTokens.split(',').filter(t => t.trim().length > 0);
                                     numCopiers = tokenArray.length;
-                                } else if (typeof copierTokens === 'object') {
-                                    // If it's an object, count its keys
+                                } else if (typeof copierTokens === 'object' && copierTokens !== null) {
+                                    // If it's an object (and not null), count its keys
                                     numCopiers = Object.keys(copierTokens).length;
                                 }
                             }
