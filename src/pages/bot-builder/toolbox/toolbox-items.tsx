@@ -887,7 +887,6 @@ export const ToolboxItems = () =>
                         </Shadow>
                     </Value>
                 </Block>
-                <Block type='switcher' />
             </Category>
 
             <Examples id='examples'>
@@ -1328,9 +1327,6 @@ export const ToolboxItems = () =>
                                     </Block>
                                 </Value>
                                 <Statement name='DO0'>
-                                    <Block type='switcher'>
-                                        <Field name='SYMBOL_LIST'>Volatility 100 index</Field>
-                                    </Block>
                                     <Block type='purchase'>
                                         <Field name='PURCHASE_LIST'>CALL</Field>
                                     </Block>
