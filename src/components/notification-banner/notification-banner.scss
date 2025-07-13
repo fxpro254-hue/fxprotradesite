@@ -105,9 +105,12 @@
   @media (max-width: 768px) {
     height: 25px;
 
+    &__marquee {
+      animation-duration: 20s; // Much faster on mobile (half the desktop speed)
+    }
+    
     &__text {
       font-size: 13px;
-      animation-duration: 25s; // Slightly faster on mobile
     }
   }
 
