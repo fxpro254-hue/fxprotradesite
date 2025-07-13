@@ -11,7 +11,7 @@ interface NotificationBannerProps {
 }
 
 const NotificationBanner: React.FC<NotificationBannerProps> = ({
-    message = "🎉 Welcome to BinaryFX! Get the latest trading strategies and join our community. Follow us on social media for updates! 📈",
+    message = "📈 Learn to trade like a pro! Join our Telegram channel for live trading sessions, strategy updates, and exclusive tips. 🚀",
     isVisible = true,
     canClose = true,
     autoHide = false,
@@ -59,13 +59,20 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
             title="Click to visit our Telegram channel"
         >
             <div className="notification-banner__content">
-                <div className="notification-banner__text">
-                    <span className="notification-banner__text-item">
-                        {message}
-                    </span>
-                    <span className="notification-banner__text-item">
-                        {message}
-                    </span>
+                <div className="notification-banner__marquee">
+                    <div className="notification-banner__text">
+                        <span className="notification-banner__text-item">{message}</span>
+                        <span className="notification-banner__text-item">{message}</span>
+                        <span className="notification-banner__text-item">{message}</span>
+                        <span className="notification-banner__text-item">{message}</span>
+                    </div>
+                    {/* Clone for seamless scrolling */}
+                    <div className="notification-banner__text">
+                        <span className="notification-banner__text-item">{message}</span>
+                        <span className="notification-banner__text-item">{message}</span>
+                        <span className="notification-banner__text-item">{message}</span>
+                        <span className="notification-banner__text-item">{message}</span>
+                    </div>
                 </div>
                 {canClose && (
                     <button 

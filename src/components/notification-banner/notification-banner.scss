@@ -30,20 +30,27 @@
     overflow: hidden;
   }
 
+  &__marquee {
+    display: flex;
+    position: relative;
+    width: 200%;
+    animation: scroll 30s linear infinite;
+    will-change: transform;
+  }
+
   &__text {
     display: flex;
     white-space: nowrap;
     font-size: 14px;
     font-weight: 500;
-    animation: scroll-left 30s linear infinite;
-    will-change: transform;
+    flex: 0 0 50%;
     
     &-item {
       flex-shrink: 0;
-      padding-right: 60px; // Space between repeating text
+      padding: 0 20px;
       
       &:first-child {
-        padding-left: 20px; // Left padding for first item
+        margin-left: 10px;
       }
     }
   }
@@ -80,24 +87,24 @@
     }
   }
 
-  @keyframes scroll-left {
+  @keyframes scroll {
     0% {
       transform: translateX(0);
     }
     100% {
-      transform: translateX(-50%); // Move exactly half the width (one complete text item)
+      transform: translateX(-50%); // Move exactly half width (one full marquee set)
     }
   }
 
   // Pause animation on hover
-  &:hover &__text {
+  &:hover &__marquee {
     animation-play-state: paused;
   }
 
   // Mobile responsiveness
   @media (max-width: 768px) {
     height: 25px;
-    
+
     &__text {
       font-size: 13px;
       animation-duration: 25s; // Slightly faster on mobile
