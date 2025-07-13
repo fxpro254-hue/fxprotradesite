@@ -60,7 +60,12 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
         >
             <div className="notification-banner__content">
                 <div className="notification-banner__text">
-                    {message}
+                    <span className="notification-banner__text-item">
+                        {message}
+                    </span>
+                    <span className="notification-banner__text-item">
+                        {message}
+                    </span>
                 </div>
                 {canClose && (
                     <button 
