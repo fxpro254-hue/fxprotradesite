@@ -10,6 +10,7 @@ import { crypto_currencies_display_order, fiat_currencies_display_order } from '
 import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
+import NotificationBanner from '../notification-banner';
 import './layout.scss';
 
 const Layout = () => {
@@ -91,6 +92,7 @@ const Layout = () => {
     return (
         <div className={clsx('layout', { responsive: isDesktop })}>
             {!isCallbackPage && <AppHeader />}
+            {!isCallbackPage && <NotificationBanner />}
             <Body>
                 <Outlet />
             </Body>
