@@ -5,7 +5,7 @@
   position: relative;
   overflow: hidden;
   height: 28px;
-  z-index: 100;
+  z-index: 4; /* Below the run panel's z-index of 5 (--zindex-drawer) */
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
   transition: all 0.3s ease;
