@@ -53,10 +53,32 @@ window.Blockly.Blocks.trade_definition_contracttype = {
                     contract_type_options.push(...config().NOT_AVAILABLE_DROPDOWN_OPTIONS);
                 }
 
+                // Determine the default value to select
+                let defaultValue;
+                if (is_load_event) {
+                    // Keep current value when loading
+                    defaultValue = contract_type_list.getValue();
+                } else {
+                    // Auto-select first contract type when trade type changes
+                    if (contract_type_options.length > 0) {
+                        // If "Both" is available and there are multiple options, select the first actual contract type
+                        if (contract_type_options.length > 1 && contract_type_options[0][1] === 'both') {
+                            defaultValue = contract_type_options[1][1]; // Select first non-"both" option
+                        } else {
+                            defaultValue = contract_type_options[0][1]; // Select first option
+                        }
+                    }
+                }
+
                 contract_type_list.updateOptions(contract_type_options, {
                     event_group: event.group,
-                    default_value: is_load_event ? contract_type_list.getValue() : undefined,
+                    default_value: defaultValue,
                 });
+
+                // Log the auto-selection for debugging
+                if (!is_load_event && defaultValue) {
+                    console.log(`Contract type auto-selected: ${defaultValue} for trade type: ${trade_type}`);
+                }
             }
         }
     },
