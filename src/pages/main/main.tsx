@@ -239,6 +239,7 @@ const AppWrapper = observer(() => {
             const botFiles = [
                 { file: 'over under turbo 1.1.xml', category: 'automated', popularity: 95, description: 'Advanced over/under trading strategy with turbo speed execution and intelligent market prediction.' },
                 { file: 'Market wizard v1.5.xml', category: 'automated', popularity: 92, description: 'Community favorite with proven track record in various market conditions and excellent risk management.' },
+                { file: 'Auto differ recovery over under.xml', category: 'automated', popularity: 90, description: 'Automated difference recovery strategy for over/under markets with adaptive risk management.' },
                 { file: 'Tradezilla.xml', category: 'automated', popularity: 88, description: 'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.' },
                 { file: 'Envy-differ.xml', category: 'popular', popularity: 85, description: 'Reliable difference-based trading strategy perfect for beginners and steady profit seekers.' },
                 { file: 'H_L auto vault.xml', category: 'automated', popularity: 90, description: 'High-Low automated vault system with built-in profit protection and loss prevention mechanisms.' },
