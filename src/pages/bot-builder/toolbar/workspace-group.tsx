@@ -23,7 +23,7 @@ import ToolbarIcon from './toolbar-icon';
 
 const WorkspaceGroup = observer(() => {
     const { dashboard, toolbar, load_modal, save_modal } = useStore();
-    const { setPreviewOnPopup, setChartModalVisibility, setTradingViewModalVisibility, setAnalysisModalVisibility, setSignalsModalVisibility, setAdvancedDisplayModalVisibility } = dashboard;
+    const { setPreviewOnPopup, setTradingViewModalVisibility, setAnalysisModalVisibility, setSignalsModalVisibility, setAdvancedDisplayModalVisibility, setStandaloneChartModalVisibility } = dashboard;
     const { has_redo_stack, has_undo_stack, onResetClick, onSortClick, onUndoClick, onZoomInOutClick } = toolbar;
     const { toggleSaveModal } = save_modal;
     const { toggleLoadModal } = load_modal;
@@ -97,12 +97,12 @@ const WorkspaceGroup = observer(() => {
                     <>
                         <div className='vertical-divider' />
                         <ToolbarIcon
-                            popover_message={localize('Charts')}
+                            popover_message={localize('charts')}
                             icon={
                                 <span
                                     className='toolbar__icon'
                                     id='db-toolbar__charts-button'
-                                    onClick={() => setChartModalVisibility()}
+                                    onClick={() => setStandaloneChartModalVisibility(true)}
                                 >
                                     <LabelPairedChartLineMdRegularIcon />
                                 </span>

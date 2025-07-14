@@ -11,6 +11,7 @@ import TradingViewModal from '@/components/trading-view-chart/trading-view-modal
 import AnalysistoolModal from '@/components/analysistool/analysistool-modal';
 import SignalsModal from '@/components/signals/signals-modal';
 import AdvancedDisplayModal from '@/components/modals/advanced-display-modal';
+import StandaloneChartModal from '@/pages/chart/standalone-chart-modal';
 import { DBOT_TABS, TAB_IDS } from '@/constants/bot-contents';
 import { api_base, updateWorkspaceName } from '@/external/bot-skeleton';
 import { CONNECTION_STATUS } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
@@ -237,12 +238,12 @@ const AppWrapper = observer(() => {
         const fetchBots = async () => {
             const botFiles = [
                 { file: 'over under turbo 1.1.xml', category: 'automated', popularity: 95, description: 'Advanced over/under trading strategy with turbo speed execution and intelligent market prediction.' },
-                { file: 'Market wizard v1.5.xml', category: 'popular', popularity: 92, description: 'Community favorite with proven track record in various market conditions and excellent risk management.' },
+                { file: 'Market wizard v1.5.xml', category: 'automated', popularity: 92, description: 'Community favorite with proven track record in various market conditions and excellent risk management.' },
                 { file: 'Tradezilla.xml', category: 'automated', popularity: 88, description: 'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.' },
-                { file: 'Envy-differ.xml', category: 'regular', popularity: 85, description: 'Reliable difference-based trading strategy perfect for beginners and steady profit seekers.' },
+                { file: 'Envy-differ.xml', category: 'popular', popularity: 85, description: 'Reliable difference-based trading strategy perfect for beginners and steady profit seekers.' },
                 { file: 'H_L auto vault.xml', category: 'automated', popularity: 90, description: 'High-Low automated vault system with built-in profit protection and loss prevention mechanisms.' },
-                { file: 'Top-notch 2.xml', category: 'popular', popularity: 94, description: 'Top-rated strategy loved by professional traders for its consistency and impressive performance metrics.' },
-                { file: 'BOT V3.xml', category: 'regular', popularity: 82, description: 'Stable and dependable trading bot with conservative approach and long-term profitability focus.' },
+                { file: 'Top-notch 2.xml', category: 'automated', popularity: 94, description: 'Top-rated strategy loved by professional traders for its consistency and impressive performance metrics.' },
+                { file: 'BOT V3.xml', category: 'popular', popularity: 82, description: 'Stable and dependable trading bot with conservative approach and long-term profitability focus.' },
                 { file: 'Even_Odd Killer bot.xml', category: 'popular', popularity: 89, description: 'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.' },
             ];
             
@@ -892,6 +893,7 @@ const AppWrapper = observer(() => {
                 <AnalysistoolModal />
                 <SignalsModal />
                 <AdvancedDisplayModal />
+                <StandaloneChartModal />
             </DesktopWrapper>
             <MobileWrapper>
                 <RunPanel />

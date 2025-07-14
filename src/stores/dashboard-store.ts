@@ -63,7 +63,9 @@ export interface IDashboardStore {
     is_analysis_modal_visible: boolean;
     is_signals_modal_visible: boolean;
     is_advanced_display_modal_visible: boolean;
+    is_standalone_chart_modal_visible: boolean;
     setPreviewOnPopup: (is_preview_on_popup: boolean) => void;
+    setStandaloneChartModalVisibility: (visible?: boolean) => void;
 }
 
 export default class DashboardStore implements IDashboardStore {
@@ -120,11 +122,13 @@ export default class DashboardStore implements IDashboardStore {
             video_tab_content: observable,
             setStrategySaveType: action.bound,
             setShowMobileTourDialog: action.bound,
+            setStandaloneChartModalVisibility: action.bound,
             is_chart_modal_visible: observable,
             is_trading_view_modal_visible: observable,
             is_analysis_modal_visible: observable,
             is_signals_modal_visible: observable,
             is_advanced_display_modal_visible: observable,
+            is_standalone_chart_modal_visible: observable,
         });
         this.root_store = root_store;
         this.core = core;
@@ -212,6 +216,7 @@ export default class DashboardStore implements IDashboardStore {
     is_analysis_modal_visible = false;
     is_signals_modal_visible = false;
     is_advanced_display_modal_visible = false;
+    is_standalone_chart_modal_visible = false;
     faq_title = '';
 
     setFaqTitle = (faq_title: string) => {
@@ -303,6 +308,10 @@ export default class DashboardStore implements IDashboardStore {
 
     setAdvancedDisplayModalVisibility = () => {
         this.is_advanced_display_modal_visible = !this.is_advanced_display_modal_visible;
+    };
+
+    setStandaloneChartModalVisibility = (visible?: boolean) => {
+        this.is_standalone_chart_modal_visible = visible !== undefined ? visible : !this.is_standalone_chart_modal_visible;
     };
 
     setIsFileSupported = (is_file_supported: boolean) => {
