@@ -11,12 +11,12 @@ interface NotificationBannerProps {
 }
 
 const NotificationBanner: React.FC<NotificationBannerProps> = ({
-    message = "📈 Learn to trade like a pro! Join our Telegram channel for live trading sessions, strategy updates, and exclusive tips. 🚀",
+    message = "🔔 IMPORTANT ANNOUNCEMENT: Mark your calendars! 📅There will be a physical class on 26th July, 10:00 AM at Vicmark Hotel Nakuru. Click here to confirm attendance.",
     isVisible = true,
     canClose = true,
     autoHide = false,
     autoHideDelay = 5000,
-    telegramUrl = "https://t.me/binaryfx_site" // Replace with your actual Telegram channel URL
+    telegramUrl = "https://wa.link/r9d262" // Replace with your actual Telegram channel URL
 }) => {
     const [visible, setVisible] = useState(isVisible);
 
@@ -64,7 +64,7 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
                         <span className="notification-banner__text-item">{message}</span>
                         <span className="notification-banner__text-item">{message}</span>
                         <span className="notification-banner__text-item">{message}</span>
-                        <span className="notification-banner__text-item">{message}</span>
+                        <span className="notification-b</div>anner__text-item">{message}</span>
                     </div>
                     {/* Clone for seamless scrolling */}
                     <div className="notification-banner__text">
