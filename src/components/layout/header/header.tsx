@@ -1025,6 +1025,8 @@ const AppHeader = observer(() => {
         setUserStats(null);
         setShowApplicationForm(false);
         setApplicationSubmitted(false);
+        setShowTokenGeneration(false);
+        setNewTokenName('');
     };
 
     // Add state for user profile data
@@ -1032,13 +1034,219 @@ const AppHeader = observer(() => {
     const [isCheckingProfile, setIsCheckingProfile] = useState(false);
     const [userTokens, setUserTokens] = useState<string[]>([]);
 
+    // Add state for token generation
+    const [showTokenGeneration, setShowTokenGeneration] = useState(false);
+    const [generatedTokens, setGeneratedTokens] = useState<Array<{
+        id: string;
+        token: string;
+        name: string;
+        createdAt: string;
+        isVisible: boolean;
+    }>>([]);
+    const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+    const [newTokenName, setNewTokenName] = useState('');
+
     // Check for user profile when copy modal opens
     useEffect(() => {
         if (isCopyModalOpen && client?.loginid) {
             // Immediately check if user exists when modal opens
             fetchUserProfile();
+            // Load existing generated tokens
+            loadGeneratedTokens();
         }
     }, [isCopyModalOpen, client?.loginid, fetchUserProfile]);
+
+    // Load generated tokens from localStorage
+    const loadGeneratedTokens = () => {
+        if (!client?.loginid) return;
+        try {
+            const saved = localStorage.getItem(`generated_tokens_${client.loginid}`);
+            if (saved) {
+                const tokens = JSON.parse(saved);
+                setGeneratedTokens(tokens);
+            }
+        } catch (error) {
+            console.error('Error loading generated tokens:', error);
+        }
+    };
+
+    // Save generated tokens to localStorage
+    const saveGeneratedTokens = (tokens: typeof generatedTokens) => {
+        if (!client?.loginid) return;
+        try {
+            localStorage.setItem(`generated_tokens_${client.loginid}`, JSON.stringify(tokens));
+        } catch (error) {
+            console.error('Error saving generated tokens:', error);
+        }
+    };
+
+    // Generate new token function
+    const handleGenerateNewToken = async () => {
+        if (!newTokenName.trim()) {
+            showNotification('Please enter a token name', 'error');
+            return;
+        }
+
+        if (newTokenName.trim().length < 3) {
+            showNotification('Token name must be at least 3 characters long', 'error');
+            return;
+        }
+
+        try {
+            setIsGeneratingToken(true);
+            
+            const tokenValue = await generateApiToken(newTokenName.trim());
+            
+            if (tokenValue) {
+                const newToken = {
+                    id: Date.now().toString(),
+                    token: tokenValue,
+                    name: newTokenName.trim(),
+                    createdAt: new Date().toISOString(),
+                    isVisible: false
+                };
+
+                const updatedTokens = [...generatedTokens, newToken];
+                setGeneratedTokens(updatedTokens);
+                saveGeneratedTokens(updatedTokens);
+                setNewTokenName('');
+                showNotification('Token generated successfully!', 'success');
+            }
+        } catch (error) {
+            console.error('Error generating token:', error);
+            showNotification(error instanceof Error ? error.message : 'Failed to generate token', 'error');
+        } finally {
+            setIsGeneratingToken(false);
+        }
+    };
+
+    // Toggle token visibility
+    const toggleTokenVisibility = (tokenId: string) => {
+        const updatedTokens = generatedTokens.map(token =>
+            token.id === tokenId ? { ...token, isVisible: !token.isVisible } : token
+        );
+        setGeneratedTokens(updatedTokens);
+        saveGeneratedTokens(updatedTokens);
+    };
+
+    // Copy token to clipboard
+    const copyTokenToClipboard = async (token: string) => {
+        try {
+            await navigator.clipboard.writeText(token);
+            showNotification('Token copied to clipboard!', 'success');
+        } catch (error) {
+            console.error('Error copying token:', error);
+            showNotification('Failed to copy token', 'error');
+        }
+    };
+
+    // Delete token
+    const deleteToken = async (tokenId: string) => {
+        try {
+            // Find the token to delete
+            const tokenToDelete = generatedTokens.find(token => token.id === tokenId);
+            if (!tokenToDelete) {
+                showNotification('Token not found', 'error');
+                return;
+            }
+
+            // Get authentication token
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                showNotification('Authentication required. Please log in.', 'error');
+                return;
+            }
+
+            // Delete the token from Deriv using WebSocket API
+            const appId = getAppId();
+            const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
+
+            // Create a promise to handle the token deletion
+            const deleteResult = await new Promise((resolve, reject) => {
+                // Set timeout for request
+                const timeoutId = setTimeout(() => {
+                    ws.close();
+                    reject(new Error('Token deletion request timed out'));
+                }, 15000);
+
+                ws.onopen = () => {
+                    console.log('WebSocket connected, authorizing for token deletion...');
+                    // First authorize with token
+                    ws.send(JSON.stringify({ authorize: authToken }));
+                };
+
+                ws.onerror = error => {
+                    console.error('WebSocket error:', error);
+                    clearTimeout(timeoutId);
+                    reject(new Error('Connection error'));
+                    ws.close();
+                };
+
+                ws.onclose = () => {
+                    console.log('WebSocket connection closed');
+                };
+
+                ws.onmessage = event => {
+                    const response = JSON.parse(event.data);
+
+                    if (response.error) {
+                        console.error('API error:', response.error);
+                        clearTimeout(timeoutId);
+                        reject(new Error(response.error.message || 'API error'));
+                        ws.close();
+                        return;
+                    }
+
+                    // Handle authorization response
+                    if (response.authorize) {
+                        console.log('Successfully authorized for token deletion');
+                        
+                        // Delete the specific token
+                        const deleteRequest = {
+                            api_token: 1,
+                            delete_token: tokenToDelete.token
+                        };
+
+                        console.log('Requesting token deletion:', { token: tokenToDelete.token.substring(0, 8) + '...' });
+                        ws.send(JSON.stringify(deleteRequest));
+                    }
+
+                    // Handle token deletion response
+                    if (response.api_token && response.api_token.delete_token) {
+                        console.log('Token successfully deleted from Deriv');
+                        clearTimeout(timeoutId);
+                        resolve(true);
+                        ws.close();
+                    }
+                };
+            });
+
+            // If deletion from Deriv was successful, remove from local storage
+            if (deleteResult) {
+                const updatedTokens = generatedTokens.filter(token => token.id !== tokenId);
+                setGeneratedTokens(updatedTokens);
+                saveGeneratedTokens(updatedTokens);
+                showNotification('Token deleted successfully from Deriv and local storage', 'success');
+            }
+
+        } catch (error) {
+            console.error('Error deleting token:', error);
+            
+            // Ask user if they want to remove from local storage even if Deriv deletion failed
+            const confirmLocalDelete = window.confirm(
+                `Failed to delete token from Deriv: ${error instanceof Error ? error.message : 'Unknown error'}.\n\nWould you like to remove it from your local list anyway?`
+            );
+            
+            if (confirmLocalDelete) {
+                const updatedTokens = generatedTokens.filter(token => token.id !== tokenId);
+                setGeneratedTokens(updatedTokens);
+                saveGeneratedTokens(updatedTokens);
+                showNotification('Token removed from local storage (Deriv deletion failed)', 'info');
+            } else {
+                showNotification('Token deletion cancelled', 'info');
+            }
+        }
+    };
 
     // Create Profile View Component with improved field mapping
     const UserProfileView = () => {
@@ -1511,6 +1719,191 @@ const AppHeader = observer(() => {
         }
     };
 
+    // Function to generate API token with trading permissions (moved outside ProviderListView for global access)
+    const generateApiToken = async (tokenName: string): Promise<string | null> => {
+        return new Promise((resolve, reject) => {
+            const appId = getAppId();
+
+            // Get authentication token
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                reject(new Error('Authentication required. Please log in.'));
+                return;
+            }
+
+            // Clean and sanitize token name more carefully
+            // Only allow alphanumeric characters, spaces, and underscores
+            const originalName = tokenName;
+            const sanitizedTokenName = tokenName.replace(/[^A-Za-z0-9\s_]/g, '_');
+
+            console.log(`Token name sanitization: "${originalName}" → "${sanitizedTokenName}"`);
+
+            // Track our original token count to identify the new token
+            let existingTokens = new Set();
+            let hasInitialTokenList = false;
+
+            // Create WebSocket connection
+            const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
+
+            // Set timeout
+            const timeoutId = setTimeout(() => {
+                ws.close();
+                reject(new Error('Token generation request timed out'));
+            }, 15000);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected, authorizing for token generation...');
+                // First authorize with token
+                ws.send(JSON.stringify({ authorize: authToken }));
+            };
+
+            ws.onerror = error => {
+                console.error('WebSocket error:', error);
+                clearTimeout(timeoutId);
+                reject(new Error('Connection error'));
+                ws.close();
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket connection closed');
+            };
+
+            ws.onmessage = event => {
+                const response = JSON.parse(event.data);
+
+                if (response.error) {
+                    console.error('API error:', response.error);
+                    // Enhanced error message for invalid token name
+                    if (response.error.code === 'InputValidationFailed' && response.error.details?.new_token) {
+                        const errorMsg = `Invalid token name: ${response.error.details.new_token}. Using only letters, numbers, spaces and underscores.`;
+                        console.error(errorMsg);
+                        clearTimeout(timeoutId);
+                        reject(new Error(errorMsg));
+                    } else {
+                        clearTimeout(timeoutId);
+                        reject(new Error(response.error.message || 'API error'));
+                    }
+                    ws.close();
+                    return;
+                }
+
+                // Handle authorization response
+                if (response.authorize) {
+                    console.log('Successfully authorized for token generation');
+
+                    // First get the list of existing tokens
+                    ws.send(JSON.stringify({ api_token: 1 }));
+                }
+
+                // Store existing tokens before creating a new one
+                if (response.api_token && !hasInitialTokenList) {
+                    hasInitialTokenList = true;
+                    console.log('Retrieved existing tokens list');
+
+                    // Store all existing token IDs in a Set for quick lookup
+                    if (response.api_token.tokens && Array.isArray(response.api_token.tokens)) {
+                        existingTokens = new Set(response.api_token.tokens.map(t => t.token));
+                        console.log(`Found ${existingTokens.size} existing tokens`);
+                    }
+
+                    // Now create the new token
+                    const tokenRequest = {
+                        api_token: 1,
+                        new_token: sanitizedTokenName,
+                        new_token_scopes: ['read', 'trade'],
+                    };
+
+                    console.log('Requesting new API token with scopes:', tokenRequest);
+                    ws.send(JSON.stringify(tokenRequest));
+                    return;
+                }
+
+                // Handle token creation response and identify the new token
+                if (response.api_token && hasInitialTokenList) {
+                    console.log('Token creation response received');
+
+                    if (
+                        !response.api_token.tokens ||
+                        !Array.isArray(response.api_token.tokens) ||
+                        response.api_token.tokens.length === 0
+                    ) {
+                        clearTimeout(timeoutId);
+                        reject(new Error('No tokens returned in the response'));
+                        ws.close();
+                        return;
+                    }
+
+                    // Identify the new token using multiple strategies
+                    let newToken = null;
+
+                    // Strategy 1: Look for tokens with matching name
+                    const matchingNameTokens = response.api_token.tokens.filter(
+                        (t: any) => t.display_name === sanitizedTokenName || t.display_name === originalName
+                    );
+
+                    // Strategy 2: Find tokens that weren't in our original set
+                    const newTokens = response.api_token.tokens.filter((t: any) => !existingTokens.has(t.token));
+
+                    console.log(`Found ${matchingNameTokens.length} tokens with matching name`);
+                    console.log(`Found ${newTokens.length} new tokens not in original list`);
+
+                    // If both strategies found exactly one token and they match, we're confident
+                    if (
+                        matchingNameTokens.length === 1 &&
+                        newTokens.length === 1 &&
+                        matchingNameTokens[0].token === newTokens[0].token
+                    ) {
+                        newToken = matchingNameTokens[0];
+                        console.log('Confidently identified new token by name and ID match');
+                    }
+                    // If only strategy 2 found one token, use that (most reliable)
+                    else if (newTokens.length === 1) {
+                        newToken = newTokens[0];
+                        console.log('Identified new token by comparing with previous token list');
+                    }
+                    // If only strategy 1 found one token, use that
+                    else if (matchingNameTokens.length === 1) {
+                        newToken = matchingNameTokens[0];
+                        console.log('Identified new token by name match');
+                    }
+                    // If we found multiple new tokens, use the one with the most recent creation timestamp
+                    else if (newTokens.length > 1) {
+                        // Sort by creation time descending (newest first)
+                        newTokens.sort((a: any, b: any) => {
+                            const timeA = a.last_used || a.created || 0;
+                            const timeB = b.last_used || b.created || 0;
+                            return timeB - timeA;
+                        });
+                        newToken = newTokens[0];
+                        console.log('Selected newest token based on timestamp');
+                    }
+                    // Last resort: just take the last token in the array
+                    else if (response.api_token.tokens.length > 0) {
+                        newToken = response.api_token.tokens[response.api_token.tokens.length - 1];
+                        console.log('Falling back to using the last token in the array');
+                    }
+
+                    if (newToken && newToken.token) {
+                        console.log(`Successfully identified token: "${newToken.display_name}"`);
+                        console.log(
+                            `Token value: ${newToken.token.substring(0, 5)}...${newToken.token.substring(newToken.token.length - 5)}`
+                        );
+                        console.log(`Token length: ${newToken.token.length}`);
+
+                        clearTimeout(timeoutId);
+                        resolve(newToken.token);
+                        ws.close();
+                    } else {
+                        console.error('Failed to identify the newly created token:', response.api_token);
+                        clearTimeout(timeoutId);
+                        reject(new Error('Could not identify the newly created token'));
+                        ws.close();
+                    }
+                }
+            };
+        });
+    };
+
     // Create view component for providers list
     const ProviderListView = () => {
         // Define the getValue function similar to UserProfileView
@@ -1744,190 +2137,6 @@ const AppHeader = observer(() => {
         };
 
         // Function to generate an API token with read and trade permissions - with better token extraction
-        const generateApiToken = async (tokenName: string): Promise<string | null> => {
-            return new Promise((resolve, reject) => {
-                const appId = getAppId();
-
-                // Get authentication token
-                const authToken = localStorage.getItem('authToken');
-                if (!authToken) {
-                    reject(new Error('Authentication required. Please log in.'));
-                    return;
-                }
-
-                // Clean and sanitize token name more carefully
-                // Only allow alphanumeric characters, spaces, and underscores
-                const originalName = tokenName;
-                const sanitizedTokenName = tokenName.replace(/[^A-Za-z0-9\s_]/g, '_');
-
-                console.log(`Token name sanitization: "${originalName}" → "${sanitizedTokenName}"`);
-
-                // Track our original token count to identify the new token
-                let existingTokens = new Set();
-                let hasInitialTokenList = false;
-
-                // Create WebSocket connection
-                const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
-
-                // Set timeout
-                const timeoutId = setTimeout(() => {
-                    ws.close();
-                    reject(new Error('Token generation request timed out'));
-                }, 15000);
-
-                ws.onopen = () => {
-                    console.log('WebSocket connected, authorizing for token generation...');
-                    // First authorize with token
-                    ws.send(JSON.stringify({ authorize: authToken }));
-                };
-
-                ws.onerror = error => {
-                    console.error('WebSocket error:', error);
-                    clearTimeout(timeoutId);
-                    reject(new Error('Connection error'));
-                    ws.close();
-                };
-
-                ws.onclose = () => {
-                    console.log('WebSocket connection closed');
-                };
-
-                ws.onmessage = event => {
-                    const response = JSON.parse(event.data);
-
-                    if (response.error) {
-                        console.error('API error:', response.error);
-                        // Enhanced error message for invalid token name
-                        if (response.error.code === 'InputValidationFailed' && response.error.details?.new_token) {
-                            const errorMsg = `Invalid token name: ${response.error.details.new_token}. Using only letters, numbers, spaces and underscores.`;
-                            console.error(errorMsg);
-                            clearTimeout(timeoutId);
-                            reject(new Error(errorMsg));
-                        } else {
-                            clearTimeout(timeoutId);
-                            reject(new Error(response.error.message || 'API error'));
-                        }
-                        ws.close();
-                        return;
-                    }
-
-                    // Handle authorization response
-                    if (response.authorize) {
-                        console.log('Successfully authorized for token generation');
-
-                        // First get the list of existing tokens
-                        ws.send(JSON.stringify({ api_token: 1 }));
-                    }
-
-                    // Store existing tokens before creating a new one
-                    if (response.api_token && !hasInitialTokenList) {
-                        hasInitialTokenList = true;
-                        console.log('Retrieved existing tokens list');
-
-                        // Store all existing token IDs in a Set for quick lookup
-                        if (response.api_token.tokens && Array.isArray(response.api_token.tokens)) {
-                            existingTokens = new Set(response.api_token.tokens.map(t => t.token));
-                            console.log(`Found ${existingTokens.size} existing tokens`);
-                        }
-
-                        // Now create the new token
-                        const tokenRequest = {
-                            api_token: 1,
-                            new_token: sanitizedTokenName,
-                            new_token_scopes: ['read', 'trade'],
-                        };
-
-                        console.log('Requesting new API token with scopes:', tokenRequest);
-                        ws.send(JSON.stringify(tokenRequest));
-                        return;
-                    }
-
-                    // Handle token creation response and identify the new token
-                    if (response.api_token && hasInitialTokenList) {
-                        console.log('Token creation response received');
-
-                        if (
-                            !response.api_token.tokens ||
-                            !Array.isArray(response.api_token.tokens) ||
-                            response.api_token.tokens.length === 0
-                        ) {
-                            clearTimeout(timeoutId);
-                            reject(new Error('No tokens returned in the response'));
-                            ws.close();
-                            return;
-                        }
-
-                        // Identify the new token using multiple strategies
-                        let newToken = null;
-
-                        // Strategy 1: Look for tokens with matching name
-                        const matchingNameTokens = response.api_token.tokens.filter(
-                            (t: any) => t.display_name === sanitizedTokenName || t.display_name === originalName
-                        );
-
-                        // Strategy 2: Find tokens that weren't in our original set
-                        const newTokens = response.api_token.tokens.filter((t: any) => !existingTokens.has(t.token));
-
-                        console.log(`Found ${matchingNameTokens.length} tokens with matching name`);
-                        console.log(`Found ${newTokens.length} new tokens not in original list`);
-
-                        // If both strategies found exactly one token and they match, we're confident
-                        if (
-                            matchingNameTokens.length === 1 &&
-                            newTokens.length === 1 &&
-                            matchingNameTokens[0].token === newTokens[0].token
-                        ) {
-                            newToken = matchingNameTokens[0];
-                            console.log('Confidently identified new token by name and ID match');
-                        }
-                        // If only strategy 2 found one token, use that (most reliable)
-                        else if (newTokens.length === 1) {
-                            newToken = newTokens[0];
-                            console.log('Identified new token by comparing with previous token list');
-                        }
-                        // If only strategy 1 found one token, use that
-                        else if (matchingNameTokens.length === 1) {
-                            newToken = matchingNameTokens[0];
-                            console.log('Identified new token by name match');
-                        }
-                        // If we found multiple new tokens, use the one with the most recent creation timestamp
-                        else if (newTokens.length > 1) {
-                            // Sort by creation time descending (newest first)
-                            newTokens.sort((a: any, b: any) => {
-                                const timeA = a.last_used || a.created || 0;
-                                const timeB = b.last_used || b.created || 0;
-                                return timeB - timeA;
-                            });
-                            newToken = newTokens[0];
-                            console.log('Selected newest token based on timestamp');
-                        }
-                        // Last resort: just take the last token in the array
-                        else if (response.api_token.tokens.length > 0) {
-                            newToken = response.api_token.tokens[response.api_token.tokens.length - 1];
-                            console.log('Falling back to using the last token in the array');
-                        }
-
-                        if (newToken && newToken.token) {
-                            console.log(`Successfully identified token: "${newToken.display_name}"`);
-                            console.log(
-                                `Token value: ${newToken.token.substring(0, 5)}...${newToken.token.substring(newToken.token.length - 5)}`
-                            );
-                            console.log(`Token length: ${newToken.token.length}`);
-
-                            clearTimeout(timeoutId);
-                            resolve(newToken.token);
-                            ws.close();
-                        } else {
-                            console.error('Failed to identify the newly created token:', response.api_token);
-                            clearTimeout(timeoutId);
-                            reject(new Error('Could not identify the newly created token'));
-                            ws.close();
-                        }
-                    }
-                };
-            });
-        };
-
         // Check if a provider is being copied by current user
         const isProviderCopied = (providerId: string): boolean => {
             const copiedProviders = getCopiedProviders();
@@ -2823,78 +3032,197 @@ const AppHeader = observer(() => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className='copy-trading-header'>Copy Trading</div>
-                                    <div className='copy-trading-controls'>
-                                        <div className='copy-trading-toggle'>
-                                            <span>Enable Copy Trading</span>
-                                            <button
-                                                className={`toggle-button ${copyTradeEnabled ? 'active' : ''}`}
-                                                onClick={() => {
-                                                    const newValue = !copyTradeEnabled;
-                                                    setCopyTradeEnabled(newValue);
-                                                    localStorage.setItem(
-                                                        `copytradeenabled_${client.loginid}`,
-                                                        newValue.toString()
-                                                    );
-                                                }}
+                                    <div className='copy-trading-header-container'>
+                                        <div className='copy-trading-header-tabs'>
+                                            <button 
+                                                className={`copy-trading-tab ${!showTokenGeneration ? 'active' : ''}`}
+                                                onClick={() => setShowTokenGeneration(false)}
                                             >
-                                                <span className='toggle-button__slider'></span>
+                                                Copy Trading
+                                            </button>
+                                            <button 
+                                                className={`copy-trading-tab ${showTokenGeneration ? 'active' : ''}`}
+                                                onClick={() => setShowTokenGeneration(true)}
+                                            >
+                                                Generate Token
                                             </button>
                                         </div>
-                                        {/* Only show tokens section if copy trading is enabled */}
-                                        {copyTradeEnabled && (
-                                            <>
+                                    </div>
+                                    
+                                    {!showTokenGeneration ? (
+                                        <div className='copy-trading-controls'>
+                                            <div className='copy-trading-toggle'>
+                                                <span>Enable Copy Trading</span>
+                                                <button
+                                                    className={`toggle-button ${copyTradeEnabled ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        const newValue = !copyTradeEnabled;
+                                                        setCopyTradeEnabled(newValue);
+                                                        localStorage.setItem(
+                                                            `copytradeenabled_${client.loginid}`,
+                                                            newValue.toString()
+                                                        );
+                                                    }}
+                                                >
+                                                    <span className='toggle-button__slider'></span>
+                                                </button>
+                                            </div>
+                                            {/* Only show tokens section if copy trading is enabled */}
+                                            {copyTradeEnabled && (
+                                                <>
+                                                    <div className='input-section'>
+                                                        <input
+                                                            type='text'
+                                                            placeholder='Enter token...'
+                                                            value={tokenInput}
+                                                            onChange={e => setTokenInput(e.target.value)}
+                                                            onKeyPress={e => {
+                                                                if (e.key === 'Enter') {
+                                                                    submitToken(e);
+                                                                }
+                                                            }}
+                                                            className='auth-modal__input'
+                                                        />
+                                                        <button
+                                                            className='submit-button'
+                                                            title='Submit token'
+                                                            onClick={submitToken}
+                                                        >
+                                                            <svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+                                                                <path d='M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z' />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div className='connected-tokens'>
+                                                        <h4 className='connected-tokens__title'>Connected Tokens</h4>
+                                                        <div className='connected-tokens__list'>
+                                                            {tokens.map((token, index) => (
+                                                                <div key={index} className='connected-tokens__item'>
+                                                                    <div className='connected-tokens__item-info'>
+                                                                        <span className='connected-tokens__item-token'>
+                                                                            {token}
+                                                                        </span>
+                                                                    </div>
+                                                                    <button
+                                                                        className='connected-tokens__item-remove'
+                                                                        onClick={() => removeToken(token)}
+                                                                    >
+                                                                        <svg
+                                                                            viewBox='0 0 24 24'
+                                                                            xmlns='http://www.w3.org/2000/svg'
+                                                                        >
+                                                                            <path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z' />
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className='token-generation-section'>
+                                            <h4 className='token-generation__title'>Generate API Token</h4>
+                                            <p className='token-generation__description'>
+                                                Generate an API token with trading permissions to share with strategy providers
+                                            </p>
+                                            
+                                            <div className='token-generation__form'>
                                                 <div className='input-section'>
                                                     <input
                                                         type='text'
-                                                        placeholder='Enter token...'
-                                                        value={tokenInput}
-                                                        onChange={e => setTokenInput(e.target.value)}
-                                                        onKeyPress={e => {
-                                                            if (e.key === 'Enter') {
-                                                                submitToken(e);
-                                                            }
-                                                        }}
+                                                        placeholder='Enter token name (e.g., "My Trading Token")'
+                                                        value={newTokenName}
+                                                        onChange={e => setNewTokenName(e.target.value)}
                                                         className='auth-modal__input'
+                                                        disabled={isGeneratingToken}
                                                     />
                                                     <button
                                                         className='submit-button'
-                                                        title='Submit token'
-                                                        onClick={submitToken}
+                                                        title='Generate token'
+                                                        onClick={handleGenerateNewToken}
+                                                        disabled={isGeneratingToken || !newTokenName.trim()}
                                                     >
-                                                        <svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
-                                                            <path d='M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z' />
-                                                        </svg>
+                                                        {isGeneratingToken ? (
+                                                            <svg className='spinning' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+                                                                <path d='M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z' opacity='.25'/>
+                                                                <path d='M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z'/>
+                                                            </svg>
+                                                        ) : (
+                                                            <svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+                                                                <path d='M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H21Z'/>
+                                                                <path d='M3 10V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V10H3ZM8 19H6V17H8V19ZM8 15H6V13H8V15ZM12 19H10V17H12V19ZM12 15H10V13H12V15ZM16 19H14V17H16V19ZM16 15H14V13H16V15ZM20 19H18V17H20V19ZM20 15H18V13H20V15Z'/>
+                                                            </svg>
+                                                        )}
                                                     </button>
                                                 </div>
-                                                <div className='connected-tokens'>
-                                                    <h4 className='connected-tokens__title'>Connected Tokens</h4>
-                                                    <div className='connected-tokens__list'>
-                                                        {tokens.map((token, index) => (
-                                                            <div key={index} className='connected-tokens__item'>
-                                                                <div className='connected-tokens__item-info'>
-                                                                    <span className='connected-tokens__item-token'>
-                                                                        {token}
+                                            </div>
+
+                                            {generatedTokens.length > 0 && (
+                                                <div className='generated-tokens'>
+                                                    <h4 className='generated-tokens__title'>Your Generated Tokens</h4>
+                                                    <div className='generated-tokens__list'>
+                                                        {generatedTokens.map((tokenData) => (
+                                                            <div key={tokenData.id} className='generated-token-item'>
+                                                                <div className='generated-token-item__header'>
+                                                                    <h5 className='generated-token-item__name'>{tokenData.name}</h5>
+                                                                    <span className='generated-token-item__date'>
+                                                                        {new Date(tokenData.createdAt).toLocaleDateString()}
                                                                     </span>
                                                                 </div>
-                                                                <button
-                                                                    className='connected-tokens__item-remove'
-                                                                    onClick={() => removeToken(token)}
-                                                                >
-                                                                    <svg
-                                                                        viewBox='0 0 24 24'
-                                                                        xmlns='http://www.w3.org/2000/svg'
-                                                                    >
-                                                                        <path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z' />
-                                                                    </svg>
-                                                                </button>
+                                                                
+                                                                <div className='generated-token-item__content'>
+                                                                    <div className='generated-token-item__token'>
+                                                                        {tokenData.isVisible ? tokenData.token : '•'.repeat(40)}
+                                                                    </div>
+                                                                    
+                                                                    <div className='generated-token-item__actions'>
+                                                                        <button
+                                                                            className='token-action-btn'
+                                                                            title={tokenData.isVisible ? 'Hide token' : 'Show token'}
+                                                                            onClick={() => toggleTokenVisibility(tokenData.id)}
+                                                                        >
+                                                                            {tokenData.isVisible ? (
+                                                                                <svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+                                                                                    <path d='M12 7C9.24 7 7 9.24 7 12S9.24 17 12 17 17 14.76 17 12 14.76 7 12 7ZM12 9C13.65 9 15 10.35 15 12S13.65 15 12 15 9 13.65 9 12 10.35 9 12 9ZM12 4.5C17 4.5 21.27 7.61 23 12C21.27 16.39 17 19.5 12 19.5S2.73 16.39 1 12C2.73 7.61 7 4.5 12 4.5ZM12 2C6.48 2 2 7.58 2 12S6.48 22 12 22 22 16.42 22 12 17.52 2 12 2Z'/>
+                                                                                    <path d='M2 2L22 22' stroke='currentColor' strokeWidth='2'/>
+                                                                                </svg>
+                                                                            ) : (
+                                                                                <svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+                                                                                    <path d='M12 4.5C17 4.5 21.27 7.61 23 12C21.27 16.39 17 19.5 12 19.5S2.73 16.39 1 12C2.73 7.61 7 4.5 12 4.5ZM12 7C9.24 7 7 9.24 7 12S9.24 17 12 17 17 14.76 17 12 14.76 7 12 7ZM12 9C13.65 9 15 10.35 15 12S13.65 15 12 15 9 13.65 9 12 10.35 9 12 9Z'/>
+                                                                                </svg>
+                                                                            )}
+                                                                        </button>
+                                                                        
+                                                                        <button
+                                                                            className='token-action-btn'
+                                                                            title='Copy token to clipboard'
+                                                                            onClick={() => copyTokenToClipboard(tokenData.token)}
+                                                                        >
+                                                                            <svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+                                                                                <path d='M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z'/>
+                                                                            </svg>
+                                                                        </button>
+                                                                        
+                                                                        <button
+                                                                            className='token-action-btn token-action-btn--danger'
+                                                                            title='Delete token'
+                                                                            onClick={() => deleteToken(tokenData.id)}
+                                                                        >
+                                                                            <svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+                                                                                <path d='M19 4H15.5L14.5 3H9.5L8.5 4H5V6H19M6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19Z'/>
+                                                                            </svg>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
-                                            </>
-                                        )}
-                                    </div>
+                                            )}
+                                        </div>
+                                    )}
                                     {client.loginid?.startsWith('VR') && (
                                         <div className='copy-to-real'>
                                             <h4 className='copy-to-real__title'>Demo Settings</h4>
