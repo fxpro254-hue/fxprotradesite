@@ -1,12 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     const wallet = document.querySelector('.wallet');
 
+    // Configuration
+    const TARGET_APP_ID = 68848; // App ID to filter markup statistics
+
     if (!wallet) {
         console.error("⚠ Wallet element not found. Ensure the element with class 'wallet' exists in the HTML.");
         return;
     }
 
-    console.log('✅ Wallet element found. Initializing WebSocket...');
+    console.log(`✅ Wallet element found. Initializing WebSocket for App ID ${TARGET_APP_ID}...`);
 
     // WebSocket connection
     const apiToken = 'uT4oMU9WykXTcV4'; // Replace with your actual token
@@ -109,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Show loading state initially
     wallet.innerHTML = `
-        <div class="wallet-header">Portfolio Overview</div>
+        <div class="wallet-header">Portfolio Overview - App ID ${TARGET_APP_ID}</div>
         <div class="loading">Loading data...</div>
     `;
 
@@ -130,13 +133,28 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchMarkupStatistics('monthly');
         } else if (response.msg_type === 'app_markup_statistics') {
             console.log('📊 Processing app_markup_statistics response...');
-            const totalMarkup = response.app_markup_statistics?.total_app_markup_usd ?? 0;
-            const totalRuns = response.app_markup_statistics?.total_transactions_count ?? 0;
+            
+            // Filter markup data for app_id 68848 only
+            let filteredMarkup = 0;
+            let filteredRuns = 0;
+            
+            if (response.app_markup_statistics?.breakdown) {
+                const appData = response.app_markup_statistics.breakdown.find(app => app.app_id === TARGET_APP_ID);
+                if (appData) {
+                    filteredMarkup = appData.app_markup_usd ?? 0;
+                    filteredRuns = appData.transactions_count ?? 0;
+                    console.log(`📊 Found data for app_id ${TARGET_APP_ID}:`, appData);
+                } else {
+                    console.log(`⚠ No data found for app_id ${TARGET_APP_ID} in breakdown`);
+                }
+            } else {
+                console.log('⚠ No breakdown data available in response');
+            }
 
             // Handle 30-day data
             if (response.req_id >= 1 && response.req_id <= 30) {
                 const date = response.echo_req.date_from.split(' ')[0]; // Extract only the date part
-                dailyData.push({ date, markup: totalMarkup });
+                dailyData.push({ date, markup: filteredMarkup });
                 completedRequests++;
 
                 // Check if all requests are completed
@@ -153,19 +171,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Handle daily, weekly, and monthly statistics
             if (response.req_id === 100) {
-                statistics.daily.markup = totalMarkup;
-                statistics.daily.runs = totalRuns;
+                statistics.daily.markup = filteredMarkup;
+                statistics.daily.runs = filteredRuns;
                 console.log('📊 Updated Daily Statistics:', statistics.daily);
             }
             if (response.req_id === 101) {
-                statistics.weekly.markup = totalMarkup;
-                statistics.weekly.runs = totalRuns;
+                statistics.weekly.markup = filteredMarkup;
+                statistics.weekly.runs = filteredRuns;
                 console.log('📊 Updated Weekly Statistics:', statistics.weekly);
             }
             if (response.req_id === 102) {
-                statistics.monthly.markup = totalMarkup;
-                statistics.monthly.runs = totalRuns;
-                statistics.currentMonth = totalMarkup;
+                statistics.monthly.markup = filteredMarkup;
+                statistics.monthly.runs = filteredRuns;
+                statistics.currentMonth = filteredMarkup;
                 console.log('📊 Updated Monthly Statistics:', statistics.monthly);
             }
 
@@ -442,7 +460,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div style="margin-top: 20px; text-align: center; font-size: 0.8rem; color: #666;">
-                Exchange Rate: 1 USD = ${usdToKes.toFixed(2)} KES
+                Exchange Rate: 1 USD = ${usdToKes.toFixed(2)} KES<br>
+                <span style="font-size: 0.7rem; opacity: 0.8;">Showing data filtered for App ID ${TARGET_APP_ID}</span>
                 ${lastUpdated ? `<br><span style="font-size: 0.7rem; opacity: 0.8;">Updated: ${formatUpdateTime(lastUpdated)}</span>` : ''}
             </div>`;
     }
