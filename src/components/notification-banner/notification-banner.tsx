@@ -11,12 +11,12 @@ interface NotificationBannerProps {
 }
 
 const NotificationBanner: React.FC<NotificationBannerProps> = ({
-    message = "🔔 IMPORTANT ANNOUNCEMENT: Mark your calendars! 📅There will be a physical class on 26th July, 10:00 AM at Vicmark Hotel Nakuru. Click here to confirm attendance.",
+    message = "📚 Join our DAILY Trading Masterclass! 🚀 Live sessions every day at 9:00 PM - Learn advanced trading strategies and watch real-time trades. Don't miss out on transforming your trading journey! Click to join our exclusive Telegram community.",
     isVisible = true,
     canClose = true,
     autoHide = false,
     autoHideDelay = 5000,
-    telegramUrl = "https://wa.link/r9d262" // Replace with your actual Telegram channel URL
+    telegramUrl = "https://t.me/binaryfx_site"
 }) => {
     const [visible, setVisible] = useState(isVisible);
 
