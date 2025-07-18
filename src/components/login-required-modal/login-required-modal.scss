@@ -1,5 +1,27 @@
 @use 'components/shared/styles/mixins' as *;
 
+// Quantum theme variables
+:root {
+    --quantum-primary: #6a00ff;
+    --quantum-secondary: #00b3ff;
+    --quantum-tertiary: #00ffd9;
+    --quantum-accent: #ff00e6;
+    --quantum-highlight: #5e17eb;
+    --quantum-deep: #240054;
+    --quantum-energy: #b69cff;
+    --text-primary: #ffffff;
+    --text-secondary: #e5e7eb;
+    --text-muted: #9ca3af;
+    --surface-dark: #040014;
+    --surface-darker: #01000d;
+    --quantum-glass: rgba(106, 0, 255, 0.15);
+    --border-glow: rgba(106, 0, 255, 0.4);
+    --shadow-glow: 0 0 30px rgba(106, 0, 255, 0.3);
+    --electron-glow: 0 0 10px rgba(0, 179, 255, 0.8);
+    --wave-glow: 0 0 15px rgba(255, 0, 230, 0.6);
+    --core-pulse: 0 0 25px rgba(106, 0, 255, 0.8);
+}
+
 .login-required-modal {
     &__content {
         display: flex;
@@ -10,20 +32,17 @@
         text-align: center;
         height: 100%;
         min-height: 100%;
-        background: 
-            radial-gradient(circle at top right, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at bottom left, rgba(103, 126, 234, 0.1) 0%, transparent 50%),
-            linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-        color: white;
+        background: radial-gradient(ellipse at center, var(--surface-dark) 0%, var(--surface-darker) 100%);
+        color: var(--text-primary);
         position: relative;
         overflow: hidden;
-        border-radius: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 1.5rem;
+        border: 1px solid var(--border-glow);
         box-shadow: 
-            0 25px 50px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            0 25px 50px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(106, 0, 255, 0.1);
         
-        // Animated background particles
+        // Quantum grid
         &::before {
             content: '';
             position: absolute;
@@ -32,29 +51,28 @@
             right: 0;
             bottom: 0;
             background-image: 
-                radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.3), transparent),
-                radial-gradient(2px 2px at 40px 70px, rgba(255, 107, 107, 0.4), transparent),
-                radial-gradient(1px 1px at 90px 40px, rgba(103, 126, 234, 0.4), transparent),
-                radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.2), transparent);
-            background-repeat: repeat;
-            background-size: 200px 100px;
-            animation: float 20s ease-in-out infinite;
+                linear-gradient(rgba(106, 0, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(106, 0, 255, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.5;
+            animation: gridPulse 20s linear infinite;
             pointer-events: none;
             z-index: 1;
         }
         
-        // Floating orbs
+        // Quantum wave effect
         &::after {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-                radial-gradient(circle at 25% 25%, rgba(255, 107, 107, 0.05) 0%, transparent 25%),
-                radial-gradient(circle at 75% 75%, rgba(103, 126, 234, 0.05) 0%, transparent 25%);
-            animation: rotate 30s linear infinite;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, 
+                rgba(106, 0, 255, 0.05) 0%,
+                transparent 40%);
+            transform-origin: bottom;
+            animation: waveMotion 15s ease-in-out infinite alternate;
             pointer-events: none;
             z-index: 1;
         }
@@ -68,25 +86,163 @@
         height: 100%;
         position: relative;
         z-index: 2;
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(15px);
         padding: clamp(2rem, 5vw, 4rem);
         justify-content: center;
+        background: rgba(4, 0, 20, 0.4);
     }
 
-    &__icon {
+    &__quantum-viz {
         margin-bottom: clamp(2rem, 4vw, 3rem);
         position: relative;
-        background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(103, 126, 234, 0.2));
-        padding: clamp(1.5rem, 3vw, 2.5rem);
-        border-radius: 50%;
-        backdrop-filter: blur(15px);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        animation: pulse 3s ease-in-out infinite;
+        width: 140px;
+        height: 140px;
         
-        svg {
-            width: clamp(48px, 8vw, 80px) !important;
-            height: clamp(48px, 8vw, 80px) !important;
-            filter: drop-shadow(0 4px 12px rgba(255, 107, 107, 0.3));
+        // Quantum sphere
+        .q-sphere {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            animation: qSphereRotate 20s linear infinite;
+            
+            // Core of the quantum visualization
+            .q-core {
+                position: absolute;
+                width: 30px;
+                height: 30px;
+                background: radial-gradient(circle, var(--quantum-primary) 0%, var(--quantum-deep) 80%);
+                border-radius: 50%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                box-shadow: var(--core-pulse);
+                animation: corePulsate 3s ease-in-out infinite;
+                
+                &::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 120%;
+                    height: 120%;
+                    transform: translate(-50%, -50%);
+                    background: radial-gradient(circle, rgba(106, 0, 255, 0.5), transparent 70%);
+                    border-radius: 50%;
+                    opacity: 0.8;
+                    animation: coreGlowPulse 3s ease-in-out infinite alternate;
+                }
+            }
+            
+            // Quantum orbits
+            .q-orbit {
+                position: absolute;
+                border-radius: 50%;
+                top: 50%;
+                left: 50%;
+                border: 2px dashed transparent;
+                transform: translate(-50%, -50%);
+                
+                &.orbit-1 {
+                    width: 60px;
+                    height: 60px;
+                    border-top-color: var(--quantum-secondary);
+                    border-bottom-color: var(--quantum-secondary);
+                    animation: orbitRotate1 8s linear infinite;
+                    opacity: 0.7;
+                    box-shadow: 0 0 15px rgba(0, 179, 255, 0.2);
+                }
+                
+                &.orbit-2 {
+                    width: 85px;
+                    height: 85px;
+                    border-left-color: var(--quantum-accent);
+                    border-right-color: var(--quantum-accent);
+                    animation: orbitRotate2 12s linear infinite reverse;
+                    opacity: 0.6;
+                    box-shadow: 0 0 15px rgba(255, 0, 230, 0.2);
+                    transform: translate(-50%, -50%) rotate(60deg);
+                }
+                
+                &.orbit-3 {
+                    width: 110px;
+                    height: 110px;
+                    border-top-color: var(--quantum-tertiary);
+                    border-left-color: var(--quantum-tertiary);
+                    animation: orbitRotate3 15s linear infinite;
+                    opacity: 0.5;
+                    box-shadow: 0 0 15px rgba(0, 255, 217, 0.2);
+                    transform: translate(-50%, -50%) rotate(30deg);
+                }
+            }
+            
+            // Electrons
+            .q-electron {
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                box-shadow: var(--electron-glow);
+                
+                &::before {
+                    content: '';
+                    position: absolute;
+                    width: 20px;
+                    height: 4px;
+                    border-radius: 4px;
+                    background: inherit;
+                    opacity: 0.3;
+                    filter: blur(2px);
+                }
+                
+                &.e1 {
+                    background: var(--quantum-secondary);
+                    top: calc(50% - 30px);
+                    left: 50%;
+                    animation: electronOrbit1 8s linear infinite;
+                    
+                    &::before {
+                        transform: rotate(90deg);
+                    }
+                }
+                
+                &.e2 {
+                    background: var(--quantum-accent);
+                    top: 50%;
+                    left: calc(50% - 42px);
+                    animation: electronOrbit2 12s linear infinite reverse;
+                    
+                    &::before {
+                        transform: rotate(0deg);
+                    }
+                }
+                
+                &.e3 {
+                    background: var(--quantum-tertiary);
+                    top: calc(50% - 15px);
+                    left: calc(50% - 55px);
+                    animation: electronOrbit3 15s linear infinite;
+                    
+                    &::before {
+                        transform: rotate(45deg);
+                    }
+                }
+            }
+            
+            // Wave effect
+            .q-wave {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 140%;
+                height: 140%;
+                border-radius: 40%;
+                transform: translate(-50%, -50%) rotate(0deg);
+                background: transparent;
+                border: 1px solid rgba(106, 0, 255, 0.2);
+                box-shadow: var(--wave-glow);
+                animation: waveRotate 10s linear infinite, wavePulse 5s ease-in-out infinite alternate;
+            }
         }
     }
 
@@ -95,21 +251,22 @@
         color: white;
         font-size: clamp(2rem, 5vw, 3.5rem);
         font-weight: 800;
-        background: linear-gradient(135deg, #ffffff 0%, #ff6b6b 50%, #677eea 100%);
+        background: linear-gradient(135deg, #ffffff 0%, var(--quantum-secondary) 50%, var(--quantum-accent) 100%);
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         letter-spacing: -0.02em;
         line-height: 1.2;
+        animation: quantumTitleGlow 3s ease-in-out infinite;
     }
 
     &__description {
         margin-bottom: clamp(2rem, 4vw, 3rem);
         max-width: 100%;
         line-height: 1.6;
-        color: rgba(255, 255, 255, 0.8);
-        font-size: clamp(1.4rem, 3vw, 1.8rem);
+        color: var(--text-secondary);
+        font-size: clamp(1.2rem, 2.5vw, 1.6rem);
         font-weight: 300;
     }
 
@@ -122,22 +279,21 @@
 
     &__login-btn {
         min-width: clamp(200px, 50vw, 280px);
-        padding: clamp(1.2rem, 3vw, 1.8rem) clamp(2rem, 5vw, 3rem);
-        border-radius: 2rem;
-        font-weight: 700;
-        font-size: clamp(1.4rem, 3vw, 1.8rem);
-        background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 50%, #ff6b6b 100%);
+        padding: clamp(1rem, 2.5vw, 1.5rem) clamp(1.5rem, 4vw, 2.5rem);
+        border-radius: 1.5rem;
+        font-weight: 600;
+        font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+        background: linear-gradient(135deg, var(--quantum-primary) 0%, var(--quantum-secondary) 50%, var(--quantum-tertiary) 100%);
         background-size: 200% 200%;
-        border: none;
+        border: 1px solid rgba(106, 0, 255, 0.3);
         color: white;
         box-shadow: 
-            0 10px 30px rgba(255, 107, 107, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            0 10px 30px rgba(106, 0, 255, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
         cursor: pointer;
-        text-transform: uppercase;
         letter-spacing: 0.5px;
         
         &::before {
@@ -147,15 +303,15 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: left 0.6s;
         }
         
         &:hover {
             transform: translateY(-2px) scale(1.02);
             box-shadow: 
-                0 15px 40px rgba(255, 107, 107, 0.6),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+                0 15px 40px rgba(0, 179, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
             background-position: 100% 0;
             
             &::before {
@@ -166,15 +322,15 @@
         &:active {
             transform: translateY(0) scale(0.98);
             box-shadow: 
-                0 5px 20px rgba(255, 107, 107, 0.5),
+                0 5px 20px rgba(106, 0, 255, 0.5),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
         
         &:focus {
             outline: none;
             box-shadow: 
-                0 10px 30px rgba(255, 107, 107, 0.4),
-                0 0 0 3px rgba(255, 255, 255, 0.3);
+                0 10px 30px rgba(106, 0, 255, 0.4),
+                0 0 0 3px rgba(106, 0, 255, 0.3);
         }
     }
 
@@ -182,15 +338,32 @@
         width: 100%;
         margin-top: clamp(1rem, 2vw, 2rem);
         padding-top: clamp(1.5rem, 3vw, 2rem);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(106, 0, 255, 0.2);
+        position: relative;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 25%;
+            right: 25%;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--quantum-secondary), 
+                var(--quantum-accent), 
+                var(--quantum-tertiary), 
+                transparent
+            );
+            filter: blur(1px);
+        }
     }
 
     &__social-title {
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--quantum-tertiary);
         margin-bottom: clamp(1.5rem, 3vw, 2rem);
-        font-size: clamp(1rem, 2vw, 1.2rem);
+        font-size: clamp(0.9rem, 1.8vw, 1.1rem);
         font-weight: 500;
-        text-transform: uppercase;
         letter-spacing: 1.5px;
         opacity: 0.9;
     }
@@ -210,17 +383,18 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: clamp(45px, 7vw, 55px);
-        height: clamp(45px, 7vw, 55px);
-        background: rgba(255, 255, 255, 0.06);
+        width: clamp(42px, 7vw, 50px);
+        height: clamp(42px, 7vw, 50px);
+        background: var(--quantum-glass);
         border-radius: 50%;
         color: white;
         text-decoration: none;
         transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        border: 1px solid var(--border-glow);
         position: relative;
         overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         
         // Subtle glow effect
         &::before {
@@ -230,7 +404,7 @@
             left: 50%;
             width: 0;
             height: 0;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(106, 0, 255, 0.15) 0%, transparent 70%);
             border-radius: 50%;
             transition: all 0.35s ease;
             transform: translate(-50%, -50%);
@@ -334,27 +508,137 @@
     }
 }
 
-// Animations
-@keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    33% { transform: translateY(-10px) rotate(1deg); }
-    66% { transform: translateY(-5px) rotate(-1deg); }
+// Quantum Animations
+@keyframes qSphereRotate {
+    from {
+        transform: rotate3d(1, 1, 1, 0deg);
+    }
+    to {
+        transform: rotate3d(1, 1, 1, 360deg);
+    }
 }
 
-@keyframes rotate {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes corePulsate {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 0 20px rgba(106, 0, 255, 0.7);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        box-shadow: 0 0 30px rgba(106, 0, 255, 1);
+    }
 }
 
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+@keyframes coreGlowPulse {
+    0% {
+        opacity: 0.3;
+        filter: blur(5px);
+    }
+    100% {
+        opacity: 0.8;
+        filter: blur(10px);
+    }
+}
+
+@keyframes orbitRotate1 {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes orbitRotate2 {
+    from { transform: translate(-50%, -50%) rotate(60deg); }
+    to { transform: translate(-50%, -50%) rotate(420deg); }
+}
+
+@keyframes orbitRotate3 {
+    from { transform: translate(-50%, -50%) rotate(30deg); }
+    to { transform: translate(-50%, -50%) rotate(390deg); }
+}
+
+@keyframes electronOrbit1 {
+    from { 
+        transform: rotate(0deg) translateX(30px) rotate(0deg); 
+    }
+    to { 
+        transform: rotate(360deg) translateX(30px) rotate(-360deg);
+    }
+}
+
+@keyframes electronOrbit2 {
+    from { 
+        transform: rotate(0deg) translateX(42px) rotate(0deg); 
+    }
+    to { 
+        transform: rotate(360deg) translateX(42px) rotate(-360deg);
+    }
+}
+
+@keyframes electronOrbit3 {
+    from { 
+        transform: rotate(0deg) translateX(55px) rotate(0deg); 
+    }
+    to { 
+        transform: rotate(360deg) translateX(55px) rotate(-360deg);
+    }
+}
+
+@keyframes waveRotate {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes wavePulse {
+    0%, 100% {
+        opacity: 0.3;
+        border-radius: 40%;
+    }
+    50% {
+        opacity: 0.6;
+        border-radius: 42%;
+    }
+}
+
+@keyframes quantumTitleGlow {
+    0%, 100% {
+        text-shadow: 0 0 20px rgba(106, 0, 255, 0.5);
+        opacity: 0.9;
+    }
+    50% {
+        text-shadow: 0 0 30px rgba(106, 0, 255, 0.8), 0 0 40px rgba(0, 179, 255, 0.5);
+        opacity: 1;
+    }
+}
+
+@keyframes gridPulse {
+    0%, 100% {
+        opacity: 0.4;
+        background-size: 30px 30px;
+    }
+    50% {
+        opacity: 0.6;
+        background-size: 35px 35px;
+    }
+}
+
+@keyframes waveMotion {
+    0%, 100% {
+        transform: scaleY(0.95);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scaleY(1.05);
+        opacity: 0.7;
+    }
 }
 
 // Modal container adjustments for login modal
 .dc-modal__container.dc-modal__container_login-required-modal {
     box-shadow: none !important;
-    border-radius: 0 !important;
+    border-radius: 1.5rem !important;
     overflow: hidden;
     position: fixed !important;
     top: 50% !important;
@@ -365,10 +649,11 @@
     max-width: none !important;
     max-height: none !important;
     margin: 0 !important;
-    border: none !important;
+    border: 1px solid var(--border-glow) !important;
     backdrop-filter: none !important;
     background: transparent !important;
     padding: 0 !important;
+    z-index: 9999 !important;
 }
 
 // Add backdrop overlay for better focus
@@ -376,5 +661,6 @@
     .dc-modal__container {
         background: transparent !important;
         backdrop-filter: none !important;
+        box-shadow: 0 0 100px rgba(106, 0, 255, 0.2) !important;
     }
 }

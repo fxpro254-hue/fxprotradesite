@@ -51,12 +51,17 @@ const LoginRequiredModal = observer(() => {
             <Modal.Body>
                 <div className='login-required-modal__content'>
                     <div className='login-required-modal__container'>
-                        <div className='login-required-modal__icon'>
-                            <LabelPairedLockLgRegularIcon 
-                                width={80}
-                                height={80}
-                                fill='white'
-                            />
+                        <div className='login-required-modal__quantum-viz'>
+                            <div className='q-sphere'>
+                                <div className='q-core'></div>
+                                <div className='q-orbit orbit-1'></div>
+                                <div className='q-orbit orbit-2'></div>
+                                <div className='q-orbit orbit-3'></div>
+                                <div className='q-electron e1'></div>
+                                <div className='q-electron e2'></div>
+                                <div className='q-electron e3'></div>
+                                <div className='q-wave'></div>
+                            </div>
                         </div>
                         <Text
                             as='h1'
@@ -71,7 +76,7 @@ const LoginRequiredModal = observer(() => {
                             align='center'
                             className='login-required-modal__description'
                         >
-                            {localize('Access powerful trading tools and strategies. Login to unlock your trading potential and start building winning bots.')}
+                            {localize('Access advanced binary trading algorithms with quantum-inspired technology. Login to unlock trading potential and start your journey.')}
                         </Text>
                         <div className='login-required-modal__actions'>
                             <Button
@@ -80,7 +85,7 @@ const LoginRequiredModal = observer(() => {
                                 large
                                 className='login-required-modal__login-btn'
                             >
-                                {localize('Login to Continue')}
+                                {localize('login to continue')}
                             </Button>
                         </div>
                         
