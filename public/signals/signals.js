@@ -5,9 +5,13 @@ const ticksStorage = {
     R_75: [],
     R_100: [],
     '1HZ10V': [],
+    '1HZ15V': [],
     '1HZ25V': [],
+    '1HZ30V': [],
     '1HZ50V': [],
+    '1HZ60V': [],
     '1HZ75V': [],
+    '1HZ90V': [],
     '1HZ100V': [],
 };
 
@@ -26,7 +30,7 @@ const subscribeTicks = symbol => {
 };
 
 ws.onopen = () => {
-    ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'].forEach(
+    ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ15V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ60V', '1HZ75V', '1HZ90V', '1HZ100V'].forEach(
         subscribeTicks
     );
 };

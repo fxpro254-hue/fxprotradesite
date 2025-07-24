@@ -47,7 +47,7 @@ const TradingHubDisplay: React.FC = () => {
     const activeContractRef = useRef<string | null>(null);
     const [lastTradeResult, setLastTradeResult] = useState<string>('');
 
-    const availableSymbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', 'RDBEAR', 'RDBULL', '1HZ10V', '1HZ25V', '1HZ50V', '1HZ75V', '1HZ100V'];
+    const availableSymbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', 'RDBEAR', 'RDBULL', '1HZ10V', '1HZ15V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ60V', '1HZ75V', '1HZ90V', '1HZ100V'];
 
     const lastMartingaleActionRef = useRef<string>('initial');
     const lastWinTimeRef = useRef<number>(0);
