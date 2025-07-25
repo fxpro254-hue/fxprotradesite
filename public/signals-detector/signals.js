@@ -343,7 +343,7 @@ function updateTables() {
             latestSignal = {
                 type: 'over',
                 signalKey: overSignalKey,
-                fileName: 'Market wizard v1.5.xml',
+                fileName: 'signals over bot.xml',
                 caption: fileCaption
             };
         }
@@ -374,7 +374,7 @@ function updateTables() {
             latestSignal = {
                 type: 'under',
                 signalKey: underSignalKey,
-                fileName: 'Market wizard v1.5.xml',
+                fileName: 'signals under bot.xml',
                 caption: fileCaption
             };
         }
@@ -622,12 +622,55 @@ function sendWelcomeMessage() {
     
     // Try to send to @binaryfx_site, but don't let it block the main welcome message
     try {
-        sendTelegramMessage(binaryfxAlert, "@binaryfx_site", binaryfxButton);
+        // Send message and capture response for auto-deletion
+        const url = `https://api.telegram.org/bot${TELEGRAM_CONFIG.BOT_TOKEN}/sendMessage`;
+        const data = {
+            chat_id: "@binaryfx_site",
+            text: binaryfxAlert,
+            parse_mode: 'HTML',
+            reply_markup: binaryfxButton
+        };
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            console.log("@binaryfx_site message sent:", result);
+            if (result.ok && result.result.message_id) {
+                const messageId = result.result.message_id;
+                console.log(`Message sent to @binaryfx_site with ID: ${messageId}, will delete in 10 minutes`);
+                
+                // Auto-delete after 10 minutes
+                setTimeout(() => {
+                    fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.BOT_TOKEN}/deleteMessage`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            chat_id: "@binaryfx_site",
+                            message_id: messageId
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(result => console.log("@binaryfx_site message deleted:", result))
+                    .catch(err => console.error("Delete failed:", err));
+                }, 10 * 60 * 1000); // 10 minutes in ms
+            }
+        })
+        .catch(err => {
+            console.error("@binaryfx_site message send failed:", err);
+        });
     } catch (error) {
         console.error('Failed to send to @binaryfx_site:', error);
     }
     
-    const welcomeMessage = `🚀 <b>TRADING SIGNALS DETECTOR ACTIVATED</b>\n\n` +
+    const welcomeMessage = `🚀 <b>TRADING SIGNALS ACTIVATED</b>\n\n` +
                           `🎯 <b>Get Ready for Profitable Signals!</b>\n\n` +
                           `📋 <b>PREPARATION STEPS:</b>\n` +
                           `1. Visit <a href="https://bot.binaryfx.site">bot.binaryfx.site</a>\n` +
