@@ -23,7 +23,6 @@ const AVAILABLE_SYMBOLS = [
     { value: '1HZ25V', label: 'Volatility 25 (1s) Index' },
     { value: '1HZ30V', label: 'Volatility 30 (1s) Index' },
     { value: '1HZ50V', label: 'Volatility 50 (1s) Index' },
-    { value: '1HZ60V', label: 'Volatility 60 (1s) Index' },
     { value: '1HZ75V', label: 'Volatility 75 (1s) Index' },
     { value: '1HZ90V', label: 'Volatility 90 (1s) Index' },
     { value: '1HZ100V', label: 'Volatility 100 (1s) Index' },

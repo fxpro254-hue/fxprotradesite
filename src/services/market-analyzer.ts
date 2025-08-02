@@ -40,7 +40,7 @@ class MarketAnalyzer {
     private tickHistories: Record<string, TickData[]> = {};
     private websockets: Record<string, WebSocket> = {};
     private decimalPlaces: Record<string, number> = {};
-    private symbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', 'RDBEAR', 'RDBULL', '1HZ10V', '1HZ15V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ60V', '1HZ75V', '1HZ90V', '1HZ100V'];
+    private symbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', 'RDBEAR', 'RDBULL', '1HZ10V', '1HZ15V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ90V', '1HZ100V'];
     private marketStats: Record<string, MarketStats> = {};
     private tickCount = 100; // Explicitly using 100 ticks for analysis
     private analysisCallbacks: AnalysisCallback[] = [];

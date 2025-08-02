@@ -3078,7 +3078,6 @@ const SmartTradingDisplay = observer(() => {
         { value: '1HZ30V', label: 'Volatility 30 (1s) Index' },
         { value: 'R_50', label: 'Volatility 50 Index' },
         { value: '1HZ50V', label: 'Volatility 50 (1s) Index' },
-        { value: '1HZ60V', label: 'Volatility 60 (1s) Index' },
         { value: 'R_75', label: 'Volatility 75 Index' },
         { value: '1HZ75V', label: 'Volatility 75 (1s) Index' },
         { value: '1HZ90V', label: 'Volatility 90 (1s) Index' },

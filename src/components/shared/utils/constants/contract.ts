@@ -150,7 +150,6 @@ export const getMarketNamesMap = () =>
         '1HZ25V': localize('Volatility 25 (1s) Index'),
         '1HZ30V': localize('Volatility 30 (1s) Index'),
         '1HZ50V': localize('Volatility 50 (1s) Index'),
-        '1HZ60V': localize('Volatility 60 (1s) Index'),
         '1HZ75V': localize('Volatility 75 (1s) Index'),
         '1HZ90V': localize('Volatility 90 (1s) Index'),
         '1HZ100V': localize('Volatility 100 (1s) Index'),

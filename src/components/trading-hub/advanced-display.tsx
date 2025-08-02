@@ -8,7 +8,7 @@ import { observer as globalObserver } from '../../external/bot-skeleton/utils/ob
 import { useStore } from '@/hooks/useStore';
 
 // Symbol type for multi-symbol analysis
-type SymbolType = 'R_10' | 'R_25' | 'R_50' | 'R_75' | 'R_100' | '1HZ10V' | '1HZ15V' | '1HZ25V' | '1HZ30V' | '1HZ50V' | '1HZ60V' | '1HZ75V' | '1HZ90V' | '1HZ100V';
+type SymbolType = 'R_10' | 'R_25' | 'R_50' | 'R_75' | 'R_100' | '1HZ10V' | '1HZ15V' | '1HZ25V' | '1HZ30V' | '1HZ50V' | '1HZ75V' | '1HZ90V' | '1HZ100V';
 type SymbolTickData = {
     tickHistory: Array<{ time: number; quote: number }>;
     decimalPlaces: number;
@@ -182,7 +182,6 @@ const AdvancedDisplay = observer(() => {
         '1HZ25V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
         '1HZ30V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
         '1HZ50V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
-        '1HZ60V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
         '1HZ75V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
         '1HZ90V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
         '1HZ100V': { tickHistory: [], decimalPlaces: 2, currentDigit: undefined },
@@ -200,7 +199,6 @@ const AdvancedDisplay = observer(() => {
         '1HZ25V': null,
         '1HZ30V': null,
         '1HZ50V': null,
-        '1HZ60V': null,
         '1HZ75V': null,
         '1HZ90V': null,
         '1HZ100V': null,
@@ -554,7 +552,7 @@ const AdvancedDisplay = observer(() => {
             const symbolMatch = longcode.match(/^([^_]+)/); // Match characters from the start until the first underscore
             if (
                 symbolMatch &&
-                ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ15V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ60V', '1HZ75V', '1HZ90V', '1HZ100V'].includes(
+                ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ15V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ90V', '1HZ100V'].includes(
                     symbolMatch[1]
                 )
             ) {
@@ -1589,7 +1587,6 @@ const AdvancedDisplay = observer(() => {
             '1HZ25V': 'Volatility 25 (1s)',
             '1HZ30V': 'Volatility 30 (1s)',
             '1HZ50V': 'Volatility 50 (1s)',
-            '1HZ60V': 'Volatility 60 (1s)',
             '1HZ75V': 'Volatility 75 (1s)',
             '1HZ90V': 'Volatility 90 (1s)',
             '1HZ100V': 'Volatility 100 (1s)',
@@ -2118,7 +2115,6 @@ const AdvancedDisplay = observer(() => {
                                     '1HZ25V',
                                     '1HZ30V',
                                     '1HZ50V',
-                                    '1HZ60V',
                                     '1HZ75V',
                                     '1HZ90V',
                                     '1HZ100V',
