@@ -88,37 +88,65 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
     }, [is_stop_button_visible]);
     const show_overlay = should_show_overlay && is_contract_completed;
 
-    const TAB_NAMES = ['dashboard', 'bot_builder', 'charts', 'Auto'] as const;
+    const TAB_NAMES = [
+        'dashboard',
+        'bot_builder', 
+        'chart',
+        'tutorial',
+        'analysis_tool',
+        'signals',
+        'trading_hub',
+        'free_bots',
+    ] as const;
     const getTabName = (index: number) => TAB_NAMES[index];
+
+    // Define which tabs should show the run button
+    // 0: dashboard, 1: bot_builder, 4: analysis_tool, 5: signals
+    const allowedTabs = [0, 1, 4, 5];
+    const shouldShowButton = allowedTabs.includes(active_tab);
 
     return (
         <div className={classNames('animation__wrapper', className)}>
-            <Button
-                is_disabled={is_disabled && !is_unavailable_for_payment_agent}
-                className={button_props.class}
-                id={button_props.id}
-                icon={button_props.icon}
-                onClick={() => {
-                    setShouldDisable(true);
-                    if (is_stop_button_visible) {
-                        onStopBotClick();
-                        return;
-                    }
-                    onRunButtonClick();
-                    rudderStackSendRunBotEvent({ subpage_name: getTabName(active_tab) });
-                }}
-                has_effect
-                {...(is_stop_button_visible || !is_unavailable_for_payment_agent ? { primary: true } : { green: true })}
-            >
-                {button_props.text}
-            </Button>
+            {shouldShowButton && (
+                <Button
+                    is_disabled={is_disabled && !is_unavailable_for_payment_agent}
+                    className={button_props.class}
+                    id={button_props.id}
+                    icon={button_props.icon}
+                    onClick={() => {
+                        setShouldDisable(true);
+                        if (is_stop_button_visible) {
+                            onStopBotClick();
+                            return;
+                        }
+                        onRunButtonClick();
+                        // Only send analytics if we have a valid tab name
+                        const tabName = getTabName(active_tab);
+                        if (tabName) {
+                            // Convert tab names to match expected analytics values
+                            const analyticsTabName = tabName === 'chart' ? 'charts' : 
+                                                    tabName === 'tutorial' ? 'tutorials' : 
+                                                    tabName;
+                            if (['dashboard', 'bot_builder', 'charts', 'tutorials'].includes(analyticsTabName)) {
+                                rudderStackSendRunBotEvent({ 
+                                    subpage_name: analyticsTabName as 'dashboard' | 'bot_builder' | 'charts' | 'tutorials'
+                                });
+                            }
+                        }
+                    }}
+                    has_effect
+                    {...(is_stop_button_visible || !is_unavailable_for_payment_agent ? { primary: true } : { green: true })}
+                >
+                    {button_props.text}
+                </Button>
+            )}
             <div
                 className={classNames('animation__container', className, {
                     'animation--running': contract_stage > 0,
                     'animation--completed': show_overlay,
                 })}
             >
-                {show_overlay && <ContractResultOverlay profit={profit} />}
+                {show_overlay && <ContractResultOverlay profit={profit ?? 0} />}
                 <span className='animation__text'>
                     <ContractStageText contract_stage={contract_stage} />
                 </span>
