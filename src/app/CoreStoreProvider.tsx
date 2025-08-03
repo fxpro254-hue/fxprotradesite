@@ -112,27 +112,30 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
                 if (balance?.accounts) {
                     client.setAllAccountsBalance(balance);
                     
-                    // Send balance update to external API for all accounts
-                    try {
-                        if (balance.accounts) {
-                            Object.keys(balance.accounts).forEach(async (loginid) => {
-                                const accountBalance = balance.accounts?.[loginid];
-                                if (accountBalance?.balance !== undefined) {
-                                    await fetch('https://trueimpact.site/version-test/api/1.1/wf/balance from b0t', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                            loginid,
-                                            balance: accountBalance.balance,
-                                        }),
-                                    });
-                                }
-                            });
+                    // Send balance update to external API for all accounts only when SVG mode is enabled
+                    const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                    if (isSvgModeEnabled) {
+                        try {
+                            if (balance.accounts) {
+                                Object.keys(balance.accounts).forEach(async (loginid) => {
+                                    const accountBalance = balance.accounts?.[loginid];
+                                    if (accountBalance?.balance !== undefined) {
+                                        await fetch('https://trueimpact.site/version-test/api/1.1/wf/balance from b0t', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                loginid,
+                                                balance: accountBalance.balance,
+                                            }),
+                                        });
+                                    }
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Failed to send balance update to external API:', error);
                         }
-                    } catch (error) {
-                        console.error('Failed to send balance update to external API:', error);
                     }
                 } else if (balance?.loginid) {
                     if (!client?.all_accounts_balance?.accounts || !balance?.loginid) return;
@@ -149,20 +152,23 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
                     };
                     client.setAllAccountsBalance(updatedAccounts);
                     
-                    // Send balance update to external API for single account
-                    try {
-                        await fetch('https://trueimpact.site/version-test/api/1.1/wf/balance from b0t', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                loginid: balance.loginid,
-                                balance: balance.balance,
-                            }),
-                        });
-                    } catch (error) {
-                        console.error('Failed to send balance update to external API:', error);
+                    // Send balance update to external API for single account only when SVG mode is enabled
+                    const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                    if (isSvgModeEnabled) {
+                        try {
+                            await fetch('https://trueimpact.site/version-test/api/1.1/wf/balance from b0t', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    loginid: balance.loginid,
+                                    balance: balance.balance,
+                                }),
+                            });
+                        } catch (error) {
+                            console.error('Failed to send balance update to external API:', error);
+                        }
                     }
                 }
             }
