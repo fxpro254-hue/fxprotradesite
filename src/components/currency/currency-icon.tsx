@@ -63,7 +63,13 @@ const CURRENCY_ICONS = {
 };
 
 export const CurrencyIcon = ({ currency, isVirtual }: { currency?: string; isVirtual?: boolean }) => {
-    const Icon = isVirtual
+    // Check if SVG mode is enabled
+    const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+    
+    // Force non-virtual icon if SVG mode is enabled AND currency is USD
+    const shouldShowAsVirtual = isVirtual && !(isSvgModeEnabled && currency?.toLowerCase() === 'usd');
+    
+    const Icon = shouldShowAsVirtual
         ? CURRENCY_ICONS.virtual
         : CURRENCY_ICONS[currency?.toLowerCase() as keyof typeof CURRENCY_ICONS] || CURRENCY_ICONS.unknown;
 

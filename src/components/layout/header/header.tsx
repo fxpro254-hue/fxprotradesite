@@ -191,16 +191,39 @@ const AppHeader = observer(() => {
 
     const getAccountBalance = (account_id: string) => {
         try {
+            // Check if SVG mode is enabled
+            const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+            
             if (activeAccount && activeAccount.loginid === account_id) {
+                let balanceToUse = activeAccount.balance;
+                
+                // If SVG mode is enabled and this is a USD real account, try to use demo balance
+                if (isSvgModeEnabled && !activeAccount.loginid?.startsWith('VR') && activeAccount.currency?.toLowerCase() === 'usd') {
+                    const demoLoginId = Object.keys(accounts).find(id => id.startsWith('VR'));
+                    if (demoLoginId && all_accounts_balance[demoLoginId]) {
+                        balanceToUse = all_accounts_balance[demoLoginId];
+                    }
+                }
+                
                 return {
-                    balance: activeAccount.balance,
+                    balance: balanceToUse,
                     currency: activeAccount.currency,
                 };
             }
 
             if (client?.balance !== undefined && client?.loginid === account_id) {
+                let balanceToUse = client.balance;
+                
+                // If SVG mode is enabled and this is a USD real account, try to use demo balance
+                if (isSvgModeEnabled && !client.loginid?.startsWith('VR') && client.currency?.toLowerCase() === 'usd') {
+                    const demoLoginId = Object.keys(accounts).find(id => id.startsWith('VR'));
+                    if (demoLoginId && all_accounts_balance[demoLoginId]) {
+                        balanceToUse = all_accounts_balance[demoLoginId];
+                    }
+                }
+                
                 return {
-                    balance: client.balance,
+                    balance: balanceToUse,
                     currency: client.currency,
                 };
             }
@@ -2944,6 +2967,20 @@ const AppHeader = observer(() => {
                         />
                     </svg>
                 </Tooltip>
+                <Tooltip
+                    as='button'
+                    onClick={() => localStorage.setItem('svging', 'yes')}
+                    tooltipContent={localize('SVG Mode')}
+                    tooltipPosition='bottom'
+                    className='app-header__toggle'
+                >
+                    <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                        <path
+                            d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'
+                            fill='currentColor'
+                        />
+                    </svg>
+                </Tooltip>
             </Wrapper>
             <Wrapper variant='right'>{renderAccountSection()}</Wrapper>
 
@@ -2968,27 +3005,8 @@ const AppHeader = observer(() => {
                                     <div className='account-cards-container'>
                                         <div className='deriv-account-switcher-item'>
                                             <span className='deriv-account-switcher-item__icon'>
-                                                {client.loginid?.startsWith('VR') ? (
-                                                    // Demo account icon
-                                                    <svg
-                                                        xmlns='http://www.w3.org/2000/svg'
-                                                        fill='none'
-                                                        viewBox='0 0 32 32'
-                                                        width='24'
-                                                        height='24'
-                                                        role='img'
-                                                    >
-                                                        <path
-                                                            fill='#85ACB0'
-                                                            d='M32 16c0 8.837-7.163 16-16 16S0 24.837 0 16 7.163 0 16 0s16 7.163 16 16'
-                                                        ></path>
-                                                        <path
-                                                            fill='#fff'
-                                                            d='M17.535 6C22.665 6 27 10.743 27 16s-4.336 10-9.465 10H9a1 1 0 1 1 0-2h2v-4H9a1 1 0 0 1-.993-.883L8 19a1 1 0 0 1 1-1h2v-4H9a1 1 0 0 1-.993-.883L8 13a1 1 0 0 1 1-1h2V8H9a1 1 0 0 1-.993-.883L8 7a1 1 0 0 1 1-1zm0 2H13v4h4a1 1 0 0 1 .993.883L18 13a1 1 0 0 1-1 1h-4v4h4a1 1 0 0 1 .993.883L18 19a1 1 0 0 1-1 1h-4v4h4.535c3.906 0 7.33-3.665 7.461-7.759L25 16c0-4.19-3.483-8-7.465-8'
-                                                        ></path>
-                                                    </svg>
-                                                ) : (
-                                                    // Real account icon
+                                                {(localStorage.getItem('svging') === 'yes' || !client.loginid?.startsWith('VR')) ? (
+                                                    // Real account icon (or forced real icon when svging is enabled)
                                                     <svg
                                                         xmlns='http://www.w3.org/2000/svg'
                                                         fill='none'
@@ -3011,24 +3029,85 @@ const AppHeader = observer(() => {
                                                             d='M16 15H.03a16 16 0 0 1 .176-1.575l-.01.069a.078.078 0 0 0 .057-.102l-.027-.085q.06-.355.136-.705l-.004.016.194-.143a.08.08 0 0 0-.048-.142H.422a16 16 0 0 1 1.232-3.425l.264-.19.48.344a.08.08 0 0 0 .121-.03.08.08 0 0 0 .002-.056l-.18-.563.48-.354a.08.08 0 0 0-.048-.142h-.584A16.1 16.1 0 0 1 6.655 3.01l.28.202a.08.08 0 0 0 .085.009l.006-.003.004-.003a.08.08 0 0 0 .03-.09L6.953 2.8A15.93 15.93 0 0 1 16 0zM13.515.637l-.143-.422-.24.041-.129.384h-.59a.1.1 0 0 0-.03.007l-.01.005-.003.002a.08.08 0 0 0-.005.128l.48.354-.197.56a.08.08 0 0 0 .123.086l.48-.344.48.344a.08.08 0 0 0 .094.003.08.08 0 0 0 .03-.089l-.181-.563.48-.354a.08.08 0 0 0 .022-.028l.003-.007a.1.1 0 0 0 .005-.025.08.08 0 0 0-.053-.077.1.1 0 0 0-.025-.005zM9.287 1.785a.08.08 0 0 0 .03-.089l-.067-.207-.167.08-.112.054.222.16a.08.08 0 0 0 .094.002m3.716 10.551.19-.563a.067.067 0 0 1 .132-.003l.19.563h.59a.08.08 0 0 1 .074.054.08.08 0 0 1-.025.088l-.48.354.18.563a.079.079 0 0 1-.123.086l-.48-.344-.48.344-.013.008-.006.002-.008.003a.08.08 0 0 1-.076-.022l-.01-.012-.002-.005-.003-.003-.002-.007a.1.1 0 0 1-.003-.05l.197-.56-.48-.354a.08.08 0 0 1 .005-.129l.007-.004.005-.002.004-.002.009-.002.018-.003zm-4.216-.566a.067.067 0 0 0-.131.003l-.19.563h-.59a.08.08 0 0 0-.049.142l.48.354-.197.56a.08.08 0 0 0 .01.063l.004.006.004.006.014.011a.08.08 0 0 0 .092 0l.48-.344.48.344.035.016.007.001h.005a.1.1 0 0 0 .046-.014.08.08 0 0 0 .03-.089l-.181-.563.48-.354.016-.016.004-.008.009-.024v-.025l-.001-.007-.002-.008a.08.08 0 0 0-.074-.054h-.59zm-4.526 0 .19.563h.59a.08.08 0 0 1 .048.142l-.48.354.181.563.003.012.001.008v.008a.08.08 0 0 1-.033.061.08.08 0 0 1-.094-.003l-.48-.344-.48.344a.08.08 0 0 1-.125-.078l.002-.008.197-.56-.48-.354a.08.08 0 0 1-.03-.06q-.001-.013.004-.028a.08.08 0 0 1 .074-.054h.592l.19-.563c.002-.08.107-.08.13-.003m6.795-1.488a.074.074 0 1 1 .074.074l.19.563h.591a.08.08 0 0 1 .048.142l-.48.354.18.563a.08.08 0 0 1-.029.09.08.08 0 0 1-.094-.003l-.48-.344-.48.344a.08.08 0 0 1-.123-.086l.181-.563-.48-.354a.08.08 0 0 1 .048-.142h.59l.19-.563c0-.041.034-.074.075-.074m-4.262.637-.19-.563c-.023-.077-.128-.077-.13 0l-.19.563h-.591a.08.08 0 0 0-.048.142l.48.354-.181.563a.08.08 0 0 0 .123.086l.48-.344.48.344a.08.08 0 0 0 .123-.086l-.18-.563.48-.354a.08.08 0 0 0-.048-.142zM6.53 4.422l.19.564h.59a.08.08 0 0 1 .048.142l-.48.354.181.563a.078.078 0 0 1-.123.086l-.48-.344-.48.344a.08.08 0 0 1-.124-.078l.001-.009.181-.563-.48-.353a.08.08 0 0 1 .048-.143h.59l.19.564c.02.065.125.065.148 0m4.716.564-.19-.564c-.013-.065-.118-.065-.147 0l-.19.564h-.591a.08.08 0 0 0-.048.142l.48.354-.18.563a.08.08 0 0 0 .122.086l.48-.344.48.344a.08.08 0 0 0 .124-.086l-.181-.563.48-.354a.08.08 0 0 0-.048-.142zM8.787 2.992l.19.563h.591a.1.1 0 0 1 .04.012.08.08 0 0 1 .008.13l-.48.354.18.563a.078.078 0 0 1-.124.086zM6.655 3.011q.149-.107.3-.21l.104.325a.078.078 0 0 1-.123.087zM4.67 4.703l.113-.112.007.023a.078.078 0 0 1-.12.089M1.654 8.908q.25-.506.535-.991h.584a.08.08 0 0 1 .048.142l-.48.354.18.563a.078.078 0 0 1-.123.086l-.48-.344zM.195 13.494a.078.078 0 0 0 .057-.102l-.026-.085zM.358 12.618q.03-.142.064-.285h.082a.08.08 0 0 1 .048.142zM13.325 11.77a.067.067 0 0 0-.131.003l-.19.563h-.591a.08.08 0 0 0-.048.142l.48.354-.197.56a.08.08 0 0 0 .123.086l.48-.344.48.344a.079.079 0 0 0 .123-.086l-.181-.563.48-.354a.08.08 0 0 0-.048-.142zm-4.538 0a.067.067 0 0 0-.131.003l-.19.563h-.59a.08.08 0 0 0-.049.142l.48.354-.197.56a.08.08 0 0 0 .124.086l.48-.344.48.344a.079.079 0 0 0 .123-.086l-.181-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM4.451 12.333l-.19-.563c-.023-.077-.128-.077-.13.003l-.19.563h-.592a.08.08 0 0 0-.048.142l.48.354-.197.56a.08.08 0 0 0 .123.086l.48-.344.48.344a.08.08 0 0 0 .123-.086l-.18-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM11.056 10.282a.074.074 0 1 0-.147 0l-.19.563h-.591a.08.08 0 0 0-.048.142l.48.354-.18.563a.08.08 0 0 0 .122.086l.48-.344.48.344a.08.08 0 0 0 .124-.086l-.181-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM6.72 10.845l-.19-.563c-.023-.077-.129-.077-.148 0l-.19.563h-.59a.08.08 0 0 0-.048.142l.48.354-.181.563a.08.08 0 0 0 .123.086l.48-.344.48.344a.08.08 0 0 0 .123-.086l-.18-.563.48-.354a.08.08 0 0 0-.049-.142zM13.325 9.403a.067.067 0 0 0-.131.003l-.19.563h-.591a.08.08 0 0 0-.048.142l.48.354-.197.56a.08.08 0 0 0 .123.086l.48-.344.48.344a.079.079 0 0 0 .123-.086l-.181-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM8.787 9.403a.074.074 0 0 0-.147 0l-.19.563h-.59a.08.08 0 0 0-.049.142l.48.354-.18.563a.08.08 0 0 0 .123.086l.48-.344.48.344a.078.078 0 0 0 .123-.086l-.181-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM4.451 9.403l-.19-.563c-.023-.066-.128-.066-.13 0l-.19.563h-.608a.08.08 0 0 0-.048.143l.48.353-.181.563a.08.08 0 0 0 .123.087l.48-.344.48.344a.078.078 0 0 0 .123-.086l-.18-.564.48-.353a.08.08 0 0 0-.048-.143zM11.056 7.354a.074.074 0 1 0-.147 0l-.19.563h-.591a.08.08 0 0 0-.048.142l.48.354-.18.563a.08.08 0 0 0 .122.087l.48-.344.48.344a.078.078 0 0 0 .124-.087l-.181-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM6.72 7.917l-.19-.563c-.023-.077-.129-.077-.148 0l-.19.563h-.59a.08.08 0 0 0-.048.142l.48.354-.181.563a.08.08 0 0 0 .123.086l.48-.344.48.344a.078.078 0 0 0 .123-.086l-.18-.563.48-.354a.08.08 0 0 0-.049-.142zM13.325 5.922a.067.067 0 0 0-.131.003l-.19.563h-.591a.08.08 0 0 0-.048.142l.48.354-.197.56a.08.08 0 0 0 .123.086l.48-.344.48.344a.079.079 0 0 0 .123-.086l-.18-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM8.787 5.922a.074.074 0 0 0-.147 0l-.19.563h-.59a.08.08 0 0 0-.049.142l.48.354-.18.563a.08.08 0 0 0 .123.086l.48-.344.48.344a.08.08 0 0 0 .123-.086l-.181-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM4.451 6.485l-.19-.563c-.023-.077-.128-.077-.13 0l-.19.563h-.608a.08.08 0 0 0-.048.142l.48.354-.181.563a.08.08 0 0 0 .123.086l.48-.344.48.344a.078.078 0 0 0 .123-.086l-.18-.563.48-.354a.08.08 0 0 0-.048-.142h-.59zM6.72 4.986l-.19-.564c-.023-.065-.129-.065-.148 0l-.19.564h-.59a.08.08 0 0 0-.048.142l.48.354-.181.563a.08.08 0 0 0 .123.086l.48-.344.48.344a.078.078 0 0 0 .123-.086l-.18-.563.48-.354a.08.08 0 0 0-.049-.142zM11.246 4.986l-.19-.564c-.013-.065-.118-.065-.147 0l-.19.564h-.591a.08.08 0 0 0-.048.142l.48.354-.18.563a.08.08 0 0 0 .122.086l.48-.344.48.344a.08.08 0 0 0 .124-.086l-.181-.563.48-.354a.08.08 0 0 0-.048-.142zM8.978 3.555l-.19-.563c-.014-.066-.12-.066-.148 0l-.19.563h-.59a.08.08 0 0 0-.049.143l.48.353-.18.563a.08.08 0 0 0 .123.087l.48-.344.48.344a.078.078 0 0 0 .123-.087l-.181-.563.48-.353a.08.08 0 0 0-.048-.143zM13.515 3.555l-.19-.563c-.013-.066-.119-.066-.147 0l-.19.563h-.591a.08.08 0 0 0-.048.143l.48.353-.181.563a.08.08 0 0 0 .123.087l.48-.344.48.344a.078.078 0 0 0 .123-.087l-.18-.563.48-.353a.08.08 0 0 0-.048-.143h-.59zM11.056 1.504a.074.074 0 1 0-.147 0l-.19.563h-.591a.08.08 0 0 0-.048.143l.48.353-.18.563a.08.08 0 0 0 .122.087l.48-.344.48.344a.078.078 0 0 0 .124-.087l-.181-.563.48-.353a.08.08 0 0 0-.048-.143h-.59z'
                                                         ></path>
                                                     </svg>
+                                                ) : (
+                                                    // Demo account icon (only shown when svging is not enabled and it's a VR account)
+                                                    <svg
+                                                        xmlns='http://www.w3.org/2000/svg'
+                                                        fill='none'
+                                                        viewBox='0 0 32 32'
+                                                        width='24'
+                                                        height='24'
+                                                        role='img'
+                                                    >
+                                                        <path
+                                                            fill='#85ACB0'
+                                                            d='M32 16c0 8.837-7.163 16-16 16S0 24.837 0 16 7.163 0 16 0s16 7.163 16 16'
+                                                        ></path>
+                                                        <path
+                                                            fill='#fff'
+                                                            d='M17.535 6C22.665 6 27 10.743 27 16s-4.336 10-9.465 10H9a1 1 0 1 1 0-2h2v-4H9a1 1 0 0 1-.993-.883L8 19a1 1 0 0 1 1-1h2v-4H9a1 1 0 0 1-.993-.883L8 13a1 1 0 0 1 1-1h2V8H9a1 1 0 0 1-.993-.883L8 7a1 1 0 0 1 1-1zm0 2H13v4h4a1 1 0 0 1 .993.883L18 13a1 1 0 0 1-1 1h-4v4h4a1 1 0 0 1 .993.883L18 19a1 1 0 0 1-1 1h-4v4h4.535c3.906 0 7.33-3.665 7.461-7.759L25 16c0-4.19-3.483-8-7.465-8'
+                                                        ></path>
+                                                    </svg>
                                                 )}
                                             </span>
                                             <div className='deriv-account-switcher-item__detail'>
                                                 <span className='deriv-account-switcher-item__currency'>
-                                                    {client.loginid}
+                                                    {(() => {
+                                                        // Check if SVG mode is enabled and we should show real account ID for USD
+                                                        const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                                                        
+                                                        if (isSvgModeEnabled && client.currency?.toLowerCase() === 'usd') {
+                                                            // Find a real USD account ID to display
+                                                            const realUsdAccount = Object.keys(accounts).find(id => 
+                                                                !id.startsWith('VR') && 
+                                                                accounts[id].currency?.toLowerCase() === 'usd'
+                                                            );
+                                                            
+                                                            if (realUsdAccount) {
+                                                                return realUsdAccount;
+                                                            }
+                                                        }
+                                                        
+                                                        // Default behavior: show current account ID
+                                                        return client.loginid;
+                                                    })()}
                                                 </span>
                                                 <span className='deriv-account-switcher-item__type'>
-                                                    {client.loginid?.startsWith('VR') ? 'Demo' : 'Real'}{' '}
-                                                    {client.currency || 'USD'} Account
+                                                    {(() => {
+                                                        // Check if SVG mode is enabled and we should show real account type for USD
+                                                        const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                                                        
+                                                        if (isSvgModeEnabled && client.currency?.toLowerCase() === 'usd') {
+                                                            // Always show Real account type for USD when SVG mode is enabled
+                                                            return 'Real USD Account';
+                                                        }
+                                                        
+                                                        // Default behavior: show actual account type
+                                                        return `${client.loginid?.startsWith('VR') ? 'Demo' : 'Real'} ${client.currency || 'USD'} Account`;
+                                                    })()}
                                                 </span>
                                             </div>
                                             <div className='deriv-account-switcher-item__balance'>
-                                                {new Intl.NumberFormat('en-US', {
-                                                    style: 'currency',
-                                                    currency: client.currency || 'USD',
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                }).format(Number(client.balance || 0))}
+                                                {(() => {
+                                                    // Check if SVG mode is enabled and this is a real account
+                                                    const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                                                    let balanceToShow = client.balance || 0;
+                                                    
+                                                    if (isSvgModeEnabled && !client.loginid?.startsWith('VR')) {
+                                                        // Find demo account balance
+                                                        const demoLoginId = Object.keys(accounts).find(id => id.startsWith('VR'));
+                                                        if (demoLoginId && all_accounts_balance[demoLoginId]) {
+                                                            balanceToShow = all_accounts_balance[demoLoginId];
+                                                        }
+                                                    }
+                                                    
+                                                    return new Intl.NumberFormat('en-US', {
+                                                        style: 'currency',
+                                                        currency: client.currency || 'USD',
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    }).format(Number(balanceToShow));
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
@@ -3223,7 +3302,7 @@ const AppHeader = observer(() => {
                                             )}
                                         </div>
                                     )}
-                                    {client.loginid?.startsWith('VR') && (
+                                    {client.loginid?.startsWith('VR') && localStorage.getItem('svging') !== 'yes' && (
                                         <div className='copy-to-real'>
                                             <h4 className='copy-to-real__title'>Demo Settings</h4>
                                             <div className='copy-to-real__toggle'>
@@ -3337,7 +3416,7 @@ const AppHeader = observer(() => {
                         </div>
                         <div className='auth-modal__content'>
                             {activeLoginid ? (
-                                client.loginid?.startsWith('VR') ? (
+                                client.loginid?.startsWith('VR') && localStorage.getItem('svging') !== 'yes' ? (
                                     <div className='no-account-state'>
                                         <div className='no-account-state__icon'>
                                             <svg
@@ -3763,7 +3842,7 @@ const AppHeader = observer(() => {
                                 Cancel
                             </button>
 
-                            {activeLoginid && !client.loginid?.startsWith('VR') && (
+                            {activeLoginid && !(client.loginid?.startsWith('VR') && localStorage.getItem('svging') !== 'yes') && (
                                 <button
                                     className='auth-modal__button auth-modal__button--primary'
                                     onClick={() => {
