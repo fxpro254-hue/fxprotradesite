@@ -48,7 +48,10 @@ const LoginRequiredModal = observer(() => {
 
     const handleCreateAccount = () => {
         // Redirect to Deriv signup page
-        window.open('https://hub.deriv.com/tradershub/signup?t=rVf-VSveO71k0YPxVS0A2Nd7ZgqdRLk&utm_campaign=myaffiliates', '_blank');
+        const redirect_uri = encodeURIComponent(`${window.location.origin}/callback`);
+        const url = `https://track.deriv.com/__rVf-VSveO71k0YPxVS0A2Nd7ZgqdRLk/1/`;
+        window.open(url, '_blank');
+        // Note: The above URL should be updated with the correct affiliate token and app ID as
     };
 
     // Don't render if user is logged in or client is not initialized
