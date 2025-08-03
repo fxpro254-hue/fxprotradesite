@@ -8,9 +8,8 @@ type FuturisticLoaderProps = {
 const FuturisticLoader: React.FC<FuturisticLoaderProps> = ({ message }) => {
     return (
         <BrandedLoader 
-            message={message || "Initializing Trading Engine..."}
-            subMessage="Powered by The Binary Blueprint"
-            showProgress={true}
+            message={message || "Loading..."}
+            subMessage="Please wait"
         />
     );
 };

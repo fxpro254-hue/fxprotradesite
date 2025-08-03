@@ -16,8 +16,7 @@ const Loading = ({ className, id, is_fullscreen = true, is_slow_loading, status,
         return (
             <BrandedLoader 
                 message={status?.[0] || "Loading..."}
-                subMessage="BinaryFX - Professional Trading Platform"
-                showProgress={true}
+                subMessage="Please wait"
             />
         );
     }
