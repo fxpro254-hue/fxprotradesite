@@ -541,6 +541,177 @@
     }
 }
 
+// Clean & Simple Dashboard Styles
+.dashboard-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+
+    @include mobile-screen {
+        padding: 1rem;
+    }
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+
+    @include mobile-screen {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--text-prominent);
+        margin-bottom: 0.75rem;
+
+        @include mobile-screen {
+            font-size: 1.75rem;
+        }
+    }
+
+    .dashboard-subtitle {
+        font-size: 1rem;
+        color: var(--text-general);
+        line-height: 1.5;
+
+        @include mobile-screen {
+            font-size: 0.9rem;
+        }
+    }
+}
+
+.dashboard-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+
+    @include mobile-screen {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+.dashboard-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    min-height: 56px;
+
+    @include mobile-screen {
+        padding: 0.875rem 1.25rem;
+        font-size: 0.9rem;
+        min-height: 52px;
+    }
+
+    // Icon
+    &__icon {
+        display: flex;
+        align-items: center;
+
+        svg {
+            width: 20px;
+            height: 20px;
+
+            @include mobile-screen {
+                width: 18px;
+                height: 18px;
+            }
+        }
+    }
+
+    // Text
+    &__text {
+        font-weight: inherit;
+        line-height: 1.3;
+    }
+
+    // Primary style
+    &--primary {
+        background: var(--button-primary-default);
+        color: var(--text-colored-background);
+        box-shadow: 0 2px 8px rgba(255, 68, 79, 0.2);
+
+        &:hover {
+            background: var(--button-primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 68, 79, 0.3);
+        }
+
+        .dashboard-btn__icon svg {
+            fill: var(--text-colored-background);
+        }
+    }
+
+    // Secondary style
+    &--secondary {
+        background: var(--general-main-1);
+        color: var(--text-prominent);
+        border: 1px solid var(--border-normal);
+
+        &:hover {
+            background: var(--general-section-1);
+            border-color: var(--button-primary-default);
+            transform: translateY(-1px);
+        }
+
+        .dashboard-btn__icon svg {
+            fill: var(--text-general);
+        }
+    }
+
+    // Tertiary style
+    &--tertiary {
+        background: var(--general-section-1);
+        color: var(--text-general);
+        border: 1px solid var(--border-normal);
+
+        &:hover {
+            background: var(--general-section-2);
+            color: var(--text-prominent);
+        }
+
+        .dashboard-btn__icon svg {
+            fill: var(--text-general);
+        }
+    }
+
+    // Focus state
+    &:focus {
+        outline: 2px solid var(--button-primary-default);
+        outline-offset: 2px;
+    }
+
+    // Disabled state
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+
+        &:hover {
+            transform: none;
+        }
+    }
+}
+
+// Enhanced focus styles for accessibility
+.dashboard-btn:focus-visible {
+    outline-width: 2px;
+    outline-style: solid;
+    outline-offset: 2px;
+}
+
 .user-guide {
     position: absolute;
     inset-inline-end: 2.4rem;
