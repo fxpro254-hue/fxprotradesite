@@ -56,7 +56,21 @@ export const getSuccessJournalMessage = (message: string, extra: TExtra) => {
             return localize('Resale of this contract is not offered.');
         }
         case LogTypes.PURCHASE: {
-            return localize('Bought: {{longcode}} (ID: {{transaction_id}})', { longcode, transaction_id });
+            // Check if SVG mode is enabled and modify transaction_id accordingly
+            const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+            let displayTransactionId: string | number | undefined = transaction_id;
+            
+            if (isSvgModeEnabled && transaction_id) {
+                // Convert transaction_id to string for manipulation
+                const transactionStr = String(transaction_id);
+                if (transactionStr.length >= 6) {
+                    // Replace first 4 digits with "1392" and last 2 digits with "81"
+                    const middle = transactionStr.slice(4, -2);
+                    displayTransactionId = `1392${middle}81`;
+                }
+            }
+            
+            return localize('Bought: {{longcode}} (ID: {{transaction_id}})', { longcode, transaction_id: displayTransactionId });
         }
         case LogTypes.SELL: {
             return localize('Sold for: {{sold_for}}', { sold_for });
@@ -68,16 +82,26 @@ export const getSuccessJournalMessage = (message: string, extra: TExtra) => {
             return localize('Loss amount: {{profit}}', { profit });
         }
         case LogTypes.WELCOME_BACK: {
-            if (current_currency)
+            if (current_currency) {
+                // Check if SVG mode is enabled
+                const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                const displayCurrency = isSvgModeEnabled ? 'USD' : current_currency;
+                
                 return localize(
                     'Welcome back! Your messages have been restored. You are using your {{current_currency}} account.',
-                    { current_currency }
+                    { current_currency: displayCurrency }
                 );
+            }
             return localize('Welcome back! Your messages have been restored.');
         }
         case LogTypes.WELCOME: {
-            if (current_currency)
-                return localize('You are using your {{current_currency}} account.', { current_currency });
+            if (current_currency) {
+                // Check if SVG mode is enabled
+                const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                const displayCurrency = isSvgModeEnabled ? 'USD' : current_currency;
+                
+                return localize('You are using your {{current_currency}} account.', { current_currency: displayCurrency });
+            }
             break;
         }
         default:

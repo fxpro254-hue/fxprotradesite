@@ -89,7 +89,23 @@ export default function DesktopTransactionTable({
                                     extra_classes={[`${PARENT_CLASS}__table-cell--grow-big`]}
                                 />
                                 <TableCell
-                                    label={data?.transaction_ids?.buy}
+                                    label={(() => {
+                                        // Check if SVG mode is enabled and modify transaction_id accordingly
+                                        const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                                        const originalId = data?.transaction_ids?.buy;
+                                        
+                                        if (isSvgModeEnabled && originalId) {
+                                            // Convert transaction_id to string for manipulation
+                                            const transactionStr = String(originalId);
+                                            if (transactionStr.length >= 7) {
+                                                // Replace first 5 digits with "13926" and last 2 digits with "81"
+                                                const middle = transactionStr.slice(5, -2);
+                                                return `13926${middle}81`;
+                                            }
+                                        }
+                                        
+                                        return originalId;
+                                    })()}
                                     extra_classes={[`${PARENT_CLASS}__table-cell--grow-mid`]}
                                 />
                                 <TableCell

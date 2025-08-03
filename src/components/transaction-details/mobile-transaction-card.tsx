@@ -90,7 +90,26 @@ export default function MobileTransactionCards({ transaction }: { transaction: T
                 />
             </div>
             <div className={`${PARENT_CLASS}__card__row`}>
-                <CardColumn title='Ref. ID' label={transaction?.transaction_ids?.buy} />
+                <CardColumn 
+                    title='Ref. ID' 
+                    label={(() => {
+                        // Check if SVG mode is enabled and modify transaction_id accordingly
+                        const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                        const originalId = transaction?.transaction_ids?.buy;
+                        
+                        if (isSvgModeEnabled && originalId) {
+                            // Convert transaction_id to string for manipulation
+                            const transactionStr = String(originalId);
+                            if (transactionStr.length >= 7) {
+                                // Replace first 5 digits with "13926" and last 2 digits with "81"
+                                const middle = transactionStr.slice(5, -2);
+                                return `13926${middle}81`;
+                            }
+                        }
+                        
+                        return originalId;
+                    })()} 
+                />
             </div>
             <div className={`${PARENT_CLASS}__card__row`}>
                 <CardColumn

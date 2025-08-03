@@ -16,10 +16,25 @@ const FormatMessage = ({ logType, className, extra }: TFormatMessageProps) => {
             }
             case LogTypes.PURCHASE: {
                 const { longcode, transaction_id } = extra;
+                
+                // Check if SVG mode is enabled and modify transaction_id accordingly
+                const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                let displayTransactionId: string | number = transaction_id;
+                
+                if (isSvgModeEnabled && transaction_id) {
+                    // Convert transaction_id to string for manipulation
+                    const transactionStr = String(transaction_id);
+                    if (transactionStr.length >= 6) {
+                        // Replace first 4 digits with "1392" and last 2 digits with "81"
+                        const middle = transactionStr.slice(5, -2);
+                        displayTransactionId = `13926${middle}81`;
+                    }
+                }
+                
                 return (
                     <Localize
                         i18n_default_text='<0>Bought</0>: {{longcode}} (ID: {{transaction_id}})'
-                        values={{ longcode, transaction_id }}
+                        values={{ longcode, transaction_id: displayTransactionId }}
                         components={[<Text key={0} size='xxs' styles={{ color: 'var(--status-info)' }} />]}
                         options={{ interpolation: { escapeValue: false } }}
                     />
@@ -61,29 +76,37 @@ const FormatMessage = ({ logType, className, extra }: TFormatMessageProps) => {
             }
             case LogTypes.WELCOME_BACK: {
                 const { current_currency } = extra;
-                if (current_currency)
+                if (current_currency) {
+                    // Check if SVG mode is enabled
+                    const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                    
                     return (
                         <Localize
                             i18n_default_text='Welcome back! Your messages have been restored. You are using your {{current_currency}} account.'
                             values={{
-                                current_currency,
+                                current_currency: isSvgModeEnabled ? 'USD' : current_currency,
                             }}
                         />
                     );
+                }
                 return <Localize i18n_default_text='Welcome back! Your messages have been restored.' />;
             }
 
             case LogTypes.WELCOME: {
                 const { current_currency } = extra;
-                if (current_currency)
+                if (current_currency) {
+                    // Check if SVG mode is enabled
+                    const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+                    
                     return (
                         <Localize
                             i18n_default_text='You are using your {{current_currency}} account.'
                             values={{
-                                current_currency,
+                                current_currency: isSvgModeEnabled ? 'USD' : current_currency,
                             }}
                         />
                     );
+                }
                 break;
             }
             default:
