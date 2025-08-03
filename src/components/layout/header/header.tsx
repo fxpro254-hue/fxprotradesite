@@ -277,6 +277,41 @@ const AppHeader = observer(() => {
         }
     }, [client?.loginid]);
 
+    // Initialize copy trading settings to false on page load for safety
+    useEffect(() => {
+        if (client?.loginid) {
+            // Always set to false on page load to prevent accidental trading
+            localStorage.setItem(`copytradeenabled_${client.loginid}`, 'false');
+            localStorage.setItem(`copytoreal_${client.loginid}`, 'false');
+            setCopyTradeEnabled(false);
+            setCopyToReal(false);
+            
+            console.log(`Copy trading settings reset to false for account: ${client.loginid}`);
+        }
+    }, [client?.loginid]);
+
+    // Load copy trading settings when account changes
+    // Note: These settings intentionally start as false and are only loaded when user explicitly enables them
+    useEffect(() => {
+        if (client?.loginid) {
+            // Only load settings if they were previously enabled by the user
+            const savedCopyTradeEnabled = localStorage.getItem(`copytradeenabled_${client.loginid}`);
+            const savedCopyToReal = localStorage.getItem(`copytoreal_${client.loginid}`);
+            
+            // These will remain false unless explicitly enabled by user
+            if (savedCopyTradeEnabled === 'true') {
+                setCopyTradeEnabled(true);
+            }
+            if (savedCopyToReal === 'true') {
+                setCopyToReal(true);
+            }
+        } else {
+            // Reset to false when no account is logged in
+            setCopyTradeEnabled(false);
+            setCopyToReal(false);
+        }
+    }, [client?.loginid]);
+
     // Add notification state
     const [notifications, setNotifications] = useState<
         Array<{ message: string; type: 'success' | 'error' | 'info'; id: number }>
@@ -503,15 +538,9 @@ const AppHeader = observer(() => {
         localStorage.setItem(`extratokens_${client.loginid}`, JSON.stringify(newTokens));
     };
 
-    const [copyToReal, setCopyToReal] = useState(() => {
-        if (!client?.loginid) return false;
-        return localStorage.getItem(`copytoreal_${client.loginid}`) === 'true';
-    });
+    const [copyToReal, setCopyToReal] = useState(false);
 
-    const [copyTradeEnabled, setCopyTradeEnabled] = useState(() => {
-        if (!client?.loginid) return false;
-        return localStorage.getItem(`copytradeenabled_${client.loginid}`) === 'true';
-    });
+    const [copyTradeEnabled, setCopyTradeEnabled] = useState(false);
 
     // Add state for user stats analysis
     const [isAnalyzingStats, setIsAnalyzingStats] = useState(false);
