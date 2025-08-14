@@ -15,3 +15,5 @@ import './over_under_percentage';
 import './digit_frequency_rank';
 import './all_same_pattern';
 import './digit_comparison';
+import './rise_fall_percentage';
+import './last_ticks_direction';

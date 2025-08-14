@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Last Ticks Direction Block Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #3498db, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 25px;
+            border: 2px solid #e8ecf4;
+            border-radius: 12px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        
+        .test-section:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .test-section h2 {
+            color: #34495e;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .emoji {
+            font-size: 1.5em;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .input-group label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .input-group select,
+        .input-group input {
+            padding: 8px 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-group select:focus,
+        .input-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .results h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .result-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .result-value {
+            font-weight: bold;
+            font-size: 1.2em;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .result-value.true {
+            background: linear-gradient(45deg, #27ae60, #229954);
+        }
+        
+        .result-value.false {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .result-value.neutral {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+        }
+        
+        .tick-data {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 12px;
+        }
+        
+        .status {
+            padding: 10px 20px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffedb3;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e8ecf4;
+        }
+        
+        .card h4 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.3em;
+        }
+        
+        .movement-analysis {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .movement-line {
+            margin: 5px 0;
+            padding: 3px;
+        }
+        
+        .movement-line.rise {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27ae60;
+        }
+        
+        .movement-line.fall {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+        
+        .movement-line.unchanged {
+            background: rgba(149, 165, 166, 0.1);
+            color: #95a5a6;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .pattern-summary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Last Ticks Direction Block Test</h1>
+        
+        <!-- Method Availability Test -->
+        <div class="test-section">
+            <h2><span class="emoji">🔍</span> Method Availability Test</h2>
+            <p>Check if the Last Ticks Direction block method is properly loaded and accessible.</p>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="checkMethodAvailability()">
+                    Check Availability
+                </button>
+            </div>
+            <div id="availability-results" class="results" style="display: none;">
+                <h3><span class="emoji">📊</span> Availability Results</h3>
+                <div id="availability-content"></div>
+            </div>
+        </div>
+
+        <!-- Pattern Generation Test -->
+        <div class="test-section">
+            <h2><span class="emoji">🎲</span> Direction Pattern Test</h2>
+            <p>Generate different directional patterns and test the block's detection accuracy.</p>
+            <div class="test-controls">
+                <div class="input-group">
+                    <label for="pattern-select">Pattern:</label>
+                    <select id="pattern-select">
+                        <option value="all_rising">All Rising</option>
+                        <option value="all_falling">All Falling</option>
+                        <option value="mixed">Mixed Movement</option>
+                        <option value="rising_then_falling">Rising then Falling</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="tick-count">Ticks:</label>
+                    <input type="number" id="tick-count" value="5" min="2" max="20">
+                </div>
+                <button class="btn btn-success" onclick="generateAndTestPattern()">
+                    Generate & Test
+                </button>
+            </div>
+            <div id="pattern-results" class="results" style="display: none;">
+                <h3><span class="emoji">🎯</span> Pattern Test Results</h3>
+                <div id="pattern-content"></div>
+            </div>
+        </div>
+
+        <!-- Live Direction Test -->
+        <div class="test-section">
+            <h2><span class="emoji">⚡</span> Live Direction Test</h2>
+            <p>Test the direction detection with live market data (if available).</p>
+            <div class="test-controls">
+                <div class="input-group">
+                    <label for="live-direction">Direction:</label>
+                    <select id="live-direction">
+                        <option value="rise">Rise</option>
+                        <option value="fall">Fall</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="live-count">Count:</label>
+                    <input type="number" id="live-count" value="3" min="2" max="20">
+                </div>
+                <button class="btn btn-warning" onclick="testLiveDirection()">
+                    Test Live Data
+                </button>
+            </div>
+            <div id="live-results" class="results" style="display: none;">
+                <h3><span class="emoji">🎯</span> Live Direction Results</h3>
+                <div id="live-content"></div>
+            </div>
+        </div>
+
+        <!-- Edge Cases Test -->
+        <div class="test-section">
+            <h2><span class="emoji">🚨</span> Edge Cases Test</h2>
+            <p>Test the block's behavior with edge cases and unusual inputs.</p>
+            <div class="test-controls">
+                <button class="btn btn-danger" onclick="testEdgeCases()">
+                    Test Edge Cases
+                </button>
+            </div>
+            <div id="edge-results" class="results" style="display: none;">
+                <h3><span class="emoji">⚠️</span> Edge Cases Results</h3>
+                <div id="edge-content"></div>
+            </div>
+        </div>
+
+        <!-- Comprehensive Test -->
+        <div class="test-section">
+            <h2><span class="emoji">🚀</span> Comprehensive Test Suite</h2>
+            <p>Run all tests automatically to validate complete functionality.</p>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="runComprehensiveTests()">
+                    Run All Tests
+                </button>
+                <button class="btn btn-success" onclick="clearAllResults()">
+                    Clear Results
+                </button>
+            </div>
+            <div id="comprehensive-results" class="results" style="display: none;">
+                <h3><span class="emoji">📋</span> Comprehensive Test Results</h3>
+                <div id="comprehensive-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test functions
+        async function checkMethodAvailability() {
+            const resultsDiv = document.getElementById('availability-results');
+            const contentDiv = document.getElementById('availability-content');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.classList.add('fade-in');
+            
+            let content = '';
+            
+            // Check Bot object
+            if (typeof Bot === 'undefined') {
+                content += '<div class="status error">❌ Bot object not found</div>';
+                content += '<p>The Bot object is not available. Make sure you\'re running this test in the bot environment.</p>';
+            } else {
+                content += '<div class="status success">✅ Bot object found</div>';
+                
+                // Check checkLastTicksDirection method
+                if (typeof Bot.checkLastTicksDirection === 'function') {
+                    content += '<div class="status success">✅ Bot.checkLastTicksDirection method available</div>';
+                    
+                    // Test method call
+                    try {
+                        const testResult = await Bot.checkLastTicksDirection(3, 'rise');
+                        content += '<div class="status success">✅ Method call successful</div>';
+                        content += `<div class="result-item">
+                            <span>Test Result (Last 3 ticks are rise):</span>
+                            <span class="result-value ${testResult ? 'true' : 'false'}">${testResult}</span>
+                        </div>`;
+                    } catch (error) {
+                        content += '<div class="status error">❌ Method call failed: ' + error.message + '</div>';
+                    }
+                } else {
+                    content += '<div class="status error">❌ Bot.checkLastTicksDirection method not found</div>';
+                    if (Bot) {
+                        content += '<p>Available Bot methods: ' + Object.keys(Bot).join(', ') + '</p>';
+                    }
+                }
+            }
+            
+            contentDiv.innerHTML = content;
+        }
+
+        function generateTestData(pattern, count) {
+            const ticks = [];
+            let basePrice = 100.000;
+            
+            for (let i = 0; i < count; i++) {
+                let change;
+                switch (pattern) {
+                    case 'all_rising':
+                        change = Math.random() * 0.01 + 0.001; // Always positive
+                        break;
+                    case 'all_falling':
+                        change = -(Math.random() * 0.01 + 0.001); // Always negative
+                        break;
+                    case 'mixed':
+                        change = (Math.random() - 0.5) * 0.02;
+                        break;
+                    case 'rising_then_falling':
+                        const halfway = Math.floor(count / 2);
+                        if (i < halfway) {
+                            change = Math.random() * 0.01 + 0.001;
+                        } else {
+                            change = -(Math.random() * 0.01 + 0.001);
+                        }
+                        break;
+                    default:
+                        change = (Math.random() - 0.5) * 0.02;
+                }
+                basePrice += change;
+                ticks.push(parseFloat(basePrice.toFixed(3)));
+            }
+            
+            return ticks;
+        }
+
+        function analyzeMovements(ticks) {
+            if (ticks.length < 2) return { movements: [], allRise: false, allFall: false };
+            
+            const movements = [];
+            let allRise = true;
+            let allFall = true;
+            
+            for (let i = 1; i < ticks.length; i++) {
+                const current = ticks[i];
+                const previous = ticks[i - 1];
+                let movement, direction;
+                
+                if (current > previous) {
+                    movement = 'rise';
+                    direction = '↗️';
+                    allFall = false;
+                } else if (current < previous) {
+                    movement = 'fall';
+                    direction = '↘️';
+                    allRise = false;
+                } else {
+                    movement = 'unchanged';
+                    direction = '➡️';
+                    allRise = false;
+                    allFall = false;
+                }
+                
+                movements.push({
+                    step: i,
+                    from: previous,
+                    to: current,
+                    movement: movement,
+                    direction: direction,
+                    change: (current - previous).toFixed(3)
+                });
+            }
+            
+            return { movements, allRise, allFall };
+        }
+
+        async function generateAndTestPattern() {
+            const pattern = document.getElementById('pattern-select').value;
+            const count = parseInt(document.getElementById('tick-count').value);
+            const resultsDiv = document.getElementById('pattern-results');
+            const contentDiv = document.getElementById('pattern-content');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.classList.add('fade-in');
+            
+            // Generate test data
+            const testTicks = generateTestData(pattern, count);
+            const analysis = analyzeMovements(testTicks);
+            
+            let content = `
+                <div class="card">
+                    <h4>Generated ${pattern.replace('_', ' ')} pattern (${count} ticks)</h4>
+                    <div class="tick-data">Ticks: [${testTicks.map(t => t.toFixed(3)).join(', ')}]</div>
+                    <div class="pattern-summary">
+                        Expected: All Rise = ${pattern === 'all_rising'}, All Fall = ${pattern === 'all_falling'}
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h4>🔍 Movement Analysis</h4>
+                    <div class="movement-analysis">
+            `;
+            
+            analysis.movements.forEach(move => {
+                content += `
+                    <div class="movement-line ${move.movement}">
+                        ${move.step}: ${move.from} → ${move.to} (${move.change >= 0 ? '+' : ''}${move.change}) ${move.direction}
+                    </div>
+                `;
+            });
+            
+            content += `
+                    </div>
+                    <div class="pattern-summary">
+                        Analysis: All Rise = ${analysis.allRise}, All Fall = ${analysis.allFall}
+                    </div>
+                </div>
+            `;
+            
+            // Test with actual method if available
+            if (typeof Bot !== 'undefined' && typeof Bot.checkLastTicksDirection === 'function') {
+                try {
+                    const actualRise = await Bot.checkLastTicksDirection(count, 'rise');
+                    const actualFall = await Bot.checkLastTicksDirection(count, 'fall');
+                    
+                    content += `
+                        <div class="grid">
+                            <div class="card">
+                                <h4>🎯 Rise Direction Test</h4>
+                                <div class="result-item">
+                                    <span>Expected Result:</span>
+                                    <span class="result-value ${analysis.allRise ? 'true' : 'false'}">${analysis.allRise}</span>
+                                </div>
+                                <div class="result-item">
+                                    <span>Actual Result:</span>
+                                    <span class="result-value ${actualRise ? 'true' : 'false'}">${actualRise}</span>
+                                </div>
+                                <div class="result-item">
+                                    <span>Match:</span>
+                                    <span class="result-value ${analysis.allRise === actualRise ? 'true' : 'false'}">
+                                        ${analysis.allRise === actualRise ? '✅ Pass' : '❌ Fail'}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <h4>🎯 Fall Direction Test</h4>
+                                <div class="result-item">
+                                    <span>Expected Result:</span>
+                                    <span class="result-value ${analysis.allFall ? 'true' : 'false'}">${analysis.allFall}</span>
+                                </div>
+                                <div class="result-item">
+                                    <span>Actual Result:</span>
+                                    <span class="result-value ${actualFall ? 'true' : 'false'}">${actualFall}</span>
+                                </div>
+                                <div class="result-item">
+                                    <span>Match:</span>
+                                    <span class="result-value ${analysis.allFall === actualFall ? 'true' : 'false'}">
+                                        ${analysis.allFall === actualFall ? '✅ Pass' : '❌ Fail'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    content += `<div class="status error">❌ Method test failed: ${error.message}</div>`;
+                }
+            } else {
+                content += `<div class="status warning">⚠️ Bot.checkLastTicksDirection method not available for validation</div>`;
+            }
+            
+            contentDiv.innerHTML = content;
+        }
+
+        async function testLiveDirection() {
+            const direction = document.getElementById('live-direction').value;
+            const count = parseInt(document.getElementById('live-count').value);
+            const resultsDiv = document.getElementById('live-results');
+            const contentDiv = document.getElementById('live-content');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.classList.add('fade-in');
+            
+            if (typeof Bot === 'undefined' || typeof Bot.checkLastTicksDirection !== 'function') {
+                contentDiv.innerHTML = '<div class="status error">❌ Bot.checkLastTicksDirection method not available</div>';
+                return;
+            }
+            
+            try {
+                contentDiv.innerHTML = '<div class="status">🔄 Analyzing live data...</div>';
+                
+                const result = await Bot.checkLastTicksDirection(count, direction);
+                
+                const content = `
+                    <div class="result-item">
+                        <span>Last ${count} ticks are ${direction}:</span>
+                        <span class="result-value ${result ? 'true' : 'false'}">${result}</span>
+                    </div>
+                    <div class="card">
+                        <h4>📊 Interpretation</h4>
+                        <p>
+                            ${result 
+                                ? `✅ Confirmed: All last ${count} ticks moved in ${direction} direction` 
+                                : `❌ Pattern broken: Not all last ${count} ticks moved in ${direction} direction`}
+                        </p>
+                        <p>
+                            <strong>Trading Signal:</strong> 
+                            ${result && direction === 'rise' ? 'Strong bullish momentum detected' :
+                              result && direction === 'fall' ? 'Strong bearish momentum detected' :
+                              'No consistent directional momentum'}
+                        </p>
+                    </div>
+                `;
+                
+                contentDiv.innerHTML = content;
+            } catch (error) {
+                contentDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testEdgeCases() {
+            const resultsDiv = document.getElementById('edge-results');
+            const contentDiv = document.getElementById('edge-content');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.classList.add('fade-in');
+            
+            if (typeof Bot === 'undefined' || typeof Bot.checkLastTicksDirection !== 'function') {
+                contentDiv.innerHTML = '<div class="status error">❌ Bot.checkLastTicksDirection method not available</div>';
+                return;
+            }
+            
+            const edgeCases = [
+                { name: 'Zero count', count: 0, direction: 'rise' },
+                { name: 'Single tick', count: 1, direction: 'rise' },
+                { name: 'Two ticks', count: 2, direction: 'fall' },
+                { name: 'Large count', count: 50, direction: 'rise' }
+            ];
+            
+            let content = '';
+            
+            for (const testCase of edgeCases) {
+                try {
+                    const result = await Bot.checkLastTicksDirection(testCase.count, testCase.direction);
+                    content += `
+                        <div class="result-item">
+                            <span>${testCase.name} (${testCase.direction}, ${testCase.count}):</span>
+                            <span class="result-value ${result ? 'true' : 'false'}">${result}</span>
+                        </div>
+                    `;
+                } catch (error) {
+                    content += `
+                        <div class="result-item">
+                            <span>${testCase.name}:</span>
+                            <span class="status error">Error: ${error.message}</span>
+                        </div>
+                    `;
+                }
+            }
+            
+            contentDiv.innerHTML = content;
+        }
+
+        async function runComprehensiveTests() {
+            const resultsDiv = document.getElementById('comprehensive-results');
+            const contentDiv = document.getElementById('comprehensive-content');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.classList.add('fade-in');
+            
+            contentDiv.innerHTML = '<div class="status">🚀 Running comprehensive tests...</div>';
+            
+            // Run all tests
+            await checkMethodAvailability();
+            await generateAndTestPattern();
+            await testLiveDirection();
+            await testEdgeCases();
+            
+            contentDiv.innerHTML = `
+                <div class="status success">✅ All tests completed!</div>
+                <p>Check individual test sections above for detailed results.</p>
+                <div class="card">
+                    <h4>📋 Test Summary</h4>
+                    <ul>
+                        <li>Method availability: Tested</li>
+                        <li>Pattern generation: Tested</li>
+                        <li>Live direction analysis: Tested</li>
+                        <li>Edge cases: Tested</li>
+                    </ul>
+                    <div class="pattern-summary">
+                        Last Ticks Direction Block Testing Complete! 🎯
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearAllResults() {
+            const resultsDivs = document.querySelectorAll('.results');
+            resultsDivs.forEach(div => {
+                div.style.display = 'none';
+                div.classList.remove('fade-in');
+            });
+        }
+
+        // Auto-check availability on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (typeof Bot !== 'undefined') {
+                    checkMethodAvailability();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

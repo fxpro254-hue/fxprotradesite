@@ -264,6 +264,67 @@ export default Engine =>
             });
         }
 
+        getRiseFallPercentage(pattern, count) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    if (ticks.length < 2 || count < 2) {
+                        resolve(0);
+                        return;
+                    }
+                    
+                    const recentTicks = ticks.slice(-count);
+                    let matchingCount = 0;
+                    
+                    // Compare each tick with the previous tick to determine rise/fall
+                    for (let i = 1; i < recentTicks.length; i++) {
+                        const currentTick = recentTicks[i];
+                        const previousTick = recentTicks[i - 1];
+                        
+                        if (pattern === 'rise' && currentTick > previousTick) {
+                            matchingCount++;
+                        } else if (pattern === 'fall' && currentTick < previousTick) {
+                            matchingCount++;
+                        }
+                    }
+                    
+                    // Calculate percentage based on number of comparisons (count - 1)
+                    const totalComparisons = recentTicks.length - 1;
+                    const percentage = totalComparisons > 0 ? (matchingCount / totalComparisons) * 100 : 0;
+                    resolve(percentage);
+                });
+            });
+        }
+
+        checkLastTicksDirection(count, direction) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    if (ticks.length < 2 || count < 2) {
+                        resolve(false);
+                        return;
+                    }
+                    
+                    const recentTicks = ticks.slice(-count);
+                    
+                    // Check if all consecutive ticks move in the specified direction
+                    for (let i = 1; i < recentTicks.length; i++) {
+                        const currentTick = recentTicks[i];
+                        const previousTick = recentTicks[i - 1];
+                        
+                        if (direction === 'rise' && currentTick <= previousTick) {
+                            resolve(false);
+                            return;
+                        } else if (direction === 'fall' && currentTick >= previousTick) {
+                            resolve(false);
+                            return;
+                        }
+                    }
+                    
+                    // If we get here, all ticks moved in the specified direction
+                    resolve(true);
+                });
+            });
+        }
+
         checkDirection(dir) {
             return new Promise(resolve =>
                 this.$scope.ticksService

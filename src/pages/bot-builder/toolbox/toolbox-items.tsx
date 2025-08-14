@@ -434,6 +434,22 @@ export const ToolboxItems = () =>
                             </Shadow>
                         </Value>
                     </Block>
+                    <Block type='rise_fall_percentage'>
+                        <Field name='PATTERN'>rise</Field>
+                        <Value name='COUNT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>10</Field>
+                            </Shadow>
+                        </Value>
+                    </Block>
+                    <Block type='last_ticks_direction'>
+                        <Value name='COUNT'>
+                            <Shadow type='math_number'>
+                                <Field name='NUM'>3</Field>
+                            </Shadow>
+                        </Value>
+                        <Field name='DIRECTION'>rise</Field>
+                    </Block>
                     <Block type='is_candle_black' />
                     <Block type='read_ohlc'>
                         <Field name='OHLCFIELD_LIST'>open</Field>
@@ -878,6 +894,22 @@ export const ToolboxItems = () =>
                             <Field name='NUM'>7</Field>
                         </Shadow>
                     </Value>
+                </Block>
+                <Block type='rise_fall_percentage'>
+                    <Field name='PATTERN'>rise</Field>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>10</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
+                <Block type='last_ticks_direction'>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>3</Field>
+                        </Shadow>
+                    </Value>
+                    <Field name='DIRECTION'>rise</Field>
                 </Block>
                 <Block type='notify'>
                     <Field name='NOTIFICATION_TYPE'>success</Field>

@@ -15,6 +15,8 @@ const getTicksInterface = tradeEngine => {
         getDigitFrequencyRank: (...args) => tradeEngine.getDigitFrequencyRank(...args),
         checkAllSamePattern: (...args) => tradeEngine.checkAllSamePattern(...args),
         checkDigitComparison: (...args) => tradeEngine.checkDigitComparison(...args),
+        getRiseFallPercentage: (...args) => tradeEngine.getRiseFallPercentage(...args),
+        checkLastTicksDirection: (...args) => tradeEngine.checkLastTicksDirection(...args),
     };
 };
 

@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-We have successfully implemented a comprehensive suite of **four advanced digit analysis blocks** that provide powerful statistical insights for trading strategies. These blocks analyze user symbol data to enable sophisticated digit-based trading decisions.
+We have successfully implemented a comprehensive suite of **seven advanced analysis blocks** that provide powerful statistical insights for trading strategies. These blocks analyze user symbol data to enable sophisticated digit-based, momentum, and directional trading decisions.
 
 ## 📊 Block Suite Summary
 
@@ -34,6 +34,27 @@ We have successfully implemented a comprehensive suite of **four advanced digit 
 - **Output**: Number (1 for true, 0 for false)
 - **Use Case**: Strong pattern detection, trend confirmation, volatility analysis
 
+### 5. **Digit Comparison Block** ✅ NEW
+**Syntax**: `last {{ count }} digits are {{ operator }} {{ digit }}`
+- **Purpose**: Compares all digits against a target value using various operators
+- **API**: `Bot.checkDigitComparison(count, operator, digit)`
+- **Output**: Number (1 for true, 0 for false)
+- **Use Case**: Specific value detection, momentum analysis, breakout signals
+
+### 6. **Rise/Fall Percentage Block** ✅ NEW
+**Syntax**: `{{ rise/fall }} % of last {{ count }} ticks`
+- **Purpose**: Analyzes percentage of rising or falling price movements
+- **API**: `Bot.getRiseFallPercentage(pattern, count)`
+- **Output**: Number (0-100 percentage)
+- **Use Case**: Momentum trading, directional bias detection, trend analysis
+
+### 7. **Last Ticks Direction Block** ✅ NEW
+**Syntax**: `last {{ count }} ticks are {{ rise/fall }}`
+- **Purpose**: Checks if ALL recent ticks moved in the same direction
+- **API**: `Bot.checkLastTicksDirection(count, direction)`
+- **Output**: Boolean (true/false)
+- **Use Case**: Strong momentum confirmation, precise pattern detection, breakout signals
+
 ## 🏗️ Implementation Status
 
 ### ✅ Completed Components
@@ -43,39 +64,51 @@ We have successfully implemented a comprehensive suite of **four advanced digit 
 - [x] `over_under_percentage.js` - Threshold percentage block  
 - [x] `digit_frequency_rank.js` - Frequency ranking block
 - [x] `all_same_pattern.js` - Pattern matching block
+- [x] `digit_comparison.js` - Digit comparison block
+- [x] `rise_fall_percentage.js` - Rise/fall momentum block
+- [x] `last_ticks_direction.js` - Directional pattern block
 
 #### Backend Implementation  
-- [x] `Ticks.js` - All four methods implemented:
+- [x] `Ticks.js` - All seven methods implemented:
   - `getEvenOddPercentage(pattern, count)`
   - `getOverUnderPercentage(condition, digit, count)`
   - `getDigitFrequencyRank(rank, count)`
   - `checkAllSamePattern(count, pattern)`
+  - `checkDigitComparison(count, operator, digit)`
+  - `getRiseFallPercentage(pattern, count)`
+  - `checkLastTicksDirection(count, direction)`
 
 #### Interface Integration
 - [x] `TicksInterface.js` - All methods exposed to Bot API
 - [x] `index.js` - All blocks imported and registered
 
 #### Toolbox Integration
-- [x] **Tick and candle analysis** category - All four blocks added
-- [x] **binaryfx** category - All four blocks added with default values
+- [x] **Tick and candle analysis** category - All seven blocks added
+- [x] **binaryfx** category - All seven blocks added with default values
 
 #### Testing Infrastructure
 - [x] `test-even-odd-block.html` - Interactive even/odd testing
 - [x] `test-over-under-block.html` - Interactive over/under testing
 - [x] `test-digit-frequency-rank.html` - Interactive frequency testing
 - [x] `test-all-same-pattern-block.html` - Interactive pattern testing
+- [x] `test-rise-fall-block.html` - Interactive rise/fall testing
+- [x] `test-last-ticks-direction.html` - Interactive direction testing
 
 #### Debug Tools
 - [x] `bot-execution-debugger.js` - Even/odd debugging
 - [x] `debug-over-under-block.js` - Over/under debugging
 - [x] `debug-digit-frequency-rank.js` - Frequency rank debugging
 - [x] `debug-all-same-pattern-block.js` - Pattern debugging
+- [x] `debug-rise-fall-block.js` - Rise/fall debugging
+- [x] `debug-last-ticks-direction.js` - Direction debugging
 
 #### Documentation
 - [x] `BLOCKS_TRADING_ANALYSIS.md` - Even/odd documentation
 - [x] `OVER_UNDER_PERCENTAGE_DOCUMENTATION.md` - Over/under documentation
 - [x] `DIGIT_FREQUENCY_RANK_DOCUMENTATION.md` - Frequency rank documentation
 - [x] `ALL_SAME_PATTERN_DOCUMENTATION.md` - Pattern documentation
+- [x] `RISE_FALL_PERCENTAGE_DOCUMENTATION.md` - Rise/fall documentation
+- [x] `LAST_TICKS_DIRECTION_DOCUMENTATION.md` - Direction documentation
 
 ## 🎲 Block Usage Matrix
 
