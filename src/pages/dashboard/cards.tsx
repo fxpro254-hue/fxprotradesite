@@ -10,10 +10,11 @@ import {
     DerivLightMyComputerIcon,
     DerivLightQuickStrategyIcon,
 } from '@deriv/quill-icons/Illustration';
-import { LabelPairedGearMdRegularIcon, LabelPairedChartLineMdRegularIcon, LabelPairedLaptopMdRegularIcon } from '@deriv/quill-icons/LabelPaired';
+import { LabelPairedGearMdRegularIcon, LabelPairedChartLineMdRegularIcon, LabelPairedLaptopMdRegularIcon, LabelPairedSearchMdRegularIcon } from '@deriv/quill-icons/LabelPaired';
 import { rudderStackSendOpenEvent } from '../../analytics/rudderstack-common-events';
 import { rudderStackSendDashboardClickEvent } from '../../analytics/rudderstack-dashboard';
 import DashboardBotList from './bot-list/dashboard-bot-list';
+import FreeBotSearchBar from './free-bot-search-bar';
 
 type TCardProps = {
     has_dashboard_strategies: boolean;
@@ -125,6 +126,9 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
                         Choose an action to get started with your trading bot
                     </p>
                 </div>
+                
+                {/* Free Bot Search Bar */}
+                <FreeBotSearchBar />
                 
                 <div className='dashboard-actions'>
                     {actions.map(action => {

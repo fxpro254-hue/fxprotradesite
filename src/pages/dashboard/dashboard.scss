@@ -595,6 +595,283 @@
     }
 }
 
+// Free Bot Search Bar Styles
+.free-bot-search-bar {
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 10;
+
+    @include mobile-screen {
+        margin-bottom: 1.5rem;
+    }
+
+    &__container {
+        position: relative;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    &__input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--general-main-1);
+        border: 1px solid var(--border-normal);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+        &:focus-within {
+            border-color: var(--brand-red-coral);
+            box-shadow: 0 0 0 3px rgba(255, 68, 79, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        @include mobile-screen {
+            border-radius: 10px;
+        }
+    }
+
+    &__search-icon {
+        position: absolute;
+        left: 16px;
+        color: var(--text-less-prominent);
+        pointer-events: none;
+        z-index: 1;
+
+        @include mobile-screen {
+            left: 14px;
+        }
+    }
+
+    &__input {
+        width: 100%;
+        padding: 16px 20px 16px 52px;
+        border: none;
+        background: transparent;
+        color: var(--text-prominent);
+        font-size: 1rem;
+        line-height: 1.4;
+        border-radius: 12px;
+        outline: none;
+
+        &::placeholder {
+            color: var(--text-less-prominent);
+            opacity: 0.8;
+        }
+
+        @include mobile-screen {
+            padding: 14px 18px 14px 46px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+        }
+    }
+
+    &__clear-btn {
+        position: absolute;
+        right: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: var(--general-section-1);
+        color: var(--text-less-prominent);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: var(--general-section-2);
+            color: var(--text-prominent);
+        }
+
+        @include mobile-screen {
+            right: 10px;
+            width: 26px;
+            height: 26px;
+        }
+    }
+
+    &__results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--general-main-1);
+        border: 1px solid var(--border-normal);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        margin-top: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 1000;
+
+        @include mobile-screen {
+            border-radius: 10px;
+            max-height: 300px;
+        }
+    }
+
+    &__results-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-normal);
+        background: var(--general-section-1);
+        border-radius: 12px 12px 0 0;
+
+        @include mobile-screen {
+            padding: 10px 14px;
+            border-radius: 10px 10px 0 0;
+        }
+    }
+
+    &__results-count {
+        font-size: 0.875rem;
+        color: var(--text-less-prominent);
+        font-weight: 500;
+
+        @include mobile-screen {
+            font-size: 0.8rem;
+        }
+    }
+
+    &__results-list {
+        padding: 8px 0;
+
+        @include mobile-screen {
+            padding: 6px 0;
+        }
+    }
+
+    &__result-item {
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid var(--border-normal);
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &:hover {
+            background: var(--general-section-1);
+        }
+
+        @include mobile-screen {
+            padding: 10px 14px;
+        }
+    }
+
+    &__result-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    &__result-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-prominent);
+        line-height: 1.3;
+
+        @include mobile-screen {
+            font-size: 0.9rem;
+        }
+    }
+
+    &__result-description {
+        font-size: 0.85rem;
+        color: var(--text-general);
+        line-height: 1.4;
+
+        @include mobile-screen {
+            font-size: 0.8rem;
+        }
+    }
+
+    &__result-category {
+        font-size: 0.75rem;
+        color: var(--text-less-prominent);
+        background: var(--general-section-2);
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 500;
+        margin-top: 4px;
+        align-self: flex-start;
+
+        @include mobile-screen {
+            font-size: 0.7rem;
+            padding: 1px 6px;
+        }
+    }
+
+    &__show-more {
+        padding: 8px 16px;
+        border-top: 1px solid var(--border-normal);
+
+        @include mobile-screen {
+            padding: 6px 14px;
+        }
+    }
+
+    &__show-more-btn {
+        width: 100%;
+        padding: 8px 12px;
+        background: var(--general-section-1);
+        color: var(--brand-red-coral);
+        border: 1px solid var(--brand-red-coral);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: var(--brand-red-coral);
+            color: var(--text-colored-background);
+        }
+
+        @include mobile-screen {
+            font-size: 0.8rem;
+            padding: 6px 10px;
+        }
+    }
+
+    &__no-results {
+        padding: 24px 16px;
+        text-align: center;
+
+        @include mobile-screen {
+            padding: 20px 14px;
+        }
+    }
+
+    &__no-results-text {
+        font-size: 0.95rem;
+        color: var(--text-prominent);
+        font-weight: 500;
+        margin-bottom: 8px;
+
+        @include mobile-screen {
+            font-size: 0.9rem;
+        }
+    }
+
+    &__no-results-suggestion {
+        font-size: 0.85rem;
+        color: var(--text-less-prominent);
+
+        @include mobile-screen {
+            font-size: 0.8rem;
+        }
+    }
+}
+
 .dashboard-btn {
     display: flex;
     align-items: center;
