@@ -1,0 +1,18 @@
+{
+    "builds": [
+        {
+            "src": "dist/**/*",
+            "use": "@vercel/static"
+        }
+    ],
+    "outputDirectory": "dist",
+    "buildCommand": "npm run build",
+    "devCommand": "npm start",
+    "installCommand": "npm install",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

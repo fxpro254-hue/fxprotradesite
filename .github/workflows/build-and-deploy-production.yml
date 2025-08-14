@@ -31,6 +31,25 @@ jobs:
           NEXT_PUBLIC_DERIV_API_TOKEN: ${{ secrets.DERIV_API_TOKEN }}
           NEXT_PUBLIC_TRACKJS_TOKEN: ${{ secrets.TRACKJS_TOKEN }}
 
+      - name: Check Vercel Secrets
+        run: |
+          if [ -z "${{ secrets.VERCEL_API_TOKEN }}" ]; then
+            echo "❌ VERCEL_API_TOKEN secret is not set"
+            echo "Please add VERCEL_API_TOKEN to repository secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
+            echo "❌ VERCEL_ORG_ID secret is not set"
+            echo "Please add VERCEL_ORG_ID to repository secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "❌ VERCEL_PROJECT_ID secret is not set"
+            echo "Please add VERCEL_PROJECT_ID to repository secrets"
+            exit 1
+          fi
+          echo "✅ All Vercel secrets are configured"
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
@@ -38,3 +57,5 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
+          github-comment: true
+          github-deployment: false
