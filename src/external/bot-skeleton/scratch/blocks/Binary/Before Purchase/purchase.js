@@ -524,6 +524,7 @@ window.Blockly.Blocks.purchase = {
 
         // Contracts that don't need any barriers or predictions (work automatically)
         const contractsNoInputsNeeded = [
+            'CALL', 'PUT',
             'DIGITEVEN', 'DIGITODD', 'ASIANU', 'ASIAND', 'TICKHIGH', 'TICKLOW', 
             'MULTUP', 'MULTDOWN', 'ACCU', 'CALLE', 'PUTE'
         ];
@@ -651,7 +652,7 @@ window.Blockly.JavaScript.javascriptGenerator.forBlock.purchase = block => {
     );
 
     // Contract types that need specific inputs
-    const contractsNeedingBarrier = ['CALL', 'PUT', 'ONETOUCH', 'NOTOUCH', 'RUNHIGH', 'RUNLOW', 'RESETCALL', 'RESETPUT'];
+    const contractsNeedingBarrier = ['ONETOUCH', 'NOTOUCH', 'RUNHIGH', 'RUNLOW', 'RESETCALL', 'RESETPUT'];
     const contractsNeedingTwoBarriers = ['EXPIRYRANGE', 'EXPIRYMISS', 'RANGE', 'UPORDOWN', 'CALLSPREAD', 'PUTSPREAD'];
     const contractsNeedingPrediction = ['DIGITOVER', 'DIGITUNDER', 'DIGITMATCH', 'DIGITDIFF'];
 
