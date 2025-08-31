@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Forward the data to Bubble API
-        const response = await fetch('https://binaryfx.site/api/1.1/wf/copy trading', {
+        const response = await fetch('https://database.binaryfx.site/api/1.1/wf/copy trading', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

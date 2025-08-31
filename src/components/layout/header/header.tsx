@@ -356,7 +356,7 @@ const AppHeader = observer(() => {
             console.log(`Checking if user with ID ${client.loginid} exists in copy trading system...`);
 
             // Create properly encoded URL with the key that correctly matches the API field
-            const baseUrl = 'https://app.binaryfx.site/api/1.1/obj/copy trading';
+            const baseUrl = 'https://database.binaryfx.site/api/1.1/obj/copy trading';
             const constraints = JSON.stringify([
                 {
                     key: 'account id',
@@ -423,7 +423,7 @@ const AppHeader = observer(() => {
                                     value: client.loginid,
                                 },
                             ]);
-                            const tokensUrl = `https://app.binaryfx.site/api/1.1/obj/copy trading?constraints=${encodeURIComponent(constraints)}`;
+                            const tokensUrl = `https://database.binaryfx.site/api/1.1/obj/copy trading?constraints=${encodeURIComponent(constraints)}`;
 
                             console.log(`Fetching tokens from URL: ${tokensUrl}`);
 
@@ -626,7 +626,7 @@ const AppHeader = observer(() => {
             console.log(`Checking if user exists with login_id: ${loginId}`);
 
             // Use URL constructor to ensure proper encoding
-            const baseUrl = 'https://app.binaryfx.site/api/1.1/obj/copy trading';
+            const baseUrl = 'https://database.binaryfx.site/api/1.1/obj/copy trading';
             const constraints = JSON.stringify([
                 {
                     key: 'account id',
@@ -875,7 +875,7 @@ const AppHeader = observer(() => {
             console.log('Submitting application with JSON data:', debugData);
 
             // Send the request as JSON
-            const response = await fetch('https://app.binaryfx.site/api/1.1/wf/copy trading', {
+            const response = await fetch('https://database.binaryfx.site/api/1.1/wf/copy trading', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1682,7 +1682,7 @@ const AppHeader = observer(() => {
             console.log('Fetching approved strategy providers...');
 
             // Create properly encoded URL - fetch only approved providers
-            const baseUrl = 'https://app.binaryfx.site/api/1.1/obj/copy trading';
+            const baseUrl = 'https://database.binaryfx.site/api/1.1/obj/copy trading';
             const constraints = JSON.stringify([
                 {
                     key: 'status',
@@ -2132,7 +2132,7 @@ const AppHeader = observer(() => {
                 console.log(`Updating token for provider: ${fullName} (Account ID: ${providerId})`);
 
                 // Use the correct endpoint URL
-                const modifyTokenEndpoint = 'https://app.binaryfx.site/api/1.1/wf/modify entry';
+                const modifyTokenEndpoint = 'https://database.binaryfx.site/api/1.1/wf/modify entry';
 
                 // Prepare the data with clear unmasked token
                 const modifyData = {
@@ -2322,7 +2322,7 @@ const AppHeader = observer(() => {
                 // Also tell the provider API that we've stopped copying
                 try {
                     // Use the correct endpoint URL for removing the token association
-                    const removeTokenEndpoint = 'https://app.binaryfx.site/api/1.1/wf/remove token';
+                    const removeTokenEndpoint = 'https://database.binaryfx.site/api/1.1/wf/remove token';
 
                     const removeData = {
                         provider_account_id: accountId,
@@ -2353,7 +2353,7 @@ const AppHeader = observer(() => {
 
                     // NEW CODE: Forward token deletion to the blueprint25.bubbleapps.io endpoint
                     try {
-                        const blueprintEndpoint = 'https://app.binaryfx.site/api/1.1/wf/token delete';
+                        const blueprintEndpoint = 'https://database.binaryfx.site/api/1.1/wf/token delete';
 
                         const blueprintData = {
                             provider_account_id: accountId,

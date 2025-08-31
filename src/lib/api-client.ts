@@ -51,7 +51,7 @@ export async function submitApplication(data: any): Promise<any> {
         );
 
         // Send as multipart/form-data (Content-Type header is automatically set by browser)
-        const response = await fetch('https://binaryfx.site/api/1.1/wf/copy trading/initialize', {
+        const response = await fetch('https://database.binaryfx.site/api/1.1/wf/copy trading/initialize', {
             method: 'POST',
             body: formData,
         });
@@ -63,7 +63,7 @@ export async function submitApplication(data: any): Promise<any> {
         return await response.json();
     } else {
         // Regular JSON submission for requests without file uploads
-        const response = await fetch('https://binaryfx.site/api/1.1/wf/copy trading/initialize', {
+        const response = await fetch('https://database.binaryfx.site/api/1.1/wf/copy trading/initialize', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
