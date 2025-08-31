@@ -2887,17 +2887,7 @@ const AppHeader = observer(() => {
                                 onClick={() => window.location.assign(standalone_routes.wallets_transfer)}
                                 primary
                             />
-                        ) : (
-                            <Button
-                                primary
-                                onClick={() => {
-                                    window.location.assign(standalone_routes.cashier_deposit);
-                                }}
-                                className='deposit-button'
-                            >
-                                {localize('Deposit')}
-                            </Button>
-                        ))}
+                        ) : null)}
                 </>
             );
         } else {
