@@ -171,7 +171,7 @@
       </block>
     </statement>
   </block>
-  <block type="after_purchase" id="cb%w4#L|)A]1F1+)uk_u" x="892" y="60">
+  <block type="after_purchase" id="cb%w4#L|)A]1F1+)uk_u" x="714" y="60">
     <statement name="AFTERPURCHASE_STACK">
       <block type="controls_if" id="[=s{/TdSy]ZB81-C0{u0">
         <mutation xmlns="http://www.w3.org/1999/xhtml" else="1"></mutation>
@@ -388,14 +388,33 @@
           </block>
         </value>
         <statement name="DO0">
-          <block type="purchase" id="?QH{0D:/t^fpgu}4sb`x">
+          <block type="purchase" id="?QH{0D:/t^fpgu}4sb`x" inline="false">
             <field name="PURCHASE_LIST">DIGITOVER</field>
+            <field name="TRADE_EACH_TICK">false</field>
+            <value name="BARRIER_OFFSET">
+              <shadow type="math_number" id="!4vSRcg8eO+IITdaP?%)" inline="true">
+                <field name="NUM">0.1</field>
+              </shadow>
+            </value>
+            <value name="SECONDBARRIER_OFFSET">
+              <shadow type="math_number" id="3(Z0pL[ai9*Ds|5sbM{x" inline="true">
+                <field name="NUM">-0.1</field>
+              </shadow>
+            </value>
+            <value name="PREDICTION">
+              <shadow type="math_number_positive" id="k5J[lPc;3AO?^tG1h[/y" inline="true">
+                <field name="NUM">5</field>
+              </shadow>
+              <block type="variables_get" id="I3Hg!k+L;;i-8d+_px7o">
+                <field name="VAR" id="#yD3|)8x4cv^5(GM%$0l">prediction</field>
+              </block>
+            </value>
           </block>
         </statement>
       </block>
     </statement>
   </block>
-  <block type="tick_analysis" id="0d];3OeEqJVb[2r_chZM" x="0" y="1386">
+  <block type="tick_analysis" id="0d];3OeEqJVb[2r_chZM" x="0" y="1426">
     <statement name="TICKANALYSIS_STACK">
       <block type="procedures_callnoreturn" id="#!kN%JjjXz~/eKG8{u+5">
         <mutation xmlns="http://www.w3.org/1999/xhtml" name="Last digit"></mutation>
@@ -403,7 +422,7 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_defnoreturn" id="h;3(Ef/qy@_?=nJKcJou" collapsed="true" x="0" y="1562">
+  <block type="procedures_defnoreturn" id="h;3(Ef/qy@_?=nJKcJou" collapsed="true" x="0" y="1602">
     <field name="NAME">Last digit</field>
     <comment pinned="false" h="80" w="160">Describe this function...</comment>
     <statement name="STACK">
