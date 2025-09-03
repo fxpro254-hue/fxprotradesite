@@ -3001,7 +3001,6 @@ const AppHeader = observer(() => {
                         />
                     </svg>
                 </Tooltip>
-              
             </Wrapper>
             <Wrapper variant='right'>{renderAccountSection()}</Wrapper>
 
