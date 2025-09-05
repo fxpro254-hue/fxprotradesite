@@ -59,11 +59,11 @@ const SpeedBotDisplay = observer(() => {
     
     // Trading configuration state
     const [selectedSymbol, setSelectedSymbol] = useState('R_100');
-    const [selectedContractType, setSelectedContractType] = useState('CALL');
+    const [selectedContractType, setSelectedContractType] = useState('CALLE'); // Fixed: Use CALLE instead of CALL
     const [currentPrice, setCurrentPrice] = useState('Loading...');
-    const [numberOfTicks, setNumberOfTicks] = useState<number | ''>('');
-    const [stake, setStake] = useState<number | ''>('');
-    const [numberOfTrades, setNumberOfTrades] = useState<number | ''>('');
+    const [numberOfTicks, setNumberOfTicks] = useState<number | ''>(1); // Default to 1 tick
+    const [stake, setStake] = useState<number | ''>(1); // Default to $1
+    const [numberOfTrades, setNumberOfTrades] = useState<number | ''>(1); // Default to 1 trade
     const [barrier, setBarrier] = useState<number | ''>(''); // For over/under/matches/differs contracts
     const [tradeEachTick, setTradeEachTick] = useState(false); // Toggle for continuous trading
     
@@ -86,6 +86,7 @@ const SpeedBotDisplay = observer(() => {
     const activeTradesRef = useRef(new Set());
     const sessionRunId = useRef(`speedbot_${Date.now()}`);
     const continuousTradingRef = useRef(false);
+    const isTradingRef = useRef(false); // Ref to ensure tick handler has latest state
     
     // Initialize component and ensure default values are valid
     useEffect(() => {
@@ -163,8 +164,10 @@ const SpeedBotDisplay = observer(() => {
                     setCurrentPrice(data.tick.quote.toFixed(4));
                     setIsConnected(true);
                     
+                    console.log(`Speed Bot: Tick received - Symbol: ${data.tick.symbol}, Price: ${data.tick.quote.toFixed(4)}, Continuous Trading: ${continuousTradingRef.current}, Is Trading: ${isTradingRef.current}`);
+                    
                     // Handle continuous trading on each tick
-                    if (continuousTradingRef.current && isTrading) {
+                    if (continuousTradingRef.current && isTradingRef.current) {
                         console.log(`Speed Bot: New tick received at price ${data.tick.quote.toFixed(4)} - executing trade...`);
                         
                         // Execute trade on every tick without rate limiting
@@ -198,7 +201,10 @@ const SpeedBotDisplay = observer(() => {
 
     // Subscribe to price updates when symbol changes
     useEffect(() => {
-        if (!api_base?.api) return;
+        if (!api_base?.api) {
+            console.log('Speed Bot: API not available for price subscription');
+            return;
+        }
         
         // Reset price when symbol changes
         setCurrentPrice('Loading...');
@@ -210,6 +216,57 @@ const SpeedBotDisplay = observer(() => {
 
         return () => clearTimeout(timer);
     }, [selectedSymbol]);
+
+    // Add debugging for API state
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (api_base?.api) {
+                console.log('Speed Bot: API Status Check:', {
+                    hasApi: !!api_base?.api,
+                    readyState: api_base?.api?.ws?.readyState,
+                    isConnected: api_base?.api?.ws?.readyState === 1,
+                    connectionStatus: api_base?.api?.connectionStatus,
+                });
+            } else {
+                console.log('Speed Bot: API not available');
+            }
+        }, 5000); // Check every 5 seconds
+        
+        return () => clearInterval(interval);
+    }, []);
+
+    // Register event listeners for speed bot run button integration
+    useEffect(() => {
+        const handleRunButtonStart = () => {
+            if (!isTrading) {
+                executeAllTrades();
+            }
+        };
+
+        const handleRunButtonStop = () => {
+            if (isTrading) {
+                stopTrading();
+            }
+        };
+
+        globalObserver.register('speed_bot.start', handleRunButtonStart);
+        globalObserver.register('speed_bot.stop', handleRunButtonStop);
+
+        return () => {
+            globalObserver.unregisterAll('speed_bot.start');
+            globalObserver.unregisterAll('speed_bot.stop');
+        };
+    }, [isTrading]); // Re-register when trading state changes
+
+    // Sync isTrading state with ref for tick handler
+    useEffect(() => {
+        isTradingRef.current = isTrading;
+    }, [isTrading]);
+
+    // Emit initial state when component mounts or trading state changes
+    useEffect(() => {
+        globalObserver.emit('speed_bot.state_changed', { isRunning: isTrading });
+    }, [isTrading]);
     
     // Contract type requires barrier input
     const requiresBarrier = () => {
@@ -218,6 +275,8 @@ const SpeedBotDisplay = observer(() => {
     
     // Execute a single trade
     const executeSingleTrade = async (): Promise<TradeResult> => {
+        console.log('Speed Bot: Starting executeSingleTrade...');
+        
         try {
             interface ContractParameters {
                 amount: number;
@@ -244,17 +303,32 @@ const SpeedBotDisplay = observer(() => {
             if (requiresBarrier()) {
                 const barrierValue = typeof barrier === 'number' ? barrier : 5;
                 contractParameters.barrier = barrierValue.toString();
+                console.log(`Speed Bot: Added barrier ${barrierValue} for contract type ${selectedContractType}`);
             }
             
+            console.log('Speed Bot: Contract parameters:', contractParameters);
+            console.log('Speed Bot: API available:', !!api_base?.api);
+            
+            if (!api_base?.api) {
+                console.error('Speed Bot: API not available for trade execution');
+                return { success: false, error: 'API not available' };
+            }
+            
+            const buyRequest = {
+                buy: 1,
+                price: stake,
+                parameters: contractParameters,
+            };
+            
+            console.log('Speed Bot: Sending buy request:', buyRequest);
+            
             const tradePromise = doUntilDone(() => 
-                api_base.api.send({
-                    buy: 1,
-                    price: stake,
-                    parameters: contractParameters,
-                }), [], api_base
+                api_base.api.send(buyRequest), [], api_base
             );
             
+            console.log('Speed Bot: Waiting for trade result...');
             const result = await tradePromise;
+            console.log('Speed Bot: Trade result received:', result);
             
             if (result && result.buy) {
                 const buy = result.buy;
@@ -270,7 +344,7 @@ const SpeedBotDisplay = observer(() => {
                     contract_id: buy.contract_id,
                     contract_type: selectedContractType,
                     transaction_ids: { buy: buy.transaction_id },
-                    buy_price: stake,
+                    buy_price: typeof stake === 'number' ? stake : parseFloat(stake) || 0,
                     currency: 'USD',
                     symbol: selectedSymbol,
                     date_start: Math.floor(Date.now() / 1000),
@@ -310,15 +384,41 @@ const SpeedBotDisplay = observer(() => {
     
     // Execute multiple trades
     const executeAllTrades = async () => {
+        console.log('Speed Bot: executeAllTrades called');
+        console.log('Speed Bot: Current state - isTrading:', isTrading, 'API ready:', !!api_base?.api);
+        console.log('Speed Bot: Form values - stake:', stake, 'ticks:', numberOfTicks, 'trades:', numberOfTrades, 'tradeEachTick:', tradeEachTick);
+        console.log('Speed Bot: Form valid:', isFormValid());
+        console.log('Speed Bot: API base status:', {
+            hasApiBase: !!api_base,
+            hasApi: !!api_base?.api,
+            apiReadyState: api_base?.api?.ws?.readyState,
+            isConnected: api_base?.api?.ws?.readyState === 1
+        });
+        
         if (isTrading || !api_base?.api) {
             console.log('Speed Bot: Cannot execute trades - already trading or API not ready');
             return;
         }
         
+        if (!isFormValid()) {
+            console.error('Speed Bot: Form validation failed');
+            console.log('Speed Bot: Validation details:', {
+                hasValidStake: typeof stake === 'number' && stake >= 0.35,
+                hasValidTicks: typeof numberOfTicks === 'number' && numberOfTicks >= 1,
+                hasValidTrades: tradeEachTick || (typeof numberOfTrades === 'number' && numberOfTrades >= 1),
+                hasValidBarrier: !requiresBarrier() || (typeof barrier === 'number' && barrier >= 0 && barrier <= 9),
+            });
+            return;
+        }
+        
         setIsTrading(true);
+        isTradingRef.current = true; // Sync ref with state
         setTradesExecuted(0);
         setTradeResults([]);
         
+        // Emit state change for the run button
+        globalObserver.emit('speed_bot.state_changed', { isRunning: true });
+
         // Prepare run panel
         if (!run_panel.is_drawer_open) {
             run_panel.toggleDrawer(true);
@@ -334,6 +434,8 @@ const SpeedBotDisplay = observer(() => {
             
             // The actual trading will happen in the tick subscription
             // This mode continues until manually stopped
+            // Note: isTrading remains true for continuous mode
+            return; // Exit early to keep isTrading = true
         } else {
             // Bulk trading mode
             console.log(`Speed Bot: Starting execution of ${numberOfTrades} trades immediately...`);
@@ -342,7 +444,7 @@ const SpeedBotDisplay = observer(() => {
             // Create array of trade promises to execute all trades simultaneously
             const tradePromises: Promise<TradeResult>[] = [];
             
-            for (let i = 0; i < numberOfTrades; i++) {
+            for (let i = 0; i < Number(numberOfTrades); i++) {
                 console.log(`Speed Bot: Preparing trade ${i + 1} of ${numberOfTrades}`);
                 tradePromises.push(executeSingleTrade());
             }
@@ -357,13 +459,13 @@ const SpeedBotDisplay = observer(() => {
                 const successfulTrades = results.filter(r => r.success).length;
                 setTradesExecuted(successfulTrades);
                 
-                console.log(`Speed Bot: Completed ${successfulTrades}/${numberOfTrades} trades successfully`);
+                console.log(`Speed Bot: Completed ${successfulTrades}/${Number(numberOfTrades)} trades successfully`);
                 
                 // Show summary
-                if (successfulTrades === numberOfTrades) {
+                if (successfulTrades === Number(numberOfTrades)) {
                     console.log('🎉 All trades executed successfully!');
                 } else {
-                    console.log(`⚠️ ${numberOfTrades - successfulTrades} trades failed`);
+                    console.log(`⚠️ ${Number(numberOfTrades) - successfulTrades} trades failed`);
                 }
                 
             } catch (error) {
@@ -372,11 +474,11 @@ const SpeedBotDisplay = observer(() => {
                 setTradeResults([{ success: false, error: 'Failed to execute trades simultaneously' }]);
             }
             
+            // Only set trading to false for bulk mode
             setIsTrading(false);
-        }
-        
-        // Emit completion events (for bulk mode)
-        if (!tradeEachTick) {
+            isTradingRef.current = false; // Sync ref with state
+            
+            // Emit completion events (for bulk mode)
             globalObserver.emit('bot.stopped');
         }
     };
@@ -393,8 +495,12 @@ const SpeedBotDisplay = observer(() => {
 
     const stopTrading = () => {
         setIsTrading(false);
+        isTradingRef.current = false; // Sync ref with state
         continuousTradingRef.current = false;
         globalObserver.emit('bot.stopped');
+        
+        // Emit state change for the run button
+        globalObserver.emit('speed_bot.state_changed', { isRunning: false });
     };
     
     const selectedContractTypeInfo = CONTRACT_TYPES.find(ct => ct.value === selectedContractType);

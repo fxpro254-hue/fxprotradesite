@@ -11,7 +11,7 @@ const TradingHubDisplay: React.FC = () => {
     const MINIMUM_STAKE = '0.35';
     const { is_dark_mode_on } = useThemeSwitcher();
 
-    const [isAutoDifferActive, setIsAutoDifferActive] = useState(false);
+    const [isAutoDifferActive, setIsAutoDifferActive] = useState(true); // Auto Differ is now default
     const [isAutoOverUnderActive, setIsAutoOverUnderActive] = useState(false);
     const [isAutoO5U4Active, setIsAutoO5U4Active] = useState(false);
     const [recommendation, setRecommendation] = useState<TradeRecommendation | null>(null);
@@ -244,6 +244,21 @@ const TradingHubDisplay: React.FC = () => {
             if (savedMartingale) {
                 console.log(`Loaded saved martingale from storage: ${savedMartingale}`);
                 setMartingale(savedMartingale);
+            }
+
+            // Load strategy preferences from localStorage
+            const savedAutoDiffer = localStorage.getItem('tradingHub_autoDifferActive');
+            const savedOverUnder = localStorage.getItem('tradingHub_overUnderActive');
+            const savedO5U4 = localStorage.getItem('tradingHub_o5u4Active');
+
+            if (savedAutoDiffer !== null) {
+                setIsAutoDifferActive(savedAutoDiffer === 'true');
+            }
+            if (savedOverUnder !== null) {
+                setIsAutoOverUnderActive(savedOverUnder === 'true');
+            }
+            if (savedO5U4 !== null) {
+                setIsAutoO5U4Active(savedO5U4 === 'true');
             }
         } catch (e) {
             console.warn('Could not load settings from localStorage', e);
@@ -613,6 +628,34 @@ const TradingHubDisplay: React.FC = () => {
         }
     }, []);
 
+    // Register event listeners for trading hub run button integration
+    useEffect(() => {
+        const handleRunButtonStart = () => {
+            if (!isContinuousTrading) {
+                startTrading();
+            }
+        };
+
+        const handleRunButtonStop = () => {
+            if (isContinuousTrading) {
+                stopTrading();
+            }
+        };
+
+        globalObserver.register('trading_hub.start', handleRunButtonStart);
+        globalObserver.register('trading_hub.stop', handleRunButtonStop);
+
+        return () => {
+            globalObserver.unregisterAll('trading_hub.start');
+            globalObserver.unregisterAll('trading_hub.stop');
+        };
+    }, [isContinuousTrading]); // Re-register when trading state changes
+
+    // Emit initial state when component mounts or trading state changes
+    React.useEffect(() => {
+        globalObserver.emit('trading_hub.state_changed', { isRunning: isContinuousTrading });
+    }, [isContinuousTrading]);
+
     useEffect(() => {
         if (isContinuousTrading) {
             // Use a faster interval for more responsive trading
@@ -688,11 +731,15 @@ const TradingHubDisplay: React.FC = () => {
     const toggleAutoDiffer = () => {
         if (!isAutoDifferActive && isAutoOverUnderActive) {
             setIsAutoOverUnderActive(false);
+            localStorage.setItem('tradingHub_overUnderActive', 'false');
         }
         if (!isAutoDifferActive && isAutoO5U4Active) {
             setIsAutoO5U4Active(false);
+            localStorage.setItem('tradingHub_o5u4Active', 'false');
         }
-        setIsAutoDifferActive(prev => !prev);
+        const newValue = !isAutoDifferActive;
+        setIsAutoDifferActive(newValue);
+        localStorage.setItem('tradingHub_autoDifferActive', newValue.toString());
         if (isContinuousTrading) {
             stopTrading();
         }
@@ -701,11 +748,15 @@ const TradingHubDisplay: React.FC = () => {
     const toggleAutoOverUnder = () => {
         if (!isAutoOverUnderActive && isAutoDifferActive) {
             setIsAutoDifferActive(false);
+            localStorage.setItem('tradingHub_autoDifferActive', 'false');
         }
         if (!isAutoOverUnderActive && isAutoO5U4Active) {
             setIsAutoO5U4Active(false);
+            localStorage.setItem('tradingHub_o5u4Active', 'false');
         }
-        setIsAutoOverUnderActive(prev => !prev);
+        const newValue = !isAutoOverUnderActive;
+        setIsAutoOverUnderActive(newValue);
+        localStorage.setItem('tradingHub_overUnderActive', newValue.toString());
         if (isContinuousTrading) {
             stopTrading();
         }
@@ -714,13 +765,16 @@ const TradingHubDisplay: React.FC = () => {
     const toggleAutoO5U4 = () => {
         if (!isAutoO5U4Active && isAutoDifferActive) {
             setIsAutoDifferActive(false);
+            localStorage.setItem('tradingHub_autoDifferActive', 'false');
         }
         if (!isAutoO5U4Active && isAutoOverUnderActive) {
             setIsAutoOverUnderActive(false);
+            localStorage.setItem('tradingHub_overUnderActive', 'false');
         }
         
         const newState = !isAutoO5U4Active;
         setIsAutoO5U4Active(newState);
+        localStorage.setItem('tradingHub_o5u4Active', newState.toString());
         
         // If activating O5U4 and trading is active, immediately check for conditions
         if (newState && isContinuousTrading) {
@@ -1578,6 +1632,9 @@ const TradingHubDisplay: React.FC = () => {
     const startTrading = () => {
         prepareRunPanelForTradingHub();
         setIsContinuousTrading(true);
+        
+        // Emit state change for the run button
+        globalObserver.emit('trading_hub.state_changed', { isRunning: true });
 
         const persistedStake = localStorage.getItem('tradingHub_initialStake') || initialStake;
         console.log(`Starting trading with persisted stake: ${persistedStake}`);
@@ -1609,6 +1666,10 @@ const TradingHubDisplay: React.FC = () => {
         setIsContinuousTrading(false);
         setIsTrading(false);
         globalObserver.emit('bot.stopped');
+        
+        // Emit state change for the run button
+        globalObserver.emit('trading_hub.state_changed', { isRunning: false });
+        
         manageStake('reset');
         
         // Reset O5U4 contract tracking when stopping

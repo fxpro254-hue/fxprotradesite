@@ -7,6 +7,7 @@ import { useStore } from '@/hooks/useStore';
 import { LabelPairedPlayLgFillIcon, LabelPairedSquareLgFillIcon } from '@deriv/quill-icons/LabelPaired';
 import { Localize } from '@deriv-com/translations';
 import { rudderStackSendRunBotEvent } from '../../analytics/rudderstack-common-events';
+import { observer as globalObserver } from '../../external/bot-skeleton/utils/observer';
 import Button from '../shared_ui/button';
 import CircularWrapper from './circular-wrapper';
 import ContractStageText from './contract-stage-text';
@@ -32,12 +33,54 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
     const { account_status } = client;
     const cashier_validation = account_status?.cashier_validation;
     const [shouldDisable, setShouldDisable] = React.useState(false);
+    const [autoTabActiveDisplay, setAutoTabActiveDisplay] = React.useState('trading'); // Track active display in auto tab
+    const [chartTabActiveDisplay, setChartTabActiveDisplay] = React.useState('smart-trading'); // Track active display in chart tab
+    const [isTradingHubRunning, setIsTradingHubRunning] = React.useState(false); // Track trading hub state
+    const [isSmartTradingRunning, setIsSmartTradingRunning] = React.useState(false); // Track smart trading state
+    const [isSpeedBotRunning, setIsSpeedBotRunning] = React.useState(false); // Track speed bot state
     const is_unavailable_for_payment_agent = cashier_validation?.includes('WithdrawServiceUnavailableForPA');
 
     // perform self-exclusion checks which will be stored under the self-exclusion-store
     React.useEffect(() => {
         performSelfExclusionCheck();
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Listen for tab display changes and state changes
+    React.useEffect(() => {
+        const handleAutoTabDisplayChange = (activeDisplay: string) => {
+            setAutoTabActiveDisplay(activeDisplay);
+        };
+
+        const handleChartTabDisplayChange = (activeDisplay: string) => {
+            setChartTabActiveDisplay(activeDisplay);
+        };
+
+        const handleTradingHubStateChange = (state: { isRunning: boolean }) => {
+            setIsTradingHubRunning(state.isRunning);
+        };
+
+        const handleSmartTradingStateChange = (state: { isRunning: boolean; strategyId: string }) => {
+            setIsSmartTradingRunning(state.isRunning);
+        };
+
+        const handleSpeedBotStateChange = (state: { isRunning: boolean }) => {
+            setIsSpeedBotRunning(state.isRunning);
+        };
+
+        globalObserver.register('auto_tab.display_changed', handleAutoTabDisplayChange);
+        globalObserver.register('chart_tab.display_changed', handleChartTabDisplayChange);
+        globalObserver.register('trading_hub.state_changed', handleTradingHubStateChange);
+        globalObserver.register('smart_trading.state_changed', handleSmartTradingStateChange);
+        globalObserver.register('speed_bot.state_changed', handleSpeedBotStateChange);
+
+        return () => {
+            globalObserver.unregisterAll('auto_tab.display_changed');
+            globalObserver.unregisterAll('chart_tab.display_changed');
+            globalObserver.unregisterAll('trading_hub.state_changed');
+            globalObserver.unregisterAll('smart_trading.state_changed');
+            globalObserver.unregisterAll('speed_bot.state_changed');
+        };
     }, []);
 
     React.useEffect(() => {
@@ -71,7 +114,20 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
     const is_disabled = is_stop_button_disabled || shouldDisable;
 
     const button_props = React.useMemo(() => {
-        if (is_stop_button_visible) {
+        // Check if we're on auto tab with trading hub display active
+        const isOnTradingHub = active_tab === 3 && autoTabActiveDisplay === 'trading';
+        // Check if we're on chart tab with smart trading display active
+        const isOnSmartTrading = active_tab === 2 && chartTabActiveDisplay === 'smart-trading';
+        // Check if we're on chart tab with speed bot display active
+        const isOnSpeedBot = active_tab === 2 && chartTabActiveDisplay === 'speed-bot';
+        
+        const shouldShowStopButton = 
+            isOnTradingHub ? isTradingHubRunning :
+            isOnSmartTrading ? isSmartTradingRunning :
+            isOnSpeedBot ? isSpeedBotRunning :
+            is_stop_button_visible;
+        
+        if (shouldShowStopButton) {
             return {
                 id: 'db-animation__stop-button',
                 class: 'animation__stop-button',
@@ -85,7 +141,7 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
             text: <Localize i18n_default_text='Run' />,
             icon: <LabelPairedPlayLgFillIcon fill='#fff' />,
         };
-    }, [is_stop_button_visible]);
+    }, [is_stop_button_visible, active_tab, autoTabActiveDisplay, chartTabActiveDisplay, isTradingHubRunning, isSmartTradingRunning, isSpeedBotRunning]);
     const show_overlay = should_show_overlay && is_contract_completed;
 
     const TAB_NAMES = [
@@ -101,8 +157,8 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
     const getTabName = (index: number) => TAB_NAMES[index];
 
     // Define which tabs should show the run button
-    // 0: dashboard, 1: bot_builder, 4: analysis_tool, 5: signals
-    const allowedTabs = [0, 1, 4, 5];
+    // 0: dashboard, 1: bot_builder, 2: chart (smart trading), 3: auto (trading hub), 4: analysis_tool, 5: signals
+    const allowedTabs = [0, 1, 2, 3, 4, 5];
     const shouldShowButton = allowedTabs.includes(active_tab);
 
     return (
@@ -115,6 +171,41 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
                     icon={button_props.icon}
                     onClick={() => {
                         setShouldDisable(true);
+                        
+                        // Check if we're on the auto tab (tab 3) and trading hub display is active
+                        if (active_tab === 3 && autoTabActiveDisplay === 'trading') {
+                            // Use trading hub's start/stop functions
+                            if (isTradingHubRunning) {
+                                globalObserver.emit('trading_hub.stop');
+                            } else {
+                                globalObserver.emit('trading_hub.start');
+                            }
+                            return;
+                        }
+                        
+                        // Check if we're on the chart tab (tab 2) and smart trading display is active
+                        if (active_tab === 2 && chartTabActiveDisplay === 'smart-trading') {
+                            // Use smart trading's start/stop functions
+                            if (isSmartTradingRunning) {
+                                globalObserver.emit('smart_trading.stop');
+                            } else {
+                                globalObserver.emit('smart_trading.start');
+                            }
+                            return;
+                        }
+                        
+                        // Check if we're on the chart tab (tab 2) and speed bot display is active
+                        if (active_tab === 2 && chartTabActiveDisplay === 'speed-bot') {
+                            // Use speed bot's start/stop functions
+                            if (isSpeedBotRunning) {
+                                globalObserver.emit('speed_bot.stop');
+                            } else {
+                                globalObserver.emit('speed_bot.start');
+                            }
+                            return;
+                        }
+                        
+                        // For other tabs, use the regular run panel functions
                         if (is_stop_button_visible) {
                             onStopBotClick();
                             return;

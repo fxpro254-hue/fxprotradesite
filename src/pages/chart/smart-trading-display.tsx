@@ -592,6 +592,39 @@ const SmartTradingDisplay = observer(() => {
         };
     }, []);
 
+    // Register event listeners for smart trading run button integration
+    useEffect(() => {
+        const handleRunButtonStart = () => {
+            // Find the first strategy that's not already trading and start it
+            const inactiveStrategy = analysisStrategies.find(s => !s.activeContractType);
+            if (inactiveStrategy) {
+                handleAutoTrade(inactiveStrategy.id);
+            }
+        };
+
+        const handleRunButtonStop = () => {
+            // Stop all active strategies
+            const activeStrategies = analysisStrategies.filter(s => s.activeContractType);
+            activeStrategies.forEach(strategy => {
+                handleAutoTrade(strategy.id);
+            });
+        };
+
+        globalObserver.register('smart_trading.start', handleRunButtonStart);
+        globalObserver.register('smart_trading.stop', handleRunButtonStop);
+
+        return () => {
+            globalObserver.unregisterAll('smart_trading.start');
+            globalObserver.unregisterAll('smart_trading.stop');
+        };
+    }, [analysisStrategies]); // Re-register when strategies change
+
+    // Emit initial state when component mounts or strategies change
+    useEffect(() => {
+        const hasActiveStrategy = analysisStrategies.some(s => s.activeContractType);
+        globalObserver.emit('smart_trading.state_changed', { isRunning: hasActiveStrategy, strategyId: 'initial' });
+    }, [analysisStrategies]);
+
     // Initialize refs in the main useEffect (from TradingHub pattern)
     useEffect(() => {
         analysisStrategies.forEach(strategy => {
@@ -1719,6 +1752,8 @@ const SmartTradingDisplay = observer(() => {
                         : s
                 )
             );
+            // Emit state change for the run button
+            globalObserver.emit('smart_trading.state_changed', { isRunning: false, strategyId });
         } else {
             // Start auto trading - use a default state to indicate trading is active
             setAnalysisStrategies(prevStrategies =>
@@ -1728,6 +1763,8 @@ const SmartTradingDisplay = observer(() => {
                         : s
                 )
             );
+            // Emit state change for the run button
+            globalObserver.emit('smart_trading.state_changed', { isRunning: true, strategyId });
         }
     };
 
