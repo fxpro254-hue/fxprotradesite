@@ -336,10 +336,56 @@
         align-items: center;
         gap: 16px;
         min-height: 100px;
+        position: relative;
 
         @include mobile-or-tablet-screen {
             padding: 20px;
             min-height: 90px;
+        }
+    }
+
+    &__share-button {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: var(--general-section-2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 0.7;
+        z-index: 2;
+
+        @include mobile-or-tablet-screen {
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+        }
+
+        svg {
+            color: var(--text-general);
+            transition: all 0.3s;
+        }
+
+        &:hover {
+            opacity: 1;
+            background: var(--brand-red-coral);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+
+            svg {
+                color: white;
+            }
+        }
+
+        &:active {
+            transform: scale(0.95);
         }
     }
 
@@ -660,5 +706,77 @@ html {
     .free-bots-grid {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+}
+
+// Free Bot Search Bar Styles
+.free-bot-search-bar {
+    &__result-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid var(--border-normal);
+        
+        &:hover {
+            background: var(--general-hover);
+        }
+        
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+    
+    &__result-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 12px 16px;
+        background: transparent;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s;
+        
+        &:hover {
+            background: transparent;
+        }
+    }
+    
+    &__share-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--general-section-2);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-right: 12px;
+        transition: all 0.2s;
+        opacity: 0.7;
+        
+        svg {
+            color: var(--text-general);
+        }
+        
+        &:hover {
+            opacity: 1;
+            background: var(--brand-red-coral);
+            transform: scale(1.05);
+            
+            svg {
+                color: white;
+            }
+        }
+        
+        &:active {
+            transform: scale(0.95);
+        }
     }
 }

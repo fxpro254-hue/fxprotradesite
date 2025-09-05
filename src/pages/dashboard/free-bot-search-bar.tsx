@@ -2,10 +2,10 @@ import React, { useState, useCallback, useEffect } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/hooks/useStore';
+import { useShareBot } from '@/hooks/useShareBot';
 import { DBOT_TABS } from '@/constants/bot-contents';
 import { LabelPairedSearchMdRegularIcon, LabelPairedXmarkMdRegularIcon } from '@deriv/quill-icons/LabelPaired';
 import { localize } from '@deriv-com/translations';
-import { useDevice } from '@deriv-com/ui';
 import { TStrategy } from 'Types';
 
 // Comprehensive bot files available for search - includes all bots from public directory
@@ -36,7 +36,7 @@ type TFreeBotSearchBar = {
 const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
     const { dashboard, load_modal } = useStore();
     const { setActiveTab } = dashboard;
-    const { isDesktop } = useDevice();
+    const { shareBot } = useShareBot();
     
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState(availableBots);
@@ -131,6 +131,14 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
         setIsSearching(false);
     }, []);
 
+    // Handle share bot
+    const handleShareBot = useCallback(
+        (bot: { file: string; title: string }, event: React.MouseEvent) => {
+            shareBot(bot, event);
+        },
+        [shareBot]
+    );
+
     // Hide results when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -184,13 +192,15 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
                         {searchResults.length > 0 ? (
                             <div className='free-bot-search-bar__results-list'>
                                 {searchResults.slice(0, 5).map((bot, index) => (
-                                    <button
+                                    <div
                                         key={bot.file}
-                                        onClick={() => handleBotSelect(bot.file, bot.title)}
                                         className='free-bot-search-bar__result-item'
                                         data-testid={`search-result-${index}`}
                                     >
-                                        <div className='free-bot-search-bar__result-content'>
+                                        <button
+                                            onClick={() => handleBotSelect(bot.file, bot.title)}
+                                            className='free-bot-search-bar__result-content'
+                                        >
                                             <div className='free-bot-search-bar__result-title'>
                                                 {bot.title}
                                             </div>
@@ -203,8 +213,18 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
                                             <div className='free-bot-search-bar__result-category'>
                                                 {bot.category.charAt(0).toUpperCase() + bot.category.slice(1)}
                                             </div>
-                                        </div>
-                                    </button>
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleShareBot(bot, e)}
+                                            className='free-bot-search-bar__share-btn'
+                                            title='Share this bot'
+                                            aria-label='Share bot link'
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 ))}
                                 
                                 {searchResults.length > 5 && (

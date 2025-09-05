@@ -13,9 +13,8 @@ import SignalsModal from '@/components/signals/signals-modal';
 import AdvancedDisplayModal from '@/components/modals/advanced-display-modal';
 import StandaloneChartModal from '@/pages/chart/standalone-chart-modal';
 import { DBOT_TABS, TAB_IDS } from '@/constants/bot-contents';
-import { api_base, updateWorkspaceName } from '@/external/bot-skeleton';
+import { api_base } from '@/external/bot-skeleton';
 import { CONNECTION_STATUS } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
-import { isDbotRTL } from '@/external/bot-skeleton/utils/workspace';
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import { Localize, localize } from '@deriv-com/translations';
@@ -27,6 +26,7 @@ import RunStrategy from '../dashboard/run-strategy';
 import DisplayToggle from '@/components/trading-hub/display-toggle';
 import './main.scss';
 import './free-bots.scss';
+import { useUrlBotLoader } from '@/hooks/useUrlBotLoader';
 
 // Extend Window interface for Blockly
 declare global {
@@ -87,23 +87,6 @@ const ChartsIcon = () => (
         <rect x='8' y='3' width='8' height='8' rx='2' stroke='var(--text-general)' stroke-width='2' />
         <path d='M12 5V9' stroke='var(--text-general)' stroke-width='2' stroke-linecap='round' />
         <path d='M10 7H14' stroke='var(--text-general)' stroke-width='2' stroke-linecap='round' />
-    </svg>
-);
-
-const TutorialsIcon = () => (
-    <svg width='24px' height='24px' viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg' fill='none'>
-        <path
-            stroke='var(--text-general)'
-            stroke-width='12'
-            d='M170 96c0-45-4.962-49.999-50-50H72c-45.038.001-50 5-50 50s4.962 49.999 50 50h48c45.038-.001 50-5 50-50Z'
-        />
-        <path
-            stroke='var(--text-general)'
-            stroke-linecap='round'
-            stroke-linejoin='round'
-            stroke-width='12'
-            d='m82 74 34 22-34 22'
-        />
     </svg>
 );
 
@@ -172,10 +155,9 @@ const BotIcon = () => (
 
 const AppWrapper = observer(() => {
     const { connectionStatus } = useApiBase();
-    const { dashboard, load_modal, run_panel, quick_strategy, summary_card } = useStore();
-    const { active_tab, is_chart_modal_visible, is_trading_view_modal_visible, setActiveTab } = dashboard;
-    const { onEntered } = load_modal;
-    const {
+    const { dashboard, load_modal, run_panel, summary_card } = useStore();
+    const { active_tab, is_chart_modal_visible, setActiveTab } = dashboard;
+    const { 
         is_dialog_open,
         dialog_options,
         onCancelButtonClick,
@@ -186,11 +168,24 @@ const AppWrapper = observer(() => {
     } = run_panel;
     const { cancel_button_text, ok_button_text, title, message } = dialog_options as { [key: string]: string };
     const { clear } = summary_card;
-    const { DASHBOARD, BOT_BUILDER, AUTO, ANALYSIS_TOOL, SIGNALS, TRADING_HUB } = DBOT_TABS;
     const { isDesktop } = useDevice();
     const location = useLocation();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
+    
+    // Create a history-like object for the Tabs component
+    const history = {
+        location,
+        replace: (path: string) => navigate(path, { replace: true }),
+        length: window.history.length,
+        scrollRestoration: 'auto' as ScrollRestoration,
+        state: null,
+        back: () => window.history.back(),
+        forward: () => window.history.forward(),
+        go: (delta?: number) => window.history.go(delta),
+        pushState: (data: any, title: string, url?: string | null) => window.history.pushState(data, title, url),
+        replaceState: (data: any, title: string, url?: string | null) => window.history.replaceState(data, title, url)
+    };
 
     interface Bot {
         title: string;
@@ -208,7 +203,12 @@ const AppWrapper = observer(() => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showScrollTop, setShowScrollTop] = useState(false);
 
-    const isAnalysisToolActive = active_tab === ANALYSIS_TOOL;
+    // Clean URL bot loading using custom hook
+    useUrlBotLoader({
+        bots,
+        setActiveTab,
+        loadModal: load_modal
+    });
 
     useEffect(() => {
         if (connectionStatus !== CONNECTION_STATUS.OPENED) {
@@ -226,13 +226,14 @@ const AppWrapper = observer(() => {
         if (tab_param !== null) {
             const tab_index = TAB_IDS.findIndex(id => id === tab_param);
             if (tab_index >= 0) {
-                handleTabChange(tab_index);
+                setActiveTab(tab_index);
+                setSearchParams({ tab: TAB_IDS[tab_index] });
             }
         }
 
         // Set overunder state to "no" on page load
         localStorage.setItem('is_auto_overunder', 'false');
-    }, [searchParams]);
+    }, [searchParams, setActiveTab, setSearchParams]);
 
     useEffect(() => {
         const fetchBots = async () => {
@@ -250,11 +251,13 @@ const AppWrapper = observer(() => {
             
             const botPromises = botFiles.map(async ({ file, category, popularity, description }) => {
                 try {
-                    const response = await fetch(file);
+                    console.log(`🔄 Fetching bot file: ${file}`);
+                    const response = await fetch(`/${file}`);
                     if (!response.ok) {
+                        console.warn(`⚠️ Failed to fetch ${file}: ${response.status} ${response.statusText}`);
                         // For demo purposes, create mock data if file doesn't exist
                         return {
-                            title: file.split('/').pop(),
+                            title: file.split('/').pop()?.replace('.xml', '') || file,
                             image: 'default_image_path',
                             filePath: file,
                             xmlContent: `<?xml version="1.0" encoding="UTF-8"?><xml><block type="root">${file}</block></xml>`,
@@ -264,10 +267,11 @@ const AppWrapper = observer(() => {
                         };
                     }
                     const text = await response.text();
+                    console.log(`✅ Successfully fetched ${file}, content length: ${text.length}`);
                     const parser = new DOMParser();
                     const xml = parser.parseFromString(text, 'application/xml');
                     return {
-                        title: file.split('/').pop(),
+                        title: file.split('/').pop()?.replace('.xml', '') || file,
                         image: xml.getElementsByTagName('image')[0]?.textContent || 'default_image_path',
                         filePath: file,
                         xmlContent: text,
@@ -276,10 +280,10 @@ const AppWrapper = observer(() => {
                         description,
                     };
                 } catch (error) {
-                    console.error(`Error fetching ${file}:`, error);
+                    console.error(`❌ Error fetching ${file}:`, error);
                     // Return mock data for demo
                     return {
-                        title: file.split('/').pop(),
+                        title: file.split('/').pop()?.replace('.xml', '') || file,
                         image: 'default_image_path',
                         filePath: file,
                         xmlContent: `<?xml version="1.0" encoding="UTF-8"?><xml><block type="root">${file}</block></xml>`,
@@ -290,15 +294,13 @@ const AppWrapper = observer(() => {
                 }
             });
             const bots = (await Promise.all(botPromises)).filter(Boolean);
+            console.log('Bots fetched successfully:', bots.length, 'bots');
+            console.log('Bot titles:', bots.map(b => b.title));
             setBots(bots);
         };
 
         fetchBots();
     }, []);
-
-    const runBot = (xmlContent: string) => {
-        updateWorkspaceName(xmlContent);
-    };
 
     const handleTabChange = useCallback(
         (index: number) => {
@@ -308,65 +310,146 @@ const AppWrapper = observer(() => {
         [setActiveTab, setSearchParams]
     );
 
+    const handleShareBot = useCallback(
+        (bot: Bot, event: React.MouseEvent) => {
+            event.stopPropagation();
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('bot', encodeURIComponent(bot.title));
+            currentUrl.searchParams.set('tab', 'id-bot-builder');
+            
+            navigator.clipboard.writeText(currentUrl.toString()).then(() => {
+                // Show success notification or toast
+                console.log('Bot link copied to clipboard:', currentUrl.toString());
+                // You might want to add a toast notification here
+                
+                // Create a temporary notification element
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: var(--brand-red-coral);
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    z-index: 10000;
+                    animation: slideIn 0.3s ease-out;
+                `;
+                notification.textContent = 'Bot link copied to clipboard!';
+                document.body.appendChild(notification);
+                
+                // Add CSS animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                setTimeout(() => {
+                    notification.remove();
+                    style.remove();
+                }, 3000);
+            }).catch(err => {
+                console.error('Failed to copy bot link:', err);
+                // Fallback: show the URL in an alert or modal
+                alert(`Copy this link to share the bot:\n${currentUrl.toString()}`);
+            });
+        },
+        []
+    );
+
     const handleBotClick = useCallback(
         async (bot: Bot) => {
+            console.log('🚀 Loading bot:', bot.title);
+            
+            // Switch to bot builder tab first
             setActiveTab(DBOT_TABS.BOT_BUILDER);
+            
             try {
-                console.log('Loading bot:', bot.title);
+                if (!bot.xmlContent) {
+                    throw new Error('No XML content available for this bot');
+                }
 
-                // Load the bot's XML content into the workspace
-                if (bot.xmlContent) {
-                    // Create a temporary strategy object that matches the expected format
-                    const tempStrategy = {
-                        id: `temp_${Date.now()}`,
-                        xml: bot.xmlContent,
-                        name: bot.title,
-                        save_type: 'local',
-                        timestamp: Date.now()
-                    };
+                // Create a temporary strategy object
+                const tempStrategy = {
+                    id: `temp_${Date.now()}`,
+                    xml: bot.xmlContent,
+                    name: bot.title,
+                    save_type: 'local',
+                    timestamp: Date.now()
+                };
 
-                    // Use the existing loadStrategyToBuilder method which properly handles XML loading
-                    if (load_modal.loadStrategyToBuilder) {
-                        console.log('Loading bot using loadStrategyToBuilder...');
-                        await load_modal.loadStrategyToBuilder(tempStrategy);
-                        console.log('Bot loaded successfully using loadStrategyToBuilder!');
-                    } else {
-                        // Fallback to direct Blockly workspace manipulation
-                        console.log('Fallback to direct Blockly loading...');
-                        if (window.Blockly?.derivWorkspace) {
-                            const workspace = window.Blockly.derivWorkspace;
-                            
-                            // Clear existing workspace
-                            if (workspace.asyncClear) {
-                                await workspace.asyncClear();
-                            } else {
-                                workspace.clear();
-                            }
-                            
-                            // Load the new XML
-                            const xml = window.Blockly.utils.xml.textToDom(bot.xmlContent);
-                            window.Blockly.Xml.domToWorkspace(xml, workspace);
-                            
-                            // Set strategy reference for future use
-                            workspace.strategy_to_load = bot.xmlContent;
-                            
-                            console.log('Bot loaded successfully via direct workspace manipulation!');
-                        }
-                    }
+                // Use the load modal's loadStrategyToBuilder method
+                if (load_modal?.loadStrategyToBuilder) {
+                    console.log('🔄 Loading strategy to builder...');
+                    await load_modal.loadStrategyToBuilder(tempStrategy);
+                    console.log('✅ Bot loaded successfully!');
                 } else {
-                    console.error('No XML content found for bot:', bot.title);
+                    console.error('❌ loadStrategyToBuilder method not available');
                 }
             } catch (error) {
-                console.error('Error loading bot:', error);
+                console.error('💥 Error loading bot:', error);
+                throw error;
             }
         },
         [setActiveTab, load_modal]
     );
 
-    const handleOpen = useCallback(async () => {
-        await load_modal.loadFileFromRecent();
-        setActiveTab(DBOT_TABS.BOT_BUILDER);
-    }, [load_modal, setActiveTab]);
+    // Simple URL bot loading - runs when we have bots and a bot parameter
+    useEffect(() => {
+        const botParam = searchParams.get('bot');
+        
+        // Only proceed if we have both bots loaded and a bot parameter
+        if (!botParam || bots.length === 0) {
+            console.log('⏭️ Skipping URL bot loading:', { 
+                hasBotParam: !!botParam, 
+                botsCount: bots.length 
+            });
+            return;
+        }
+
+        console.log('🔍 URL Bot Loading - Starting process...');
+        console.log('📋 Bot parameter:', botParam);
+        console.log('🤖 Available bots:', bots.map(b => b.title));
+
+        const decodedBotName = decodeURIComponent(botParam);
+        console.log('� Decoded bot name:', decodedBotName);
+
+        // Find bot with flexible matching
+        const foundBot = bots.find(bot => {
+            const exactTitleMatch = bot.title === decodedBotName;
+            const fileNameMatch = bot.filePath.replace('.xml', '') === decodedBotName;
+            
+            console.log(`🔍 Checking "${bot.title}":`, {
+                exactTitleMatch,
+                fileNameMatch,
+                botTitle: bot.title,
+                filePath: bot.filePath
+            });
+            
+            return exactTitleMatch || fileNameMatch;
+        });
+
+        if (foundBot) {
+            console.log('✅ Found matching bot:', foundBot.title);
+            console.log('📄 Has XML content:', !!foundBot.xmlContent, 'Length:', foundBot.xmlContent?.length);
+            
+            // Load the bot immediately
+            handleBotClick(foundBot)
+                .then(() => {
+                    console.log('🎉 Bot loaded successfully from URL!');
+                })
+                .catch((error) => {
+                    console.error('� Failed to load bot from URL:', error);
+                });
+        } else {
+            console.log('❌ No matching bot found for:', decodedBotName);
+        }
+    }, [bots, searchParams, handleBotClick]);
 
     const toggleAnalysisTool = (url: string) => {
         setAnalysisToolUrl(url);
@@ -416,8 +499,8 @@ const AppWrapper = observer(() => {
                     <Tabs
                         active_index={active_tab}
                         className='main__tabs'
-                        onTabItemChange={onEntered}
                         onTabItemClick={handleTabChange}
+                        history={history}
                         top
                     >
                         <div
@@ -779,6 +862,16 @@ const AppWrapper = observer(() => {
                                                                     </div>
                                                                 )}
                                                             </div>
+                                                            <button
+                                                                className='bot-card__share-button'
+                                                                onClick={(e) => handleShareBot(bot, e)}
+                                                                title='Share this bot'
+                                                                aria-label='Share bot link'
+                                                            >
+                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                                                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                                                                </svg>
+                                                            </button>
                                                         </div>
                                                         <div className='bot-card__content'>
                                                             <p className='bot-card__description'>
@@ -904,7 +997,7 @@ const AppWrapper = observer(() => {
                 confirm_button_text={ok_button_text || localize('Ok')}
                 has_close_icon
                 is_visible={is_dialog_open}
-                onCancel={onCancelButtonClick}
+                onCancel={onCancelButtonClick || onCloseDialog}
                 onClose={onCloseDialog}
                 onConfirm={onOkButtonClick || onCloseDialog}
                 title={title}
