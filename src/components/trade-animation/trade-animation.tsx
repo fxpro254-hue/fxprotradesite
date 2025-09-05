@@ -151,13 +151,13 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
         'tutorial',
         'analysis_tool',
         'signals',
-        'trading_hub',
+        'portfolio',
         'free_bots',
     ] as const;
     const getTabName = (index: number) => TAB_NAMES[index];
 
     // Define which tabs should show the run button
-    // 0: dashboard, 1: bot_builder, 2: chart (smart trading), 3: auto (trading hub), 4: analysis_tool, 5: signals
+    // 0: dashboard, 1: bot_builder, 2: chart (smart trading), 3: auto (trading hub), 4: analysis_tool, 5: signals, 6: portfolio
     const allowedTabs = [0, 1, 2, 3, 4, 5];
     const shouldShowButton = allowedTabs.includes(active_tab);
 
