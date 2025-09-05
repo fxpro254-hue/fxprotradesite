@@ -207,6 +207,31 @@
     cursor: not-allowed;
 }
 
+.mobile-loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: var(--text-less-prominent);
+}
+
+.mobile-loading-indicator .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-normal);
+    border-top: 2px solid var(--brand-red-coral);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 8px;
+}
+
+.mobile-loading-indicator p {
+    margin: 0;
+    font-size: 13px;
+    text-align: center;
+}
+
 .portfolio-error {
     background: var(--status-danger-transparent);
     border: 1px solid var(--status-danger);
@@ -346,6 +371,52 @@
 .portfolio-action--default {
     background: var(--general-section-2);
     color: var(--text-general);
+}
+
+// Reference ID styling rules
+.reference-id {
+    font-family: 'Courier New', 'Monaco', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    background: var(--general-section-2);
+    border: 1px solid var(--border-normal);
+    border-radius: 4px;
+    color: var(--text-prominent);
+    text-align: center;
+    display: inline-block;
+    min-width: 80px;
+    letter-spacing: 0.5px;
+}
+
+// Add saving mode indicator
+.reference-id.reference-id--saving::before {
+    content: '🔒';
+    opacity: 0.7;
+    position: absolute;
+    left: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+}
+
+.reference-id--contract {
+    background: var(--status-info-transparent);
+    border-color: var(--status-info);
+    color: var(--status-info);
+}
+
+.reference-id--transaction {
+    background: var(--status-success-transparent);
+    border-color: var(--status-success);
+    color: var(--status-success);
+}
+
+.reference-id--unavailable {
+    background: var(--general-section-1);
+    border-color: var(--border-disabled);
+    color: var(--text-disabled);
+    font-style: italic;
 }
 
 // Mobile card view for transactions
@@ -498,6 +569,19 @@
         font-size: 10px;
         padding: 2px 6px;
     }
+    
+    // Mobile reference ID styling
+    .reference-id {
+        font-size: 11px;
+        padding: 3px 6px;
+        min-width: 60px;
+        letter-spacing: 0.3px;
+    }
+    
+    .card-detail-value .reference-id {
+        margin-left: auto;
+        flex-shrink: 0;
+    }
 }
 
 /* Regular Tablet devices */
@@ -566,6 +650,13 @@
     .statements-table td {
         padding: 10px 12px;
         font-size: 13px;
+    }
+    
+    // Tablet reference ID styling
+    .reference-id {
+        font-size: 11px;
+        padding: 3px 7px;
+        min-width: 70px;
     }
 }
 

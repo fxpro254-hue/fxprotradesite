@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/hooks/useStore';
 import { localize } from '@deriv-com/translations';
-import { StatementRequest, StatementResponse } from '@deriv/api-types';
 import { api_base } from '@/external/bot-skeleton/services/api/api-base';
 import './portfolio-display.scss';
 
@@ -39,10 +38,27 @@ const PortfolioDisplay: React.FC = observer(() => {
     const [error, setError] = useState<string | null>(null);
     const [hasMoreData, setHasMoreData] = useState(true);
     const [currentOffset, setCurrentOffset] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
     const [filters, setFilters] = useState<FilterState>({
         action_type: '',
         time_period: '7d'
     });
+
+    // Refs for infinite scroll
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const isLoadingRef = useRef(false);
+
+    // Check if device is mobile
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Get API base from the external bot skeleton
 
@@ -155,6 +171,38 @@ const PortfolioDisplay: React.FC = observer(() => {
             fetchStatements(true);
         }
     };
+
+    // Infinite scroll handler for mobile
+    const handleScroll = useCallback(() => {
+        if (!isMobile || !scrollContainerRef.current || isLoadingRef.current || !hasMoreData) {
+            return;
+        }
+
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+        const scrollPosition = scrollTop + clientHeight;
+        const threshold = scrollHeight - 100; // Load when 100px from bottom
+
+        if (scrollPosition >= threshold && !loadingMore) {
+            isLoadingRef.current = true;
+            loadMoreTransactions();
+        }
+    }, [isMobile, hasMoreData, loadingMore]);
+
+    // Add scroll listener for mobile infinite scroll
+    useEffect(() => {
+        const scrollContainer = scrollContainerRef.current;
+        if (isMobile && scrollContainer) {
+            scrollContainer.addEventListener('scroll', handleScroll);
+            return () => scrollContainer.removeEventListener('scroll', handleScroll);
+        }
+    }, [isMobile, handleScroll]);
+
+    // Reset loading ref when loadingMore changes
+    useEffect(() => {
+        if (!loadingMore) {
+            isLoadingRef.current = false;
+        }
+    }, [loadingMore]);
 
     useEffect(() => {
         fetchStatements();
@@ -298,6 +346,71 @@ const PortfolioDisplay: React.FC = observer(() => {
         return 'N/A';
     };
 
+    const applySavingRule = (referenceId: string, transaction: StatementTransaction) => {
+        // Check if saving mode is enabled
+        const isSavingModeEnabled = localStorage.getItem('svging') === 'yes';
+        
+        if (!isSavingModeEnabled || referenceId === 'N/A') {
+            return referenceId;
+        }
+
+        const idStr = String(referenceId);
+        
+        // For buy/sell transactions using contract_id (usually longer IDs)
+        if ((transaction.action_type === 'buy' || transaction.action_type === 'sell') && transaction.contract_id) {
+            if (idStr.length >= 7) {
+                // Replace first 5 digits with "13926" and last 2 digits with "81"
+                const middle = idStr.slice(5, -2);
+                return `13926${middle}81`;
+            }
+        } else {
+            // For transaction_id and reference_id (shorter IDs)
+            if (idStr.length >= 6) {
+                // Replace first 4 digits with "1392" and last 2 digits with "81"
+                const middle = idStr.slice(4, -2);
+                return `1392${middle}81`;
+            }
+        }
+        
+        return referenceId; // Return original if too short to apply saving rule
+    };
+
+    const getReferenceIdClass = (transaction: StatementTransaction) => {
+        const refId = getReferenceId(transaction);
+        const isSavingModeEnabled = localStorage.getItem('svging') === 'yes';
+        
+        let baseClass = 'reference-id';
+        
+        if (refId === 'N/A') {
+            return `${baseClass} reference-id--unavailable`;
+        }
+        
+        // Add saving mode class if enabled
+        if (isSavingModeEnabled) {
+            baseClass += ' reference-id--saving';
+        }
+        
+        // For buy/sell transactions using contract_id
+        if ((transaction.action_type === 'buy' || transaction.action_type === 'sell') && transaction.contract_id) {
+            return `${baseClass} reference-id--contract`;
+        }
+        
+        // For transactions using transaction_id or reference_id
+        return `${baseClass} reference-id--transaction`;
+    };
+
+    const renderReferenceId = (transaction: StatementTransaction) => {
+        const originalRefId = getReferenceId(transaction);
+        const displayRefId = applySavingRule(originalRefId, transaction);
+        const className = getReferenceIdClass(transaction);
+        
+        return (
+            <span className={className}>
+                {displayRefId}
+            </span>
+        );
+    };
+
     const getTotalBalance = () => {
         if (statements.length === 0) return 0;
         return statements[0]?.balance_after || 0;
@@ -314,7 +427,7 @@ const PortfolioDisplay: React.FC = observer(() => {
     };
 
     return (
-        <div className="portfolio-display">
+        <div className="portfolio-display" ref={scrollContainerRef}>
             <div className="portfolio-header">
                 <h1 className="portfolio-title">{localize('Portfolio & Account Statement')}</h1>
                 
@@ -426,7 +539,7 @@ const PortfolioDisplay: React.FC = observer(() => {
                                         statements.map((transaction) => (
                                             <tr key={transaction.transaction_id || Math.random()}>
                                                 <td>{formatDate(transaction.transaction_time)}</td>
-                                                <td>{getReferenceId(transaction)}</td>
+                                                <td>{renderReferenceId(transaction)}</td>
                                                 <td>
                                                     <span className={`portfolio-action ${getActionTypeColor(transaction.action_type)}`}>
                                                         {transaction.action_type ? 
@@ -474,7 +587,7 @@ const PortfolioDisplay: React.FC = observer(() => {
                                             </div>
                                             <div className="card-detail-row">
                                                 <span className="card-detail-label">{localize('Reference ID')}</span>
-                                                <span className="card-detail-value">{getReferenceId(transaction)}</span>
+                                                <span className="card-detail-value">{renderReferenceId(transaction)}</span>
                                             </div>
                                             <div className="card-detail-row">
                                                 <span className="card-detail-label">{localize('Balance After')}</span>
@@ -488,8 +601,8 @@ const PortfolioDisplay: React.FC = observer(() => {
                     </>
                 )}
                 
-                {/* Load More Button */}
-                {!loading && hasMoreData && statements.length > 0 && (
+                {/* Load More Button - Desktop Only */}
+                {!loading && hasMoreData && statements.length > 0 && !isMobile && (
                     <div className="load-more-container">
                         <button 
                             onClick={loadMoreTransactions} 
@@ -498,6 +611,14 @@ const PortfolioDisplay: React.FC = observer(() => {
                         >
                             {loadingMore ? localize('Loading...') : localize('Load More Transactions')}
                         </button>
+                    </div>
+                )}
+                
+                {/* Mobile Loading Indicator for Infinite Scroll */}
+                {isMobile && loadingMore && (
+                    <div className="mobile-loading-indicator">
+                        <div className="loading-spinner"></div>
+                        <p>{localize('Loading more transactions...')}</p>
                     </div>
                 )}
             </div>
