@@ -64,13 +64,16 @@ window.Blockly.Blocks.input_list = {
     allowed_parents: [
         'bb_statement',
         'bba_statement',
+        'donchian_channels_statement',
         'ema_statement',
         'emaa_statement',
+        'ichimoku_statement',
         'macda_statement',
         'rsi_statement',
         'rsia_statement',
         'sma_statement',
         'smaa_statement',
+        'williams_r_statement',
     ],
     getRequiredValueInputs() {
         return {

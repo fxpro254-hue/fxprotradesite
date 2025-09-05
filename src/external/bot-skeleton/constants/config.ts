@@ -274,6 +274,18 @@ export const config = () => ({
         [localize('MACD'), '1'],
         [localize('Signal'), '2'],
     ],
+    ichimokuResult: [
+        [localize('Tenkan-sen (Conversion Line)'), '0'],
+        [localize('Kijun-sen (Base Line)'), '1'],
+        [localize('Senkou Span A (Leading Span A)'), '2'],
+        [localize('Senkou Span B (Leading Span B)'), '3'],
+        [localize('Chikou Span (Lagging Span)'), '4'],
+    ],
+    donchianChannelsResult: [
+        [localize('Upper Channel'), '0'],
+        [localize('Middle Channel'), '1'],
+        [localize('Lower Channel'), '2'],
+    ],
     GOOGLE_DRIVE: {
         SCOPE: 'https://www.googleapis.com/auth/drive.file',
         DISCOVERY_DOCS: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',

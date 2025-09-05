@@ -1,14 +1,14 @@
 import { localize } from '@deriv-com/translations';
 import { modifyContextMenu } from '../../../../utils';
 
-window.Blockly.Blocks.period = {
+window.Blockly.Blocks.donchian_period = {
     init() {
         this.jsonInit({
-            message0: localize('Period {{ input_period }}', { input_period: '%1' }),
+            message0: localize('Donchian Period {{ input_period }}', { input_period: '%1' }),
             args0: [
                 {
                     type: 'input_value',
-                    name: 'PERIOD',
+                    name: 'DONCHIAN_PERIOD',
                     check: null,
                 },
             ],
@@ -27,24 +27,13 @@ window.Blockly.Blocks.period = {
         modifyContextMenu(menu);
     },
     allowed_parents: [
-        'bb_statement',
-        'bba_statement',
         'donchian_channels_statement',
-        'ema_statement',
-        'emaa_statement',
-        'ichimoku_statement',
-        'macda_statement',
-        'rsi_statement',
-        'rsia_statement',
-        'sma_statement',
-        'smaa_statement',
-        'williams_r_statement',
     ],
     getRequiredValueInputs() {
         return {
-            PERIOD: null,
+            DONCHIAN_PERIOD: null,
         };
     },
 };
 
-window.Blockly.JavaScript.javascriptGenerator.forBlock.period = () => {};
+window.Blockly.JavaScript.javascriptGenerator.forBlock.donchian_period = () => {};

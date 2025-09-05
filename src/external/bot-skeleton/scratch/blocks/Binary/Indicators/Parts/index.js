@@ -5,3 +5,8 @@ import './std_dev_multiplier_down';
 import './fast_ema_period';
 import './slow_ema_period';
 import './signal_ema_period';
+import './tenkan_period';
+import './kijun_period';
+import './senkou_span_b_period';
+import './donchian_period';
+import './williams_r_period';

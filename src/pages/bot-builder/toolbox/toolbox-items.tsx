@@ -171,6 +171,493 @@ export const ToolboxItems = () =>
                 <Block type='trade_again' />
             </Category>
 
+            <Category id='templates' name={localize('Templates')}>
+                <Category id='beginner_templates' name={localize('Beginner Templates')}>
+                    {/* Simple Even/Odd Strategy */}
+                    <Block type='before_purchase' name='📚 Simple Even/Odd Strategy'>
+                        <Statement name='BEFOREPURCHASE_STACK'>
+                            <Block type='controls_if'>
+                                <Value name='IF0'>
+                                    <Block type='logic_compare'>
+                                        <Field name='OP'>GT</Field>
+                                        <Value name='A'>
+                                            <Block type='even_odd_percentage'>
+                                                <Field name='PATTERN'>even</Field>
+                                                <Value name='COUNT'>
+                                                    <Shadow type='math_number'>
+                                                        <Field name='NUM'>5</Field>
+                                                    </Shadow>
+                                                </Value>
+                                            </Block>
+                                        </Value>
+                                        <Value name='B'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>70</Field>
+                                            </Shadow>
+                                        </Value>
+                                    </Block>
+                                </Value>
+                                <Statement name='DO0'>
+                                    <Block type='purchase'>
+                                        <Field name='PURCHASE_LIST'>CALL</Field>
+                                    </Block>
+                                </Statement>
+                                <Statement name='ELSE'>
+                                    <Block type='purchase'>
+                                        <Field name='PURCHASE_LIST'>PUT</Field>
+                                    </Block>
+                                </Statement>
+                            </Block>
+                        </Statement>
+                    </Block>
+                    
+                    {/* Basic Trend Following */}
+                    <Block type='before_purchase' name='📈 Basic Trend Following'>
+                        <Statement name='BEFOREPURCHASE_STACK'>
+                            <Block type='controls_if'>
+                                <Value name='IF0'>
+                                    <Block type='last_ticks_direction'>
+                                        <Value name='COUNT'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>3</Field>
+                                            </Shadow>
+                                        </Value>
+                                        <Field name='DIRECTION'>rise</Field>
+                                    </Block>
+                                </Value>
+                                <Statement name='DO0'>
+                                    <Block type='purchase'>
+                                        <Field name='PURCHASE_LIST'>CALL</Field>
+                                    </Block>
+                                </Statement>
+                                <Next>
+                                    <Block type='controls_if'>
+                                        <Value name='IF0'>
+                                            <Block type='last_ticks_direction'>
+                                                <Value name='COUNT'>
+                                                    <Shadow type='math_number'>
+                                                        <Field name='NUM'>3</Field>
+                                                    </Shadow>
+                                                </Value>
+                                                <Field name='DIRECTION'>fall</Field>
+                                            </Block>
+                                        </Value>
+                                        <Statement name='DO0'>
+                                            <Block type='purchase'>
+                                                <Field name='PURCHASE_LIST'>PUT</Field>
+                                            </Block>
+                                        </Statement>
+                                    </Block>
+                                </Next>
+                            </Block>
+                        </Statement>
+                    </Block>
+                </Category>
+                
+                <Category id='advanced_templates' name={localize('Advanced Templates')}>
+                    {/* Multi-Condition Analysis */}
+                    <Block type='logic_operation' name='🔬 Multi-Condition Analyzer'>
+                        <Field name='OP'>AND</Field>
+                        <Value name='A'>
+                            <Block type='logic_compare'>
+                                <Field name='OP'>GT</Field>
+                                <Value name='A'>
+                                    <Block type='digit_comparison'>
+                                        <Field name='DIGIT_TYPE'>last</Field>
+                                        <Field name='COMPARISON_TYPE'>matches</Field>
+                                        <Field name='DIGIT_VALUE'>8</Field>
+                                        <Value name='COUNT'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>10</Field>
+                                            </Shadow>
+                                        </Value>
+                                    </Block>
+                                </Value>
+                                <Value name='B'>
+                                    <Shadow type='math_number'>
+                                        <Field name='NUM'>3</Field>
+                                    </Shadow>
+                                </Value>
+                            </Block>
+                        </Value>
+                        <Value name='B'>
+                            <Block type='logic_compare'>
+                                <Field name='OP'>LT</Field>
+                                <Value name='A'>
+                                    <Block type='digit_frequency_rank'>
+                                        <Field name='DIGIT_TYPE'>last</Field>
+                                        <Field name='DIGIT_VALUE'>8</Field>
+                                        <Value name='COUNT'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>20</Field>
+                                            </Shadow>
+                                        </Value>
+                                    </Block>
+                                </Value>
+                                <Value name='B'>
+                                    <Shadow type='math_number'>
+                                        <Field name='NUM'>5</Field>
+                                    </Shadow>
+                                </Value>
+                            </Block>
+                        </Value>
+                    </Block>
+                    
+                    {/* Pattern Breakout Detection */}
+                    <Block type='logic_operation' name='⚡ Pattern Breakout Detector'>
+                        <Field name='OP'>OR</Field>
+                        <Value name='A'>
+                            <Block type='logic_operation'>
+                                <Field name='OP'>AND</Field>
+                                <Value name='A'>
+                                    <Block type='logic_compare'>
+                                        <Field name='OP'>GT</Field>
+                                        <Value name='A'>
+                                            <Block type='even_odd_percentage'>
+                                                <Field name='PATTERN'>odd</Field>
+                                                <Value name='COUNT'>
+                                                    <Shadow type='math_number'>
+                                                        <Field name='NUM'>15</Field>
+                                                    </Shadow>
+                                                </Value>
+                                            </Block>
+                                        </Value>
+                                        <Value name='B'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>75</Field>
+                                            </Shadow>
+                                        </Value>
+                                    </Block>
+                                </Value>
+                                <Value name='B'>
+                                    <Block type='last_ticks_direction'>
+                                        <Value name='COUNT'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>2</Field>
+                                            </Shadow>
+                                        </Value>
+                                        <Field name='DIRECTION'>fall</Field>
+                                    </Block>
+                                </Value>
+                            </Block>
+                        </Value>
+                        <Value name='B'>
+                            <Block type='logic_operation'>
+                                <Field name='OP'>AND</Field>
+                                <Value name='A'>
+                                    <Block type='logic_compare'>
+                                        <Field name='OP'>GT</Field>
+                                        <Value name='A'>
+                                            <Block type='even_odd_percentage'>
+                                                <Field name='PATTERN'>even</Field>
+                                                <Value name='COUNT'>
+                                                    <Shadow type='math_number'>
+                                                        <Field name='NUM'>15</Field>
+                                                    </Shadow>
+                                                </Value>
+                                            </Block>
+                                        </Value>
+                                        <Value name='B'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>75</Field>
+                                            </Shadow>
+                                        </Value>
+                                    </Block>
+                                </Value>
+                                <Value name='B'>
+                                    <Block type='last_ticks_direction'>
+                                        <Value name='COUNT'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>2</Field>
+                                            </Shadow>
+                                        </Value>
+                                        <Field name='DIRECTION'>rise</Field>
+                                    </Block>
+                                </Value>
+                            </Block>
+                        </Value>
+                    </Block>
+                </Category>
+                
+                <Category id='professional_templates' name={localize('Professional Strategies')}>
+                    {/* Complete Trading Strategy */}
+                    <Block type='before_purchase' name='💼 Professional Trading System'>
+                        <Statement name='BEFOREPURCHASE_STACK'>
+                            <Block type='variables_set'>
+                                <Field name='VAR' variabletype='Number'>confidence_score</Field>
+                                <Value name='VALUE'>
+                                    <Shadow type='math_number'>
+                                        <Field name='NUM'>0</Field>
+                                    </Shadow>
+                                </Value>
+                                <Next>
+                                    <Block type='controls_if'>
+                                        <Value name='IF0'>
+                                            <Block type='logic_compare'>
+                                                <Field name='OP'>GT</Field>
+                                                <Value name='A'>
+                                                    <Block type='even_odd_percentage'>
+                                                        <Field name='PATTERN'>odd</Field>
+                                                        <Value name='COUNT'>
+                                                            <Shadow type='math_number'>
+                                                                <Field name='NUM'>10</Field>
+                                                            </Shadow>
+                                                        </Value>
+                                                    </Block>
+                                                </Value>
+                                                <Value name='B'>
+                                                    <Shadow type='math_number'>
+                                                        <Field name='NUM'>65</Field>
+                                                    </Shadow>
+                                                </Value>
+                                            </Block>
+                                        </Value>
+                                        <Statement name='DO0'>
+                                            <Block type='variables_set'>
+                                                <Field name='VAR' variabletype='Number'>confidence_score</Field>
+                                                <Value name='VALUE'>
+                                                    <Block type='math_arithmetic'>
+                                                        <Field name='OP'>ADD</Field>
+                                                        <Value name='A'>
+                                                            <Block type='variables_get'>
+                                                                <Field name='VAR' variabletype='Number'>confidence_score</Field>
+                                                            </Block>
+                                                        </Value>
+                                                        <Value name='B'>
+                                                            <Shadow type='math_number'>
+                                                                <Field name='NUM'>1</Field>
+                                                            </Shadow>
+                                                        </Value>
+                                                    </Block>
+                                                </Value>
+                                            </Block>
+                                        </Statement>
+                                        <Next>
+                                            <Block type='controls_if'>
+                                                <Value name='IF0'>
+                                                    <Block type='last_ticks_direction'>
+                                                        <Value name='COUNT'>
+                                                            <Shadow type='math_number'>
+                                                                <Field name='NUM'>3</Field>
+                                                            </Shadow>
+                                                        </Value>
+                                                        <Field name='DIRECTION'>fall</Field>
+                                                    </Block>
+                                                </Value>
+                                                <Statement name='DO0'>
+                                                    <Block type='variables_set'>
+                                                        <Field name='VAR' variabletype='Number'>confidence_score</Field>
+                                                        <Value name='VALUE'>
+                                                            <Block type='math_arithmetic'>
+                                                                <Field name='OP'>ADD</Field>
+                                                                <Value name='A'>
+                                                                    <Block type='variables_get'>
+                                                                        <Field name='VAR' variabletype='Number'>confidence_score</Field>
+                                                                    </Block>
+                                                                </Value>
+                                                                <Value name='B'>
+                                                                    <Shadow type='math_number'>
+                                                                        <Field name='NUM'>1</Field>
+                                                                    </Shadow>
+                                                                </Value>
+                                                            </Block>
+                                                        </Value>
+                                                    </Block>
+                                                </Statement>
+                                                <Next>
+                                                    <Block type='controls_if'>
+                                                        <Value name='IF0'>
+                                                            <Block type='logic_compare'>
+                                                                <Field name='OP'>GTE</Field>
+                                                                <Value name='A'>
+                                                                    <Block type='variables_get'>
+                                                                        <Field name='VAR' variabletype='Number'>confidence_score</Field>
+                                                                    </Block>
+                                                                </Value>
+                                                                <Value name='B'>
+                                                                    <Shadow type='math_number'>
+                                                                        <Field name='NUM'>2</Field>
+                                                                    </Shadow>
+                                                                </Value>
+                                                            </Block>
+                                                        </Value>
+                                                        <Statement name='DO0'>
+                                                            <Block type='purchase'>
+                                                                <Field name='PURCHASE_LIST'>PUT</Field>
+                                                            </Block>
+                                                        </Statement>
+                                                    </Block>
+                                                </Next>
+                                            </Block>
+                                        </Next>
+                                    </Block>
+                                </Next>
+                            </Block>
+                        </Statement>
+                    </Block>
+                    
+                    {/* Advanced Risk Management */}
+                    <Block type='after_purchase' name='🛡️ Advanced Risk Controller'>
+                        <Statement name='AFTERPURCHASE_STACK'>
+                            <Block type='controls_if'>
+                                <Value name='IF0'>
+                                    <Block type='contract_check_result'>
+                                        <Field name='CHECK_RESULT'>win</Field>
+                                    </Block>
+                                </Value>
+                                <Statement name='DO0'>
+                                    <Block type='notify'>
+                                        <Field name='NOTIFICATION_TYPE'>success</Field>
+                                        <Field name='NOTIFICATION_SOUND'>earned-money</Field>
+                                        <Value name='MESSAGE'>
+                                            <Shadow type='text'>
+                                                <Field name='TEXT'>Trade successful! Continuing with base stake.</Field>
+                                            </Shadow>
+                                        </Value>
+                                        <Next>
+                                            <Block type='trade_again' />
+                                        </Next>
+                                    </Block>
+                                </Statement>
+                                <Statement name='ELSE'>
+                                    <Block type='controls_if'>
+                                        <Value name='IF0'>
+                                            <Block type='logic_compare'>
+                                                <Field name='OP'>LTE</Field>
+                                                <Value name='A'>
+                                                    <Block type='total_profit' />
+                                                </Value>
+                                                <Value name='B'>
+                                                    <Shadow type='math_number'>
+                                                        <Field name='NUM'>-20</Field>
+                                                    </Shadow>
+                                                </Value>
+                                            </Block>
+                                        </Value>
+                                        <Statement name='DO0'>
+                                            <Block type='notify'>
+                                                <Field name='NOTIFICATION_TYPE'>warn</Field>
+                                                <Field name='NOTIFICATION_SOUND'>job-done</Field>
+                                                <Value name='MESSAGE'>
+                                                    <Shadow type='text'>
+                                                        <Field name='TEXT'>Daily loss limit reached. Stopping trades.</Field>
+                                                    </Shadow>
+                                                </Value>
+                                            </Block>
+                                        </Statement>
+                                        <Statement name='ELSE'>
+                                            <Block type='trade_again' />
+                                        </Statement>
+                                    </Block>
+                                </Statement>
+                            </Block>
+                        </Statement>
+                    </Block>
+                </Category>
+                
+                <Category id='quick_setup_templates' name={localize('Quick Setup Templates')}>
+                    {/* 5-Minute Scalping Setup */}
+                    <Block type='before_purchase' name='⏰ 5-Minute Scalping Setup'>
+                        <Statement name='BEFOREPURCHASE_STACK'>
+                            <Block type='controls_if'>
+                                <Value name='IF0'>
+                                    <Block type='logic_operation'>
+                                        <Field name='OP'>AND</Field>
+                                        <Value name='A'>
+                                            <Block type='logic_compare'>
+                                                <Field name='OP'>GT</Field>
+                                                <Value name='A'>
+                                                    <Block type='digit_comparison'>
+                                                        <Field name='DIGIT_TYPE'>last</Field>
+                                                        <Field name='COMPARISON_TYPE'>matches</Field>
+                                                        <Field name='DIGIT_VALUE'>3</Field>
+                                                        <Value name='COUNT'>
+                                                            <Shadow type='math_number'>
+                                                                <Field name='NUM'>5</Field>
+                                                            </Shadow>
+                                                        </Value>
+                                                    </Block>
+                                                </Value>
+                                                <Value name='B'>
+                                                    <Shadow type='math_number'>
+                                                        <Field name='NUM'>1</Field>
+                                                    </Shadow>
+                                                </Value>
+                                            </Block>
+                                        </Value>
+                                        <Value name='B'>
+                                            <Block type='logic_compare'>
+                                                <Field name='OP'>GT</Field>
+                                                <Value name='A'>
+                                                    <Block type='even_odd_percentage'>
+                                                        <Field name='PATTERN'>odd</Field>
+                                                        <Value name='COUNT'>
+                                                            <Shadow type='math_number'>
+                                                                <Field name='NUM'>5</Field>
+                                                            </Shadow>
+                                                        </Value>
+                                                    </Block>
+                                                </Value>
+                                                <Value name='B'>
+                                                    <Shadow type='math_number'>
+                                                        <Field name='NUM'>60</Field>
+                                                    </Shadow>
+                                                </Value>
+                                            </Block>
+                                        </Value>
+                                    </Block>
+                                </Value>
+                                <Statement name='DO0'>
+                                    <Block type='purchase'>
+                                        <Field name='PURCHASE_LIST'>PUT</Field>
+                                    </Block>
+                                </Statement>
+                                <Statement name='ELSE'>
+                                    <Block type='purchase'>
+                                        <Field name='PURCHASE_LIST'>CALL</Field>
+                                    </Block>
+                                </Statement>
+                            </Block>
+                        </Statement>
+                    </Block>
+                    
+                    {/* Conservative Profit Target */}
+                    <Block type='after_purchase' name='💰 Conservative Profit Target'>
+                        <Statement name='AFTERPURCHASE_STACK'>
+                            <Block type='controls_if'>
+                                <Value name='IF0'>
+                                    <Block type='logic_compare'>
+                                        <Field name='OP'>GTE</Field>
+                                        <Value name='A'>
+                                            <Block type='total_profit' />
+                                        </Value>
+                                        <Value name='B'>
+                                            <Shadow type='math_number'>
+                                                <Field name='NUM'>10</Field>
+                                            </Shadow>
+                                        </Value>
+                                    </Block>
+                                </Value>
+                                <Statement name='DO0'>
+                                    <Block type='notify'>
+                                        <Field name='NOTIFICATION_TYPE'>success</Field>
+                                        <Field name='NOTIFICATION_SOUND'>earned-money</Field>
+                                        <Value name='MESSAGE'>
+                                            <Shadow type='text'>
+                                                <Field name='TEXT'>Profit target reached! Well done.</Field>
+                                            </Shadow>
+                                        </Value>
+                                    </Block>
+                                </Statement>
+                                <Statement name='ELSE'>
+                                    <Block type='trade_again' />
+                                </Statement>
+                            </Block>
+                        </Statement>
+                    </Block>
+                </Category>
+            </Category>
+
             <Category id='analysis' name={localize('Analysis')}>
                 <Category id='indicators' name={localize('Indicators')}>
                     <Block type='sma_statement'>
@@ -406,7 +893,8 @@ export const ToolboxItems = () =>
                         </Value>
                     </Block>
                     <Block type='digit_frequency_rank'>
-                        <Field name='RANK'>most</Field>
+                        <Field name='DIGIT_TYPE'>last</Field>
+                        <Field name='DIGIT_VALUE'>7</Field>
                         <Value name='COUNT'>
                             <Shadow type='math_number'>
                                 <Field name='NUM'>15</Field>
@@ -422,15 +910,12 @@ export const ToolboxItems = () =>
                         <Field name='PATTERN'>all_even</Field>
                     </Block>
                     <Block type='digit_comparison'>
+                        <Field name='DIGIT_TYPE'>last</Field>
+                        <Field name='COMPARISON_TYPE'>matches</Field>
+                        <Field name='DIGIT_VALUE'>7</Field>
                         <Value name='COUNT'>
                             <Shadow type='math_number'>
                                 <Field name='NUM'>5</Field>
-                            </Shadow>
-                        </Value>
-                        <Field name='OPERATOR'>equal</Field>
-                        <Value name='DIGIT'>
-                            <Shadow type='math_number'>
-                                <Field name='NUM'>7</Field>
                             </Shadow>
                         </Value>
                     </Block>
@@ -513,9 +998,10 @@ export const ToolboxItems = () =>
                     </Block>
                     <Block type='notify'>
                         <Field name='NOTIFICATION_TYPE'>success</Field>
+                        <Field name='NOTIFICATION_SOUND'>announcement</Field>
                         <Value name='MESSAGE'>
                             <Shadow type='text'>
-                                <Field name='TEXT'>abc</Field>
+                                <Field name='TEXT'>Notification message</Field>
                             </Shadow>
                         </Value>
                     </Block>
@@ -867,7 +1353,8 @@ export const ToolboxItems = () =>
                     </Value>
                 </Block>
                 <Block type='digit_frequency_rank'>
-                    <Field name='RANK'>most</Field>
+                    <Field name='DIGIT_TYPE'>last</Field>
+                    <Field name='DIGIT_VALUE'>7</Field>
                     <Value name='COUNT'>
                         <Shadow type='math_number'>
                             <Field name='NUM'>15</Field>
@@ -883,15 +1370,12 @@ export const ToolboxItems = () =>
                     <Field name='PATTERN'>all_even</Field>
                 </Block>
                 <Block type='digit_comparison'>
+                    <Field name='DIGIT_TYPE'>last</Field>
+                    <Field name='COMPARISON_TYPE'>matches</Field>
+                    <Field name='DIGIT_VALUE'>7</Field>
                     <Value name='COUNT'>
                         <Shadow type='math_number'>
                             <Field name='NUM'>5</Field>
-                        </Shadow>
-                    </Value>
-                    <Field name='OPERATOR'>equal</Field>
-                    <Value name='DIGIT'>
-                        <Shadow type='math_number'>
-                            <Field name='NUM'>7</Field>
                         </Shadow>
                     </Value>
                 </Block>
@@ -913,11 +1397,83 @@ export const ToolboxItems = () =>
                 </Block>
                 <Block type='notify'>
                     <Field name='NOTIFICATION_TYPE'>success</Field>
+                    <Field name='NOTIFICATION_SOUND'>announcement</Field>
                     <Value name='MESSAGE'>
                         <Shadow type='text'>
-                            <Field name='TEXT'>abc</Field>
+                            <Field name='TEXT'>Notification message</Field>
                         </Shadow>
                     </Value>
+                </Block>
+            </Category>
+
+            <Category id='tools' name={localize('Tools🔥')}>
+                <Block type='ichimoku_statement'>
+                    <Field name='ICHIMOKU_LINE_TYPE'>0</Field>
+                    <Statement name='STATEMENT'>
+                        <Block type='input_list' deletable='false' movable='false'>
+                            <Value name='INPUT_LIST' />
+                            <Next>
+                                <Block type='tenkan_period' deletable='false' movable='false'>
+                                    <Value name='TENKAN_PERIOD'>
+                                        <Shadow type='math_number'>
+                                            <Field name='NUM'>9</Field>
+                                        </Shadow>
+                                    </Value>
+                                    <Next>
+                                        <Block type='kijun_period' deletable='false' movable='false'>
+                                            <Value name='KIJUN_PERIOD'>
+                                                <Shadow type='math_number'>
+                                                    <Field name='NUM'>26</Field>
+                                                </Shadow>
+                                            </Value>
+                                            <Next>
+                                                <Block type='senkou_span_b_period'>
+                                                    <Value name='SENKOU_SPAN_B_PERIOD'>
+                                                        <Shadow type='math_number'>
+                                                            <Field name='NUM'>52</Field>
+                                                        </Shadow>
+                                                    </Value>
+                                                </Block>
+                                            </Next>
+                                        </Block>
+                                    </Next>
+                                </Block>
+                            </Next>
+                        </Block>
+                    </Statement>
+                </Block>
+                <Block type='donchian_channels_statement'>
+                    <Field name='DONCHIAN_CHANNEL_LINE'>0</Field>
+                    <Statement name='STATEMENT'>
+                        <Block type='input_list' deletable='false' movable='false'>
+                            <Value name='INPUT_LIST' />
+                            <Next>
+                                <Block type='donchian_period' deletable='false' movable='false'>
+                                    <Value name='DONCHIAN_PERIOD'>
+                                        <Shadow type='math_number'>
+                                            <Field name='NUM'>20</Field>
+                                        </Shadow>
+                                    </Value>
+                                </Block>
+                            </Next>
+                        </Block>
+                    </Statement>
+                </Block>
+                <Block type='williams_r_statement'>
+                    <Statement name='STATEMENT'>
+                        <Block type='input_list' deletable='false' movable='false'>
+                            <Value name='INPUT_LIST' />
+                            <Next>
+                                <Block type='williams_r_period' deletable='false' movable='false'>
+                                    <Value name='WILLIAMS_R_PERIOD'>
+                                        <Shadow type='math_number'>
+                                            <Field name='NUM'>14</Field>
+                                        </Shadow>
+                                    </Value>
+                                </Block>
+                            </Next>
+                        </Block>
+                    </Statement>
                 </Block>
             </Category>
 
