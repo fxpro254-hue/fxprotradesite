@@ -30,8 +30,67 @@ interface FilterState {
     time_period: string;
 }
 
+interface RiskCalculationState {
+    stake: number;
+    contractType: string;
+    prediction?: number | string;
+    martingaleEnabled: boolean;
+    martingaleMultiplier: number;
+    martingaleSteps: number;
+    display: string;
+    operation: string | null;
+    previousValue: number | null;
+    waitingForOperand: boolean;
+    activeField: 'stake' | null;
+    targetProfit: number;
+    riskTolerance: 'conservative' | 'moderate' | 'aggressive';
+}
+
+interface MartingaleCalculation {
+    sequence: number[];
+    totalRisk: number;
+    maxPossibleLoss: number;
+    capitalRecommendation: {
+        minimum: number;
+        recommended: number;
+        conservative: number;
+        reasoning: string[];
+    };
+    riskAssessment: {
+        level: 'low' | 'medium' | 'high' | 'extreme';
+        score: number;
+        warnings: string[];
+        recommendations: string[];
+    };
+    takeProfitSuggestion: {
+        conservative: {
+            amount: number;
+            runsNeeded: number;
+            profitPerRun: number;
+        };
+        balanced: {
+            amount: number;
+            runsNeeded: number;
+            profitPerRun: number;
+        };
+        aggressive: {
+            amount: number;
+            runsNeeded: number;
+            profitPerRun: number;
+        };
+        currentOptimal: {
+            amount: number;
+            runsNeeded: number;
+            profitPerRun: number;
+        };
+        contractProfitRate: number;
+        minimumProfitableAmount: number;
+    };
+}
+
 const PortfolioDisplay: React.FC = observer(() => {
     const { client } = useStore();
+    const [activeSection, setActiveSection] = useState<'portfolio' | 'risk-management' | 'strategies'>('portfolio');
     const [statements, setStatements] = useState<StatementTransaction[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -44,9 +103,42 @@ const PortfolioDisplay: React.FC = observer(() => {
         time_period: '7d'
     });
 
+    // Risk Management Calculator State
+    const [riskCalc, setRiskCalc] = useState<RiskCalculationState>({
+        stake: 1,
+        contractType: 'call',
+        prediction: undefined,
+        martingaleEnabled: true,
+        martingaleMultiplier: 2.1,
+        martingaleSteps: 5,
+        display: '0',
+        operation: null,
+        previousValue: null,
+        waitingForOperand: false,
+        activeField: null,
+        targetProfit: 20,
+        riskTolerance: 'moderate'
+    });
+    const [payoutRates, setPayoutRates] = useState<{ [key: string]: number }>({});
+    const [loadingPayout, setLoadingPayout] = useState(false);
+    const [calculationResults, setCalculationResults] = useState<MartingaleCalculation | null>(null);
+    const [isCalculating, setIsCalculating] = useState(false);
+
     // Refs for infinite scroll
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isLoadingRef = useRef(false);
+
+    // Currency formatting utility
+    const formatCurrency = useCallback((amount: number, currency: string = 'USD'): string => {
+        if (isNaN(amount)) return `${currency} 0.00`;
+
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    }, []);
 
     // Check if device is mobile
     useEffect(() => {
@@ -204,9 +296,821 @@ const PortfolioDisplay: React.FC = observer(() => {
         }
     }, [loadingMore]);
 
+    // Initialize risk calc with current balance
+    useEffect(() => {
+        if (client?.currency && statements.length > 0) {
+            setRiskCalc(prev => ({
+                ...prev,
+                accountBalance: getTotalBalance()
+            }));
+        }
+    }, [statements, client?.currency]);
+
+    // Contract type options for binary options
+    const contractTypeOptions = [
+        // Rise/Fall contracts
+        { value: 'call', label: localize('Rise (Call)') },
+        { value: 'put', label: localize('Fall (Put)') },
+        
+        // Higher/Lower contracts
+        { value: 'calle', label: localize('Higher') },
+        { value: 'pute', label: localize('Lower') },
+        
+        // Touch/No Touch contracts
+        { value: 'onetouch', label: localize('Touch') },
+        { value: 'notouch', label: localize('No Touch') },
+        
+        // Range contracts
+        { value: 'range', label: localize('Ends Between') },
+        { value: 'upordown', label: localize('Ends Outside') },
+        { value: 'expirymiss', label: localize('Stays Between') },
+        { value: 'expiryrange', label: localize('Goes Outside') },
+        
+        // Asian contracts
+        { value: 'asianu', label: localize('Asian Up') },
+        { value: 'asiand', label: localize('Asian Down') },
+        
+        // Digit contracts
+        { value: 'digitmatch', label: localize('Matches') },
+        { value: 'digitdiff', label: localize('Differs') },
+        { value: 'digiteven', label: localize('Even') },
+        { value: 'digitodd', label: localize('Odd') },
+        { value: 'digitover', label: localize('Over') },
+        { value: 'digitunder', label: localize('Under') }
+    ];
+
+    // Function to determine if contract type requires prediction and what type
+    const getPredictionInfo = (contractType: string) => {
+        const predictionTypes: { [key: string]: any } = {
+            // Digit prediction contracts - only show UI for over/under
+            'digitover': { 
+                required: true, 
+                showUI: true,
+                type: 'digit', 
+                label: localize('Threshold'), 
+                placeholder: '0-9',
+                min: 0,
+                max: 9
+            },
+            'digitunder': { 
+                required: true, 
+                showUI: true,
+                type: 'digit', 
+                label: localize('Threshold'), 
+                placeholder: '0-9',
+                min: 0,
+                max: 9
+            },
+            // Match/Diff contracts - use fixed value, no UI
+            'digitmatch': { 
+                required: true, 
+                showUI: false,
+                type: 'digit', 
+                defaultValue: 1
+            },
+            'digitdiff': { 
+                required: true, 
+                showUI: false,
+                type: 'digit', 
+                defaultValue: 1
+            },
+            
+            // Barrier contracts
+            'onetouch': { 
+                required: true, 
+                type: 'barrier', 
+                label: localize('Barrier'), 
+                placeholder: 'Enter barrier value'
+            },
+            'notouch': { 
+                required: true, 
+                type: 'barrier', 
+                label: localize('Barrier'), 
+                placeholder: 'Enter barrier value'
+            },
+            'calle': { 
+                required: true, 
+                type: 'barrier', 
+                label: localize('Barrier'), 
+                placeholder: 'Enter barrier value'
+            },
+            'pute': { 
+                required: true, 
+                type: 'barrier', 
+                label: localize('Barrier'), 
+                placeholder: 'Enter barrier value'
+            },
+            
+            // Range contracts
+            'range': { 
+                required: true, 
+                type: 'range', 
+                label: localize('Range'), 
+                placeholder: 'High barrier'
+            },
+            'upordown': { 
+                required: true, 
+                type: 'range', 
+                label: localize('Range'), 
+                placeholder: 'High barrier'
+            },
+            'expirymiss': { 
+                required: true, 
+                type: 'range', 
+                label: localize('Range'), 
+                placeholder: 'High barrier'
+            },
+            'expiryrange': { 
+                required: true, 
+                type: 'range', 
+                label: localize('Range'), 
+                placeholder: 'High barrier'
+            }
+        };
+
+        return predictionTypes[contractType] || { required: false };
+    };
+
+    const handleRiskCalcChange = (field: 'stake', value: number) => {
+        setRiskCalc(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handlePredictionChange = (prediction: number | string) => {
+        setRiskCalc(prev => ({
+            ...prev,
+            prediction
+        }));
+    };
+
+    const handleMartingaleToggle = (enabled: boolean) => {
+        setRiskCalc(prev => ({
+            ...prev,
+            martingaleEnabled: enabled
+        }));
+    };
+
+    const handleMartingaleChange = (field: 'martingaleMultiplier' | 'martingaleSteps', value: number) => {
+        setRiskCalc(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleContractTypeChange = (contractType: string) => {
+        const predictionInfo = getPredictionInfo(contractType);
+        
+        setRiskCalc(prev => ({
+            ...prev,
+            contractType,
+            // Auto-set prediction for contracts that don't show UI, otherwise reset
+            prediction: predictionInfo.defaultValue !== undefined ? predictionInfo.defaultValue : undefined
+        }));
+        
+        // If this contract type doesn't have payout data, fetch it specifically
+        if (payoutRates[contractType] === undefined && !loadingPayout) {
+            fetchSpecificContractPayout(contractType);
+        }
+    };
+
+    const calculateMartingaleStrategy = (): MartingaleCalculation | null => {
+        if (!riskCalc.stake || riskCalc.stake <= 0) return null;
+        
+        // Build martingale sequence
+        const sequence: number[] = [riskCalc.stake];
+        let totalRisk = riskCalc.stake;
+        
+        for (let i = 1; i < riskCalc.martingaleSteps; i++) {
+            const nextStake = sequence[i - 1] * riskCalc.martingaleMultiplier;
+            sequence.push(nextStake);
+            totalRisk += nextStake;
+        }
+        
+        // Calculate maximum possible loss for this martingale sequence
+        const maxPossibleLoss = totalRisk;
+        
+        // Get contract payout rate from API or fallback
+        const getContractProfitRate = (contractType: string): number => {
+            console.log('Getting profit rate for:', contractType);
+            console.log('Available payout rates:', payoutRates);
+            console.log('Contract type in payoutRates?', contractType in payoutRates);
+            console.log('PayoutRates value for contract:', payoutRates[contractType]);
+            
+            // Use fetched rate if available, otherwise use fallback
+            if (payoutRates[contractType] !== undefined) {
+                console.log('Using API rate:', payoutRates[contractType]);
+                return payoutRates[contractType];
+            }
+            
+            // Fallback to hardcoded rates if API data not available
+            const fallbackRate = getFallbackProfitRate(contractType);
+            console.log('Using fallback rate:', fallbackRate);
+            return fallbackRate;
+        };
+        
+        const contractProfitRate = getContractProfitRate(riskCalc.contractType);
+        const profitPerWin = riskCalc.stake * contractProfitRate; // Actual profit per win
+        const minimumProfitableAmount = profitPerWin; // Minimum profit to be profitable
+        
+        // Take Profit Suggestions based on contract payout and risk tolerance
+        const calculateTakeProfitOption = (multiplier: number) => {
+            const targetAmount = profitPerWin * multiplier;
+            const runsNeeded = Math.ceil(targetAmount / profitPerWin);
+            return {
+                amount: targetAmount,
+                runsNeeded: runsNeeded,
+                profitPerRun: profitPerWin
+            };
+        };
+        
+        const takeProfitSuggestion = {
+            conservative: calculateTakeProfitOption(2),    // 2x profit per win (safer, quicker)
+            balanced: calculateTakeProfitOption(5),        // 5x profit per win (balanced approach)  
+            aggressive: calculateTakeProfitOption(10),     // 10x profit per win (higher target)
+            currentOptimal: calculateTakeProfitOption(
+                riskCalc.riskTolerance === 'conservative' ? 2 : 
+                riskCalc.riskTolerance === 'moderate' ? 5 : 10
+            ),
+            contractProfitRate: contractProfitRate,
+            minimumProfitableAmount: minimumProfitableAmount
+        };
+        
+        // Capital Recommendations based on martingale risk
+        const riskMultiplier = {
+            conservative: 20,
+            moderate: 15,
+            aggressive: 10
+        }[riskCalc.riskTolerance];
+        
+        const minimumCapital = totalRisk * 5; // Absolute minimum
+        const recommendedCapital = totalRisk * riskMultiplier;
+        const conservativeCapital = totalRisk * 25; // Very safe
+        
+        // Risk Assessment
+        const riskPercentage = (totalRisk / getTotalBalance()) * 100;
+        let riskLevel: 'low' | 'medium' | 'high' | 'extreme';
+        let riskScore = 0;
+        
+        // Calculate risk score based on multiple factors
+        if (riskPercentage > 50) riskScore += 40;
+        else if (riskPercentage > 25) riskScore += 25;
+        else if (riskPercentage > 10) riskScore += 15;
+        else riskScore += 5;
+        
+        if (riskCalc.martingaleSteps > 7) riskScore += 30;
+        else if (riskCalc.martingaleSteps > 5) riskScore += 20;
+        else if (riskCalc.martingaleSteps > 3) riskScore += 10;
+        
+        if (riskCalc.martingaleMultiplier > 2.5) riskScore += 20;
+        else if (riskCalc.martingaleMultiplier > 2.0) riskScore += 10;
+        
+        if (totalRisk > getTotalBalance() * 0.8) riskScore += 30;
+        
+        if (riskScore >= 70) riskLevel = 'extreme';
+        else if (riskScore >= 50) riskLevel = 'high';
+        else if (riskScore >= 25) riskLevel = 'medium';
+        else riskLevel = 'low';
+        
+        // Generate warnings and recommendations
+        const warnings: string[] = [];
+        const recommendations: string[] = [];
+        
+        if (riskPercentage > 50) {
+            warnings.push("Risk exceeds 50% of available balance");
+        }
+        if (riskCalc.martingaleSteps > 6) {
+            warnings.push("High number of martingale steps increases risk exponentially");
+        }
+        if (riskCalc.martingaleMultiplier > 2.2) {
+            warnings.push("High multiplier leads to rapid stake escalation");
+        }
+        if (totalRisk > recommendedCapital / 10) {
+            warnings.push("Total risk is high relative to recommended capital");
+        }
+        
+        if (riskLevel === 'high' || riskLevel === 'extreme') {
+            recommendations.push("Consider reducing martingale steps or multiplier");
+            recommendations.push("Increase capital before using this strategy");
+        }
+        if (riskPercentage > 20) {
+            recommendations.push("Risk management: Use smaller stake sizes");
+        }
+        recommendations.push("Test with demo account first");
+        recommendations.push("Set strict loss limits and stick to them");
+        
+        // Capital recommendation reasoning
+        const reasoning: string[] = [
+            `Minimum capital (${minimumCapital.toFixed(2)}): Covers basic martingale sequence`,
+            `Recommended capital (${recommendedCapital.toFixed(2)}): Allows for ${riskMultiplier} complete sequences`,
+            `Conservative capital (${conservativeCapital.toFixed(2)}): Maximum safety with 25x coverage`,
+            "Accounts for potential consecutive losses and psychological pressure"
+        ];
+        
+        return {
+            sequence,
+            totalRisk,
+            maxPossibleLoss,
+            capitalRecommendation: {
+                minimum: minimumCapital,
+                recommended: recommendedCapital,
+                conservative: conservativeCapital,
+                reasoning
+            },
+            riskAssessment: {
+                level: riskLevel,
+                score: riskScore,
+                warnings,
+                recommendations
+            },
+            takeProfitSuggestion
+        };
+    };
+
+    const resetRiskCalculator = () => {
+        setRiskCalc({
+            stake: 1,
+            contractType: 'call',
+            prediction: undefined,
+            martingaleEnabled: true,
+            martingaleMultiplier: 2.1,
+            martingaleSteps: 5,
+            display: '0',
+            operation: null,
+            previousValue: null,
+            waitingForOperand: false,
+            activeField: null,
+            targetProfit: 20,
+            riskTolerance: 'moderate'
+        });
+    };
+
+    const handleFieldSelect = (field: 'stake') => {
+        // Simple field selection for mobile input
+        console.log(`Selected field: ${field}`);
+    };
+
     useEffect(() => {
         fetchStatements();
+        // Only fetch the most common contract types on initial load
+        fetchInitialPayoutRates();
     }, []);
+
+    // Function to fetch only the most essential contract types on component mount
+    const fetchInitialPayoutRates = async () => {
+        if (!client?.currency) {
+            console.log('No client currency available, skipping initial payout fetch');
+            return;
+        }
+        
+        setLoadingPayout(true);
+        console.log('Fetching initial payout rates for common contract types...');
+        
+        // Only fetch the most commonly used contract types initially
+        const initialContractTypes = ['call', 'put', 'digiteven', 'digitodd'];
+        
+        for (const contractType of initialContractTypes) {
+            try {
+                const profitRate = await fetchSingleContractRate(contractType);
+                setPayoutRates(prev => ({
+                    ...prev,
+                    [contractType]: profitRate
+                }));
+                console.log(`Initial fetch completed for ${contractType}: ${profitRate}`);
+            } catch (err) {
+                console.warn(`Initial fetch failed for ${contractType}:`, err);
+                // Use fallback rate
+                const fallbackRate = getFallbackProfitRate(contractType);
+                setPayoutRates(prev => ({
+                    ...prev,
+                    [contractType]: fallbackRate
+                }));
+            }
+            
+            // Small delay between requests
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        setLoadingPayout(false);
+        console.log('Initial payout rates fetch completed');
+    };
+
+    // Helper function to fetch a single contract rate without managing loading state
+    const fetchSingleContractRate = async (contractType: string): Promise<number> => {
+        // Map internal contract types to Deriv API contract types
+        const getApiContractType = (contractType: string): string => {
+            const typeMapping: { [key: string]: string } = {
+                'call': 'CALL',
+                'put': 'PUT', 
+                'digitmatch': 'DIGITMATCH',
+                'digitdiff': 'DIGITDIFF',
+                'digiteven': 'DIGITEVEN',
+                'digitodd': 'DIGITODD',
+                'digitover': 'DIGITOVER',
+                'digitunder': 'DIGITUNDER'
+            };
+            return typeMapping[contractType] || contractType.toUpperCase();
+        };
+
+        const symbol = 'R_10';
+        const amount = 1;
+        const app_id = "52152";
+
+        return new Promise<number>((resolve, reject) => {
+            const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${app_id}`);
+            
+            const timeout = setTimeout(() => {
+                console.warn(`Timeout for ${contractType}`);
+                ws.close();
+                reject(new Error('WebSocket timeout'));
+            }, 8000);
+
+            ws.onopen = function () {
+                const apiContractType = getApiContractType(contractType);
+                const proposalRequest: any = {
+                    proposal: 1,
+                    amount: amount,
+                    basis: "stake",
+                    contract_type: apiContractType,
+                    currency: client?.currency || 'USD',
+                    duration: 1,
+                    duration_unit: "t",
+                    symbol: symbol
+                };
+
+                console.log(`Fetching payout for ${contractType} (API: ${apiContractType})`);
+
+                // Add barriers based on contract type  
+                if (['DIGITOVER', 'DIGITUNDER'].includes(apiContractType)) {
+                    // Use user's prediction for digit contracts, fallback to '5' if not available
+                    proposalRequest.barrier = riskCalc.prediction?.toString() || '5';
+                } else if (['DIGITMATCH', 'DIGITDIFF'].includes(apiContractType)) {
+                    // Use fixed barrier value of '1' for match/diff contracts
+                    proposalRequest.barrier = '1';
+                }
+
+                console.log(`Proposal request for ${contractType}:`, proposalRequest);
+                ws.send(JSON.stringify(proposalRequest));
+            };
+
+            ws.onmessage = function (event) {
+                clearTimeout(timeout);
+                const response = JSON.parse(event.data);
+                
+                console.log(`Response for ${contractType}:`, response);
+                
+                if (response.proposal && response.proposal.payout) {
+                    const profitRate = (response.proposal.payout - amount) / amount;
+                    console.log(`${contractType} - Payout: ${response.proposal.payout}, Stake: ${amount}, Profit Rate: ${profitRate}`);
+                    ws.close();
+                    resolve(profitRate);
+                } else if (response.error) {
+                    console.warn(`Error for ${contractType}:`, response.error.message);
+                    ws.close();
+                    reject(new Error(response.error.message));
+                }
+            };
+
+            ws.onerror = function (error) {
+                clearTimeout(timeout);
+                console.error(`WebSocket Error for ${contractType}:`, error);
+                ws.close();
+                reject(error);
+            };
+
+            ws.onclose = function() {
+                clearTimeout(timeout);
+            };
+        });
+    };
+
+    // Auto-recalculate when relevant parameters change
+    useEffect(() => {
+        const recalculate = async () => {
+            setIsCalculating(true);
+            try {
+                // Add a small delay to avoid excessive calculations during rapid changes
+                await new Promise(resolve => setTimeout(resolve, 100));
+                const results = calculateMartingaleStrategy();
+                setCalculationResults(results);
+            } catch (error) {
+                console.error('Error calculating martingale strategy:', error);
+                setCalculationResults(null);
+            } finally {
+                setIsCalculating(false);
+            }
+        };
+
+        // Only recalculate if we have valid inputs
+        if (riskCalc.stake > 0) {
+            recalculate();
+        } else {
+            setCalculationResults(null);
+            setIsCalculating(false);
+        }
+    }, [
+        riskCalc.stake,
+        riskCalc.prediction,
+        riskCalc.contractType,
+        riskCalc.martingaleEnabled,
+        riskCalc.martingaleMultiplier,
+        riskCalc.martingaleSteps,
+        riskCalc.targetProfit,
+        riskCalc.riskTolerance,
+        payoutRates // Recalculate when payout rates are updated
+    ]);
+
+    // Auto-fetch payout rates when prediction changes for barrier-dependent contracts
+    useEffect(() => {
+        // Fetch new rates for contracts that use prediction as barrier (over/under with user input)
+        if (['digitover', 'digitunder'].includes(riskCalc.contractType) && riskCalc.prediction) {
+            console.log(`Prediction changed to ${riskCalc.prediction} for ${riskCalc.contractType}, fetching new payout rates...`);
+            fetchSpecificContractPayout(riskCalc.contractType);
+        }
+        // Also fetch for match/diff contracts when they're selected (they use default value)
+        else if (['digitmatch', 'digitdiff'].includes(riskCalc.contractType) && riskCalc.prediction) {
+            console.log(`Contract ${riskCalc.contractType} selected with default prediction ${riskCalc.prediction}, fetching payout rates...`);
+            fetchSpecificContractPayout(riskCalc.contractType);
+        }
+    }, [riskCalc.prediction, riskCalc.contractType]);
+
+    // Function to fetch real payout rates from API using WebSocket
+    const fetchPayoutRates = async () => {
+        if (!client?.currency) {
+            console.log('No client currency available, using fallback rates');
+            return;
+        }
+        
+        setLoadingPayout(true);
+        console.log('Starting payout rate fetch...');
+        
+        // Focus on the most reliable contract types for R_10
+        const contractTypes = [
+            'call', 'put', 'digitmatch', 'digitdiff',
+            'digiteven', 'digitodd', 'digitover', 'digitunder'
+        ];
+
+        // Map internal contract types to Deriv API contract types
+        const getApiContractType = (contractType: string): string => {
+            const typeMapping: { [key: string]: string } = {
+                'call': 'CALL',
+                'put': 'PUT', 
+                'digitmatch': 'DIGITMATCH',
+                'digitdiff': 'DIGITDIFF',
+                'digiteven': 'DIGITEVEN',
+                'digitodd': 'DIGITODD',
+                'digitover': 'DIGITOVER',
+                'digitunder': 'DIGITUNDER'
+            };
+            return typeMapping[contractType] || contractType.toUpperCase();
+        };
+
+        const payouts: { [key: string]: number } = {};
+        const symbol = 'R_10'; // Default volatility index
+        const amount = 1; // Standard $1 stake for rate calculation
+        const app_id = "52152"; // Deriv App ID
+
+        console.log('Attempting to fetch rates for contracts:', contractTypes);
+
+        try {
+            // Process each contract type sequentially with better error handling
+            for (const contractType of contractTypes) {
+                console.log(`Fetching rate for ${contractType}...`);
+                
+                try {
+                    const payout = await new Promise<number>((resolve, reject) => {
+                        const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${app_id}`);
+                        
+                        const timeout = setTimeout(() => {
+                            console.warn(`Timeout for ${contractType}`);
+                            ws.close();
+                            reject(new Error('WebSocket timeout'));
+                        }, 8000); // Increased timeout to 8 seconds
+
+                        ws.onopen = function () {
+                            const apiContractType = getApiContractType(contractType);
+                            const proposalRequest: any = {
+                                proposal: 1,
+                                amount: amount,
+                                basis: "stake",
+                                contract_type: apiContractType,
+                                currency: client?.currency || 'USD',
+                                duration: 1,
+                                duration_unit: "t",
+                                symbol: symbol
+                            };
+
+                            console.log(`Fetching payout for ${contractType} (API: ${apiContractType})`); // Debug log
+
+                            // Add barriers based on contract type  
+                            if (['DIGITOVER', 'DIGITUNDER'].includes(apiContractType)) {
+                                // Use user's prediction for digit contracts, fallback to '5' if not available
+                                proposalRequest.barrier = riskCalc.prediction?.toString() || '5';
+                            } else if (['DIGITMATCH', 'DIGITDIFF'].includes(apiContractType)) {
+                                // Use fixed barrier value of '1' for match/diff contracts
+                                proposalRequest.barrier = '1';
+                            }
+                            // CALL, PUT, DIGITEVEN, DIGITODD don't need barriers
+
+                            console.log(`Proposal request for ${contractType}:`, proposalRequest); // Debug log
+                            ws.send(JSON.stringify(proposalRequest));
+                        };
+
+                        ws.onmessage = function (event) {
+                            clearTimeout(timeout);
+                            const response = JSON.parse(event.data);
+                            
+                            console.log(`Response for ${contractType}:`, response); // Debug log
+                            
+                            if (response.proposal && response.proposal.payout) {
+                                // Calculate profit rate: (payout - stake) / stake
+                                const profitRate = (response.proposal.payout - amount) / amount;
+                                console.log(`${contractType} - Payout: ${response.proposal.payout}, Stake: ${amount}, Profit Rate: ${profitRate}`); // Debug log
+                                ws.close();
+                                resolve(profitRate);
+                            } else if (response.error) {
+                                console.warn(`Error for ${contractType}:`, response.error.message);
+                                ws.close();
+                                reject(new Error(response.error.message));
+                            }
+                        };
+
+                        ws.onerror = function (error) {
+                            clearTimeout(timeout);
+                            console.error(`WebSocket Error for ${contractType}:`, error);
+                            ws.close();
+                            reject(error);
+                        };
+
+                        ws.onclose = function() {
+                            clearTimeout(timeout);
+                        };
+                    });
+
+                    payouts[contractType] = payout;
+                    console.log(`Successfully fetched rate for ${contractType}: ${payout}`);
+                    
+                } catch (err) {
+                    console.warn(`Failed to fetch payout for ${contractType}:`, err);
+                    // Use fallback rates for failed requests
+                    const fallbackRate = getFallbackProfitRate(contractType);
+                    payouts[contractType] = fallbackRate;
+                    console.log(`Using fallback rate for ${contractType}: ${fallbackRate}`);
+                }
+                
+                // Small delay between requests to avoid overwhelming the WebSocket
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            setPayoutRates(payouts);
+            console.log('Final fetched payout rates:', payouts);
+            console.log('Payout rates state updated with:', Object.keys(payouts).length, 'contract types');
+            
+        } catch (error) {
+            console.error('Error fetching payout rates:', error);
+            // Use all fallback rates if API fails
+            const fallbackRates: { [key: string]: number } = {};
+            contractTypes.forEach(type => {
+                fallbackRates[type] = getFallbackProfitRate(type);
+            });
+            setPayoutRates(fallbackRates);
+            console.log('Using all fallback rates:', fallbackRates);
+        } finally {
+            setLoadingPayout(false);
+            console.log('Payout fetch completed');
+        }
+    };
+
+    // Function to fetch payout for a specific contract type only
+    const fetchSpecificContractPayout = async (contractType: string) => {
+        if (!client?.currency) {
+            console.log('No client currency available, using fallback rate for', contractType);
+            return;
+        }
+        
+        setLoadingPayout(true);
+        console.log(`Fetching payout rate specifically for: ${contractType}`);
+
+        try {
+            const profitRate = await fetchSingleContractRate(contractType);
+            
+            // Update only the specific contract type in payoutRates
+            setPayoutRates(prev => ({
+                ...prev,
+                [contractType]: profitRate
+            }));
+            
+            console.log(`Successfully fetched rate for ${contractType}: ${profitRate}`);
+            
+        } catch (err) {
+            console.warn(`Failed to fetch payout for ${contractType}:`, err);
+            // Use fallback rate for failed request
+            const fallbackRate = getFallbackProfitRate(contractType);
+            setPayoutRates(prev => ({
+                ...prev,
+                [contractType]: fallbackRate
+            }));
+            console.log(`Using fallback rate for ${contractType}: ${fallbackRate}`);
+        } finally {
+            setLoadingPayout(false);
+            console.log(`Specific payout fetch completed for ${contractType}`);
+        }
+    };
+
+    // Function to get payout for a specific contract type
+    const getSpecificPayout = async (contractType: string, userStake: number = 1): Promise<number> => {
+        const app_id = "52152"; // Deriv App ID
+        const symbol = 'R_10'; // Default volatility index
+        
+        try {
+            return await new Promise<number>((resolve, reject) => {
+                const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${app_id}`);
+                
+                const timeout = setTimeout(() => {
+                    ws.close();
+                    reject(new Error('WebSocket timeout'));
+                }, 5000);
+
+                ws.onopen = function () {
+                    const proposalRequest: any = {
+                        proposal: 1,
+                        amount: userStake,
+                        basis: "stake",
+                        contract_type: contractType.toUpperCase(),
+                        currency: client?.currency || 'USD',
+                        duration: 1,
+                        duration_unit: "t",
+                        symbol: symbol
+                    };
+
+                    // Add barriers based on contract type
+                    const upperType = contractType.toUpperCase();
+                    if (['CALLE', 'PUTE', 'ONETOUCH', 'NOTOUCH'].includes(upperType)) {
+                        proposalRequest.barrier = '+0.1';
+                    } else if (['DIGITOVER', 'DIGITUNDER'].includes(upperType)) {
+                        // Use user's prediction for digit contracts, fallback to '5' if not available
+                        proposalRequest.barrier = riskCalc.prediction?.toString() || '5';
+                    } else if (['DIGITMATCH', 'DIGITDIFF'].includes(upperType)) {
+                        // Use fixed barrier value of '1' for match/diff contracts
+                        proposalRequest.barrier = '1';
+                    } else if (['RANGE', 'UPORDOWN', 'EXPIRYMISS', 'EXPIRYRANGE'].includes(upperType)) {
+                        proposalRequest.barrier = '+0.1';
+                        proposalRequest.barrier2 = '-0.1';
+                    }
+                    // DIGITEVEN and DIGITODD don't need barriers
+
+                    ws.send(JSON.stringify(proposalRequest));
+                };
+
+                ws.onmessage = function (event) {
+                    clearTimeout(timeout);
+                    const response = JSON.parse(event.data);
+                    
+                    if (response.proposal && response.proposal.payout) {
+                        const payoutAmount = response.proposal.payout;
+                        ws.close();
+                        resolve(payoutAmount);
+                    } else if (response.error) {
+                        console.warn(`Error for ${contractType}:`, response.error.message);
+                        ws.close();
+                        reject(new Error(response.error.message));
+                    }
+                };
+
+                ws.onerror = function (error) {
+                    clearTimeout(timeout);
+                    console.error(`WebSocket Error for ${contractType}:`, error);
+                    ws.close();
+                    reject(error);
+                };
+
+                ws.onclose = function() {
+                    clearTimeout(timeout);
+                };
+            });
+        } catch (error) {
+            console.error(`Failed to get payout for ${contractType}:`, error);
+            // Return fallback calculation
+            return userStake * (1 + getFallbackProfitRate(contractType));
+        }
+    };
+
+    // Fallback profit rates if API fails
+    const getFallbackProfitRate = (contractType: string): number => {
+        const fallbackRates: { [key: string]: number } = {
+            'call': 0.95, 'put': 0.95,
+            'calle': 0.90, 'pute': 0.90,
+            'onetouch': 0.85, 'notouch': 0.85,
+            'range': 0.80, 'upordown': 0.80,
+            'expirymiss': 0.75, 'expiryrange': 0.75,
+            'asianu': 0.90, 'asiand': 0.90,
+            'digitmatch': 0.95, 'digitdiff': 0.95,
+            'digiteven': 0.95, 'digitodd': 0.95,
+            'digitover': 0.90, 'digitunder': 0.90
+        };
+        return fallbackRates[contractType] || 0.95;
+    };
 
     const handleFilterChange = (field: keyof FilterState, value: string | number) => {
         setFilters(prev => ({
@@ -224,15 +1128,6 @@ const PortfolioDisplay: React.FC = observer(() => {
             action_type: '',
             time_period: '7d'
         });
-    };
-
-    const formatCurrency = (amount: number, currency: string) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: currency || 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
     };
 
     const formatDate = (timestamp?: number) => {
@@ -431,197 +1326,1152 @@ const PortfolioDisplay: React.FC = observer(() => {
             <div className="portfolio-header">
                 <h1 className="portfolio-title">{localize('Portfolio & Account Statement')}</h1>
                 
-                {/* Portfolio Summary */}
-                <div className="portfolio-summary">
-                    <div className="summary-card">
-                        <div className="summary-label">{localize('Current Balance')}</div>
-                        <div className="summary-value">
-                            {formatCurrency(getTotalBalance(), client?.currency || 'USD')}
-                        </div>
-                    </div>
-                    <div className="summary-card">
-                        <div className="summary-label">{localize('Total Profit/Loss')}</div>
-                        <div className={`summary-value ${getTotalProfit() >= 0 ? 'positive' : 'negative'}`}>
-                            {formatCurrency(getTotalProfit(), client?.currency || 'USD')}
-                        </div>
-                    </div>
-                    <div className="summary-card">
-                        <div className="summary-label">{localize('Total Trades')}</div>
-                        <div className="summary-value">{getTotalTrades()}</div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="portfolio-filters">
-                <h3>{localize('Filter Transactions')}</h3>
-                <div className="filter-grid">
-                    <div className="filter-group">
-                        <label>{localize('Transaction Type')}</label>
-                        <select
-                            value={filters.action_type}
-                            onChange={(e) => handleFilterChange('action_type', e.target.value)}
-                        >
-                            {actionTypeOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    <div className="filter-group">
-                        <label>{localize('Time Period')}</label>
-                        <select
-                            value={filters.time_period}
-                            onChange={(e) => handleFilterChange('time_period', e.target.value)}
-                        >
-                            {timePeriodOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    <div className="filter-actions">
-                        <button onClick={applyFilters} className="btn-primary" disabled={loading}>
-                            {loading ? localize('Loading...') : localize('Apply Filters')}
-                        </button>
-                        <button onClick={resetFilters} className="btn-secondary">
-                            {localize('Reset')}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Error Display */}
-            {error && (
-                <div className="portfolio-error">
-                    <p>{error}</p>
-                    <button onClick={() => fetchStatements(false)} className="btn-retry">
-                        {localize('Retry')}
+                {/* Section Toggle */}
+                <div className="section-toggle">
+                    <button 
+                        className={`toggle-btn ${activeSection === 'portfolio' ? 'active' : ''}`}
+                        onClick={() => setActiveSection('portfolio')}
+                    >
+                        {localize('Portfolio')}
+                    </button>
+                    <button 
+                        className={`toggle-btn ${activeSection === 'risk-management' ? 'active' : ''}`}
+                        onClick={() => setActiveSection('risk-management')}
+                    >
+                        {localize('Risk Management')}
+                    </button>
+                    <button 
+                        className={`toggle-btn ${activeSection === 'strategies' ? 'active' : ''}`}
+                        onClick={() => setActiveSection('strategies')}
+                    >
+                        {localize('Strategies')}
                     </button>
                 </div>
-            )}
 
-            {/* Statements Table */}
-            <div className="portfolio-statements">
-                <h3>{localize('Transaction History')}</h3>
-                
-                {loading ? (
-                    <div className="portfolio-loading">
-                        <div className="loading-spinner"></div>
-                        <p>{localize('Loading transactions...')}</p>
+                {/* Portfolio Summary - Only show in portfolio section */}
+                {activeSection === 'portfolio' && (
+                    <div className="portfolio-summary">
+                        <div className="summary-card">
+                            <div className="summary-label">{localize('Current Balance')}</div>
+                            <div className="summary-value">
+                                {formatCurrency(getTotalBalance(), client?.currency || 'USD')}
+                            </div>
+                        </div>
+                        <div className="summary-card">
+                            <div className="summary-label">{localize('Total Profit/Loss')}</div>
+                            <div className={`summary-value ${getTotalProfit() >= 0 ? 'positive' : 'negative'}`}>
+                                {formatCurrency(getTotalProfit(), client?.currency || 'USD')}
+                            </div>
+                        </div>
+                        <div className="summary-card">
+                            <div className="summary-label">{localize('Total Trades')}</div>
+                            <div className="summary-value">{getTotalTrades()}</div>
+                        </div>
                     </div>
-                ) : (
-                    <>
-                        {/* Desktop Table View */}
-                        <div className="statements-table-wrapper">
-                            <table className="statements-table">
-                                <thead>
-                                    <tr>
-                                        <th>{localize('Date & Time')}</th>
-                                        <th>{localize('Reference ID')}</th>
-                                        <th>{localize('Action')}</th>
-                                        <th>{localize('Amount')}</th>
-                                        <th>{localize('Balance')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                )}
+            </div>
+
+            {/* Portfolio Section */}
+            {activeSection === 'portfolio' && (
+                <>
+                    {/* Filters */}
+                    <div className="portfolio-filters">
+                        <h3>{localize('Filter Transactions')}</h3>
+                        <div className="filter-grid">
+                            <div className="filter-group">
+                                <label>{localize('Transaction Type')}</label>
+                                <select
+                                    value={filters.action_type}
+                                    onChange={(e) => handleFilterChange('action_type', e.target.value)}
+                                >
+                                    {actionTypeOptions.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            <div className="filter-group">
+                                <label>{localize('Time Period')}</label>
+                                <select
+                                    value={filters.time_period}
+                                    onChange={(e) => handleFilterChange('time_period', e.target.value)}
+                                >
+                                    {timePeriodOptions.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            <div className="filter-actions">
+                                <button onClick={applyFilters} className="btn-primary" disabled={loading}>
+                                    {loading ? localize('Loading...') : localize('Apply Filters')}
+                                </button>
+                                <button onClick={resetFilters} className="btn-secondary">
+                                    {localize('Reset')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Error Display */}
+                    {error && (
+                        <div className="portfolio-error">
+                            <p>{error}</p>
+                            <button onClick={() => fetchStatements(false)} className="btn-retry">
+                                {localize('Retry')}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Statements Table */}
+                    <div className="portfolio-statements">
+                        <h3>{localize('Transaction History')}</h3>
+                        
+                        {loading ? (
+                            <div className="portfolio-loading">
+                                <div className="loading-spinner"></div>
+                                <p>{localize('Loading transactions...')}</p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Desktop Table View */}
+                                <div className="statements-table-wrapper">
+                                    <table className="statements-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{localize('Date & Time')}</th>
+                                                <th>{localize('Reference ID')}</th>
+                                                <th>{localize('Action')}</th>
+                                                <th>{localize('Amount')}</th>
+                                                <th>{localize('Balance')}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {statements.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="no-data">
+                                                        {localize('No transactions found')}
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                statements.map((transaction) => (
+                                                    <tr key={transaction.transaction_id || Math.random()}>
+                                                        <td>{formatDate(transaction.transaction_time)}</td>
+                                                        <td>{renderReferenceId(transaction)}</td>
+                                                        <td>
+                                                            <span className={`portfolio-action ${getActionTypeColor(transaction.action_type)}`}>
+                                                                {transaction.action_type ? 
+                                                                    transaction.action_type.charAt(0).toUpperCase() + transaction.action_type.slice(1) : 
+                                                                    'Unknown'
+                                                                }
+                                                            </span>
+                                                        </td>
+                                                        <td className={(transaction.amount || 0) >= 0 ? 'amount-positive' : 'amount-negative'}>
+                                                            {formatCurrency(Math.abs(transaction.amount || 0), transaction.currency || 'USD')}
+                                                        </td>
+                                                        <td>{formatCurrency(transaction.balance_after || 0, transaction.currency || 'USD')}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                {/* Mobile Card View */}
+                                <div className="statements-cards">
                                     {statements.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={5} className="no-data">
-                                                {localize('No transactions found')}
-                                            </td>
-                                        </tr>
+                                        <div className="no-data">
+                                            {localize('No transactions found')}
+                                        </div>
                                     ) : (
                                         statements.map((transaction) => (
-                                            <tr key={transaction.transaction_id || Math.random()}>
-                                                <td>{formatDate(transaction.transaction_time)}</td>
-                                                <td>{renderReferenceId(transaction)}</td>
-                                                <td>
-                                                    <span className={`portfolio-action ${getActionTypeColor(transaction.action_type)}`}>
+                                            <div key={transaction.transaction_id || Math.random()} className="statement-card">
+                                                <div className="card-header">
+                                                    <span className={`portfolio-action card-action ${getActionTypeColor(transaction.action_type)}`}>
                                                         {transaction.action_type ? 
                                                             transaction.action_type.charAt(0).toUpperCase() + transaction.action_type.slice(1) : 
                                                             'Unknown'
                                                         }
                                                     </span>
-                                                </td>
-                                                <td className={(transaction.amount || 0) >= 0 ? 'amount-positive' : 'amount-negative'}>
-                                                    {formatCurrency(Math.abs(transaction.amount || 0), transaction.currency || 'USD')}
-                                                </td>
-                                                <td>{formatCurrency(transaction.balance_after || 0, transaction.currency || 'USD')}</td>
-                                            </tr>
+                                                    <div className={`card-amount ${(transaction.amount || 0) >= 0 ? 'card-amount--positive' : 'card-amount--negative'}`}>
+                                                        {(transaction.amount || 0) >= 0 ? '+' : ''}
+                                                        {formatCurrency(Math.abs(transaction.amount || 0), transaction.currency || 'USD')}
+                                                    </div>
+                                                </div>
+                                                <div className="card-details">
+                                                    <div className="card-detail-row">
+                                                        <span className="card-detail-label">{localize('Date & Time')}</span>
+                                                        <span className="card-detail-value">{formatDate(transaction.transaction_time)}</span>
+                                                    </div>
+                                                    <div className="card-detail-row">
+                                                        <span className="card-detail-label">{localize('Reference ID')}</span>
+                                                        <span className="card-detail-value">{renderReferenceId(transaction)}</span>
+                                                    </div>
+                                                    <div className="card-detail-row">
+                                                        <span className="card-detail-label">{localize('Balance After')}</span>
+                                                        <span className="card-detail-value">{formatCurrency(transaction.balance_after || 0, transaction.currency || 'USD')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         ))
                                     )}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        {/* Mobile Card View */}
-                        <div className="statements-cards">
-                            {statements.length === 0 ? (
-                                <div className="no-data">
-                                    {localize('No transactions found')}
                                 </div>
-                            ) : (
-                                statements.map((transaction) => (
-                                    <div key={transaction.transaction_id || Math.random()} className="statement-card">
-                                        <div className="card-header">
-                                            <span className={`portfolio-action card-action ${getActionTypeColor(transaction.action_type)}`}>
-                                                {transaction.action_type ? 
-                                                    transaction.action_type.charAt(0).toUpperCase() + transaction.action_type.slice(1) : 
-                                                    'Unknown'
-                                                }
-                                            </span>
-                                            <div className={`card-amount ${(transaction.amount || 0) >= 0 ? 'card-amount--positive' : 'card-amount--negative'}`}>
-                                                {(transaction.amount || 0) >= 0 ? '+' : ''}
-                                                {formatCurrency(Math.abs(transaction.amount || 0), transaction.currency || 'USD')}
+                            </>
+                        )}
+                        
+                        {/* Load More Button - Desktop Only */}
+                        {!loading && hasMoreData && statements.length > 0 && !isMobile && (
+                            <div className="load-more-container">
+                                <button 
+                                    onClick={loadMoreTransactions} 
+                                    className="btn-load-more" 
+                                    disabled={loadingMore}
+                                >
+                                    {loadingMore ? localize('Loading...') : localize('Load More Transactions')}
+                                </button>
+                            </div>
+                        )}
+                        
+                        {/* Mobile Loading Indicator for Infinite Scroll */}
+                        {isMobile && loadingMore && (
+                            <div className="mobile-loading-indicator">
+                                <div className="loading-spinner"></div>
+                                <p>{localize('Loading more transactions...')}</p>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {/* Risk Management Section */}
+            {activeSection === 'risk-management' && (
+                <div className="risk-management-section">
+                    <div className="risk-header">
+                        <div className="risk-header-content">
+                            <h2 className="risk-title">{localize('Binary Options Trading Calculator')}</h2>
+                            <p className="risk-subtitle">
+                                {localize('Manage your risk and optimize your binary options trading strategy')}
+                            </p>
+                        </div>
+                        <div className="balance-badge">
+                            <span className="balance-label">{localize('Current Balance')}</span>
+                            <span className="balance-value">{formatCurrency(getTotalBalance(), client?.currency || 'USD')}</span>
+                        </div>
+                    </div>
+
+                    <div className="risk-content">
+                        {/* Input Controls */}
+                        <div className="input-panel">
+                            <h3 className="panel-title">{localize('Trading Parameters')}</h3>
+                            
+                            <div className="input-grid">
+                                {/* Stake Input */}
+                                <div className="input-group">
+                                    <label className="input-label">
+                                        <span className="label-text">{localize('Stake Amount')}</span>
+                                        <span className="label-required">*</span>
+                                    </label>
+                                    <div className="input-wrapper">
+                                        <div className={`custom-input ${riskCalc.activeField === 'stake' ? 'active' : ''}`}>
+                                            <span className="currency-prefix">{client?.currency || 'USD'}</span>
+                                            <input
+                                                type="number"
+                                                value={riskCalc.stake || ''}
+                                                onChange={(e) => handleRiskCalcChange('stake', parseFloat(e.target.value) || 0)}
+                                                onFocus={() => handleFieldSelect('stake')}
+                                                placeholder="0.00"
+                                                step="0.01"
+                                                min="0"
+                                                className="number-input"
+                                            />
+                                        </div>
+                                        <div className="input-hint">
+                                            {localize('Amount to risk per trade')}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Contract Type Selector */}
+                                <div className="input-group contract-group">
+                                    <label className="input-label">
+                                        <span className="label-text">{localize('Contract Type')}</span>
+                                        <span className="label-required">*</span>
+                                    </label>
+                                    <div className="input-wrapper">
+                                        <div className="custom-select">
+                                            <select 
+                                                value={riskCalc.contractType}
+                                                onChange={(e) => handleContractTypeChange(e.target.value)}
+                                                className="select-input"
+                                            >
+                                                {contractTypeOptions.map(option => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="select-arrow">
+                                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                                    <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
                                             </div>
                                         </div>
-                                        <div className="card-details">
-                                            <div className="card-detail-row">
-                                                <span className="card-detail-label">{localize('Date & Time')}</span>
-                                                <span className="card-detail-value">{formatDate(transaction.transaction_time)}</span>
+                                        <div className="input-hint">
+                                            {localize('Choose your preferred contract type')}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Enhanced Prediction Input */}
+                                {(() => {
+                                    const predictionInfo = getPredictionInfo(riskCalc.contractType);
+                                    if (!predictionInfo.required || !predictionInfo.showUI) return null;
+
+                                    return (
+                                        <div className="input-group prediction-group enhanced">
+                                            <div className="prediction-header">
+                                                <label className="prediction-label">
+                                                    <div className="label-content">
+                                                        <span className="label-icon">🎯</span>
+                                                        <span className="label-text">{predictionInfo.label}</span>
+                                                        <span className="label-required">*</span>
+                                                    </div>
+                                                    <div className="label-description">
+                                                        {predictionInfo.type === 'digit' && predictionInfo.min !== undefined && predictionInfo.max !== undefined
+                                                            ? localize(`Choose a digit from ${predictionInfo.min} to ${predictionInfo.max}`)
+                                                            : predictionInfo.type === 'barrier' 
+                                                            ? localize('Set the barrier level for your prediction')
+                                                            : predictionInfo.type === 'range'
+                                                            ? localize('Define the upper range boundary')
+                                                            : localize('Make your prediction')
+                                                        }
+                                                    </div>
+                                                </label>
                                             </div>
-                                            <div className="card-detail-row">
-                                                <span className="card-detail-label">{localize('Reference ID')}</span>
-                                                <span className="card-detail-value">{renderReferenceId(transaction)}</span>
+
+                                            <div className="prediction-input-container">
+                                                {predictionInfo.type === 'digit' ? (
+                                                    // Enhanced digit selector with visual buttons
+                                                    <div className="digit-selector">
+                                                        <div className="digit-grid">
+                                                            {Array.from({ length: 10 }, (_, i) => (
+                                                                <button
+                                                                    key={i}
+                                                                    type="button"
+                                                                    className={`digit-button ${riskCalc.prediction === i ? 'selected' : ''}`}
+                                                                    onClick={() => handlePredictionChange(i)}
+                                                                >
+                                                                    <span className="digit-number">{i}</span>
+                                                                    <div className="digit-hover-effect"></div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                        <div className="digit-info">
+                                                            <div className="selected-digit">
+                                                                {riskCalc.prediction !== undefined ? (
+                                                                    <span className="digit-display">
+                                                                        Selected: <strong>{riskCalc.prediction}</strong>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="digit-placeholder">
+                                                                        Select a digit above
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : predictionInfo.type === 'select' ? (
+                                                    // Enhanced dropdown with modern styling
+                                                    <div className="enhanced-select">
+                                                        <select 
+                                                            value={riskCalc.prediction || ''}
+                                                            onChange={(e) => handlePredictionChange(e.target.value)}
+                                                            className="select-input enhanced"
+                                                        >
+                                                            <option value="" disabled>
+                                                                {localize('Choose your prediction...')}
+                                                            </option>
+                                                            {predictionInfo.options?.map((option: any) => (
+                                                                <option key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <div className="select-enhancement">
+                                                            <div className="select-arrow">
+                                                                <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+                                                                    <path d="M2 2L7 7L12 2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                                </svg>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    // Enhanced number input with modern design
+                                                    <div className="enhanced-number-input">
+                                                        <div className="input-field-wrapper">
+                                                            <input
+                                                                type="number"
+                                                                value={riskCalc.prediction || ''}
+                                                                onChange={(e) => handlePredictionChange(e.target.value ? parseFloat(e.target.value) : '')}
+                                                                placeholder={predictionInfo.placeholder}
+                                                                min={predictionInfo.min}
+                                                                max={predictionInfo.max}
+                                                                step={predictionInfo.type === 'digit' ? 1 : 'any'}
+                                                                className="number-input enhanced"
+                                                            />
+                                                            <div className="input-decoration">
+                                                                <div className="input-focus-line"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="input-controls">
+                                                            <button
+                                                                type="button"
+                                                                className="input-control-btn decrease"
+                                                                onClick={() => {
+                                                                    const current = Number(riskCalc.prediction) || 0;
+                                                                    const min = predictionInfo.min ?? -Infinity;
+                                                                    if (current > min) {
+                                                                        handlePredictionChange(current - 1);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                                                    <path d="M2 6H10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                                                </svg>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="input-control-btn increase"
+                                                                onClick={() => {
+                                                                    const current = Number(riskCalc.prediction) || 0;
+                                                                    const max = predictionInfo.max ?? Infinity;
+                                                                    if (current < max) {
+                                                                        handlePredictionChange(current + 1);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                                                    <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Live prediction feedback */}
+                                                {riskCalc.prediction !== undefined && (
+                                                    <div className="prediction-feedback">
+                                                        <div className="feedback-content">
+                                                            <span className="feedback-icon">✨</span>
+                                                            <span className="feedback-text">
+                                                                {predictionInfo.type === 'digit' 
+                                                                    ? `Predicting last digit will ${riskCalc.contractType.includes('over') ? 'be over' : riskCalc.contractType.includes('under') ? 'be under' : riskCalc.contractType.includes('match') ? 'match' : 'differ from'} ${riskCalc.prediction}`
+                                                                    : `Your prediction: ${riskCalc.prediction}`
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="card-detail-row">
-                                                <span className="card-detail-label">{localize('Balance After')}</span>
-                                                <span className="card-detail-value">{formatCurrency(transaction.balance_after || 0, transaction.currency || 'USD')}</span>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Fixed Prediction Info for Match/Diff contracts */}
+                                {(() => {
+                                    const predictionInfo = getPredictionInfo(riskCalc.contractType);
+                                    if (!predictionInfo.required || predictionInfo.showUI) return null;
+
+                                    return (
+                                        <div className="fixed-prediction-info">
+                                            <div className="info-content">
+                                                <span className="info-icon">🎯</span>
+                                                <div className="info-text">
+                                                    <span className="info-title">
+                                                        {riskCalc.contractType === 'digitmatch' ? 'Digit Match' : 'Digit Differs'}
+                                                    </span>
+                                                    <span className="info-description">
+                                                        Automatically using digit <strong>{predictionInfo.defaultValue}</strong> for this contract type
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Martingale Settings */}
+                                <div className="input-group martingale-group">
+                                    <div className="martingale-header">
+                                        <label className="checkbox-wrapper">
+                                            <input
+                                                type="checkbox"
+                                                checked={riskCalc.martingaleEnabled}
+                                                onChange={(e) => handleMartingaleToggle(e.target.checked)}
+                                                className="checkbox-input"
+                                            />
+                                            <span className="checkbox-label">
+                                                <span className="label-text">{localize('Enable Martingale Strategy')}</span>
+                                                <span className="martingale-badge">⚡</span>
+                                            </span>
+                                        </label>
+                                        <div className="input-hint">
+                                            {localize('Automatically increase stake after losses to recover previous losses')}
+                                        </div>
+                                    </div>
+
+                                    {riskCalc.martingaleEnabled && (
+                                        <div className="martingale-settings">
+                                            <div className="setting-row">
+                                                <div className="setting-item">
+                                                    <label className="input-label">
+                                                        <span className="label-text">{localize('Multiplier')}</span>
+                                                    </label>
+                                                    <div className="number-input-wrapper">
+                                                        <input
+                                                            type="number"
+                                                            value={riskCalc.martingaleMultiplier}
+                                                            onChange={(e) => handleMartingaleChange('martingaleMultiplier', parseFloat(e.target.value) || 2)}
+                                                            min="1.1"
+                                                            max="10"
+                                                            step="0.1"
+                                                            className="number-input martingale-input"
+                                                        />
+                                                    </div>
+                                                    <div className="input-hint">
+                                                        {localize('Stake multiplier after loss')}
+                                                    </div>
+                                                </div>
+
+                                                <div className="setting-item">
+                                                    <label className="input-label">
+                                                        <span className="label-text">{localize('Max Steps')}</span>
+                                                    </label>
+                                                    <div className="number-input-wrapper">
+                                                        <input
+                                                            type="number"
+                                                            value={riskCalc.martingaleSteps}
+                                                            onChange={(e) => handleMartingaleChange('martingaleSteps', parseInt(e.target.value) || 3)}
+                                                            min="2"
+                                                            max="10"
+                                                            step="1"
+                                                            className="number-input martingale-input"
+                                                        />
+                                                    </div>
+                                                    <div className="input-hint">
+                                                        {localize('Maximum martingale steps')}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Martingale Sequence Preview */}
+                                            {(() => {
+                                                if (calculationResults?.sequence && calculationResults.sequence.length > 0) {
+                                                    return (
+                                                        <div className="martingale-preview">
+                                                            <div className="preview-header">
+                                                                <span className="preview-title">{localize('Martingale Sequence')}</span>
+                                                                <span className="preview-total">
+                                                                    {localize('Total Risk')}: {formatCurrency(calculationResults.totalRisk, client?.currency || 'USD')}
+                                                                </span>
+                                                            </div>
+                                                            <div className="sequence-steps">
+                                                                {calculationResults.sequence.map((stake, index) => (
+                                                                    <div key={index} className="sequence-step">
+                                                                        <span className="step-number">{index + 1}</span>
+                                                                        <span className="step-amount">
+                                                                            {formatCurrency(stake, client?.currency || 'USD')}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Quick Stake Buttons */}
+                            <div className="quick-stake-section">
+                                <label className="section-label">{localize('Quick Stake Selection')}</label>
+                                <div className="quick-buttons">
+                                    {[1, 5, 10, 25, 50, 100].map(amount => (
+                                        <button
+                                            key={amount}
+                                            className={`quick-btn ${riskCalc.stake === amount ? 'active' : ''}`}
+                                            onClick={() => handleRiskCalcChange('stake', amount)}
+                                        >
+                                            {formatCurrency(amount, client?.currency || 'USD')}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Calculate Button */}
+                            <div className="calculate-section">
+                                <button 
+                                    className="calculate-btn"
+                                    onClick={() => {/* Calculate button can trigger validation or refresh */}}
+                                    disabled={!riskCalc.stake}
+                                >
+                                    <span className="btn-icon">📊</span>
+                                    <span className="btn-text">{localize('Calculate Risk')}</span>
+                                </button>
+                                <button 
+                                    className="reset-btn"
+                                    onClick={resetRiskCalculator}
+                                >
+                                    <span className="btn-icon">🔄</span>
+                                    <span className="btn-text">{localize('Reset')}</span>
+                                </button>
+                                <button 
+                                    className="refresh-payout-btn"
+                                    onClick={fetchPayoutRates}
+                                    disabled={loadingPayout}
+                                >
+                                    <span className="btn-icon">{loadingPayout ? '⏳' : '🔄'}</span>
+                                    <span className="btn-text">{loadingPayout ? localize('Fetching...') : localize('Refresh Payouts')}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Results Panel */}
+                        {(() => {
+                            if (isCalculating) return (
+                                <div className="results-panel loading-state">
+                                    <div className="loading-content">
+                                        <div className="loading-spinner">⏳</div>
+                                        <h4 className="loading-title">{localize('Calculating Strategy...')}</h4>
+                                        <p className="loading-text">
+                                            {localize('Analyzing martingale sequence and risk assessment')}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+
+                            if (!calculationResults) return (
+                                <div className="results-panel empty-state">
+                                    <div className="empty-content">
+                                        <div className="empty-icon">🎯</div>
+                                        <h4 className="empty-title">{localize('Martingale Calculator Ready')}</h4>
+                                        <p className="empty-text">
+                                            {localize('Enter your stake amount to see martingale strategy analysis and capital recommendations')}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+
+                            return (
+                                <div className="results-panel">
+                                    <h3 className="panel-title">
+                                        {localize('Martingale Strategy Analysis')}
+                                        <span className="calculation-status">
+                                            {payoutRates[riskCalc.contractType] !== undefined ? '🔄 Live Data' : '📋 Fallback Data'}
+                                        </span>
+                                    </h3>
+                                    
+                                    {/* Key Metrics Grid */}
+                                    <div className="metrics-grid">
+                                        <div className="metric-card primary">
+                                            <div className="metric-header">
+                                                <span className="metric-icon">💰</span>
+                                                <span className="metric-label">{localize('Total Sequence Risk')}</span>
+                                            </div>
+                                            <div className="metric-value">
+                                                {formatCurrency(calculationResults.totalRisk, client?.currency || 'USD')}
+                                            </div>
+                                        </div>
+
+                                        <div className="metric-card">
+                                            <div className="metric-header">
+                                                <span className="metric-icon">🎯</span>
+                                                <span className="metric-label">{localize('Steps in Sequence')}</span>
+                                            </div>
+                                            <div className="metric-value trades">
+                                                {calculationResults.sequence.length}
+                                            </div>
+                                        </div>
+
+                                        <div className="metric-card">
+                                            <div className="metric-header">
+                                                <span className="metric-icon">�</span>
+                                                <span className="metric-label">{localize('Take Profit Target')}</span>
+                                            </div>
+                                            <div className="metric-value profit">
+                                                {formatCurrency(calculationResults.takeProfitSuggestion.currentOptimal.amount, client?.currency || 'USD')}
+                                            </div>
+                                            <div className="metric-sub">
+                                                {calculationResults.takeProfitSuggestion.currentOptimal.runsNeeded} {localize('runs needed')}
+                                            </div>
+                                        </div>
+
+                                        <div className="metric-card">
+                                            <div className="metric-header">
+                                                <span className="metric-icon">🎯</span>
+                                                <span className="metric-label">{localize('Profit Per Win')}</span>
+                                            </div>
+                                            <div className="metric-value profit">
+                                                {formatCurrency(calculationResults.takeProfitSuggestion.currentOptimal.profitPerRun, client?.currency || 'USD')}
+                                            </div>
+                                            <div className="metric-sub">
+                                                {(calculationResults.takeProfitSuggestion.contractProfitRate * 100).toFixed(1)}% {localize('profit on stake')}
+                                                {loadingPayout && ' (⏳ Fetching...)'}
+                                                {!loadingPayout && payoutRates[riskCalc.contractType] !== undefined && ' (🔄 Live API)'}
+                                                {!loadingPayout && payoutRates[riskCalc.contractType] === undefined && ' (📋 Fallback)'}
                                             </div>
                                         </div>
                                     </div>
-                                ))
-                            )}
+
+                                    {/* Take Profit Recommendations */}
+                                    <div className="take-profit-section">
+                                        <h4 className="section-title">
+                                            🎯 {localize('Take Profit Options')}
+                                        </h4>
+                                        <div className="take-profit-grid">
+                                            <div className="take-profit-option conservative">
+                                                <div className="option-header">
+                                                    <span className="option-icon">🛡️</span>
+                                                    <span className="option-name">{localize('Conservative')}</span>
+                                                </div>
+                                                <div className="option-value">
+                                                    {formatCurrency(calculationResults.takeProfitSuggestion.conservative.amount, client?.currency || 'USD')}
+                                                </div>
+                                                <div className="option-description">
+                                                    {calculationResults.takeProfitSuggestion.conservative.runsNeeded} {localize('runs needed')} - {localize('Quick achievable target')}
+                                                </div>
+                                            </div>
+
+                                            <div className="take-profit-option balanced">
+                                                <div className="option-header">
+                                                    <span className="option-icon">⚖️</span>
+                                                    <span className="option-name">{localize('Balanced')}</span>
+                                                </div>
+                                                <div className="option-value">
+                                                    {formatCurrency(calculationResults.takeProfitSuggestion.balanced.amount, client?.currency || 'USD')}
+                                                </div>
+                                                <div className="option-description">
+                                                    {calculationResults.takeProfitSuggestion.balanced.runsNeeded} {localize('runs needed')} - {localize('Balanced risk/reward')}
+                                                </div>
+                                            </div>
+
+                                            <div className="take-profit-option aggressive">
+                                                <div className="option-header">
+                                                    <span className="option-icon">🚀</span>
+                                                    <span className="option-name">{localize('Aggressive')}</span>
+                                                </div>
+                                                <div className="option-value">
+                                                    {formatCurrency(calculationResults.takeProfitSuggestion.aggressive.amount, client?.currency || 'USD')}
+                                                </div>
+                                                <div className="option-description">
+                                                    {calculationResults.takeProfitSuggestion.aggressive.runsNeeded} {localize('runs needed')} - {localize('Higher reward potential')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Capital Recommendations */}
+                                    <div className="capital-recommendations">
+                                        <div className="capital-header">
+                                            <h4 className="capital-title">
+                                                💎 {localize('Capital Recommendations')}
+                                            </h4>
+                                            <div className={`risk-badge ${calculationResults.riskAssessment.level}`}>
+                                                {calculationResults.riskAssessment.level.toUpperCase()} RISK
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="capital-grid">
+                                            <div className="capital-card minimum">
+                                                <div className="capital-label">
+                                                    <span className="capital-icon">⚠️</span>
+                                                    {localize('Minimum Capital')}
+                                                </div>
+                                                <div className="capital-amount">
+                                                    {formatCurrency(calculationResults.capitalRecommendation.minimum, client?.currency || 'USD')}
+                                                </div>
+                                                <div className="capital-description">
+                                                    {localize('Bare minimum to cover one sequence')}
+                                                </div>
+                                            </div>
+
+                                            <div className="capital-card recommended">
+                                                <div className="capital-label">
+                                                    <span className="capital-icon">✅</span>
+                                                    {localize('Recommended Capital')}
+                                                </div>
+                                                <div className="capital-amount">
+                                                    {formatCurrency(calculationResults.capitalRecommendation.recommended, client?.currency || 'USD')}
+                                                </div>
+                                                <div className="capital-description">
+                                                    {localize('Balanced approach for sustainable trading')}
+                                                </div>
+                                            </div>
+
+                                            <div className="capital-card conservative">
+                                                <div className="capital-label">
+                                                    <span className="capital-icon">🛡️</span>
+                                                    {localize('Conservative Capital')}
+                                                </div>
+                                                <div className="capital-amount">
+                                                    {formatCurrency(calculationResults.capitalRecommendation.conservative, client?.currency || 'USD')}
+                                                </div>
+                                                <div className="capital-description">
+                                                    {localize('Maximum safety with psychological comfort')}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="capital-reasoning">
+                                            <h5>{localize('Why These Amounts?')}</h5>
+                                            <ul>
+                                                {calculationResults.capitalRecommendation.reasoning.map((reason, index) => (
+                                                    <li key={index}>{reason}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* Martingale Sequence Visualization */}
+                                    <div className="martingale-visualization">
+                                        <div className="viz-header">
+                                            <h4 className="viz-title">
+                                                📊 {localize('Martingale Sequence Breakdown')}
+                                            </h4>
+                                            <div className="viz-stats">
+                                                <span className="viz-stat">
+                                                    {localize('Multiplier')}: {riskCalc.martingaleMultiplier}x
+                                                </span>
+                                                <span className="viz-stat">
+                                                    {localize('Steps')}: {riskCalc.martingaleSteps}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="sequence-visualization">
+                                            {calculationResults.sequence.map((stake, index) => {
+                                                const isLast = index === calculationResults.sequence.length - 1;
+                                                const winAmount = stake * 0.95; // Assuming 95% payout
+                                                const cumulativeRisk = calculationResults.sequence.slice(0, index + 1).reduce((sum, s) => sum + s, 0);
+                                                
+                                                return (
+                                                    <div key={index} className={`sequence-step-detailed ${isLast ? 'last-step' : ''}`}>
+                                                        <div className="step-header">
+                                                            <span className="step-number">{index + 1}</span>
+                                                            <span className="step-title">
+                                                                {localize('Step')} {index + 1}
+                                                            </span>
+                                                        </div>
+                                                        <div className="step-details">
+                                                            <div className="step-detail">
+                                                                <span className="detail-label">{localize('Stake')}</span>
+                                                                <span className="detail-value stake">
+                                                                    {formatCurrency(stake, client?.currency || 'USD')}
+                                                                </span>
+                                                            </div>
+                                                            <div className="step-detail">
+                                                                <span className="detail-label">{localize('If Win')}</span>
+                                                                <span className="detail-value win">
+                                                                    +{formatCurrency(winAmount - cumulativeRisk, client?.currency || 'USD')}
+                                                                </span>
+                                                            </div>
+                                                            <div className="step-detail">
+                                                                <span className="detail-label">{localize('Total Risk')}</span>
+                                                                <span className="detail-value risk">
+                                                                    {formatCurrency(cumulativeRisk, client?.currency || 'USD')}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        {!isLast && <div className="step-arrow">→</div>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Risk Assessment & Warnings */}
+                                    <div className={`risk-assessment ${calculationResults.riskAssessment.level}-risk`}>
+                                        <div className="assessment-header">
+                                            <h4 className="assessment-title">
+                                                ⚖️ {localize('Risk Assessment')}
+                                            </h4>
+                                            <div className="risk-score">
+                                                {localize('Score')}: {calculationResults.riskAssessment.score}/100
+                                            </div>
+                                        </div>
+
+                                        {calculationResults.riskAssessment.warnings.length > 0 && (
+                                            <div className="warnings-section">
+                                                <h5 className="warnings-title">⚠️ {localize('Warnings')}</h5>
+                                                <ul className="warnings-list">
+                                                    {calculationResults.riskAssessment.warnings.map((warning, index) => (
+                                                        <li key={index} className="warning-item">{warning}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        <div className="recommendations-section">
+                                            <h5 className="recommendations-title">💡 {localize('Recommendations')}</h5>
+                                            <ul className="recommendations-list">
+                                                {calculationResults.riskAssessment.recommendations.map((recommendation, index) => (
+                                                    <li key={index} className="recommendation-item">{recommendation}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* Trading Tips */}
+                                    <div className="trading-tips">
+                                        <h4 className="tips-title">💡 {localize('Martingale Trading Tips')}</h4>
+                                        <div className="tips-grid">
+                                            <div className="tip-card">
+                                                <div className="tip-icon">🎯</div>
+                                                <div className="tip-content">
+                                                    <strong>{localize('Start Small')}</strong>
+                                                    <p>{localize('Begin with the smallest possible stake to minimize risk during the learning phase.')}</p>
+                                                </div>
+                                            </div>
+                                            <div className="tip-card">
+                                                <div className="tip-icon">🛑</div>
+                                                <div className="tip-content">
+                                                    <strong>{localize('Set Strict Limits')}</strong>
+                                                    <p>{localize('Never exceed your predetermined maximum loss limit, regardless of emotions.')}</p>
+                                                </div>
+                                            </div>
+                                            <div className="tip-card">
+                                                <div className="tip-icon">📊</div>
+                                                <div className="tip-content">
+                                                    <strong>{localize('Track Everything')}</strong>
+                                                    <p>{localize('Keep detailed records of all trades and sequences for analysis.')}</p>
+                                                </div>
+                                            </div>
+                                            <div className="tip-card">
+                                                <div className="tip-icon">🧘</div>
+                                                <div className="tip-content">
+                                                    <strong>{localize('Stay Disciplined')}</strong>
+                                                    <p>{localize('Emotional decisions lead to losses. Stick to your predetermined strategy.')}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+            )}
+
+            {/* Strategies Section */}
+            {activeSection === 'strategies' && (
+                <div className="strategies-section">
+                    <div className="strategies-header">
+                        <h2 className="section-title">
+                            <span className="title-icon">📈</span>
+                            {localize('Trading Strategies')}
+                        </h2>
+                        <p className="section-description">
+                            {localize('Proven strategies for different contract types and market conditions')}
+                        </p>
+                    </div>
+
+                    <div className="strategies-grid">
+                        {/* Even Strategy */}
+                        <div className="strategy-card even-strategy">
+                            <div className="strategy-header">
+                                <div className="strategy-icon">⚡</div>
+                                <h3 className="strategy-title">{localize('Even Strategy')}</h3>
+                                <div className="strategy-badge even">{localize('EVEN')}</div>
+                            </div>
+                            <div className="strategy-content">
+                                <div className="strategy-section">
+                                    <h4 className="section-label">{localize('Entry Criteria')}</h4>
+                                    <p>{localize('When numbers (2, 4, 6, 8) indicate 11.5% and above, place an Even contract type in all volatilities from Volatility 10 index to Volatility 100 index.')}</p>
+                                </div>
+                                <div className="strategy-section">
+                                    <h4 className="section-label">{localize('Main Volatility')}</h4>
+                                    <p className="highlight">{localize('Volatility 100 index')}</p>
+                                </div>
+                                <div className="strategy-section">
+                                    <h4 className="section-label">{localize('Entry Point')}</h4>
+                                    <p>{localize('Make sure the cursor hits 4 or 5 times on odd numbers, then run your bot if it hits any Even number.')}</p>
+                                    <div className="warning-note">
+                                        <span className="warning-icon">⚠️</span>
+                                        <span>{localize('Don\'t rush! Wait for confirmation of an Even number before running your bot.')}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </>
-                )}
-                
-                {/* Load More Button - Desktop Only */}
-                {!loading && hasMoreData && statements.length > 0 && !isMobile && (
-                    <div className="load-more-container">
-                        <button 
-                            onClick={loadMoreTransactions} 
-                            className="btn-load-more" 
-                            disabled={loadingMore}
-                        >
-                            {loadingMore ? localize('Loading...') : localize('Load More Transactions')}
-                        </button>
+
+                        {/* Odd Strategy */}
+                        <div className="strategy-card odd-strategy">
+                            <div className="strategy-header">
+                                <div className="strategy-icon">🎯</div>
+                                <h3 className="strategy-title">{localize('Odd Strategy')}</h3>
+                                <div className="strategy-badge odd">{localize('ODD')}</div>
+                            </div>
+                            <div className="strategy-content">
+                                <div className="strategy-section">
+                                    <h4 className="section-label">{localize('Entry Criteria')}</h4>
+                                    <p>{localize('When numbers (1, 3, 5, 7, 9) indicate 11% and above, place an Odd contract type.')}</p>
+                                </div>
+                                <div className="strategy-section">
+                                    <h4 className="section-label">{localize('Main Volatility')}</h4>
+                                    <p className="highlight">{localize('Volatility 75 index')}</p>
+                                </div>
+                                <div className="strategy-section">
+                                    <h4 className="section-label">{localize('Entry Point')}</h4>
+                                    <p>{localize('Make sure the cursor hits 3 or 4 times on even numbers, then run your bot if it hits any Odd number.')}</p>
+                                    <div className="warning-note">
+                                        <span className="warning-icon">⚠️</span>
+                                        <span>{localize('Don\'t rush! Wait for confirmation of an Odd number before running your bot.')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Over/Under Strategies */}
+                        <div className="strategy-card over-under-strategy">
+                            <div className="strategy-header">
+                                <div className="strategy-icon">📊</div>
+                                <h3 className="strategy-title">{localize('Over/Under Strategies')}</h3>
+                                <div className="strategy-badge over-under">{localize('OVER/UNDER')}</div>
+                            </div>
+                            <div className="strategy-content">
+                                <div className="strategy-subsection">
+                                    <h4 className="subsection-title">{localize('Over 0 & 1')}</h4>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Criteria')}</h5>
+                                        <p>{localize('Use 1 tick. Green bar should have 10.5% and above. Red bar should have 9% and below.')}</p>
+                                    </div>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Entry Point')}</h5>
+                                        <p>{localize('Wait for the moving cursor to hit 0 or 1 once or twice before trading Over 0 or 1.')}</p>
+                                    </div>
+                                </div>
+                                <div className="strategy-subsection">
+                                    <h4 className="subsection-title">{localize('Over 2')}</h4>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Criteria')}</h5>
+                                        <p>{localize('Any digit among 3, 4, 5, 6, 7, 8, or 9 should be at least 10% and above.')}</p>
+                                    </div>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Entry Point')}</h5>
+                                        <p>{localize('If the last trade ends in Under 2, trade Over when the cursor hits 0, 1, or 2.')}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Matches & Differs Strategy */}
+                        <div className="strategy-card match-differ-strategy">
+                            <div className="strategy-header">
+                                <div className="strategy-icon">🔀</div>
+                                <h3 className="strategy-title">{localize('Matches & Differs')}</h3>
+                                <div className="strategy-badge match-differ">{localize('MATCH/DIFFER')}</div>
+                            </div>
+                            <div className="strategy-content">
+                                <div className="strategy-subsection">
+                                    <h4 className="subsection-title">{localize('Digit Differs Strategy')}</h4>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Criteria')}</h5>
+                                        <p>{localize('Use 1 Tick. Predict digit with less than 9%. Green bar should be below 12%.')}</p>
+                                    </div>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Entry Point')}</h5>
+                                        <p>{localize('Ensure the predicted number has been hit once before entering the trade.')}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Rise and Fall Strategies */}
+                        <div className="strategy-card rise-fall-strategy">
+                            <div className="strategy-header">
+                                <div className="strategy-icon">📈</div>
+                                <h3 className="strategy-title">{localize('Rise and Fall')}</h3>
+                                <div className="strategy-badge rise-fall">{localize('RISE/FALL')}</div>
+                            </div>
+                            <div className="strategy-content">
+                                <div className="strategy-subsection">
+                                    <h4 className="subsection-title">{localize('Rise Strategy')}</h4>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Criteria')}</h5>
+                                        <p>{localize('Use moving averages, trend lines, and volume analysis to confirm an upward momentum.')}</p>
+                                    </div>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Entry Timing')}</h5>
+                                        <p>{localize('Wait for a pullback or consolidation near support levels before entering a trade.')}</p>
+                                    </div>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Risk Management')}</h5>
+                                        <p>{localize('Place stop-loss orders just below key support levels to minimize potential losses.')}</p>
+                                    </div>
+                                </div>
+                                <div className="strategy-subsection">
+                                    <h4 className="subsection-title">{localize('Fall Strategy')}</h4>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Criteria')}</h5>
+                                        <p>{localize('Use moving averages and trend lines to detect downward momentum.')}</p>
+                                    </div>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Entry Timing')}</h5>
+                                        <p>{localize('Wait for a brief consolidation or bounce near resistance levels before initiating the trade.')}</p>
+                                    </div>
+                                    <div className="strategy-section">
+                                        <h5 className="section-label">{localize('Risk Management')}</h5>
+                                        <p>{localize('Place stop-loss orders above key resistance levels to protect capital.')}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                )}
-                
-                {/* Mobile Loading Indicator for Infinite Scroll */}
-                {isMobile && loadingMore && (
-                    <div className="mobile-loading-indicator">
-                        <div className="loading-spinner"></div>
-                        <p>{localize('Loading more transactions...')}</p>
+
+                    {/* Strategy Tips */}
+                    <div className="strategy-tips">
+                        <h3 className="tips-title">
+                            <span className="tips-icon">💡</span>
+                            {localize('General Strategy Tips')}
+                        </h3>
+                        <div className="tips-grid">
+                            <div className="tip-item">
+                                <div className="tip-icon">🎯</div>
+                                <div className="tip-content">
+                                    <strong>{localize('Patience is Key')}</strong>
+                                    <p>{localize('Wait for clear confirmation signals before entering trades.')}</p>
+                                </div>
+                            </div>
+                            <div className="tip-item">
+                                <div className="tip-icon">📊</div>
+                                <div className="tip-content">
+                                    <strong>{localize('Monitor Percentages')}</strong>
+                                    <p>{localize('Always check the percentage indicators before making decisions.')}</p>
+                                </div>
+                            </div>
+                            <div className="tip-item">
+                                <div className="tip-icon">⏰</div>
+                                <div className="tip-content">
+                                    <strong>{localize('Timing Matters')}</strong>
+                                    <p>{localize('Entry timing can significantly impact your success rate.')}</p>
+                                </div>
+                            </div>
+                            <div className="tip-item">
+                                <div className="tip-icon">🛡️</div>
+                                <div className="tip-content">
+                                    <strong>{localize('Risk Management')}</strong>
+                                    <p>{localize('Never risk more than you can afford to lose.')}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 });
