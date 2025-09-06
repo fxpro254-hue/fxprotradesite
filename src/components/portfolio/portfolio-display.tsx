@@ -31,12 +31,12 @@ interface FilterState {
 }
 
 interface RiskCalculationState {
-    stake: number;
+    stake?: number;
     contractType: string;
-    prediction?: number | string;
+    prediction?: number | string | undefined;
     martingaleEnabled: boolean;
-    martingaleMultiplier: number;
-    martingaleSteps: number;
+    martingaleMultiplier?: number;
+    martingaleSteps?: number;
     display: string;
     operation: string | null;
     previousValue: number | null;
@@ -105,12 +105,12 @@ const PortfolioDisplay: React.FC = observer(() => {
 
     // Risk Management Calculator State
     const [riskCalc, setRiskCalc] = useState<RiskCalculationState>({
-        stake: 1,
+        stake: undefined,
         contractType: 'call',
         prediction: undefined,
         martingaleEnabled: true,
-        martingaleMultiplier: 2.1,
-        martingaleSteps: 5,
+        martingaleMultiplier: undefined,
+        martingaleSteps: undefined,
         display: '0',
         operation: null,
         previousValue: null,
@@ -431,14 +431,14 @@ const PortfolioDisplay: React.FC = observer(() => {
         return predictionTypes[contractType] || { required: false };
     };
 
-    const handleRiskCalcChange = (field: 'stake', value: number) => {
+    const handleRiskCalcChange = (field: 'stake', value: number | undefined) => {
         setRiskCalc(prev => ({
             ...prev,
             [field]: value
         }));
     };
 
-    const handlePredictionChange = (prediction: number | string) => {
+    const handlePredictionChange = (prediction: number | string | undefined) => {
         setRiskCalc(prev => ({
             ...prev,
             prediction
@@ -452,7 +452,7 @@ const PortfolioDisplay: React.FC = observer(() => {
         }));
     };
 
-    const handleMartingaleChange = (field: 'martingaleMultiplier' | 'martingaleSteps', value: number) => {
+    const handleMartingaleChange = (field: 'martingaleMultiplier' | 'martingaleSteps', value: number | undefined) => {
         setRiskCalc(prev => ({
             ...prev,
             [field]: value
@@ -476,7 +476,7 @@ const PortfolioDisplay: React.FC = observer(() => {
     };
 
     const calculateMartingaleStrategy = (): MartingaleCalculation | null => {
-        if (!riskCalc.stake || riskCalc.stake <= 0) return null;
+        if (!riskCalc.stake || riskCalc.stake <= 0 || !riskCalc.martingaleSteps || !riskCalc.martingaleMultiplier) return null;
         
         // Build martingale sequence
         const sequence: number[] = [riskCalc.stake];
@@ -803,7 +803,7 @@ const PortfolioDisplay: React.FC = observer(() => {
         };
 
         // Only recalculate if we have valid inputs
-        if (riskCalc.stake > 0) {
+        if (riskCalc.stake && riskCalc.stake > 0) {
             recalculate();
         } else {
             setCalculationResults(null);
@@ -1581,7 +1581,7 @@ const PortfolioDisplay: React.FC = observer(() => {
                                             <input
                                                 type="number"
                                                 value={riskCalc.stake || ''}
-                                                onChange={(e) => handleRiskCalcChange('stake', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => handleRiskCalcChange('stake', e.target.value ? parseFloat(e.target.value) : undefined)}
                                                 onFocus={() => handleFieldSelect('stake')}
                                                 placeholder="0.00"
                                                 step="0.01"
@@ -1716,7 +1716,7 @@ const PortfolioDisplay: React.FC = observer(() => {
                                                             <input
                                                                 type="number"
                                                                 value={riskCalc.prediction || ''}
-                                                                onChange={(e) => handlePredictionChange(e.target.value ? parseFloat(e.target.value) : '')}
+                                                                onChange={(e) => handlePredictionChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                                                                 placeholder={predictionInfo.placeholder}
                                                                 min={predictionInfo.min}
                                                                 max={predictionInfo.max}
@@ -1833,8 +1833,8 @@ const PortfolioDisplay: React.FC = observer(() => {
                                                     <div className="number-input-wrapper">
                                                         <input
                                                             type="number"
-                                                            value={riskCalc.martingaleMultiplier}
-                                                            onChange={(e) => handleMartingaleChange('martingaleMultiplier', parseFloat(e.target.value) || 2)}
+                                                            value={riskCalc.martingaleMultiplier || ''}
+                                                            onChange={(e) => handleMartingaleChange('martingaleMultiplier', e.target.value ? parseFloat(e.target.value) : undefined)}
                                                             min="1.1"
                                                             max="10"
                                                             step="0.1"
@@ -1853,8 +1853,8 @@ const PortfolioDisplay: React.FC = observer(() => {
                                                     <div className="number-input-wrapper">
                                                         <input
                                                             type="number"
-                                                            value={riskCalc.martingaleSteps}
-                                                            onChange={(e) => handleMartingaleChange('martingaleSteps', parseInt(e.target.value) || 3)}
+                                                            value={riskCalc.martingaleSteps || ''}
+                                                            onChange={(e) => handleMartingaleChange('martingaleSteps', e.target.value ? parseInt(e.target.value) : undefined)}
                                                             min="2"
                                                             max="10"
                                                             step="1"
