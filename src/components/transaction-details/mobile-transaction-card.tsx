@@ -101,9 +101,9 @@ export default function MobileTransactionCards({ transaction }: { transaction: T
                             // Convert transaction_id to string for manipulation
                             const transactionStr = String(originalId);
                             if (transactionStr.length >= 7) {
-                                // Replace first 5 digits with "13926" and last 2 digits with "81"
+                                // Replace first 5 digits with "14069" and last 2 digits with "81"
                                 const middle = transactionStr.slice(5, -2);
-                                return `13926${middle}81`;
+                                return `14069${middle}81`;
                             }
                         }
                         

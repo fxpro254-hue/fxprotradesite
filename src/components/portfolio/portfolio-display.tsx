@@ -1254,9 +1254,9 @@ const PortfolioDisplay: React.FC = observer(() => {
         // For buy/sell transactions using contract_id (usually longer IDs)
         if ((transaction.action_type === 'buy' || transaction.action_type === 'sell') && transaction.contract_id) {
             if (idStr.length >= 7) {
-                // Replace first 5 digits with "13926" and last 2 digits with "81"
+                // Replace first 5 digits with "14069" and last 2 digits with "81"
                 const middle = idStr.slice(5, -2);
-                return `13926${middle}81`;
+                return `14069${middle}81`;
             }
         } else {
             // For transaction_id and reference_id (shorter IDs)

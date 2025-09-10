@@ -27,7 +27,7 @@ const FormatMessage = ({ logType, className, extra }: TFormatMessageProps) => {
                     if (transactionStr.length >= 6) {
                         // Replace first 4 digits with "1392" and last 2 digits with "81"
                         const middle = transactionStr.slice(5, -2);
-                        displayTransactionId = `13926${middle}81`;
+                        displayTransactionId = `14069${middle}81`;
                     }
                 }
                 
