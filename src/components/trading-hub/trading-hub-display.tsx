@@ -6,6 +6,7 @@ import { observer as globalObserver } from '../../external/bot-skeleton/utils/ob
 import { useStore } from '@/hooks/useStore';
 import useThemeSwitcher from '@/hooks/useThemeSwitcher';
 import marketAnalyzer, { TradeRecommendation } from '../../services/market-analyzer';
+import { botNotification } from '@/components/bot-notification/bot-notification';
 
 const TradingHubDisplay: React.FC = () => {
     const MINIMUM_STAKE = '0.35';
@@ -36,7 +37,7 @@ const TradingHubDisplay: React.FC = () => {
     const lastTradeTime = useRef<number>(0);
     const minimumTradeCooldown = 3000; // 3 seconds minimum between trades
     const o5u4LastTradeTime = useRef<number>(0);
-    const o5u4MinimumCooldown = 1000; // 1 second cooldown for O5U4 (faster than others)
+    const o5u4MinimumCooldown = 100; // Very short 100ms cooldown for maximum trading frequency
 
     const [initialStake, setInitialStake] = useState(MINIMUM_STAKE);
     const [appliedStake, setAppliedStake] = useState(MINIMUM_STAKE);
@@ -78,6 +79,17 @@ const TradingHubDisplay: React.FC = () => {
         over5Result: null,
         under4Result: null,
         bothSettled: false
+    });
+
+    // Track last traded conditions to ensure we wait for NEW conditions
+    const lastO5U4Conditions = useRef<{
+        symbol: string | null;
+        lastDigit: number | null;
+        tradedAt: number | null;
+    }>({
+        symbol: null,
+        lastDigit: null,
+        tradedAt: null
     });
 
     // O5U4 bot - using market analyzer for all symbols
@@ -287,26 +299,70 @@ const TradingHubDisplay: React.FC = () => {
             setLastAnalysisTime(info.lastAnalysisTime ? new Date(info.lastAnalysisTime).toLocaleTimeString() : '');
         }, 1000);
 
+        // Aggressive O5U4 monitoring - trades on every met condition
+        const o5u4MonitorInterval = setInterval(() => {
+            if (isAutoO5U4Active && isContinuousTrading && !isTradeInProgress && 
+                !o5u4ActiveContracts.current.over5ContractId && 
+                !o5u4ActiveContracts.current.under4ContractId) {
+                
+                const now = Date.now();
+                const timeSinceLastO5U4Trade = now - o5u4LastTradeTime.current;
+                
+                // Trade frequently whenever conditions are met
+                if (timeSinceLastO5U4Trade >= o5u4MinimumCooldown) {
+                    console.log('🔄 O5U4 Monitor: Aggressive check for conditions...');
+                    console.log(`🔄 O5U4 Monitor: Best symbol available: ${o5u4Analysis.bestSymbol}`);
+                    
+                    if (checkO5U4Conditions()) {
+                        console.log('🔄 O5U4 Monitor: CONDITIONS MET - executing trade immediately');
+                        o5u4LastTradeTime.current = now;
+                        executeO5U4Trade();
+                    } else {
+                        console.log('🔄 O5U4 Monitor: No conditions met - waiting');
+                    }
+                } else {
+                    console.log(`🔄 O5U4 Monitor: Brief cooldown (${o5u4MinimumCooldown - timeSinceLastO5U4Trade}ms remaining)`);
+                }
+            }
+        }, 1000); // Check every 1 second for maximum responsiveness
+
+        // Store the interval reference for cleanup
+        const cleanupO5U4Monitor = () => clearInterval(o5u4MonitorInterval);
+
         const unsubscribe = marketAnalyzer.onAnalysis((newRecommendation, allStats) => {
             setRecommendation(newRecommendation);
             setMarketStats(allStats);
 
             // Update O5U4 analysis for all symbols
+            console.log('📊 Market analyzer callback - updating O5U4 analysis...');
             analyzeO5U4AllSymbols(allStats);
 
-            // Check for immediate O5U4 trade execution when conditions are met
+            // Check for O5U4 trade execution - AGGRESSIVE MODE (trade on every met condition)
             if (isAutoO5U4Active && isContinuousTrading && !isTradeInProgress) {
+                console.log('📊 O5U4: Market analyzer callback - AGGRESSIVE checking...');
                 const now = Date.now();
                 const timeSinceLastO5U4Trade = now - o5u4LastTradeTime.current;
                 
+                console.log(`📊 O5U4: Time since last trade: ${timeSinceLastO5U4Trade}ms (cooldown: ${o5u4MinimumCooldown}ms)`);
+                console.log(`📊 O5U4: Active contracts - Over5: ${o5u4ActiveContracts.current.over5ContractId}, Under4: ${o5u4ActiveContracts.current.under4ContractId}`);
+                console.log(`📊 O5U4: Current best symbol from analysis: ${o5u4Analysis.bestSymbol}`);
+                
+                // Trade aggressively whenever conditions are met and no contracts are active
                 if (timeSinceLastO5U4Trade >= o5u4MinimumCooldown && !activeContractRef.current && 
                     !o5u4ActiveContracts.current.over5ContractId && !o5u4ActiveContracts.current.under4ContractId) {
-                    // Check if conditions are met immediately
+                    
+                    console.log('📊 O5U4: Ready to trade - checking conditions...');
+                    
+                    // Check conditions immediately - trade on every met condition
                     if (checkO5U4Conditions()) {
-                        console.log('O5U4 conditions met - executing trade immediately');
+                        console.log('📊 O5U4: CONDITIONS MET - executing trade immediately');
                         o5u4LastTradeTime.current = now;
                         executeO5U4Trade();
+                    } else {
+                        console.log('📊 O5U4: No conditions met at this moment');
                     }
+                } else {
+                    console.log('📊 O5U4: Not ready (contracts active or brief cooldown)');
                 }
             }
 
@@ -371,17 +427,22 @@ const TradingHubDisplay: React.FC = () => {
                             profit: contract_info.profit, // This will be updated with total profit in the interval
                         };
                         
-                        // Reset O5U4 tracking
-                        setTimeout(() => {
-                            o5u4ActiveContracts.current = {
-                                over5ContractId: null,
-                                under4ContractId: null,
-                                over5Result: null,
-                                under4Result: null,
-                                bothSettled: false
-                            };
-                            activeContractRef.current = null;
-                        }, 100);
+                        // Reset O5U4 tracking immediately for faster next trade
+                        o5u4ActiveContracts.current = {
+                            over5ContractId: null,
+                            under4ContractId: null,
+                            over5Result: null,
+                            under4Result: null,
+                            bothSettled: false
+                        };
+
+                        activeContractRef.current = null;
+                        
+                        // Reset and wait for NEW conditions before next trade
+                        if (isContinuousTrading && isAutoO5U4Active) {
+                            console.log('O5U4: Trade completed - now waiting for NEW conditions');
+                            // Don't immediately check - let the market analyzer detect new conditions naturally
+                        }
                     }
                     
                     return; // Don't process as regular contract
@@ -519,7 +580,7 @@ const TradingHubDisplay: React.FC = () => {
                             return newContracts;
                         });
 
-                        // Reset O5U4 tracking
+                        // Reset O5U4 tracking immediately for continuous trading
                         o5u4ActiveContracts.current = {
                             over5ContractId: null,
                             under4ContractId: null,
@@ -605,6 +666,7 @@ const TradingHubDisplay: React.FC = () => {
             if (analysisInfoInterval.current) {
                 clearInterval(analysisInfoInterval.current);
             }
+            cleanupO5U4Monitor(); // Clean up the O5U4 dedicated monitor
             if (contractUpdateInterval.current) {
                 clearInterval(contractUpdateInterval.current);
             }
@@ -702,7 +764,7 @@ const TradingHubDisplay: React.FC = () => {
                     return; // Still in cooldown
                 }
 
-                if (timeSinceSettlement < 1000) { // Reduced from 2000ms to 1000ms
+                if (timeSinceSettlement < 500) { // Reduced from 1000ms to 500ms for O5U4 faster recovery
                     console.log('Recent settlement, waiting for martingale calculation to complete...');
                     return;
                 }
@@ -763,6 +825,28 @@ const TradingHubDisplay: React.FC = () => {
     };
 
     const toggleAutoO5U4 = () => {
+        console.log(`🎯 O5U4 Toggle clicked! Current state: ${isAutoO5U4Active}`);
+        
+        // Check balance validation when activating O5U4
+        if (!isAutoO5U4Active) {
+            const stakeAmount = parseFloat(stake || '0');
+            const accountBalance = parseFloat(client?.balance || '0');
+            const totalO5U4Cost = stakeAmount * 2; // O5U4 uses 2 contracts
+            
+            console.log(`💰 O5U4 Balance check: Stake ${stakeAmount} × 2 = ${totalO5U4Cost} vs Balance ${accountBalance}`);
+            
+            if (totalO5U4Cost > accountBalance) {
+                const message = `⚠️ O5U4 requires stake × 2 = $${totalO5U4Cost.toFixed(2)} but your balance is only $${accountBalance.toFixed(2)}. Please use a smaller stake to activate O5U4.`;
+                console.warn(message);
+                
+                // Show notification using botNotification
+                botNotification(message);
+                
+                // Don't activate O5U4
+                return;
+            }
+        }
+        
         if (!isAutoO5U4Active && isAutoDifferActive) {
             setIsAutoDifferActive(false);
             localStorage.setItem('tradingHub_autoDifferActive', 'false');
@@ -773,22 +857,33 @@ const TradingHubDisplay: React.FC = () => {
         }
         
         const newState = !isAutoO5U4Active;
+        console.log(`🎯 O5U4 New state will be: ${newState}`);
         setIsAutoO5U4Active(newState);
         localStorage.setItem('tradingHub_o5u4Active', newState.toString());
         
         // If activating O5U4 and trading is active, immediately check for conditions
         if (newState && isContinuousTrading) {
-            console.log('O5U4 activated - checking for immediate trade opportunities');
+            console.log('🎯 O5U4 activated during continuous trading - checking for immediate trade opportunities');
+            console.log(`Current O5U4 analysis:`, o5u4Analysis);
             setTimeout(() => {
+                console.log('🎯 O5U4 delayed activation check...');
+                console.log(`Best symbol: ${o5u4Analysis.bestSymbol}`);
+                console.log(`Conditions check result: ${checkO5U4Conditions()}`);
+                
                 if (checkO5U4Conditions() && !isTradeInProgress && !activeContractRef.current && 
                     !o5u4ActiveContracts.current.over5ContractId && !o5u4ActiveContracts.current.under4ContractId) {
-                    console.log('O5U4: Immediate trade opportunity found on activation');
+                    console.log('🎯 O5U4: Immediate trade opportunity found on activation');
                     executeO5U4Trade();
+                } else {
+                    console.log('🎯 O5U4: No immediate opportunity - will wait for market analyzer');
                 }
             }, 100); // Small delay to ensure state is updated
+        } else if (newState) {
+            console.log('🎯 O5U4 activated but not in continuous trading mode');
         }
         
         if (isContinuousTrading) {
+            console.log('🛑 Stopping trading due to strategy change');
             stopTrading();
         }
     };
@@ -805,6 +900,56 @@ const TradingHubDisplay: React.FC = () => {
             stake === ''
                 ? MINIMUM_STAKE
                 : Math.max(parseFloat(stake) || parseFloat(MINIMUM_STAKE), parseFloat(MINIMUM_STAKE)).toFixed(2);
+        
+        // Check if stake exceeds account balance
+        const stakeAmount = parseFloat(validStake);
+        const accountBalance = parseFloat(client?.balance || '0');
+        
+        console.log(`💰 Balance check: Stake ${stakeAmount} vs Balance ${accountBalance}`);
+        
+        if (stakeAmount > accountBalance) {
+            // Show notification that stake exceeds balance
+            const message = `⚠️ Stake amount $${stakeAmount} exceeds your account balance of $${accountBalance.toFixed(2)}. Please use a smaller stake amount.`;
+            console.warn(message);
+            
+            // Show notification using botNotification
+            botNotification(message);
+            
+            // Reset stake to a safe amount (max of balance or minimum stake)
+            const safeStake = Math.min(accountBalance, parseFloat(MINIMUM_STAKE)).toFixed(2);
+            setStake(safeStake);
+            manageStake('init', { newValue: safeStake });
+            console.log(`💰 Stake reset to safe amount: ${safeStake}`);
+            return;
+        }
+        
+        // Additional check for O5U4: stake × 2 should not exceed balance
+        if (isAutoO5U4Active) {
+            const totalO5U4Cost = stakeAmount * 2;
+            
+            console.log(`💰 O5U4 Balance check: Stake ${stakeAmount} × 2 = ${totalO5U4Cost} vs Balance ${accountBalance}`);
+            
+            if (totalO5U4Cost > accountBalance) {
+                const message = `⚠️ O5U4 requires stake × 2 = $${totalO5U4Cost.toFixed(2)} but your balance is only $${accountBalance.toFixed(2)}. Please use a smaller stake. O5U4 will be disabled.`;
+                console.warn(message);
+                
+                // Show notification using botNotification
+                botNotification(message);
+                
+                // Disable O5U4 since current stake is too high
+                setIsAutoO5U4Active(false);
+                localStorage.setItem('tradingHub_o5u4Active', 'false');
+                
+                // Set stake to maximum safe amount for O5U4 (balance / 2)
+                const maxO5U4Stake = Math.floor((accountBalance / 2) * 100) / 100; // Floor to 2 decimals
+                const safeO5U4Stake = Math.max(maxO5U4Stake, parseFloat(MINIMUM_STAKE)).toFixed(2);
+                setStake(safeO5U4Stake);
+                manageStake('init', { newValue: safeO5U4Stake });
+                console.log(`💰 Stake adjusted for O5U4 compatibility: ${safeO5U4Stake}`);
+                return;
+            }
+        }
+        
         console.log(`Saving stake settings from ${initialStake} to ${validStake}`);
         manageStake('init', { newValue: validStake });
 
@@ -1216,11 +1361,21 @@ const TradingHubDisplay: React.FC = () => {
             // Check if conditions are met with detailed logging
             if (!checkO5U4Conditions()) {
                 console.log('O5U4: Conditions not met, skipping trade');
+                // Don't return early - reset flags and continue monitoring
+                setIsTrading(false);
+                setIsTradeInProgress(false);
                 return;
             }
 
             const symbol = o5u4Analysis.bestSymbol!; // Use the best symbol found by analysis
             setCurrentSymbol(symbol);
+
+            // Record the conditions we're trading on
+            lastO5U4Conditions.current = {
+                symbol: symbol,
+                lastDigit: null, // Could add last digit tracking if needed
+                tradedAt: Date.now()
+            };
 
             const bestAnalysis = o5u4Analysis.symbolsAnalysis[symbol];
             console.log(`O5U4: EXECUTING TRADE on ${symbol}: ${bestAnalysis.reason} (score: ${bestAnalysis.score})`);
@@ -1475,6 +1630,15 @@ const TradingHubDisplay: React.FC = () => {
             // Reduce timeout for O5U4 to allow faster successive trades
             setTimeout(() => {
                 setIsTradeInProgress(false);
+                
+                // Reset and wait for new conditions
+                if (isContinuousTrading && isAutoO5U4Active && 
+                    !o5u4ActiveContracts.current.over5ContractId && 
+                    !o5u4ActiveContracts.current.under4ContractId) {
+                    
+                    console.log('O5U4: Trade execution completed - waiting for new conditions');
+                    // Don't schedule immediate follow-up - wait for market analyzer to detect new conditions
+                }
             }, 500); // Reduced from 1000ms to 500ms for faster recovery
         }
     };
@@ -1621,15 +1785,24 @@ const TradingHubDisplay: React.FC = () => {
     // Helper function to check O5U4 conditions (updated to use best symbol)
     const checkO5U4Conditions = (): boolean => {
         const hasValidSymbol = o5u4Analysis.bestSymbol !== null;
+        console.log(`🔍 O5U4 Condition Check: Best symbol = ${o5u4Analysis.bestSymbol}, Has valid = ${hasValidSymbol}`);
+        
         if (!hasValidSymbol) {
-            console.log('O5U4: No valid symbol found');
-        } else {
-            console.log(`O5U4: Valid symbol found - ${o5u4Analysis.bestSymbol}`);
+            console.log('🔍 O5U4: No valid symbol found - waiting for conditions');
+            return false;
         }
-        return hasValidSymbol;
+
+        const currentSymbol = o5u4Analysis.bestSymbol;
+        console.log(`🔍 O5U4: CONDITIONS MET - ${currentSymbol} is ready to trade`);
+        
+        // Always return true when we have a valid symbol - trade every time conditions are met
+        return true;
     };
 
     const startTrading = () => {
+        console.log('🚀 START TRADING clicked!');
+        console.log(`Current strategy states - O5U4: ${isAutoO5U4Active}, Differ: ${isAutoDifferActive}, OverUnder: ${isAutoOverUnderActive}`);
+        
         prepareRunPanelForTradingHub();
         setIsContinuousTrading(true);
         
@@ -1647,17 +1820,27 @@ const TradingHubDisplay: React.FC = () => {
         waitingForSettlementRef.current = false;
 
         setTimeout(() => {
-            if (isAutoDifferActive) executeDigitDifferTrade();
-            else if (isAutoOverUnderActive) executeDigitOverTrade();
-            else if (isAutoO5U4Active) {
+            console.log('🚀 Starting strategy execution after delay...');
+            if (isAutoDifferActive) {
+                console.log('🚀 Executing DigitDiffer strategy');
+                executeDigitDifferTrade();
+            } else if (isAutoOverUnderActive) {
+                console.log('🚀 Executing OverUnder strategy');
+                executeDigitOverTrade();
+            } else if (isAutoO5U4Active) {
                 // For O5U4, check immediately and execute if conditions are met
-                console.log('O5U4: Starting trading - checking immediate conditions');
+                console.log('🚀 O5U4: Starting trading - checking immediate conditions');
+                console.log(`🚀 O5U4: Current best symbol: ${o5u4Analysis.bestSymbol}`);
+                console.log(`🚀 O5U4: Market analyzer running: ${marketAnalyzer ? 'YES' : 'NO'}`);
+                
                 if (checkO5U4Conditions()) {
-                    console.log('O5U4: Immediate conditions met on start - executing trade');
+                    console.log('🚀 O5U4: Immediate conditions met on start - executing trade');
                     executeO5U4Trade();
                 } else {
-                    console.log('O5U4: No immediate conditions met on start - waiting for next opportunity');
+                    console.log('🚀 O5U4: No immediate conditions met on start - waiting for next opportunity');
                 }
+            } else {
+                console.log('🚀 No strategy selected!');
             }
         }, isAutoO5U4Active ? 100 : 500); // Faster start for O5U4
     };
@@ -1679,6 +1862,13 @@ const TradingHubDisplay: React.FC = () => {
             over5Result: null,
             under4Result: null,
             bothSettled: false
+        };
+
+        // Reset last conditions tracking
+        lastO5U4Conditions.current = {
+            symbol: null,
+            lastDigit: null,
+            tradedAt: null
         };
     };
 
