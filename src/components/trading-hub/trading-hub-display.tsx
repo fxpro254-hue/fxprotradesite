@@ -15,6 +15,7 @@ const TradingHubDisplay: React.FC = () => {
     const [isAutoDifferActive, setIsAutoDifferActive] = useState(true); // Auto Differ is now default
     const [isAutoOverUnderActive, setIsAutoOverUnderActive] = useState(false);
     const [isAutoO5U4Active, setIsAutoO5U4Active] = useState(false);
+    const [isAutoMatchesActive, setIsAutoMatchesActive] = useState(false);
     const [recommendation, setRecommendation] = useState<TradeRecommendation | null>(null);
     const [marketStats, setMarketStats] = useState<Record<string, any>>({});
     const [stake, setStake] = useState(MINIMUM_STAKE);
@@ -38,6 +39,8 @@ const TradingHubDisplay: React.FC = () => {
     const minimumTradeCooldown = 3000; // 3 seconds minimum between trades
     const o5u4LastTradeTime = useRef<number>(0);
     const o5u4MinimumCooldown = 100; // Very short 100ms cooldown for maximum trading frequency
+    const matchesLastTradeTime = useRef<number>(0);
+    const matchesMinimumCooldown = 200; // Short 200ms cooldown for aggressive trading
 
     const [initialStake, setInitialStake] = useState(MINIMUM_STAKE);
     const [appliedStake, setAppliedStake] = useState(MINIMUM_STAKE);
@@ -52,6 +55,46 @@ const TradingHubDisplay: React.FC = () => {
 
     const lastMartingaleActionRef = useRef<string>('initial');
     const lastWinTimeRef = useRef<number>(0);
+
+    // Function to extract the last digit from a price based on its actual decimal places
+    const getLastDigitFromPrice = (price: number): number => {
+        // Convert to string to preserve exact decimal representation
+        const priceStr = price.toString();
+        
+        // Find the decimal point
+        const decimalIndex = priceStr.indexOf('.');
+        
+        if (decimalIndex === -1) {
+            // No decimal point, last digit is the ones place
+            const result = Math.abs(price) % 10;
+            return result;
+        }
+        
+        // Get the last character after decimal point
+        const lastChar = priceStr[priceStr.length - 1];
+        
+        // Convert back to number, ensuring it's a valid digit 0-9
+        const lastDigit = parseInt(lastChar, 10);
+        
+        // Fallback to modulo if parsing fails
+        if (isNaN(lastDigit)) {
+            console.warn(`getLastDigitFromPrice: Failed to parse last digit from ${priceStr}, using fallback`);
+            return Math.abs(Math.floor(price * Math.pow(10, priceStr.length - decimalIndex - 1))) % 10;
+        }
+        
+        return lastDigit;
+    };
+
+    // Function to analyze price precision for debugging
+    const analyzePricePrecision = (prices: number[], symbol: string) => {
+        const samplePrices = prices.slice(0, 5);
+        console.log(`🔍 ${symbol} price samples:`, samplePrices.map(p => ({
+            original: p,
+            string: p.toString(),
+            lastDigit: getLastDigitFromPrice(p),
+            oldMethod: Math.floor((p * 100)) % 10
+        })));
+    };
 
     const { run_panel, transactions, client } = useStore();
 
@@ -103,8 +146,40 @@ const TradingHubDisplay: React.FC = () => {
         readySymbols: []
     });
 
+    // Matches bot - digit frequency analysis for all volatilities
+    const [matchesAnalysis, setMatchesAnalysis] = useState<{
+        digitFrequencies: Record<string, Record<number, number>>; // symbol -> digit -> frequency
+        topDigits: Record<string, number[]>; // symbol -> top 5 digits
+        readySymbols: string[];
+        lastUpdated?: Record<string, number>; // symbol -> timestamp
+        bestSymbol?: string | null; // symbol with highest total frequency
+        symbolTotalFrequencies?: Record<string, number>; // symbol -> total frequency of top 5
+        // Remove isAnalyzing - analyze silently
+    }>({
+        digitFrequencies: {},
+        topDigits: {},
+        readySymbols: [],
+        lastUpdated: {},
+        bestSymbol: null,
+        symbolTotalFrequencies: {}
+        // Remove isAnalyzing - analyze silently
+    });
+
+    // Active contracts for Matches strategy
+    const matchesActiveContracts = useRef<{
+        [symbol: string]: {
+            [digit: number]: string | null; // digit -> contract_id
+        }
+    }>({});
+
+    // Matches analysis interval ref for cleanup
+    const matchesAnalysisIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
     // Symbols grid toggle state (hidden by default)
     const [isSymbolsGridVisible, setIsSymbolsGridVisible] = useState(false);
+    
+    // Symbols overview toggle state (hidden by default)
+    const [isSymbolsOverviewVisible, setIsSymbolsOverviewVisible] = useState(false);
 
     const manageMartingale = (
         action: 'init' | 'update' | 'get',
@@ -262,6 +337,7 @@ const TradingHubDisplay: React.FC = () => {
             const savedAutoDiffer = localStorage.getItem('tradingHub_autoDifferActive');
             const savedOverUnder = localStorage.getItem('tradingHub_overUnderActive');
             const savedO5U4 = localStorage.getItem('tradingHub_o5u4Active');
+            const savedMatches = localStorage.getItem('tradingHub_matchesActive');
 
             if (savedAutoDiffer !== null) {
                 setIsAutoDifferActive(savedAutoDiffer === 'true');
@@ -271,6 +347,9 @@ const TradingHubDisplay: React.FC = () => {
             }
             if (savedO5U4 !== null) {
                 setIsAutoO5U4Active(savedO5U4 === 'true');
+            }
+            if (savedMatches !== null) {
+                setIsAutoMatchesActive(savedMatches === 'true');
             }
         } catch (e) {
             console.warn('Could not load settings from localStorage', e);
@@ -326,8 +405,45 @@ const TradingHubDisplay: React.FC = () => {
             }
         }, 1000); // Check every 1 second for maximum responsiveness
 
+        // Aggressive Matches monitoring - trades when analysis is ready
+        const matchesMonitorInterval = setInterval(() => {
+            if (isAutoMatchesActive && isContinuousTrading && !isTradeInProgress && 
+                !hasActiveMatchesContracts()) {
+                
+                const now = Date.now();
+                const timeSinceLastMatchesTrade = now - matchesLastTradeTime.current;
+                
+                // Trade frequently whenever conditions are met
+                if (timeSinceLastMatchesTrade >= matchesMinimumCooldown) {
+                    console.log('🔄 Matches Monitor: Checking for ready symbols...');
+                    console.log(`🔄 Matches Monitor: Ready symbols: ${matchesAnalysis.readySymbols.length}`);
+                    
+                    if (matchesAnalysis.readySymbols.length > 0) {
+                        const volatilitySymbols = availableSymbols;
+                        const readySymbol = volatilitySymbols.find(symbol => 
+                            matchesAnalysis.readySymbols.includes(symbol) && 
+                            matchesAnalysis.topDigits[symbol]?.length === 5
+                        );
+                        
+                        if (readySymbol) {
+                            console.log('🔄 Matches Monitor: CONDITIONS MET - executing trades immediately');
+                            matchesLastTradeTime.current = now;
+                            executeMatchesTrades();
+                        } else {
+                            console.log('🔄 Matches Monitor: Analysis not complete - waiting');
+                        }
+                    } else {
+                        console.log('🔄 Matches Monitor: No ready symbols - waiting');
+                    }
+                } else {
+                    console.log(`🔄 Matches Monitor: Brief cooldown (${matchesMinimumCooldown - timeSinceLastMatchesTrade}ms remaining)`);
+                }
+            }
+        }, 1000); // Check every 1 second for maximum responsiveness
+
         // Store the interval reference for cleanup
         const cleanupO5U4Monitor = () => clearInterval(o5u4MonitorInterval);
+        const cleanupMatchesMonitor = () => clearInterval(matchesMonitorInterval);
 
         const unsubscribe = marketAnalyzer.onAnalysis((newRecommendation, allStats) => {
             setRecommendation(newRecommendation);
@@ -336,6 +452,13 @@ const TradingHubDisplay: React.FC = () => {
             // Update O5U4 analysis for all symbols
             console.log('📊 Market analyzer callback - updating O5U4 analysis...');
             analyzeO5U4AllSymbols(allStats);
+
+            // Update Matches analysis continuously - AGGRESSIVE MODE (like O5U4)
+            if (isAutoMatchesActive) {
+                console.log('📊 Matches: Market analyzer callback - continuous analysis...');
+                console.log('📊 Matches: marketStats available:', !!allStats, 'symbols count:', Object.keys(allStats || {}).length);
+                analyzeMatchesFromMarketData(allStats);
+            }
 
             // Check for O5U4 trade execution - AGGRESSIVE MODE (trade on every met condition)
             if (isAutoO5U4Active && isContinuousTrading && !isTradeInProgress) {
@@ -448,6 +571,42 @@ const TradingHubDisplay: React.FC = () => {
                     return; // Don't process as regular contract
                 }
 
+                // Handle Matches contracts
+                let isMatchesContract = false;
+                for (const symbol in matchesActiveContracts.current) {
+                    for (const digit in matchesActiveContracts.current[symbol]) {
+                        if (matchesActiveContracts.current[symbol][digit] === contract_info.contract_id) {
+                            isMatchesContract = true;
+                            const isWin = contract_info.profit >= 0;
+                            console.log(`🎯 Matches: ${symbol} digit ${digit} contract ${contract_info.contract_id} settled with ${isWin ? 'WIN' : 'LOSS'} (profit: ${contract_info.profit})`);
+                            
+                            // Remove from activeContracts display
+                            setActiveContracts(prev => {
+                                const newContracts = { ...prev };
+                                delete newContracts[contract_info.contract_id];
+                                console.log(`🎯 Matches: Contract ${contract_info.contract_id} removed from UI display`);
+                                return newContracts;
+                            });
+                            
+                            // Remove from tracking
+                            matchesActiveContracts.current[symbol][digit] = null;
+                            
+                            // Check how many contracts are still active
+                            const remainingContracts = Object.values(matchesActiveContracts.current).reduce((total, symbolContracts) => {
+                                return total + Object.values(symbolContracts).filter(contractId => contractId !== null).length;
+                            }, 0);
+                            console.log(`🎯 Matches: ${remainingContracts} contracts still active`);
+                            
+                            break;
+                        }
+                    }
+                    if (isMatchesContract) break;
+                }
+                
+                if (isMatchesContract) {
+                    return; // Don't process as regular contract
+                }
+
                 // Regular single contract handling
                 if (contract_info.contract_id === activeContractRef.current) {
                     const isWin = contract_info.profit >= 0;
@@ -487,6 +646,101 @@ const TradingHubDisplay: React.FC = () => {
         globalObserver.register('contract.settled', contractSettlementHandler);
 
         contractUpdateInterval.current = setInterval(async () => {
+            // Handle Matches multiple contracts separately
+            if (isAutoMatchesActive && Object.keys(matchesActiveContracts.current).length > 0) {
+                try {
+                    let allMatchesSettled = true;
+                    let totalMatchesProfit = 0;
+                    let matchesWinCount = 0;
+                    let totalMatchesContracts = 0;
+                    let primaryMatchesContractId: string | null = null;
+
+                    for (const symbol in matchesActiveContracts.current) {
+                        for (const digit in matchesActiveContracts.current[symbol]) {
+                            const contractId = matchesActiveContracts.current[symbol][digit];
+                            if (contractId) {
+                                totalMatchesContracts++;
+                                if (!primaryMatchesContractId) {
+                                    primaryMatchesContractId = contractId; // First contract as primary
+                                }
+
+                                try {
+                                    const response = await api_base.api.send({
+                                        proposal_open_contract: 1,
+                                        contract_id: contractId,
+                                    });
+
+                                    const contract = response?.proposal_open_contract;
+                                    if (contract) {
+                                        setActiveContracts(prev => ({
+                                            ...prev,
+                                            [contract.contract_id]: contract,
+                                        }));
+
+                                        if (contract.is_sold === 1) {
+                                            console.log(`🎯 Matches: Contract ${contractId} for digit ${digit} settled with profit: ${contract.profit}`);
+                                            totalMatchesProfit += contract.profit;
+                                            if (contract.profit > 0) matchesWinCount++;
+                                        } else {
+                                            allMatchesSettled = false;
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error(`Error checking Matches contract ${contractId}:`, error);
+                                }
+                            }
+                        }
+                    }
+
+                    // If all Matches contracts are settled, process the combined result
+                    if (allMatchesSettled && totalMatchesContracts > 0) {
+                        const matchesWon = matchesWinCount > 0;
+                        console.log(`🎯 Matches: All ${totalMatchesContracts} contracts settled. Wins: ${matchesWinCount}, Total profit: ${totalMatchesProfit}`);
+
+                        if (matchesWon) {
+                            setLastTradeWin(true);
+                            setLastTradeResult('WIN');
+                            manageStake('reset');
+                            console.log('🎯 Matches: At least one contract won - resetting stake');
+                        } else {
+                            setLastTradeWin(false);
+                            setLastTradeResult('LOSS');
+                            manageStake('martingale');
+                            console.log('🎯 Matches: All contracts lost - applying martingale');
+                        }
+
+                        // Record the trade result using primary contract
+                        lastTradeRef.current = {
+                            id: primaryMatchesContractId!,
+                            profit: totalMatchesProfit,
+                        };
+
+                        contractSettledTimeRef.current = Date.now();
+
+                        // Clean up contracts
+                        setActiveContracts(prev => {
+                            const newContracts = { ...prev };
+                            for (const symbol in matchesActiveContracts.current) {
+                                for (const digit in matchesActiveContracts.current[symbol]) {
+                                    const contractId = matchesActiveContracts.current[symbol][digit];
+                                    if (contractId) {
+                                        delete newContracts[contractId];
+                                    }
+                                }
+                            }
+                            return newContracts;
+                        });
+
+                        // Reset Matches tracking for continuous trading
+                        matchesActiveContracts.current = {};
+                        activeContractRef.current = null;
+                    }
+                } catch (error) {
+                    console.error('Error tracking Matches contracts:', error);
+                }
+                return; // Skip regular single contract tracking for Matches
+            }
+
             // Handle O5U4 dual contracts separately
             if (isAutoO5U4Active && o5u4ActiveContracts.current.over5ContractId && o5u4ActiveContracts.current.under4ContractId && !o5u4ActiveContracts.current.bothSettled) {
                 try {
@@ -667,6 +921,7 @@ const TradingHubDisplay: React.FC = () => {
                 clearInterval(analysisInfoInterval.current);
             }
             cleanupO5U4Monitor(); // Clean up the O5U4 dedicated monitor
+            cleanupMatchesMonitor(); // Clean up the Matches dedicated monitor
             if (contractUpdateInterval.current) {
                 clearInterval(contractUpdateInterval.current);
             }
@@ -675,6 +930,11 @@ const TradingHubDisplay: React.FC = () => {
             unsubscribe();
             globalObserver.unregisterAll('contract.status');
             globalObserver.unregisterAll('contract.settled');
+            
+            // Clean up Matches analysis interval
+            if (matchesAnalysisIntervalRef.current) {
+                clearInterval(matchesAnalysisIntervalRef.current);
+            }
         };
     }, []);
 
@@ -689,6 +949,54 @@ const TradingHubDisplay: React.FC = () => {
             setIsSymbolsGridVisible(savedPreference === 'true');
         }
     }, []);
+
+    // Load symbols overview visibility preference from localStorage
+    useEffect(() => {
+        const savedOverviewPreference = localStorage.getItem('trading-hub-symbols-overview-visible');
+        if (savedOverviewPreference !== null) {
+            setIsSymbolsOverviewVisible(savedOverviewPreference === 'true');
+        }
+    }, []);
+
+    // Initialize Matches analysis if it was active on page load
+    useEffect(() => {
+        // Run when isAutoMatchesActive changes (including when loaded from localStorage)
+        if (isAutoMatchesActive) {
+            console.log('🎯 Matches: Initializing analysis (page load or activation)');
+            
+            // Small delay to ensure market analyzer is ready
+            const initTimeout = setTimeout(() => {
+                startMatchesAnalysis();
+            }, 1000);
+            
+            // Set up aggressive periodic refresh every 5 seconds (like O5U4)
+            const matchesAnalysisInterval = setInterval(() => {
+                if (isAutoMatchesActive && marketStats) {
+                    console.log('🔄 Matches: Aggressive periodic analysis refresh using market data...');
+                    // Use market data instead of separate API calls
+                    analyzeMatchesFromMarketData(marketStats);
+                }
+            }, 5000); // Aggressive refresh every 5 seconds
+            
+            // Store interval for cleanup
+            matchesAnalysisIntervalRef.current = matchesAnalysisInterval;
+            
+            // Cleanup function
+            return () => {
+                clearTimeout(initTimeout);
+                if (matchesAnalysisIntervalRef.current) {
+                    clearInterval(matchesAnalysisIntervalRef.current);
+                    matchesAnalysisIntervalRef.current = null;
+                }
+            };
+        } else {
+            // Clean up when deactivated
+            if (matchesAnalysisIntervalRef.current) {
+                clearInterval(matchesAnalysisIntervalRef.current);
+                matchesAnalysisIntervalRef.current = null;
+            }
+        }
+    }, [isAutoMatchesActive]); // Depend on isAutoMatchesActive so it runs when loaded from localStorage
 
     // Register event listeners for trading hub run button integration
     useEffect(() => {
@@ -730,7 +1038,8 @@ const TradingHubDisplay: React.FC = () => {
                 
                 // Skip if trade is in progress or active contract exists
                 if (isTradeInProgress || activeContractRef.current !== null || 
-                    (isAutoO5U4Active && (o5u4ActiveContracts.current.over5ContractId || o5u4ActiveContracts.current.under4ContractId))) {
+                    (isAutoO5U4Active && (o5u4ActiveContracts.current.over5ContractId || o5u4ActiveContracts.current.under4ContractId)) ||
+                    (isAutoMatchesActive && hasActiveMatchesContracts())) {
                     if (!waitingForSettlementRef.current) {
                         console.log(
                             `Trade skipped: ${
@@ -738,12 +1047,14 @@ const TradingHubDisplay: React.FC = () => {
                                     ? 'Trade in progress'
                                     : activeContractRef.current 
                                         ? 'Waiting for previous contract settlement'
-                                        : 'O5U4 contracts are active'
+                                        : (isAutoMatchesActive && hasActiveMatchesContracts())
+                                            ? 'Matches contracts are active'
+                                            : 'O5U4 contracts are active'
                             }`
                         );
                     }
 
-                    if (activeContractRef.current || o5u4ActiveContracts.current.over5ContractId) {
+                    if (activeContractRef.current || o5u4ActiveContracts.current.over5ContractId || (isAutoMatchesActive && hasActiveMatchesContracts())) {
                         waitingForSettlementRef.current = true;
                     }
                     return;
@@ -758,6 +1069,9 @@ const TradingHubDisplay: React.FC = () => {
                 if (isAutoO5U4Active) {
                     requiredCooldown = o5u4MinimumCooldown;
                     lastTradeTimeRef = o5u4LastTradeTime;
+                } else if (isAutoMatchesActive) {
+                    requiredCooldown = matchesMinimumCooldown;
+                    lastTradeTimeRef = matchesLastTradeTime;
                 }
 
                 if (timeSinceLastTrade < requiredCooldown && lastTradeTimeRef.current > 0) {
@@ -775,6 +1089,26 @@ const TradingHubDisplay: React.FC = () => {
                     executeDigitOverTrade();
                 } else if (isAutoO5U4Active) {
                     executeO5U4Trade();
+                } else if (isAutoMatchesActive) {
+                    // For Matches, we need to check if analysis is ready and we're not already in progress
+                    const bestSymbol = matchesAnalysis.bestSymbol;
+                    if (bestSymbol && 
+                        matchesAnalysis.readySymbols.includes(bestSymbol) && 
+                        matchesAnalysis.topDigits[bestSymbol]?.length === 5 && 
+                        !isTradeInProgress) {
+                        console.log(`🎯 Continuous: Best symbol ${bestSymbol} ready, executing trades...`);
+                        executeMatchesTrades();
+                    } else {
+                        // Log why we're not trading for debugging
+                        console.log('🎯 Continuous: Matches not ready', {
+                            hasBestSymbol: !!bestSymbol,
+                            bestSymbol: bestSymbol,
+                            isSymbolReady: bestSymbol ? matchesAnalysis.readySymbols.includes(bestSymbol) : false,
+                            hasTopDigits: bestSymbol ? matchesAnalysis.topDigits[bestSymbol]?.length === 5 : false,
+                            isTradeInProgress: isTradeInProgress,
+                            readySymbolsCount: matchesAnalysis.readySymbols.length
+                        });
+                    }
                 }
             }, intervalTime);
         } else {
@@ -788,7 +1122,7 @@ const TradingHubDisplay: React.FC = () => {
                 clearInterval(tradingIntervalRef.current);
             }
         };
-    }, [isContinuousTrading, isAutoDifferActive, isAutoOverUnderActive, isAutoO5U4Active, isTradeInProgress]);
+    }, [isContinuousTrading, isAutoDifferActive, isAutoOverUnderActive, isAutoO5U4Active, isAutoMatchesActive, isTradeInProgress]);
 
     const toggleAutoDiffer = () => {
         if (!isAutoDifferActive && isAutoOverUnderActive) {
@@ -798,6 +1132,16 @@ const TradingHubDisplay: React.FC = () => {
         if (!isAutoDifferActive && isAutoO5U4Active) {
             setIsAutoO5U4Active(false);
             localStorage.setItem('tradingHub_o5u4Active', 'false');
+        }
+        if (!isAutoDifferActive && isAutoMatchesActive) {
+            setIsAutoMatchesActive(false);
+            localStorage.setItem('tradingHub_matchesActive', 'false');
+            // Stop Matches analysis when deactivating
+            stopMatchesAnalysis();
+            if (matchesAnalysisIntervalRef.current) {
+                clearInterval(matchesAnalysisIntervalRef.current);
+                matchesAnalysisIntervalRef.current = null;
+            }
         }
         const newValue = !isAutoDifferActive;
         setIsAutoDifferActive(newValue);
@@ -815,6 +1159,16 @@ const TradingHubDisplay: React.FC = () => {
         if (!isAutoOverUnderActive && isAutoO5U4Active) {
             setIsAutoO5U4Active(false);
             localStorage.setItem('tradingHub_o5u4Active', 'false');
+        }
+        if (!isAutoOverUnderActive && isAutoMatchesActive) {
+            setIsAutoMatchesActive(false);
+            localStorage.setItem('tradingHub_matchesActive', 'false');
+            // Stop Matches analysis when deactivating
+            stopMatchesAnalysis();
+            if (matchesAnalysisIntervalRef.current) {
+                clearInterval(matchesAnalysisIntervalRef.current);
+                matchesAnalysisIntervalRef.current = null;
+            }
         }
         const newValue = !isAutoOverUnderActive;
         setIsAutoOverUnderActive(newValue);
@@ -855,6 +1209,16 @@ const TradingHubDisplay: React.FC = () => {
             setIsAutoOverUnderActive(false);
             localStorage.setItem('tradingHub_overUnderActive', 'false');
         }
+        if (!isAutoO5U4Active && isAutoMatchesActive) {
+            setIsAutoMatchesActive(false);
+            localStorage.setItem('tradingHub_matchesActive', 'false');
+            // Stop Matches analysis when deactivating
+            stopMatchesAnalysis();
+            if (matchesAnalysisIntervalRef.current) {
+                clearInterval(matchesAnalysisIntervalRef.current);
+                matchesAnalysisIntervalRef.current = null;
+            }
+        }
         
         const newState = !isAutoO5U4Active;
         console.log(`🎯 O5U4 New state will be: ${newState}`);
@@ -888,11 +1252,672 @@ const TradingHubDisplay: React.FC = () => {
         }
     };
 
+    const toggleAutoMatches = () => {
+        console.log(`🎯 Matches Toggle clicked! Current state: ${isAutoMatchesActive}`);
+        
+        // Check balance validation when activating Matches
+        if (!isAutoMatchesActive) {
+            const stakeAmount = parseFloat(stake || '0');
+            const accountBalance = parseFloat(client?.balance || '0');
+            const totalMatchesCost = stakeAmount * 5; // Matches uses 5 contracts
+            
+            console.log(`💰 Matches Balance check: Stake ${stakeAmount} × 5 = ${totalMatchesCost} vs Balance ${accountBalance}`);
+            
+            if (totalMatchesCost > accountBalance) {
+                const message = `⚠️ Matches requires stake × 5 = $${totalMatchesCost.toFixed(2)} but your balance is only $${accountBalance.toFixed(2)}. Please use a smaller stake to activate Matches.`;
+                console.warn(message);
+                
+                // Show notification using botNotification
+                botNotification(message);
+                
+                // Don't activate Matches
+                return;
+            }
+        }
+        
+        if (!isAutoMatchesActive && isAutoDifferActive) {
+            setIsAutoDifferActive(false);
+            localStorage.setItem('tradingHub_autoDifferActive', 'false');
+        }
+        if (!isAutoMatchesActive && isAutoOverUnderActive) {
+            setIsAutoOverUnderActive(false);
+            localStorage.setItem('tradingHub_overUnderActive', 'false');
+        }
+        if (!isAutoMatchesActive && isAutoO5U4Active) {
+            setIsAutoO5U4Active(false);
+            localStorage.setItem('tradingHub_o5u4Active', 'false');
+        }
+        
+        const newState = !isAutoMatchesActive;
+        console.log(`🎯 Matches New state will be: ${newState}`);
+        setIsAutoMatchesActive(newState);
+        localStorage.setItem('tradingHub_matchesActive', newState.toString());
+        
+        // Analysis setup/cleanup is now handled by useEffect
+        if (newState) {
+            console.log('🎯 Matches activated - analysis will start via useEffect');
+        } else {
+            console.log('🎯 Matches deactivated - analysis will stop via useEffect');
+            stopMatchesAnalysis();
+        }
+        
+        if (isContinuousTrading) {
+            console.log('🛑 Stopping trading due to strategy change');
+            stopTrading();
+        }
+    };
+
     // Toggle symbols grid visibility
     const toggleSymbolsGrid = () => {
         setIsSymbolsGridVisible(prev => !prev);
         // Optionally save preference to localStorage
         localStorage.setItem('trading-hub-symbols-grid-visible', (!isSymbolsGridVisible).toString());
+    };
+
+    // Toggle symbols overview visibility
+    const toggleSymbolsOverview = () => {
+        setIsSymbolsOverviewVisible(prev => !prev);
+        // Save preference to localStorage
+        localStorage.setItem('trading-hub-symbols-overview-visible', (!isSymbolsOverviewVisible).toString());
+    };
+
+    // Matches strategy functions
+    const analyzeMatchesFromMarketData = async (allStats: Record<string, any>) => {
+        console.log('📊 Matches: Analyzing from real-time market data...');
+        console.log('📊 Matches: Available market data symbols:', Object.keys(allStats));
+        console.log('📊 Matches: Using corrected digit extraction for continuous analysis');
+        
+        // Remove analyzing state - analyze silently
+        
+        const volatilitySymbols = availableSymbols;
+        const newDigitFrequencies: Record<string, Record<number, number>> = {};
+        const newTopDigits: Record<string, number[]> = {};
+        const newReadySymbols: string[] = [];
+        const newLastUpdated: Record<string, number> = {};
+        const symbolTotalFrequencies: Record<string, number> = {};
+        const now = Date.now();
+
+        // Instead of using potentially incorrect market analyzer digitCounts,
+        // fetch fresh tick data for each symbol with our corrected digit extraction
+        const analysisPromises = volatilitySymbols.map(async (symbol) => {
+            try {
+                console.log(`📊 Matches: Fetching fresh tick data for ${symbol}...`);
+                const response = await api_base.api.send({
+                    ticks_history: symbol,
+                    count: 500, // Use 500 ticks for comprehensive analysis
+                    end: 'latest',
+                    style: 'ticks'
+                });
+                
+                if (response.history?.prices && response.history.prices.length >= 10) {
+                    const digitFrequencies: Record<number, number> = {};
+                    
+                    // Debug: Log actual response data
+                    console.log(`📊 ${symbol}: Received ${response.history.prices.length} ticks (requested 500)`);
+                    
+                    // Debug: Sample the first few prices to see their format
+                    const samplePrices = response.history.prices.slice(0, 5);
+                    console.log(`📊 ${symbol}: Sample prices:`, samplePrices);
+                    
+                    // Initialize frequency counters
+                    for (let i = 0; i <= 9; i++) {
+                        digitFrequencies[i] = 0;
+                    }
+                    
+                    // Count digit frequencies using our corrected method
+                    let validTickCount = 0;
+                    let invalidTickCount = 0;
+                    
+                    response.history.prices.forEach((price: number, index: number) => {
+                        if (typeof price === 'number' && !isNaN(price)) {
+                            const lastDigit = getLastDigitFromPrice(price);
+                            
+                            // Debug: Log first few extractions
+                            if (index < 5) {
+                                console.log(`📊 ${symbol}: Price ${price} -> Last digit ${lastDigit}`);
+                            }
+                            
+                            if (lastDigit >= 0 && lastDigit <= 9) {
+                                digitFrequencies[lastDigit]++;
+                                validTickCount++;
+                            } else {
+                                invalidTickCount++;
+                                console.warn(`📊 ${symbol}: Invalid digit ${lastDigit} from price ${price}`);
+                            }
+                        } else {
+                            invalidTickCount++;
+                            console.warn(`📊 ${symbol}: Invalid price at index ${index}:`, price);
+                        }
+                    });
+                    
+                    // Debug: Log frequency distribution
+                    console.log(`📊 ${symbol}: Valid ticks: ${validTickCount}, Invalid: ${invalidTickCount}`);
+                    console.log(`📊 ${symbol}: Digit frequencies:`, digitFrequencies);
+                    
+                    // Verify total
+                    const totalFrequencyCheck = Object.values(digitFrequencies).reduce((sum, count) => sum + count, 0);
+                    console.log(`📊 ${symbol}: Total frequency check: ${totalFrequencyCheck} (should equal ${validTickCount})`);
+                    
+                    // Convert frequencies to percentages
+                    const digitPercentages: Record<number, number> = {};
+                    for (let digit = 0; digit <= 9; digit++) {
+                        digitPercentages[digit] = totalFrequencyCheck > 0 ? (digitFrequencies[digit] / totalFrequencyCheck) * 100 : 0;
+                    }
+                    
+                    console.log(`📊 ${symbol}: Digit percentages:`, digitPercentages);
+                    
+                    // Get top 5 most frequent digits based on percentages
+                    const topDigitsWithPerc = Object.entries(digitPercentages)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 5);
+                    
+                    const topDigits = topDigitsWithPerc.map(([digit]) => parseInt(digit));
+                    const totalTopPercentage = topDigitsWithPerc.reduce((sum, [, perc]) => sum + perc, 0);
+                    
+                    console.log(`📊 ${symbol}: Top 5 digits with percentages:`, topDigitsWithPerc.map(([digit, perc]) => `${digit}: ${perc.toFixed(2)}%`));
+                    console.log(`📊 ${symbol}: Total top 5 percentage: ${totalTopPercentage.toFixed(2)}%`);
+                    
+                    return {
+                        symbol,
+                        digitFrequencies,
+                        digitPercentages,
+                        topDigits,
+                        totalTopPercentage,
+                        sampleSize: response.history.prices.length
+                    };
+                } else {
+                    console.log(`📊 Matches: ${symbol} - insufficient fresh data (${response.history?.prices?.length || 0} ticks)`);
+                    return null;
+                }
+            } catch (error) {
+                console.error(`📊 Matches: Error fetching data for ${symbol}:`, error);
+                return null;
+            }
+        });
+
+        try {
+            const results = await Promise.all(analysisPromises);
+            
+            // Process successful results
+            results.forEach(result => {
+                if (result) {
+                    newDigitFrequencies[result.symbol] = result.digitFrequencies;
+                    newTopDigits[result.symbol] = result.topDigits;
+                    newReadySymbols.push(result.symbol);
+                    newLastUpdated[result.symbol] = now;
+                    symbolTotalFrequencies[result.symbol] = result.totalTopPercentage; // Use percentage instead of raw count
+                }
+            });
+
+            // Determine the best symbol (highest total percentage of top 5 digits)
+            let bestSymbol: string | null = null;
+            let bestTotalPercentage = 0;
+            
+            Object.entries(symbolTotalFrequencies).forEach(([symbol, totalPerc]) => {
+                if (totalPerc > bestTotalPercentage) {
+                    bestTotalPercentage = totalPerc;
+                    bestSymbol = symbol;
+                }
+            });
+
+            if (bestSymbol) {
+                console.log(`📊 Matches: Best symbol determined - ${bestSymbol} (total top 5 percentage: ${bestTotalPercentage.toFixed(2)}%)`);
+            }
+
+            // Only update if we have some ready symbols or this is the first update
+            if (newReadySymbols.length > 0 || matchesAnalysis.readySymbols.length === 0) {
+                // Update state with corrected analysis data
+                setMatchesAnalysis(prev => ({
+                    ...prev,
+                    digitFrequencies: newDigitFrequencies,
+                    topDigits: newTopDigits,
+                    readySymbols: newReadySymbols,
+                    lastUpdated: newLastUpdated,
+                    bestSymbol: bestSymbol,
+                    symbolTotalFrequencies: symbolTotalFrequencies
+                    // Remove isAnalyzing - analyze silently
+                }));
+
+                const readyCount = newReadySymbols.length;
+                console.log(`📊 Matches: Continuous analysis complete - ${readyCount} symbols ready`);
+            } else {
+                // Remove isAnalyzing state update - analyze silently
+                console.log('📊 Matches: No symbols ready from continuous analysis');
+            }
+        } catch (error) {
+            console.error('📊 Matches: Error in continuous analysis:', error);
+            // Remove isAnalyzing state update - analyze silently
+        }
+    };
+
+    const analyzeMatchesContinuous = async () => {
+        // Remove analyzing check - allow silent overlapping analysis
+        
+        console.log('📊 Matches: Continuous analysis triggered by market callback');        const volatilitySymbols = availableSymbols;
+        
+        // Only refresh symbols that need updating (haven't been analyzed recently)
+        const now = Date.now();
+        const staleThreshold = 30000; // 30 seconds
+        
+        const symbolsToRefresh = volatilitySymbols.filter(symbol => {
+            const lastUpdate = matchesAnalysis.lastUpdated?.[symbol] || 0;
+            return (now - lastUpdate) > staleThreshold;
+        });
+        
+        if (symbolsToRefresh.length === 0) {
+            console.log('📊 Matches: All symbols are up-to-date, skipping analysis');
+            return;
+        }
+        
+        console.log(`📊 Matches: Refreshing ${symbolsToRefresh.length} symbols: ${symbolsToRefresh.join(', ')}`);
+        
+        // Quick analysis for refreshing symbols
+        const analysisPromises = symbolsToRefresh.map(async (symbol) => {
+            try {
+                const response = await api_base.api.send({
+                    ticks_history: symbol,
+                    count: 500,
+                    end: 'latest',
+                    style: 'ticks'
+                });
+                
+                if (response.history?.prices) {
+                    const digitFrequencies: Record<number, number> = {};
+                    
+                    // Initialize frequency counters
+                    for (let i = 0; i <= 9; i++) {
+                        digitFrequencies[i] = 0;
+                    }
+                    
+                    // Count digit frequencies from last digits
+                    response.history.prices.forEach((price: number) => {
+                        const lastDigit = getLastDigitFromPrice(price);
+                        digitFrequencies[lastDigit]++;
+                    });
+                    
+                    // Get top 5 most frequent digits
+                    const topDigits = Object.entries(digitFrequencies)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 5)
+                        .map(([digit]) => parseInt(digit));
+                    
+                    console.log(`📊 Matches: ${symbol} updated - top digits: ${topDigits.join(',')}`);
+                    return { symbol, digitFrequencies, topDigits, timestamp: now };
+                }
+            } catch (error) {
+                console.error(`📊 Matches: Error updating ${symbol}:`, error);
+                return null;
+            }
+        });
+        
+        const results = await Promise.all(analysisPromises);
+        
+        // Update state with refreshed data
+        setMatchesAnalysis(prev => {
+            const newState = { ...prev };
+            
+            results.forEach(result => {
+                if (result) {
+                    newState.digitFrequencies[result.symbol] = result.digitFrequencies;
+                    newState.topDigits[result.symbol] = result.topDigits;
+                    
+                    // Add to ready symbols if not already there
+                    if (!newState.readySymbols.includes(result.symbol)) {
+                        newState.readySymbols.push(result.symbol);
+                    }
+                    
+                    // Update timestamp tracking
+                    if (!newState.lastUpdated) newState.lastUpdated = {};
+                    newState.lastUpdated[result.symbol] = result.timestamp;
+                }
+            });
+            
+            return newState;
+        });
+        
+        console.log(`📊 Matches: Continuous analysis completed for ${results.filter(r => r).length} symbols`);
+    };
+
+    const startMatchesAnalysis = async () => {
+        console.log('🔍 Starting Matches digit frequency analysis...');
+        console.log('🔍 Fixed digit extraction - now using actual decimal precision per symbol');
+        console.log('🔍 Available symbols for analysis:', availableSymbols);
+        // Remove analyzing state - analyze silently
+        
+        const volatilitySymbols = availableSymbols;
+        
+        // Analyze all symbols in parallel for faster results
+        const analysisPromises = volatilitySymbols.map(async (symbol) => {
+            try {
+                console.log(`🔍 Analyzing symbol: ${symbol}`);
+                // Get 500 ticks of historical data for frequency analysis
+                const response = await api_base.api.send({
+                    ticks_history: symbol,
+                    count: 500,
+                    end: 'latest',
+                    style: 'ticks'
+                });
+                
+                console.log(`🔍 ${symbol} API response:`, response);
+                
+                if (response.history?.prices) {
+                    console.log(`🔍 ${symbol} got ${response.history.prices.length} prices`);
+                    const digitFrequencies: Record<number, number> = {};
+                    
+                    // Initialize frequency counters
+                    for (let i = 0; i <= 9; i++) {
+                        digitFrequencies[i] = 0;
+                    }
+                    
+                    // Count digit frequencies from last digits
+                    response.history.prices.forEach((price: number) => {
+                        const lastDigit = getLastDigitFromPrice(price);
+                        digitFrequencies[lastDigit]++;
+                    });
+                    
+                    // Convert to percentages
+                    const totalTicks = response.history.prices.length;
+                    const digitPercentages: Record<number, number> = {};
+                    for (let i = 0; i <= 9; i++) {
+                        digitPercentages[i] = totalTicks > 0 ? (digitFrequencies[i] / totalTicks) * 100 : 0;
+                    }
+                    
+                    // Get top 5 most frequent digits based on percentages
+                    const topDigitsWithPerc = Object.entries(digitPercentages)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 5);
+                    
+                    const topDigits = topDigitsWithPerc.map(([digit]) => parseInt(digit));
+                    const totalTopPercentage = topDigitsWithPerc.reduce((sum, [, perc]) => sum + perc, 0);
+                    
+                    console.log(`🔍 ${symbol} digit percentages:`, Object.entries(digitPercentages).map(([d, p]) => `${d}: ${p.toFixed(2)}%`).join(', '));
+                    console.log(`🔍 ${symbol} top 5 digits:`, topDigitsWithPerc.map(([d, p]) => `${d}(${p.toFixed(2)}%)`).join(', '));
+                    console.log(`🔍 ${symbol} total top 5 percentage: ${totalTopPercentage.toFixed(2)}%`);
+                    
+                    return { symbol, digitFrequencies, digitPercentages, topDigits, totalTopPercentage };
+                } else {
+                    console.warn(`🔍 ${symbol} - No price data in response:`, response);
+                    return null;
+                }
+            } catch (error) {
+                console.error(`❌ Error analyzing ${symbol}:`, error);
+                return null;
+            }
+        });
+        
+        // Wait for all analyses to complete
+        const results = await Promise.all(analysisPromises);
+        console.log(`🔍 Analysis promises completed. Valid results: ${results.filter(r => r !== null).length}/${results.length}`);
+        
+        // Update state with all results
+        const newDigitFrequencies: Record<string, Record<number, number>> = {};
+        const newTopDigits: Record<string, number[]> = {};
+        const newReadySymbols: string[] = [];
+        const newLastUpdated: Record<string, number> = {};
+        const symbolTotalFrequencies: Record<string, number> = {};
+        const now = Date.now();
+        
+        results.forEach(result => {
+            if (result) {
+                newDigitFrequencies[result.symbol] = result.digitFrequencies;
+                newTopDigits[result.symbol] = result.topDigits;
+                newReadySymbols.push(result.symbol);
+                newLastUpdated[result.symbol] = now;
+                
+                // Use total percentage of top 5 digits for ranking
+                symbolTotalFrequencies[result.symbol] = result.totalTopPercentage;
+                
+                console.log(`✅ ${result.symbol} analysis - top digits: ${result.topDigits.join(',')}, total percentage: ${result.totalTopPercentage.toFixed(2)}%`);
+            }
+        });
+        
+        console.log(`🔍 Ready symbols: ${newReadySymbols.join(', ')}`);
+        console.log(`🔍 Total frequencies:`, symbolTotalFrequencies);
+        
+        // Determine the best symbol (highest total percentage of top 5 digits)
+        let bestSymbol: string | null = null;
+        let bestTotalPercentage = 0;
+        
+        Object.entries(symbolTotalFrequencies).forEach(([symbol, totalPerc]) => {
+            if (totalPerc > bestTotalPercentage) {
+                bestTotalPercentage = totalPerc;
+                bestSymbol = symbol;
+            }
+        });
+
+        if (bestSymbol) {
+            console.log(`✅ Matches: Best symbol determined - ${bestSymbol} (total percentage: ${bestTotalPercentage.toFixed(2)}%)`);
+        }
+        
+        setMatchesAnalysis(prev => ({
+            ...prev,
+            digitFrequencies: newDigitFrequencies,
+            topDigits: newTopDigits,
+            readySymbols: newReadySymbols,
+            lastUpdated: newLastUpdated,
+            bestSymbol: bestSymbol,
+            symbolTotalFrequencies: symbolTotalFrequencies
+            // Remove isAnalyzing - analyze silently
+        }));
+        
+        console.log(`✅ Matches analysis completed! Ready symbols: ${newReadySymbols.length}, Best symbol: ${bestSymbol}`);
+    };
+    
+    const stopMatchesAnalysis = () => {
+        console.log('🛑 Stopping Matches analysis');
+        setMatchesAnalysis({
+            digitFrequencies: {},
+            topDigits: {},
+            readySymbols: [],
+            lastUpdated: {},
+            bestSymbol: null,
+            symbolTotalFrequencies: {}
+        });
+        
+        // Clear active contracts from UI display
+        setActiveContracts(prev => {
+            const newContracts = { ...prev };
+            Object.keys(newContracts).forEach(contractId => {
+                if (newContracts[contractId]?.strategy === 'Matches') {
+                    delete newContracts[contractId];
+                }
+            });
+            return newContracts;
+        });
+        
+        // Clear active contracts tracking
+        matchesActiveContracts.current = {};
+        console.log('🛑 Matches contracts cleared');
+    };
+    
+    const hasActiveMatchesContracts = () => {
+        const activeCount = Object.values(matchesActiveContracts.current).reduce((total, symbolContracts) => {
+            return total + Object.values(symbolContracts).filter(contractId => contractId !== null).length;
+        }, 0);
+        
+        console.log(`🎯 Matches Contract Check: ${activeCount} active contracts`);
+        if (activeCount > 0) {
+            console.log('🎯 Active contract details:', matchesActiveContracts.current);
+        }
+        
+        return activeCount > 0;
+    };
+    
+    const executeMatchesTrades = async () => {
+        if (!isAutoMatchesActive || isTradeInProgress) return;
+        
+        // Check if there are already active Matches contracts
+        if (hasActiveMatchesContracts()) {
+            console.log('🎯 Matches: Contracts already active, skipping new trade request');
+            return;
+        }
+        
+        // Use the best symbol instead of just any ready symbol
+        const bestSymbol = matchesAnalysis.bestSymbol;
+        if (!bestSymbol || !matchesAnalysis.readySymbols.includes(bestSymbol) || 
+            matchesAnalysis.topDigits[bestSymbol]?.length !== 5) {
+            console.log('🎯 Matches: Best symbol not ready for trading', {
+                bestSymbol,
+                isReady: bestSymbol ? matchesAnalysis.readySymbols.includes(bestSymbol) : false,
+                hasTopDigits: bestSymbol ? matchesAnalysis.topDigits[bestSymbol]?.length === 5 : false
+            });
+            return;
+        }
+        
+        const topDigits = matchesAnalysis.topDigits[bestSymbol];
+        const totalFreq = matchesAnalysis.symbolTotalFrequencies?.[bestSymbol] || 0;
+        console.log(`🎯 Matches: Executing 5 trades on BEST SYMBOL ${bestSymbol} (freq: ${totalFreq}) with digits:`, topDigits);
+        
+        setIsTradeInProgress(true);
+        
+        // Update Matches trade timing
+        matchesLastTradeTime.current = Date.now();
+        
+        try {
+            // Execute 5 trades simultaneously - one for each top digit on the best symbol
+            const tradePromises = topDigits.map(async (digit) => {
+                try {
+                    const proposal = await doUntilDone(() =>
+                        api_base.api.send({
+                            proposal: 1,
+                            amount: stake,
+                            basis: 'stake',
+                            contract_type: 'DIGITMATCH',
+                            currency: client.currency,
+                            symbol: bestSymbol,
+                            barrier: digit.toString(),
+                            duration: 1,
+                            duration_unit: 't'
+                        }), [], api_base
+                    );
+                    
+                    if (!proposal.proposal?.id) {
+                        throw new Error(`No proposal ID for digit ${digit}`);
+                    }
+                    
+                    const buyResponse = await doUntilDone(() =>
+                        api_base.api.send({
+                            buy: proposal.proposal.id,
+                            price: parseFloat(stake)
+                        }), [], api_base
+                    );
+                    
+                    if (buyResponse.buy?.contract_id) {
+                        console.log(`🎯 Matches: Trade executed for digit ${digit}: ${buyResponse.buy.contract_id}`);
+                        
+                        // Store contract ID
+                        if (!matchesActiveContracts.current[bestSymbol]) {
+                            matchesActiveContracts.current[bestSymbol] = {};
+                        }
+                        matchesActiveContracts.current[bestSymbol][digit] = buyResponse.buy.contract_id;
+                        
+                        // Emit purchase event for run panel visibility
+                        globalObserver.emit('contract.purchase_received', buyResponse.buy.contract_id);
+                        
+                        return { digit, contractId: buyResponse.buy.contract_id, buyResponse: buyResponse.buy };
+                    }
+                } catch (error) {
+                    console.error(`🎯 Matches: Error trading digit ${digit}:`, error);
+                    return { digit, error };
+                }
+            });
+            
+            const results = await Promise.all(tradePromises);
+            console.log('🎯 Matches: All trades completed:', results);
+            
+            // Add contracts to activeContracts state for UI display
+            const successfulTrades = results.filter((result): result is { digit: number; contractId: string; buyResponse: any } => 
+                result && result.contractId && !result.error);
+                
+            if (successfulTrades.length > 0) {
+                // Set the first successful trade as the primary active contract for tracking
+                const primaryTrade = successfulTrades[0];
+                activeContractRef.current = primaryTrade.contractId;
+                setActiveContractId(primaryTrade.contractId);
+                
+                // Generate trade ID and update counters
+                const tradeId = `matches_${bestSymbol}_${Date.now()}`;
+                setLastTradeId(tradeId);
+                setTradeCount(prevCount => prevCount + 1);
+                lastTradeTime.current = Date.now();
+                
+                console.log(
+                    `Starting Matches trade #${tradeCount + 1}: ${tradeId} with ${successfulTrades.length} contracts, stake ${stake} each (total: ${parseFloat(stake) * successfulTrades.length})`
+                );
+                
+                // Emit transaction events for each successful trade
+                globalObserver.emit('trading_hub.running');
+                globalObserver.emit('bot.bot_ready');
+                
+                setActiveContracts(prev => {
+                    const newContracts = { ...prev };
+                    successfulTrades.forEach(trade => {
+                        // Create contract info for run panel
+                        const contract_info = {
+                            contract_id: trade.contractId,
+                            contract_type: 'DIGITMATCH',
+                            transaction_ids: { buy: trade.buyResponse.transaction_id || trade.contractId },
+                            buy_price: parseFloat(stake),
+                            currency: client.currency,
+                            symbol: bestSymbol,
+                            barrier: trade.digit.toString(),
+                            date_start: Math.floor(Date.now() / 1000),
+                            barrier_display_value: trade.digit.toString(),
+                            contract_parameter: trade.digit.toString(),
+                            parameter_type: 'digit_match',
+                            entry_tick_time: Math.floor(Date.now() / 1000),
+                            exit_tick_time: Math.floor(Date.now() / 1000) + 1,
+                            run_id: sessionRunId,
+                            display_name: `Matches Bot - Digit ${trade.digit}`,
+                            transaction_time: Math.floor(Date.now() / 1000),
+                            underlying: bestSymbol,
+                            longcode: `Win if last digit equals ${trade.digit} on ${bestSymbol}.`,
+                            display_message: `Matches Bot: Digit ${trade.digit} on ${bestSymbol}`,
+                            duration: 1,
+                            duration_unit: 't',
+                            amount: parseFloat(stake),
+                            basis: 'stake'
+                        };
+                        
+                        // Emit all required events for run panel visibility
+                        globalObserver.emit('bot.contract', contract_info);
+                        globalObserver.emit('contract.status', {
+                            id: 'contract.purchase',
+                            data: contract_info,
+                            buy: trade.buyResponse,
+                        });
+                        
+                        // Add to transactions
+                        transactions.onBotContractEvent(contract_info);
+                        
+                        newContracts[trade.contractId] = {
+                            contract_id: trade.contractId,
+                            buy_price: parseFloat(stake),
+                            status: 'open',
+                            purchase_time: Date.now(),
+                            strategy: 'Matches',
+                            digit: trade.digit,
+                            symbol: bestSymbol,
+                            type: 'DIGITMATCH'
+                        };
+                    });
+                    return newContracts;
+                });
+                
+                console.log(`🎯 Matches: Added ${successfulTrades.length} contracts to UI display and transactions`);
+                console.log(`Matches trades executed: ${successfulTrades.map(t => `Digit ${t.digit}`).join(', ')} on ${bestSymbol}`);
+            } else {
+                console.error('🎯 Matches: No successful trades executed');
+                globalObserver.emit('ui.log.error', 'Matches trade execution failed: No successful trades');
+            }
+            
+        } catch (error) {
+            console.error('🎯 Matches: Error executing trades:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            botNotification(`Matches trading error: ${errorMessage}`);
+        } finally {
+            setIsTradeInProgress(false);
+        }
     };
 
     const handleSaveSettings = () => {
@@ -946,6 +1971,33 @@ const TradingHubDisplay: React.FC = () => {
                 setStake(safeO5U4Stake);
                 manageStake('init', { newValue: safeO5U4Stake });
                 console.log(`💰 Stake adjusted for O5U4 compatibility: ${safeO5U4Stake}`);
+                return;
+            }
+        }
+        
+        // Additional check for Matches: stake × 5 should not exceed balance
+        if (isAutoMatchesActive) {
+            const totalMatchesCost = stakeAmount * 5;
+            
+            console.log(`💰 Matches Balance check: Stake ${stakeAmount} × 5 = ${totalMatchesCost} vs Balance ${accountBalance}`);
+            
+            if (totalMatchesCost > accountBalance) {
+                const message = `⚠️ Matches requires stake × 5 = $${totalMatchesCost.toFixed(2)} but your balance is only $${accountBalance.toFixed(2)}. Please use a smaller stake. Matches will be disabled.`;
+                console.warn(message);
+                
+                // Show notification using botNotification
+                botNotification(message);
+                
+                // Disable Matches since current stake is too high
+                setIsAutoMatchesActive(false);
+                localStorage.setItem('tradingHub_matchesActive', 'false');
+                
+                // Set stake to maximum safe amount for Matches (balance / 5)
+                const maxMatchesStake = Math.floor((accountBalance / 5) * 100) / 100; // Floor to 2 decimals
+                const safeMatchesStake = Math.max(maxMatchesStake, parseFloat(MINIMUM_STAKE)).toFixed(2);
+                setStake(safeMatchesStake);
+                manageStake('init', { newValue: safeMatchesStake });
+                console.log(`💰 Stake adjusted for Matches compatibility: ${safeMatchesStake}`);
                 return;
             }
         }
@@ -1839,6 +2891,28 @@ const TradingHubDisplay: React.FC = () => {
                 } else {
                     console.log('🚀 O5U4: No immediate conditions met on start - waiting for next opportunity');
                 }
+            } else if (isAutoMatchesActive) {
+                // For Matches, check if analysis is ready and execute if conditions are met
+                console.log('🚀 Matches: Starting trading - checking analysis status');
+                console.log(`🚀 Matches: Ready symbols: ${matchesAnalysis.readySymbols.length}`);
+                console.log(`🚀 Matches: Ready symbols: ${matchesAnalysis.readySymbols.length}`);
+                
+                if (matchesAnalysis.readySymbols.length > 0) {
+                    const volatilitySymbols = availableSymbols;
+                    const readySymbol = volatilitySymbols.find(symbol => 
+                        matchesAnalysis.readySymbols.includes(symbol) && 
+                        matchesAnalysis.topDigits[symbol]?.length === 5
+                    );
+                    
+                    if (readySymbol) {
+                        console.log('🚀 Matches: Analysis ready on start - executing trades');
+                        executeMatchesTrades();
+                    } else {
+                        console.log('🚀 Matches: Analysis not complete on start - waiting for completion');
+                    }
+                } else {
+                    console.log('🚀 Matches: No analysis available on start - waiting for first analysis');
+                }
             } else {
                 console.log('🚀 No strategy selected!');
             }
@@ -1874,7 +2948,7 @@ const TradingHubDisplay: React.FC = () => {
 
     const handleTrade = () => (isContinuousTrading ? stopTrading() : startTrading());
 
-    const isStrategyActive = isAutoDifferActive || isAutoOverUnderActive || isAutoO5U4Active;
+    const isStrategyActive = isAutoDifferActive || isAutoOverUnderActive || isAutoO5U4Active || isAutoMatchesActive;
 
     const displayStake = () => {
         if (parseFloat(appliedStake) === parseFloat(initialStake)) {
@@ -2123,18 +3197,43 @@ const TradingHubDisplay: React.FC = () => {
                                         </div>
                                     ) : (
                                         <>
-                                            <div className='symbols-overview'>
-                                                <div className='overview-header'>
-                                                    <span>Market Analysis ({o5u4Analysis.readySymbols.length}/12 ready)</span>
-                                                    <div className='header-actions'>
-                                                        {o5u4Analysis.bestSymbol && (
-                                                            <span className='best-symbol'>Best: {o5u4Analysis.bestSymbol}</span>
-                                                        )}
-                                                        <button 
-                                                            className='symbols-grid-toggle'
-                                                            onClick={toggleSymbolsGrid}
-                                                            title={isSymbolsGridVisible ? 'Hide symbols grid' : 'Show symbols grid'}
-                                                        >
+                                            {isSymbolsOverviewVisible && (
+                                                <div className='symbols-overview'>
+                                                    <div className='overview-header'>
+                                                        <div className='header-title'>
+                                                            <span>Market Analysis ({o5u4Analysis.readySymbols.length}/12 ready)</span>
+                                                            {isAutoO5U4Active && (
+                                                                <div className='live-indicator'>
+                                                                    <div className='live-dot'></div>
+                                                                    <span>LIVE</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className='header-actions'>
+                                                            {o5u4Analysis.bestSymbol && (
+                                                                <span className='best-symbol'>Best: {o5u4Analysis.bestSymbol}</span>
+                                                            )}
+                                                            <button 
+                                                                className='symbols-overview-toggle'
+                                                                onClick={toggleSymbolsOverview}
+                                                                title={isSymbolsOverviewVisible ? 'Hide overview' : 'Show overview'}
+                                                            >
+                                                                <svg 
+                                                                    width='16' 
+                                                                    height='16' 
+                                                                    viewBox='0 0 24 24' 
+                                                                    fill='none'
+                                                                    stroke='currentColor' 
+                                                                    strokeWidth='2'
+                                                                >
+                                                                    <path d={isSymbolsOverviewVisible ? 'M18 6L6 18M6 6l12 12' : 'M3 12h18m-9-9v18'} />
+                                                                </svg>
+                                                            </button>
+                                                            <button 
+                                                                className='symbols-grid-toggle'
+                                                                onClick={toggleSymbolsGrid}
+                                                                title={isSymbolsGridVisible ? 'Hide symbols grid' : 'Show symbols grid'}
+                                                            >
                                                             <svg 
                                                                 width='16' 
                                                                 height='16' 
@@ -2179,6 +3278,7 @@ const TradingHubDisplay: React.FC = () => {
                                                     })}
                                                 </div>
                                             </div>
+                                            )}
 
                                             {o5u4Analysis.bestSymbol && (
                                                 <div className='best-symbol-details'>
@@ -2204,6 +3304,21 @@ const TradingHubDisplay: React.FC = () => {
                                                     
                                                 </div>
                                             )}
+
+                                            {!isSymbolsOverviewVisible && (
+                                                <div className='overview-collapsed'>
+                                                    <button 
+                                                        className='show-overview-btn'
+                                                        onClick={toggleSymbolsOverview}
+                                                        title='Show market analysis'
+                                                    >
+                                                        <svg width='14' height='14' viewBox='0 0 24 24' fill='none'>
+                                                            <path d='M7 14l5-5 5 5' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                                                        </svg>
+                                                        <span>Market Analysis</span>
+                                                    </button>
+                                                </div>
+                                            )}
                                         </>
                                     )}
                                 </div>
@@ -2215,6 +3330,211 @@ const TradingHubDisplay: React.FC = () => {
                             disabled={isContinuousTrading}
                         >
                             {isAutoO5U4Active ? 'Deactivate' : 'Activate'}
+                        </button>
+                    </div>
+
+                    <div className={`strategy-card ${isAutoMatchesActive ? 'active' : ''}`}>
+                        <div className='card-header'>
+                            <div className='strategy-icon'>
+                                <svg viewBox='0 0 24 24' width='24' height='24'>
+                                    <path
+                                        d='M3 3h18v2H3z'
+                                        fill='currentColor'
+                                        opacity='0.7'
+                                    />
+                                    <path
+                                        d='M6 8h3v3H6zM11 8h3v3h-3zM16 8h3v3h-3z'
+                                        fill='currentColor'
+                                    />
+                                    <path
+                                        d='M6 13h3v3H6zM16 13h3v3h-3z'
+                                        fill='currentColor'
+                                        opacity='0.8'
+                                    />
+                                    <text x='7.5' y='10' fontSize='3' fill='white' fontWeight='bold'>5</text>
+                                    <text x='12.5' y='10' fontSize='3' fill='white' fontWeight='bold'>1</text>
+                                    <text x='17.5' y='10' fontSize='3' fill='white' fontWeight='bold'>7</text>
+                                    <text x='7.5' y='15' fontSize='3' fill='white' fontWeight='bold'>3</text>
+                                    <text x='17.5' y='15' fontSize='3' fill='white' fontWeight='bold'>9</text>
+                                </svg>
+                            </div>
+                            <div className='strategy-title'>
+                                <h4>Matches</h4>
+                                <p>Digit Frequency Strategy</p>
+                            </div>
+                            <div className={`strategy-status ${isAutoMatchesActive ? 'on' : 'off'}`}>
+                                {isAutoMatchesActive ? 'ON' : 'OFF'}
+                            </div>
+                        </div>
+                        <div className='card-content'>
+                            <p>Analyzes 500 ticks across all volatility symbols to identify the 5 most frequent digits, then executes simultaneous DIGITMATCH trades.</p>
+                            
+                            {isAutoMatchesActive && (
+                                <div className='matches-info'>
+                                    {matchesAnalysis.readySymbols.length === 0 ? (
+                                        <div className='no-analysis'>
+                                            <div className='loading-indicator'>
+                                                <div className='spinner'></div>
+                                                <span className='info-text'>Analyzing 15 volatility symbols...</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {isSymbolsOverviewVisible && (
+                                                <div className='symbols-overview'>
+                                                    <div className='overview-header'>
+                                                        <div className='header-title'>
+                                                            <span>Frequency Analysis ({matchesAnalysis.readySymbols.length}/5 symbols ready)</span>
+                                                            {isAutoMatchesActive && (
+                                                                <div className='live-indicator'>
+                                                                    <div className='live-dot'></div>
+                                                                    <span>LIVE</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className='header-actions'>
+                                                            {matchesAnalysis.bestSymbol && (
+                                                                <span className='best-symbol'>Best: {matchesAnalysis.bestSymbol}</span>
+                                                            )}
+                                                            {matchesAnalysis.readySymbols.length > 0 && (
+                                                                <span className='ready-count'>{matchesAnalysis.readySymbols.length} Ready</span>
+                                                            )}
+                                                            <button 
+                                                                className='symbols-overview-toggle'
+                                                                onClick={toggleSymbolsOverview}
+                                                                title={isSymbolsOverviewVisible ? 'Hide overview' : 'Show overview'}
+                                                            >
+                                                                <svg 
+                                                                    width='16' 
+                                                                    height='16' 
+                                                                    viewBox='0 0 24 24' 
+                                                                    fill='none'
+                                                                    stroke='currentColor' 
+                                                                    strokeWidth='2'
+                                                                >
+                                                                    <path d={isSymbolsOverviewVisible ? 'M18 6L6 18M6 6l12 12' : 'M3 12h18m-9-9v18'} />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                
+                                                    <div className='symbols-grid'>
+                                                        {availableSymbols.map(symbol => {
+                                                        const isReady = matchesAnalysis.readySymbols.includes(symbol);
+                                                        const topDigits = matchesAnalysis.topDigits[symbol] || [];
+                                                        const frequencies = matchesAnalysis.digitFrequencies[symbol] || {};
+                                                        const isBest = symbol === matchesAnalysis.bestSymbol;
+                                                        const totalFreq = matchesAnalysis.symbolTotalFrequencies?.[symbol] || 0;
+                                                        
+                                                        return (
+                                                            <div key={symbol} className={`symbol-status ${isReady ? 'ready' : 'loading'} ${topDigits.length === 5 ? 'complete' : ''} ${isBest ? 'best' : ''}`}>
+                                                                <div className='symbol-name'>
+                                                                    {symbol}
+                                                                    {isBest && <span className='best-indicator'>★</span>}
+                                                                </div>
+                                                                <div className='symbol-info'>
+                                                                    {isReady && topDigits.length === 5 ? (
+                                                                        <>
+                                                                            <div className='top-digits-preview'>
+                                                                                {topDigits.slice(0, 3).map((digit) => (
+                                                                                    <span key={digit} className='digit-mini'>
+                                                                                        {digit}
+                                                                                    </span>
+                                                                                ))}
+                                                                                {topDigits.length > 3 && <span className='more'>+{topDigits.length - 3}</span>}
+                                                                            </div>
+                                                                            {totalFreq > 0 && (
+                                                                                <div className='total-frequency'>
+                                                                                    Total: {totalFreq.toFixed(2)}%
+                                                                                </div>
+                                                                            )}
+                                                                        </>
+                                                                    ) : isReady ? (
+                                                                        <div className='processing-indicator'>Processing...</div>
+                                                                    ) : (
+                                                                        <div className='loading-indicator'>...</div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                            )}
+
+                                            {matchesAnalysis.readySymbols.length > 0 && matchesAnalysis.bestSymbol && (
+                                                <div className='trading-readiness'>
+                                                    {(() => {
+                                                        const bestSymbol = matchesAnalysis.bestSymbol;
+                                                        const isReady = matchesAnalysis.readySymbols.includes(bestSymbol) && 
+                                                                        matchesAnalysis.topDigits[bestSymbol]?.length === 5;
+                                                        
+                                                        if (isReady) {
+                                                            const topDigits = matchesAnalysis.topDigits[bestSymbol];
+                                                            const totalFreq = matchesAnalysis.symbolTotalFrequencies?.[bestSymbol] || 0;
+                                                            return (
+                                                                <div className='ready-to-trade'>
+                                                                    <div className='readiness-header'>
+                                                                        <span className='success-text'>Best Market Ready: {bestSymbol} ⭐</span>
+                                                                        <span className='frequency-badge'>Total Freq: {totalFreq.toFixed(2)}%</span>
+                                                                    </div>
+                                                                    <div className='trade-preview'>
+                                                                        <div className='preview-item'>
+                                                                            <span>Top 5 Frequent Digits:</span>
+                                                                            <div className='digit-list'>
+                                                                                {topDigits.map((digit, index) => {
+                                                                                    const freq = matchesAnalysis.digitFrequencies[bestSymbol]?.[digit] || 0;
+                                                                                    return (
+                                                                                        <span key={digit} className={`digit-badge ${index === 0 ? 'highest' : ''}`}>
+                                                                                            {digit} ({freq})
+                                                                                        </span>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className='preview-item'>
+                                                                            <span>Strategy:</span>
+                                                                            <span className='strategy-text'>5 simultaneous DIGITMATCH trades on {bestSymbol}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        } else {
+                                                            return (
+                                                                <div className='analysis-progress'>
+                                                                    <span>Best market ({bestSymbol}) analysis in progress...</span>
+                                                                </div>
+                                                            );
+                                                        }
+                                                    })()}
+                                                </div>
+                                            )}
+
+                                            {!isSymbolsOverviewVisible && (
+                                                <div className='overview-collapsed'>
+                                                    <button 
+                                                        className='show-overview-btn'
+                                                        onClick={toggleSymbolsOverview}
+                                                        title='Show frequency analysis'
+                                                    >
+                                                        <svg width='14' height='14' viewBox='0 0 24 24' fill='none'>
+                                                            <path d='M7 14l5-5 5 5' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                                                        </svg>
+                                                        <span>Frequency Analysis</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <button
+                            className={`strategy-toggle ${isAutoMatchesActive ? 'active' : ''}`}
+                            onClick={toggleAutoMatches}
+                            disabled={isContinuousTrading}
+                        >
+                            {isAutoMatchesActive ? 'Deactivate' : 'Activate'}
                         </button>
                     </div>
                 </div>
