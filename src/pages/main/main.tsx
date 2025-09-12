@@ -1,34 +1,34 @@
-import React, { lazy, Suspense, useEffect, useState, useCallback } from 'react';
+import React, { lazy, Suspense, useCallback,useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import AnalysistoolModal from '@/components/analysistool/analysistool-modal';
+import PortfolioIcon from '@/components/icons/portfolio-icon';
 import ChunkLoader from '@/components/loader/chunk-loader';
+import AdvancedDisplayModal from '@/components/modals/advanced-display-modal';
+import PortfolioDisplay from '@/components/portfolio/portfolio-display';
 import DesktopWrapper from '@/components/shared_ui/desktop-wrapper';
 import Dialog from '@/components/shared_ui/dialog';
 import MobileWrapper from '@/components/shared_ui/mobile-wrapper';
 import Tabs from '@/components/shared_ui/tabs/tabs';
-import TradingViewModal from '@/components/trading-view-chart/trading-view-modal';
-import AnalysistoolModal from '@/components/analysistool/analysistool-modal';
 import SignalsModal from '@/components/signals/signals-modal';
-import AdvancedDisplayModal from '@/components/modals/advanced-display-modal';
-import StandaloneChartModal from '@/pages/chart/standalone-chart-modal';
+import DisplayToggle from '@/components/trading-hub/display-toggle';
+import TradingViewModal from '@/components/trading-view-chart/trading-view-modal';
 import { DBOT_TABS, TAB_IDS } from '@/constants/bot-contents';
 import { api_base } from '@/external/bot-skeleton';
 import { CONNECTION_STATUS } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
+import { useUrlBotLoader } from '@/hooks/useUrlBotLoader';
+import StandaloneChartModal from '@/pages/chart/standalone-chart-modal';
 import { Localize, localize } from '@deriv-com/translations';
 import { useDevice } from '@deriv-com/ui';
 import RunPanel from '../../components/run-panel';
 import ChartModal from '../chart/chart-modal';
 import Dashboard from '../dashboard';
 import RunStrategy from '../dashboard/run-strategy';
-import DisplayToggle from '@/components/trading-hub/display-toggle';
-import PortfolioDisplay from '@/components/portfolio/portfolio-display';
-import PortfolioIcon from '@/components/icons/portfolio-icon';
 import './main.scss';
 import './free-bots.scss';
-import { useUrlBotLoader } from '@/hooks/useUrlBotLoader';
 
 // Extend Window interface for Blockly
 declare global {
@@ -48,7 +48,7 @@ const DashboardIcon = () => (
 const BotBuilderIcon = () => (
     <svg fill='var(--text-general)' width='24px' height='24px' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
         <path
-            fill-rule='evenodd'
+            fillRule='evenodd'
             d='M20,9.85714286 L20,14.1428571 C20,15.2056811 19.0732946,16 18,16 L6,16 C4.92670537,16 4,15.2056811 4,14.1428571 L4,9.85714286 C4,8.79431889 4.92670537,8 6,8 L18,8 C19.0732946,8 20,8.79431889 20,9.85714286 Z M6,10 L6,14 L18,14 L18,10 L6,10 Z M2,19 L2,17 L22,17 L22,19 L2,19 Z M2,7 L2,5 L22,5 L22,7 L2,7 Z'
         />
     </svg>
@@ -82,26 +82,26 @@ const ChartsIcon = () => (
         <path
             d='M4 20L10 14L14 16L20 10'
             stroke='var(--text-general)'
-            stroke-width='2'
-            stroke-linecap='round'
-            stroke-linejoin='round'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
         />
-        <rect x='8' y='3' width='8' height='8' rx='2' stroke='var(--text-general)' stroke-width='2' />
-        <path d='M12 5V9' stroke='var(--text-general)' stroke-width='2' stroke-linecap='round' />
-        <path d='M10 7H14' stroke='var(--text-general)' stroke-width='2' stroke-linecap='round' />
+        <rect x='8' y='3' width='8' height='8' rx='2' stroke='var(--text-general)' strokeWidth='2' />
+        <path d='M12 5V9' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
+        <path d='M10 7H14' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
     </svg>
 );
 
 const AnalysisToolIcon = () => (
     <svg width='24px' height='24px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-        <path d='M7.5 3.5V6.5' stroke='var(--text-general)' stroke-linecap='round' />
-        <path d='M7.5 14.5V18.5' stroke='var(--text-general)' stroke-linecap='round' />
+        <path d='M7.5 3.5V6.5' stroke='var(--text-general)' strokeLinecap='round' />
+        <path d='M7.5 14.5V18.5' stroke='var(--text-general)' strokeLinecap='round' />
         <path
             d='M6.8 6.5C6.08203 6.5 5.5 7.08203 5.5 7.8V13.2C5.5 13.918 6.08203 14.5 6.8 14.5H8.2C8.91797 14.5 9.5 13.918 9.5 13.2V7.8C9.5 7.08203 8.91797 6.5 8.2 6.5H6.8Z'
             stroke='var(--text-general)'
         />
-        <path d='M16.5 6.5V11.5' stroke='var(--text-general)' stroke-linecap='round' />
-        <path d='M16.5 16.5V20.5' stroke='var(--text-general)' stroke-linecap='round' />
+        <path d='M16.5 6.5V11.5' stroke='var(--text-general)' strokeLinecap='round' />
+        <path d='M16.5 16.5V20.5' stroke='var(--text-general)' strokeLinecap='round' />
         <path
             d='M15.8 11.5C15.082 11.5 14.5 12.082 14.5 12.8V15.2C14.5 15.918 15.082 16.5 15.8 16.5H17.2C17.918 16.5 18.5 15.918 18.5 15.2V12.8C18.5 12.082 17.918 11.5 17.2 11.5H15.8Z'
             stroke='var(--text-general)'
@@ -114,9 +114,9 @@ const SignalsIcon = () => (
         <path
             d='M8 6.00067L21 6.00139M8 12.0007L21 12.0015M8 18.0007L21 18.0015M3.5 6H3.51M3.5 12H3.51M3.5 18H3.51M4 6C4 6.27614 3.77614 6.5 3.5 6.5C3.22386 6.5 3 6.27614 3 6C3 5.72386 3.22386 5.5 3.5 5.5C3.77614 5.5 4 5.72386 4 6ZM4 12C4 12.2761 3.77614 12.5 3.5 12.5C3.22386 12.5 3 12.2761 3 12C3 11.7239 3.22386 11.5 3.5 11.5C3.77614 11.5 4 11.7239 4 12ZM4 18C4 18.2761 3.77614 18.5 3.5 18.5C3.22386 18.5 3 18.2761 3 18C3 17.7239 3.22386 17.5 3.5 17.5C3.77614 17.5 4 17.7239 4 18Z'
             stroke='var(--text-general)'
-            stroke-width='2'
-            stroke-linecap='round'
-            stroke-linejoin='round'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
         />
     </svg>
 );
@@ -152,7 +152,7 @@ const AppWrapper = observer(() => {
     const { connectionStatus } = useApiBase();
     const { dashboard, load_modal, run_panel, summary_card } = useStore();
     const { active_tab, is_chart_modal_visible, setActiveTab } = dashboard;
-    const { 
+    const {
         is_dialog_open,
         dialog_options,
         onCancelButtonClick,
@@ -167,7 +167,7 @@ const AppWrapper = observer(() => {
     const location = useLocation();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    
+
     // Create a history-like object for the Tabs component
     const history = {
         location,
@@ -179,7 +179,7 @@ const AppWrapper = observer(() => {
         forward: () => window.history.forward(),
         go: (delta?: number) => window.history.go(delta),
         pushState: (data: any, title: string, url?: string | null) => window.history.pushState(data, title, url),
-        replaceState: (data: any, title: string, url?: string | null) => window.history.replaceState(data, title, url)
+        replaceState: (data: any, title: string, url?: string | null) => window.history.replaceState(data, title, url),
     };
 
     interface Bot {
@@ -202,7 +202,7 @@ const AppWrapper = observer(() => {
     useUrlBotLoader({
         bots,
         setActiveTab,
-        loadModal: load_modal
+        loadModal: load_modal,
     });
 
     useEffect(() => {
@@ -233,17 +233,78 @@ const AppWrapper = observer(() => {
     useEffect(() => {
         const fetchBots = async () => {
             const botFiles = [
-                { file: 'over under turbo 1.1.xml', category: 'automated', popularity: 95, description: 'Advanced over/under trading strategy with turbo speed execution and intelligent market prediction.' },
-                { file: 'Market wizard v1.5.xml', category: 'automated', popularity: 92, description: 'Community favorite with proven track record in various market conditions and excellent risk management.' },
-                { file: 'Auto differ recovery over under.xml', category: 'automated', popularity: 90, description: 'Automated difference recovery strategy for over/under markets with adaptive risk management.' },
-                { file: 'Tradezilla.xml', category: 'automated', popularity: 88, description: 'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.' },
-                { file: 'Envy-differ.xml', category: 'popular', popularity: 85, description: 'Reliable difference-based trading strategy perfect for beginners and steady profit seekers.' },
-                { file: 'H_L auto vault.xml', category: 'automated', popularity: 90, description: 'High-Low automated vault system with built-in profit protection and loss prevention mechanisms.' },
-                { file: 'Top-notch 2.xml', category: 'automated', popularity: 94, description: 'Top-rated strategy loved by professional traders for its consistency and impressive performance metrics.' },
-                { file: 'BOT V3.xml', category: 'popular', popularity: 82, description: 'Stable and dependable trading bot with conservative approach and long-term profitability focus.' },
-                { file: 'Even_Odd Killer bot.xml', category: 'popular', popularity: 89, description: 'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.' },
+                {
+                    file: '2025 $Orginal  2025 Version .xml',
+                    category: 'popular',
+                    popularity: 96,
+                    description:
+                        'Advanced 2025 Even/Odd digit bot with smart profit targeting, loss management, and adaptive stake adjustment for maximum profitability.',
+                },
+                {
+                    file: 'over under turbo 1.1.xml',
+                    category: 'automated',
+                    popularity: 95,
+                    description:
+                        'Advanced over/under trading strategy with turbo speed execution and intelligent market prediction.',
+                },
+                {
+                    file: 'Market wizard v1.5.xml',
+                    category: 'automated',
+                    popularity: 92,
+                    description:
+                        'Community favorite with proven track record in various market conditions and excellent risk management.',
+                },
+                {
+                    file: 'Auto differ recovery over under.xml',
+                    category: 'automated',
+                    popularity: 90,
+                    description:
+                        'Automated difference recovery strategy for over/under markets with adaptive risk management.',
+                },
+                {
+                    file: 'Tradezilla.xml',
+                    category: 'automated',
+                    popularity: 88,
+                    description:
+                        'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.',
+                },
+                {
+                    file: 'Envy-differ.xml',
+                    category: 'popular',
+                    popularity: 85,
+                    description:
+                        'Reliable difference-based trading strategy perfect for beginners and steady profit seekers.',
+                },
+                {
+                    file: 'H_L auto vault.xml',
+                    category: 'automated',
+                    popularity: 90,
+                    description:
+                        'High-Low automated vault system with built-in profit protection and loss prevention mechanisms.',
+                },
+                {
+                    file: 'Top-notch 2.xml',
+                    category: 'automated',
+                    popularity: 94,
+                    description:
+                        'Top-rated strategy loved by professional traders for its consistency and impressive performance metrics.',
+                },
+                {
+                    file: 'BOT V3.xml',
+                    category: 'popular',
+                    popularity: 82,
+                    description:
+                        'Stable and dependable trading bot with conservative approach and long-term profitability focus.',
+                },
+                {
+                    file: 'Even_Odd Killer bot.xml',
+                    category: 'popular',
+                    popularity: 89,
+                    description:
+                        'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.',
+                },
             ];
-            
+
             const botPromises = botFiles.map(async ({ file, category, popularity, description }) => {
                 try {
                     console.log(`🔄 Fetching bot file: ${file}`);
@@ -290,7 +351,10 @@ const AppWrapper = observer(() => {
             });
             const bots = (await Promise.all(botPromises)).filter(Boolean);
             console.log('Bots fetched successfully:', bots.length, 'bots');
-            console.log('Bot titles:', bots.map(b => b.title));
+            console.log(
+                'Bot titles:',
+                bots.map(b => b.title)
+            );
             setBots(bots);
         };
 
@@ -305,18 +369,19 @@ const AppWrapper = observer(() => {
         [setActiveTab, setSearchParams]
     );
 
-    const handleShareBot = useCallback(
-        (bot: Bot, event: React.MouseEvent) => {
-            event.stopPropagation();
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('bot', encodeURIComponent(bot.title));
-            currentUrl.searchParams.set('tab', 'id-bot-builder');
-            
-            navigator.clipboard.writeText(currentUrl.toString()).then(() => {
+    const handleShareBot = useCallback((bot: Bot, event: React.MouseEvent) => {
+        event.stopPropagation();
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('bot', encodeURIComponent(bot.title));
+        currentUrl.searchParams.set('tab', 'id-bot-builder');
+
+        navigator.clipboard
+            .writeText(currentUrl.toString())
+            .then(() => {
                 // Show success notification or toast
                 console.log('Bot link copied to clipboard:', currentUrl.toString());
                 // You might want to add a toast notification here
-                
+
                 // Create a temporary notification element
                 const notification = document.createElement('div');
                 notification.style.cssText = `
@@ -333,7 +398,7 @@ const AppWrapper = observer(() => {
                 `;
                 notification.textContent = 'Bot link copied to clipboard!';
                 document.body.appendChild(notification);
-                
+
                 // Add CSS animation
                 const style = document.createElement('style');
                 style.textContent = `
@@ -343,27 +408,26 @@ const AppWrapper = observer(() => {
                     }
                 `;
                 document.head.appendChild(style);
-                
+
                 setTimeout(() => {
                     notification.remove();
                     style.remove();
                 }, 3000);
-            }).catch(err => {
+            })
+            .catch(err => {
                 console.error('Failed to copy bot link:', err);
                 // Fallback: show the URL in an alert or modal
                 alert(`Copy this link to share the bot:\n${currentUrl.toString()}`);
             });
-        },
-        []
-    );
+    }, []);
 
     const handleBotClick = useCallback(
         async (bot: Bot) => {
             console.log('🚀 Loading bot:', bot.title);
-            
+
             // Switch to bot builder tab first
             setActiveTab(DBOT_TABS.BOT_BUILDER);
-            
+
             try {
                 if (!bot.xmlContent) {
                     throw new Error('No XML content available for this bot');
@@ -375,7 +439,7 @@ const AppWrapper = observer(() => {
                     xml: bot.xmlContent,
                     name: bot.title,
                     save_type: 'local',
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
                 };
 
                 // Use the load modal's loadStrategyToBuilder method
@@ -397,19 +461,22 @@ const AppWrapper = observer(() => {
     // Simple URL bot loading - runs when we have bots and a bot parameter
     useEffect(() => {
         const botParam = searchParams.get('bot');
-        
+
         // Only proceed if we have both bots loaded and a bot parameter
         if (!botParam || bots.length === 0) {
-            console.log('⏭️ Skipping URL bot loading:', { 
-                hasBotParam: !!botParam, 
-                botsCount: bots.length 
+            console.log('⏭️ Skipping URL bot loading:', {
+                hasBotParam: !!botParam,
+                botsCount: bots.length,
             });
             return;
         }
 
         console.log('🔍 URL Bot Loading - Starting process...');
         console.log('📋 Bot parameter:', botParam);
-        console.log('🤖 Available bots:', bots.map(b => b.title));
+        console.log(
+            '🤖 Available bots:',
+            bots.map(b => b.title)
+        );
 
         const decodedBotName = decodeURIComponent(botParam);
         console.log('� Decoded bot name:', decodedBotName);
@@ -418,27 +485,27 @@ const AppWrapper = observer(() => {
         const foundBot = bots.find(bot => {
             const exactTitleMatch = bot.title === decodedBotName;
             const fileNameMatch = bot.filePath.replace('.xml', '') === decodedBotName;
-            
+
             console.log(`🔍 Checking "${bot.title}":`, {
                 exactTitleMatch,
                 fileNameMatch,
                 botTitle: bot.title,
-                filePath: bot.filePath
+                filePath: bot.filePath,
             });
-            
+
             return exactTitleMatch || fileNameMatch;
         });
 
         if (foundBot) {
             console.log('✅ Found matching bot:', foundBot.title);
             console.log('📄 Has XML content:', !!foundBot.xmlContent, 'Length:', foundBot.xmlContent?.length);
-            
+
             // Load the bot immediately
             handleBotClick(foundBot)
                 .then(() => {
                     console.log('🎉 Bot loaded successfully from URL!');
                 })
-                .catch((error) => {
+                .catch(error => {
                     console.error('� Failed to load bot from URL:', error);
                 });
         } else {
@@ -482,7 +549,7 @@ const AppWrapper = observer(() => {
         if (scrollContainer) {
             scrollContainer.scrollTo({
                 top: 0,
-                behavior: 'smooth'
+                behavior: 'smooth',
             });
         }
     };
@@ -686,7 +753,7 @@ const AppWrapper = observer(() => {
                                         <p className='free-bots-header__subtitle'>
                                             <Localize i18n_default_text='Discover our collection of professionally designed trading bots. Choose from automated strategies, popular community favorites, or reliable everyday trading solutions.' />
                                         </p>
-                                        
+
                                         {/* Statistics */}
                                         <div className='free-bots-stats'>
                                             <div className='free-bots-stats__item'>
@@ -712,9 +779,15 @@ const AppWrapper = observer(() => {
                                                     {bots.filter(bot => bot.category === botsCategory).length}
                                                 </div>
                                                 <div className='free-bots-stats__label'>
-                                                    {botsCategory === 'automated' && <Localize i18n_default_text='Auto Bots' />}
-                                                    {botsCategory === 'popular' && <Localize i18n_default_text='Popular' />}
-                                                    {botsCategory === 'regular' && <Localize i18n_default_text='Regular' />}
+                                                    {botsCategory === 'automated' && (
+                                                        <Localize i18n_default_text='Auto Bots' />
+                                                    )}
+                                                    {botsCategory === 'popular' && (
+                                                        <Localize i18n_default_text='Popular' />
+                                                    )}
+                                                    {botsCategory === 'regular' && (
+                                                        <Localize i18n_default_text='Regular' />
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -727,7 +800,7 @@ const AppWrapper = observer(() => {
                                             className='free-bots-search__input'
                                             placeholder='Search bots by name or description...'
                                             value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onChange={e => setSearchQuery(e.target.value)}
                                         />
                                     </div>
 
@@ -736,13 +809,15 @@ const AppWrapper = observer(() => {
                                         {[
                                             { key: 'automated', label: 'Automated Strategies', icon: '🤖' },
                                             { key: 'popular', label: 'Community Favorites', icon: '⭐' },
-                                            { key: 'regular', label: 'Reliable Classics', icon: '📊' }
+                                            { key: 'regular', label: 'Reliable Classics', icon: '📊' },
                                         ].map(category => (
                                             <button
                                                 key={category.key}
                                                 onClick={() => setBotsCategory(category.key)}
                                                 className={`free-bots-filters__button ${
-                                                    botsCategory === category.key ? 'free-bots-filters__button--active' : ''
+                                                    botsCategory === category.key
+                                                        ? 'free-bots-filters__button--active'
+                                                        : ''
                                                 }`}
                                             >
                                                 <span style={{ marginRight: '8px' }}>{category.icon}</span>
@@ -766,7 +841,9 @@ const AppWrapper = observer(() => {
                                                             </div>
                                                         </div>
                                                         <div className='bot-card__content'>
-                                                            <p className='bot-card__description'>Loading bot details...</p>
+                                                            <p className='bot-card__description'>
+                                                                Loading bot details...
+                                                            </p>
                                                             <div className='bot-card__features'>
                                                                 <span className='bot-card__feature'>Loading</span>
                                                             </div>
@@ -782,10 +859,13 @@ const AppWrapper = observer(() => {
                                         <div className='free-bots-grid'>
                                             {bots
                                                 .filter(bot => bot.category === botsCategory)
-                                                .filter(bot => 
-                                                    searchQuery === '' || 
-                                                    bot.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                    bot.description.toLowerCase().includes(searchQuery.toLowerCase())
+                                                .filter(
+                                                    bot =>
+                                                        searchQuery === '' ||
+                                                        bot.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                        bot.description
+                                                            .toLowerCase()
+                                                            .includes(searchQuery.toLowerCase())
                                                 )
                                                 .map((bot, index) => (
                                                     <div
@@ -802,44 +882,58 @@ const AppWrapper = observer(() => {
                                                             </div>
                                                             <div style={{ flex: 1 }}>
                                                                 <h3 className='bot-card__title'>
-                                                                    {bot.title.replace('.xml', '').replace(/[-_]/g, ' ')}
+                                                                    {bot.title
+                                                                        .replace('.xml', '')
+                                                                        .replace(/[-_]/g, ' ')}
                                                                 </h3>
                                                                 {bot.popularity && (
-                                                                    <div style={{ 
-                                                                        display: 'flex', 
-                                                                        alignItems: 'center', 
-                                                                        gap: '4px', 
-                                                                        marginTop: '4px'
-                                                                    }}>
-                                                                        <span style={{ 
-                                                                            fontSize: '0.75rem', 
-                                                                            color: 'var(--text-general)'
-                                                                        }}>
+                                                                    <div
+                                                                        style={{
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '4px',
+                                                                            marginTop: '4px',
+                                                                        }}
+                                                                    >
+                                                                        <span
+                                                                            style={{
+                                                                                fontSize: '0.75rem',
+                                                                                color: 'var(--text-general)',
+                                                                            }}
+                                                                        >
                                                                             Rating:
                                                                         </span>
-                                                                        <div style={{ 
-                                                                            display: 'flex', 
-                                                                            alignItems: 'center',
-                                                                            gap: '2px'
-                                                                        }}>
+                                                                        <div
+                                                                            style={{
+                                                                                display: 'flex',
+                                                                                alignItems: 'center',
+                                                                                gap: '2px',
+                                                                            }}
+                                                                        >
                                                                             {Array.from({ length: 5 }).map((_, i) => (
-                                                                                <span 
+                                                                                <span
                                                                                     key={i}
-                                                                                    style={{ 
+                                                                                    style={{
                                                                                         fontSize: '0.75rem',
-                                                                                        color: i < Math.floor(bot.popularity / 20) 
-                                                                                            ? '#FFD700' 
-                                                                                            : 'var(--border-normal)'
+                                                                                        color:
+                                                                                            i <
+                                                                                            Math.floor(
+                                                                                                bot.popularity / 20
+                                                                                            )
+                                                                                                ? '#FFD700'
+                                                                                                : 'var(--border-normal)',
                                                                                     }}
                                                                                 >
                                                                                     ⭐
                                                                                 </span>
                                                                             ))}
-                                                                            <span style={{ 
-                                                                                fontSize: '0.7rem', 
-                                                                                color: 'var(--text-general)',
-                                                                                marginLeft: '4px'
-                                                                            }}>
+                                                                            <span
+                                                                                style={{
+                                                                                    fontSize: '0.7rem',
+                                                                                    color: 'var(--text-general)',
+                                                                                    marginLeft: '4px',
+                                                                                }}
+                                                                            >
                                                                                 ({bot.popularity}%)
                                                                             </span>
                                                                         </div>
@@ -848,12 +942,17 @@ const AppWrapper = observer(() => {
                                                             </div>
                                                             <button
                                                                 className='bot-card__share-button'
-                                                                onClick={(e) => handleShareBot(bot, e)}
+                                                                onClick={e => handleShareBot(bot, e)}
                                                                 title='Share this bot'
                                                                 aria-label='Share bot link'
                                                             >
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                                                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                                                                <svg
+                                                                    width='16'
+                                                                    height='16'
+                                                                    viewBox='0 0 24 24'
+                                                                    fill='currentColor'
+                                                                >
+                                                                    <path d='M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z' />
                                                                 </svg>
                                                             </button>
                                                         </div>
@@ -876,23 +975,41 @@ const AppWrapper = observer(() => {
                                                             <div className='bot-card__features'>
                                                                 {botsCategory === 'automated' && (
                                                                     <>
-                                                                        <span className='bot-card__feature'>Auto-Execute</span>
-                                                                        <span className='bot-card__feature'>Risk Control</span>
-                                                                        <span className='bot-card__feature'>24/7 Trading</span>
+                                                                        <span className='bot-card__feature'>
+                                                                            Auto-Execute
+                                                                        </span>
+                                                                        <span className='bot-card__feature'>
+                                                                            Risk Control
+                                                                        </span>
+                                                                        <span className='bot-card__feature'>
+                                                                            24/7 Trading
+                                                                        </span>
                                                                     </>
                                                                 )}
                                                                 {botsCategory === 'popular' && (
                                                                     <>
-                                                                        <span className='bot-card__feature'>Community Tested</span>
-                                                                        <span className='bot-card__feature'>High Performance</span>
-                                                                        <span className='bot-card__feature'>User Favorite</span>
+                                                                        <span className='bot-card__feature'>
+                                                                            Community Tested
+                                                                        </span>
+                                                                        <span className='bot-card__feature'>
+                                                                            High Performance
+                                                                        </span>
+                                                                        <span className='bot-card__feature'>
+                                                                            User Favorite
+                                                                        </span>
                                                                     </>
                                                                 )}
                                                                 {botsCategory === 'regular' && (
                                                                     <>
-                                                                        <span className='bot-card__feature'>Stable</span>
-                                                                        <span className='bot-card__feature'>Low Risk</span>
-                                                                        <span className='bot-card__feature'>Beginner Friendly</span>
+                                                                        <span className='bot-card__feature'>
+                                                                            Stable
+                                                                        </span>
+                                                                        <span className='bot-card__feature'>
+                                                                            Low Risk
+                                                                        </span>
+                                                                        <span className='bot-card__feature'>
+                                                                            Beginner Friendly
+                                                                        </span>
                                                                     </>
                                                                 )}
                                                             </div>
@@ -915,44 +1032,46 @@ const AppWrapper = observer(() => {
                                     )}
 
                                     {/* Empty State */}
-                                    {bots.length > 0 && bots
-                                        .filter(bot => bot.category === botsCategory)
-                                        .filter(bot => 
-                                            searchQuery === '' || 
-                                            bot.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                            bot.description.toLowerCase().includes(searchQuery.toLowerCase())
-                                        ).length === 0 && (
-                                        <div className='free-bots-empty'>
-                                            <div className='free-bots-empty__icon'>
-                                                <BotIcon />
+                                    {bots.length > 0 &&
+                                        bots
+                                            .filter(bot => bot.category === botsCategory)
+                                            .filter(
+                                                bot =>
+                                                    searchQuery === '' ||
+                                                    bot.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                    bot.description.toLowerCase().includes(searchQuery.toLowerCase())
+                                            ).length === 0 && (
+                                            <div className='free-bots-empty'>
+                                                <div className='free-bots-empty__icon'>
+                                                    <BotIcon />
+                                                </div>
+                                                <h3 className='free-bots-empty__title'>
+                                                    {searchQuery ? (
+                                                        <Localize i18n_default_text='No bots found' />
+                                                    ) : (
+                                                        <Localize i18n_default_text='No bots available' />
+                                                    )}
+                                                </h3>
+                                                <p className='free-bots-empty__description'>
+                                                    {searchQuery ? (
+                                                        <Localize i18n_default_text='No bots match your search criteria. Try adjusting your search terms.' />
+                                                    ) : (
+                                                        <Localize i18n_default_text='There are no bots available in this category at the moment. Please try another category.' />
+                                                    )}
+                                                </p>
                                             </div>
-                                            <h3 className='free-bots-empty__title'>
-                                                {searchQuery ? (
-                                                    <Localize i18n_default_text='No bots found' />
-                                                ) : (
-                                                    <Localize i18n_default_text='No bots available' />
-                                                )}
-                                            </h3>
-                                            <p className='free-bots-empty__description'>
-                                                {searchQuery ? (
-                                                    <Localize i18n_default_text='No bots match your search criteria. Try adjusting your search terms.' />
-                                                ) : (
-                                                    <Localize i18n_default_text='There are no bots available in this category at the moment. Please try another category.' />
-                                                )}
-                                            </p>
-                                        </div>
-                                    )}
+                                        )}
                                 </div>
-                                
+
                                 {/* Scroll to Top Button */}
                                 {showScrollTop && (
                                     <button
                                         className={`scroll-to-top ${showScrollTop ? 'scroll-to-top--visible' : ''}`}
                                         onClick={scrollToTop}
-                                        aria-label="Scroll to top"
+                                        aria-label='Scroll to top'
                                     >
-                                        <svg viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M7.41 15.41L12 10.83L16.59 15.41L18 14L12 8L6 14L7.41 15.41Z" />
+                                        <svg viewBox='0 0 24 24' fill='currentColor'>
+                                            <path d='M7.41 15.41L12 10.83L16.59 15.41L18 14L12 8L6 14L7.41 15.41Z' />
                                         </svg>
                                     </button>
                                 )}
