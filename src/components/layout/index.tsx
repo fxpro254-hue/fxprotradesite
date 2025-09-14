@@ -7,6 +7,7 @@ import { useOauth2 } from '@/hooks/auth/useOauth2';
 import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { useDevice } from '@deriv-com/ui';
 import { crypto_currencies_display_order, fiat_currencies_display_order } from '../shared';
+import { DisclaimerButton } from '../disclaimer';
 import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
@@ -96,6 +97,7 @@ const Layout = () => {
             <Body>
                 <Outlet />
             </Body>
+            {!isCallbackPage && <DisclaimerButton />}
             {!isCallbackPage && isDesktop && <Footer />}
         </div>
     );

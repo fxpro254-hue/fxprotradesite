@@ -50,7 +50,10 @@ const Draggable: React.FC<TDraggableProps> = ({
     }, [boundary]);
 
     const handleMouseDown = (event: React.MouseEvent<HTMLElement, MouseEvent> | null, action: string) => {
-        event?.stopPropagation();
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault(); // Prevent default browser behavior
+        }
         calculateZindex({ setZIndex });
         if (!action) return;
         const resize_direction = action;
@@ -197,7 +200,13 @@ const Draggable: React.FC<TDraggableProps> = ({
     return (
         <div
             className={`draggable ${isDragging ? 'dragging' : ''}`}
-            style={{ position: 'absolute', top: position.y, left: position.x, zIndex }}
+            style={{ 
+                position: 'absolute', 
+                top: position.y, 
+                left: position.x, 
+                zIndex,
+                pointerEvents: 'auto', // Ensure pointer events are enabled
+            }}
             onMouseDown={() => calculateZindex({ setZIndex })}
             onKeyDown={() => calculateZindex({ setZIndex })}
             data-testid='dt_react_draggable'
@@ -214,6 +223,49 @@ const Draggable: React.FC<TDraggableProps> = ({
                     data-testid='dt_react_draggable_handler'
                     className='draggable-content__header'
                     onMouseDown={e => handleMouseDown(e, DRAGGABLE_CONSTANTS.MOVE)}
+                    onTouchStart={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        calculateZindex({ setZIndex });
+                        setIsDragging(enableDragging);
+                        
+                        const touch = e.touches[0];
+                        const initialTouchX = touch.clientX;
+                        const initialTouchY = touch.clientY;
+                        const initialX = position?.x ?? 0;
+                        const initialY = position?.y ?? 0;
+                        
+                        const handleTouchMove = (moveEvent: TouchEvent) => {
+                            const touchMove = moveEvent.touches[0];
+                            const deltaX = touchMove.clientX - initialTouchX;
+                            const deltaY = touchMove.clientY - initialTouchY;
+                            
+                            const boundaryRect = boundaryRef?.getBoundingClientRect();
+                            const topOffset = boundaryRef?.offsetTop ?? 0;
+                            const leftOffset = boundaryRef?.offsetLeft ?? 0;
+                            
+                            const newX = deltaX + initialX;
+                            const newY = deltaY + initialY;
+                            const boundedX = Math.min(
+                                Math.max(newX, leftOffset + SAFETY_MARGIN),
+                                leftOffset + (boundaryRect?.width ?? 0) - size.width - SAFETY_MARGIN
+                            );
+                            const boundedY = Math.min(
+                                Math.max(newY, topOffset + SAFETY_MARGIN),
+                                topOffset + (boundaryRect?.height ?? 0) - size.height - SAFETY_MARGIN
+                            );
+                            setPosition({ x: boundedX, y: boundedY });
+                        };
+                        
+                        const handleTouchEnd = () => {
+                            setIsDragging(false);
+                            window.removeEventListener('touchmove', handleTouchMove);
+                            window.removeEventListener('touchend', handleTouchEnd);
+                        };
+                        
+                        window.addEventListener('touchmove', handleTouchMove);
+                        window.addEventListener('touchend', handleTouchEnd);
+                    }}
                     onKeyDown={(e: React.KeyboardEvent<HTMLElement>) =>
                         e.key === 'Enter' && handleMouseDown(null, DRAGGABLE_CONSTANTS.MOVE)
                     }
