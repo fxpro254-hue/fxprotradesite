@@ -12,7 +12,8 @@ const TradingHubDisplay: React.FC = () => {
     const MINIMUM_STAKE = '0.35';
     const { is_dark_mode_on } = useThemeSwitcher();
 
-    const [isAutoDifferActive, setIsAutoDifferActive] = useState(true); // Auto Differ is now default
+    // Set all to false by default - they will be initialized from localStorage in useEffect
+    const [isAutoDifferActive, setIsAutoDifferActive] = useState(false);
     const [isAutoOverUnderActive, setIsAutoOverUnderActive] = useState(false);
     const [isAutoO5U4Active, setIsAutoO5U4Active] = useState(false);
     const [isAutoMatchesActive, setIsAutoMatchesActive] = useState(false);
@@ -339,18 +340,53 @@ const TradingHubDisplay: React.FC = () => {
             const savedO5U4 = localStorage.getItem('tradingHub_o5u4Active');
             const savedMatches = localStorage.getItem('tradingHub_matchesActive');
 
+            console.log(`Loading saved strategy states - Differ: ${savedAutoDiffer}, OverUnder: ${savedOverUnder}, O5U4: ${savedO5U4}, Matches: ${savedMatches}`);
+            
             if (savedAutoDiffer !== null) {
                 setIsAutoDifferActive(savedAutoDiffer === 'true');
+            } else {
+                // Default to false if not set
+                setIsAutoDifferActive(false);
             }
             if (savedOverUnder !== null) {
                 setIsAutoOverUnderActive(savedOverUnder === 'true');
+            } else {
+                setIsAutoOverUnderActive(false);
             }
             if (savedO5U4 !== null) {
                 setIsAutoO5U4Active(savedO5U4 === 'true');
+            } else {
+                setIsAutoO5U4Active(false);
             }
             if (savedMatches !== null) {
                 setIsAutoMatchesActive(savedMatches === 'true');
+            } else {
+                setIsAutoMatchesActive(false);
             }
+            
+            // Ensure only one strategy is active, prioritizing O5U4
+            setTimeout(() => {
+                console.log(`Strategy states after init - O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
+                
+                // Emergency fix: If we have multiple active strategies, prioritize O5U4
+                if (isAutoO5U4Active) {
+                    if (isAutoDifferActive) {
+                        console.log('🚨 FIXING: Both O5U4 and Differ are active - disabling Differ to prioritize O5U4');
+                        setIsAutoDifferActive(false);
+                        localStorage.setItem('tradingHub_autoDifferActive', 'false');
+                    }
+                    if (isAutoOverUnderActive) {
+                        console.log('🚨 FIXING: Both O5U4 and OverUnder are active - disabling OverUnder to prioritize O5U4');
+                        setIsAutoOverUnderActive(false);
+                        localStorage.setItem('tradingHub_overUnderActive', 'false');
+                    }
+                    if (isAutoMatchesActive) {
+                        console.log('🚨 FIXING: Both O5U4 and Matches are active - disabling Matches to prioritize O5U4');
+                        setIsAutoMatchesActive(false);
+                        localStorage.setItem('tradingHub_matchesActive', 'false');
+                    }
+                }
+            }, 100);
         } catch (e) {
             console.warn('Could not load settings from localStorage', e);
         }
@@ -1001,6 +1037,7 @@ const TradingHubDisplay: React.FC = () => {
     // Register event listeners for trading hub run button integration
     useEffect(() => {
         const handleRunButtonStart = () => {
+            console.log(`🔴 RUN BUTTON CLICKED - Active cards: O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
             if (!isContinuousTrading) {
                 startTrading();
             }
@@ -1083,11 +1120,7 @@ const TradingHubDisplay: React.FC = () => {
                     return;
                 }
 
-                if (isAutoDifferActive) {
-                    executeDigitDifferTrade();
-                } else if (isAutoOverUnderActive) {
-                    executeDigitOverTrade();
-                } else if (isAutoO5U4Active) {
+                if (isAutoO5U4Active) {
                     executeO5U4Trade();
                 } else if (isAutoMatchesActive) {
                     // For Matches, we need to check if analysis is ready and we're not already in progress
@@ -1109,6 +1142,10 @@ const TradingHubDisplay: React.FC = () => {
                             readySymbolsCount: matchesAnalysis.readySymbols.length
                         });
                     }
+                } else if (isAutoOverUnderActive) {
+                    executeDigitOverTrade();
+                } else if (isAutoDifferActive) {
+                    executeDigitDifferTrade();
                 }
             }, intervalTime);
         } else {
@@ -2038,6 +2075,9 @@ const TradingHubDisplay: React.FC = () => {
     };
 
     const executeDigitDifferTrade = async () => {
+        console.log('🎯 DIFFER TRADE EXECUTION FUNCTION CALLED - Active cards: ' + 
+            `O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
+            
         if (isTradeInProgress) {
             console.log('Trade already in progress, skipping new trade request');
             return;
@@ -2395,6 +2435,9 @@ const TradingHubDisplay: React.FC = () => {
     };
 
     const executeO5U4Trade = async () => {
+        console.log('🎯 O5U4 TRADE EXECUTION FUNCTION CALLED - Active cards: ' + 
+            `O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
+            
         if (isTradeInProgress) {
             console.log('O5U4: Trade already in progress, skipping new trade request');
             return;
@@ -2853,7 +2896,8 @@ const TradingHubDisplay: React.FC = () => {
 
     const startTrading = () => {
         console.log('🚀 START TRADING clicked!');
-        console.log(`Current strategy states - O5U4: ${isAutoO5U4Active}, Differ: ${isAutoDifferActive}, OverUnder: ${isAutoOverUnderActive}`);
+        console.log(`Current strategy states - O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
+        console.log('🚀 Strategy priority: 1. O5U4, 2. Matches, 3. OverUnder, 4. Differ');
         
         prepareRunPanelForTradingHub();
         setIsContinuousTrading(true);
@@ -2873,13 +2917,11 @@ const TradingHubDisplay: React.FC = () => {
 
         setTimeout(() => {
             console.log('🚀 Starting strategy execution after delay...');
-            if (isAutoDifferActive) {
-                console.log('🚀 Executing DigitDiffer strategy');
-                executeDigitDifferTrade();
-            } else if (isAutoOverUnderActive) {
-                console.log('🚀 Executing OverUnder strategy');
-                executeDigitOverTrade();
-            } else if (isAutoO5U4Active) {
+            console.log(`🚀 STRATEGY CHECK - O5U4: ${isAutoO5U4Active ? 'ACTIVE' : 'inactive'}, Matches: ${isAutoMatchesActive ? 'ACTIVE' : 'inactive'}, OverUnder: ${isAutoOverUnderActive ? 'ACTIVE' : 'inactive'}, Differ: ${isAutoDifferActive ? 'ACTIVE' : 'inactive'}`);
+            // Check which strategy is active and execute in order of priority
+            
+            // Check if O5U4 is active first (since you mentioned this is your issue)
+            if (isAutoO5U4Active) {
                 // For O5U4, check immediately and execute if conditions are met
                 console.log('🚀 O5U4: Starting trading - checking immediate conditions');
                 console.log(`🚀 O5U4: Current best symbol: ${o5u4Analysis.bestSymbol}`);
@@ -2894,7 +2936,6 @@ const TradingHubDisplay: React.FC = () => {
             } else if (isAutoMatchesActive) {
                 // For Matches, check if analysis is ready and execute if conditions are met
                 console.log('🚀 Matches: Starting trading - checking analysis status');
-                console.log(`🚀 Matches: Ready symbols: ${matchesAnalysis.readySymbols.length}`);
                 console.log(`🚀 Matches: Ready symbols: ${matchesAnalysis.readySymbols.length}`);
                 
                 if (matchesAnalysis.readySymbols.length > 0) {
@@ -2913,6 +2954,12 @@ const TradingHubDisplay: React.FC = () => {
                 } else {
                     console.log('🚀 Matches: No analysis available on start - waiting for first analysis');
                 }
+            } else if (isAutoOverUnderActive) {
+                console.log('🚀 Executing OverUnder strategy');
+                executeDigitOverTrade();
+            } else if (isAutoDifferActive) {
+                console.log('🚀 Executing DigitDiffer strategy');
+                executeDigitDifferTrade();
             } else {
                 console.log('🚀 No strategy selected!');
             }
