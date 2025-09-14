@@ -1395,6 +1395,26 @@ export const ToolboxItems = () =>
                     </Value>
                     <Field name='DIRECTION'>rise</Field>
                 </Block>
+                <Block type='digit_percentage'>
+                    <Value name='DIGIT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>7</Field>
+                        </Shadow>
+                    </Value>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>20</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
+                <Block type='digit_highest_lowest_frequency'>
+                    <Field name='FREQUENCY_TYPE'>highest</Field>
+                    <Value name='COUNT'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>50</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
                 <Block type='notify'>
                     <Field name='NOTIFICATION_TYPE'>success</Field>
                     <Field name='NOTIFICATION_SOUND'>announcement</Field>

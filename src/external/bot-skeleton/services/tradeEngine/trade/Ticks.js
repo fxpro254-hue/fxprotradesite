@@ -325,6 +325,71 @@ export default Engine =>
             });
         }
 
+        getDigitPercentage(digit, count) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    const recentTicks = ticks.slice(-count);
+                    const digits = this.getLastDigitsFromList(recentTicks);
+                    
+                    if (digits.length === 0) {
+                        resolve(0);
+                        return;
+                    }
+                    
+                    const matchingCount = digits.filter(d => parseInt(d) === parseInt(digit)).length;
+                    const percentage = (matchingCount / digits.length) * 100;
+                    
+                    resolve(percentage);
+                });
+            });
+        }
+
+        getDigitHighestLowestFrequency(frequencyType, count) {
+            return new Promise(resolve => {
+                this.getTicks().then(ticks => {
+                    const recentTicks = ticks.slice(-count);
+                    const digits = this.getLastDigitsFromList(recentTicks);
+                    
+                    if (digits.length === 0) {
+                        resolve(0);
+                        return;
+                    }
+                    
+                    // Count frequency of each digit
+                    const digitCounts = Array(10).fill(0);
+                    digits.forEach(digit => {
+                        digitCounts[parseInt(digit)]++;
+                    });
+                    
+                    // Find highest or lowest frequency digit
+                    let resultDigit = 0;
+                    let currentValue = digitCounts[0];
+                    
+                    if (frequencyType === 'highest') {
+                        // Find highest frequency
+                        for (let i = 1; i < 10; i++) {
+                            if (digitCounts[i] > currentValue) {
+                                resultDigit = i;
+                                currentValue = digitCounts[i];
+                            }
+                        }
+                    } else {
+                        // Find lowest frequency (only among digits that have appeared)
+                        for (let i = 1; i < 10; i++) {
+                            // Only consider digits that have appeared at least once
+                            if ((digitCounts[i] < currentValue && digitCounts[i] > 0) || 
+                                (currentValue === 0 && digitCounts[i] > 0)) {
+                                resultDigit = i;
+                                currentValue = digitCounts[i];
+                            }
+                        }
+                    }
+                    
+                    resolve(resultDigit);
+                });
+            });
+        }
+
         checkDirection(dir) {
             return new Promise(resolve =>
                 this.$scope.ticksService

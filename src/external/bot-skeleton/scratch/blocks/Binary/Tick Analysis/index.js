@@ -17,3 +17,5 @@ import './all_same_pattern';
 import './digit_comparison';
 import './rise_fall_percentage';
 import './last_ticks_direction';
+import './digit_percentage';
+import './digit_highest_lowest_frequency';
