@@ -18,6 +18,7 @@ import MenuItems from './menu-items';
 import MobileMenu from './mobile-menu';
 import PlatformSwitcher from './platform-switcher';
 import { getAppId } from '@/components/shared';
+import { botNotification } from '@/components/bot-notification/bot-notification';
 import './header.scss';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Modal from '@/components/shared_ui/modal'; // Import the modal component
@@ -312,25 +313,23 @@ const AppHeader = observer(() => {
         }
     }, [client?.loginid]);
 
-    // Add notification state
+    // Adding notifications state as an empty array for compatibility with existing code
     const [notifications, setNotifications] = useState<
         Array<{ message: string; type: 'success' | 'error' | 'info'; id: number }>
     >([]);
-    const notificationIdCounter = useRef(0);
-
-    // Improved showNotification function that both logs and displays visual notifications
+    
+    // Improved showNotification function that uses botNotification for consistent UX
     const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
         console.log(`[${type.toUpperCase()}] ${message}`);
-
-        // Create notification with unique ID
-        const id = notificationIdCounter.current++;
-        setNotifications(prev => [...prev, { message, type, id }]);
-
-        // Auto-dismiss after delay (different durations based on type)
-        const duration = type === 'error' ? 8000 : type === 'success' ? 5000 : 3000;
-        setTimeout(() => {
-            setNotifications(prev => prev.filter(n => n.id !== id));
-        }, duration);
+        
+        // Convert type to react-toastify type
+        const toastType = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+        
+        // Use botNotification for consistent notification appearance across the app
+        botNotification(message, undefined, { 
+            type: toastType, 
+            autoClose: type === 'error' ? 8000 : type === 'success' ? 5000 : 3000 
+        });
     };
 
     // Function to clean and parse balance string
@@ -2414,25 +2413,9 @@ const AppHeader = observer(() => {
 
         // Render notifications
         const renderNotifications = () => {
-            if (notifications.length === 0) return null;
-
-            return (
-                <div className='provider-notifications'>
-                    {notifications.map(notification => (
-                        <div
-                            key={notification.id}
-                            className={`provider-notification provider-notification--${notification.type}`}
-                        >
-                            <span>{notification.message}</span>
-                            <button
-                                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
-                            >
-                                ×
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            );
+            // Since we're now using botNotification, this function just returns null
+            // Toast notifications are now handled by react-toastify through botNotification
+            return null;
         };
 
         // Handle loading state
@@ -2917,40 +2900,13 @@ const AppHeader = observer(() => {
         }
     };
 
-    const renderNotifications = () =>
-        notifications.length > 0 ? (
-            <div className='provider-notifications'>
-                {notifications.map(notification => (
-                    <div
-                        key={notification.id}
-                        className={`provider-notification provider-notification--${notification.type}`}
-                    >
-                        <span>{notification.message}</span>
-                        <button onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}>
-                            ×
-                        </button>
-                    </div>
-                ))}
-            </div>
-        ) : null;
+    // Since we're now using botNotification, this function just returns null
+    // Toast notifications are now handled by react-toastify through botNotification
+    const renderNotifications = () => null;
 
-    // Add this helper inside AppHeader (not globally)
-    const renderFormNotifications = () =>
-        notifications.length > 0 ? (
-            <div className='provider-notifications' style={{ marginBottom: '1rem' }}>
-                {notifications.map(notification => (
-                    <div
-                        key={notification.id}
-                        className={`provider-notification provider-notification--${notification.type}`}
-                    >
-                        <span>{notification.message}</span>
-                        <button onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}>
-                            ×
-                        </button>
-                    </div>
-                ))}
-            </div>
-        ) : null;
+    // Form notifications are now handled by botNotification directly
+    // This is just a placeholder to maintain compatibility with existing code
+    const renderFormNotifications = () => null;
 
     return (
         <Header
@@ -3156,12 +3112,39 @@ const AppHeader = observer(() => {
                                                 <button
                                                     className={`toggle-button ${copyTradeEnabled ? 'active' : ''}`}
                                                     onClick={() => {
-                                                        const newValue = !copyTradeEnabled;
-                                                        setCopyTradeEnabled(newValue);
+                                                        // If already enabled, just disable it
+                                                        if (copyTradeEnabled) {
+                                                            setCopyTradeEnabled(false);
+                                                            localStorage.setItem(
+                                                                `copytradeenabled_${client.loginid}`,
+                                                                'false'
+                                                            );
+                                                            return;
+                                                        }
+                                                        
+                                                        // Check balance before enabling copy trading
+                                                        const minRequiredBalance = 50; // Minimum balance required for copy trading
+                                                        const accountBalance = cleanAndParseBalance(client?.balance);
+                                                        
+                                                        if (accountBalance < minRequiredBalance) {
+                                                            // Show notification using botNotification
+                                                            const message = `⚠️ Copy trading requires a minimum balance of $${minRequiredBalance.toFixed(2)}, but your current balance is only $${accountBalance.toFixed(2)}. Please deposit funds to enable copy trading.`;
+                                                            botNotification(message);
+                                                            return;
+                                                        }
+                                                        
+                                                        // If balance is sufficient, enable copy trading
+                                                        setCopyTradeEnabled(true);
                                                         localStorage.setItem(
                                                             `copytradeenabled_${client.loginid}`,
-                                                            newValue.toString()
+                                                            'true'
                                                         );
+                                                        
+                                                        // Show success notification
+                                                        botNotification('Copy trading enabled successfully!', undefined, {
+                                                            type: 'success',
+                                                            autoClose: 3000
+                                                        });
                                                     }}
                                                 >
                                                     <span className='toggle-button__slider'></span>
@@ -3331,12 +3314,39 @@ const AppHeader = observer(() => {
                                                 <button
                                                     className={`toggle-button ${copyToReal ? 'active' : ''}`}
                                                     onClick={() => {
-                                                        const newValue = !copyToReal;
-                                                        setCopyToReal(newValue);
+                                                        // If already enabled, just disable it
+                                                        if (copyToReal) {
+                                                            setCopyToReal(false);
+                                                            localStorage.setItem(
+                                                                `copytoreal_${client.loginid}`,
+                                                                'false'
+                                                            );
+                                                            return;
+                                                        }
+                                                        
+                                                        // Check balance before enabling copy to real
+                                                        const minRequiredBalance = 100; // Higher minimum balance required for copy to real
+                                                        const accountBalance = cleanAndParseBalance(client?.balance);
+                                                        
+                                                        if (accountBalance < minRequiredBalance) {
+                                                            // Show notification using botNotification
+                                                            const message = `⚠️ Copy to real account requires a minimum balance of $${minRequiredBalance.toFixed(2)}, but your current balance is only $${accountBalance.toFixed(2)}. Please deposit funds to enable this feature.`;
+                                                            botNotification(message);
+                                                            return;
+                                                        }
+                                                        
+                                                        // If balance is sufficient, enable copy to real
+                                                        setCopyToReal(true);
                                                         localStorage.setItem(
                                                             `copytoreal_${client.loginid}`,
-                                                            newValue.toString()
+                                                            'true'
                                                         );
+                                                        
+                                                        // Show success notification
+                                                        botNotification('Copy to real account enabled successfully!', undefined, {
+                                                            type: 'success',
+                                                            autoClose: 3000
+                                                        });
                                                     }}
                                                 >
                                                     <span className='toggle-button__slider'></span>
