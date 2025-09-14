@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { Button } from '@deriv-com/quill-ui';
 import { LabelPairedCircleExclamationLgFillIcon } from '@deriv/quill-icons/LabelPaired';
 import { useDevice } from '@deriv-com/ui';
@@ -10,8 +11,8 @@ interface DisclaimerPopupProps {
     onDontShowAgain: () => void;
 }
 
-const DisclaimerPopup: React.FC<DisclaimerPopupProps> = ({ onClose, onDontShowAgain }) => {
-    const { isMobile, isTablet, isDesktop } = useDevice();
+const DisclaimerPopup: React.FC<DisclaimerPopupProps> = observer(({ onClose, onDontShowAgain }) => {
+    const { isMobile, isTablet } = useDevice();
     const [windowSize, setWindowSize] = useState({
         width: window.innerWidth,
         height: window.innerHeight
@@ -124,6 +125,6 @@ const DisclaimerPopup: React.FC<DisclaimerPopupProps> = ({ onClose, onDontShowAg
             </div>
         </Draggable>
     );
-};
+});
 
 export default DisclaimerPopup;

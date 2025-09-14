@@ -1,13 +1,27 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { observer } from 'mobx-react-lite';
 import { LabelPairedCircleExclamationCaptionFillIcon } from '@deriv/quill-icons/LabelPaired';
 import { useDevice } from '@deriv-com/ui';
+import { DBOT_TABS } from '@/constants/bot-contents';
+import { useStore } from '@/hooks/useStore';
 import DisclaimerPopup from './disclaimer-popup';
 import './disclaimer.scss';
 
 const STORAGE_KEY = 'disclaimer_hidden';
 
-const DisclaimerButton: React.FC = () => {
+const DisclaimerButton: React.FC = observer(() => {
     const { isMobile } = useDevice();
+    
+    try {
+        const store = useStore();
+        
+        // Early return if store is not initialized yet
+        if (!store || !store.dashboard || typeof store.dashboard.active_tab === 'undefined') {
+            return null;
+        }
+        
+        const { dashboard } = store;
+        const { active_tab } = dashboard;
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [shouldShow, setShouldShow] = useState(true);
     const [position, setPosition] = useState({ 
@@ -18,6 +32,9 @@ const DisclaimerButton: React.FC = () => {
     const dragRef = useRef<HTMLDivElement>(null);
     // Reference for tracking starting points of drag
     const startPosRef = useRef({ x: 0, y: 0, left: 0, top: 0 });
+
+    // Only show disclaimer when active tab is dashboard
+    const shouldShowDisclaimer = typeof active_tab === 'number' && active_tab === DBOT_TABS.DASHBOARD;
 
     useEffect(() => {
         // Check if user has previously dismissed the disclaimer
@@ -191,7 +208,7 @@ const DisclaimerButton: React.FC = () => {
         setIsPopupOpen(false);
     };
 
-    if (!shouldShow) return null;
+    if (!shouldShow || !shouldShowDisclaimer) return null;
 
     return (
         <>
@@ -236,6 +253,10 @@ const DisclaimerButton: React.FC = () => {
             )}
         </>
     );
-};
+    } catch (error) {
+        console.warn('DisclaimerButton: Store not available yet', error);
+        return null;
+    }
+});
 
 export default DisclaimerButton;
