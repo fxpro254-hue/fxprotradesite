@@ -32,7 +32,7 @@ const result_columns = (): TColumn[] => [
 
 const TransactionDetailsDesktop = observer(() => {
     const { client } = useStore();
-    const { loginid, balance } = client;
+    const { loginid, balance, accounts } = client;
     const { transactions } = useStore();
     const {
         toggleTransactionDetailsModal,

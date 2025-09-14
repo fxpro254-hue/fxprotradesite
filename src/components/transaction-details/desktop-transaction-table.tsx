@@ -4,6 +4,7 @@ import ContentLoader from 'react-content-loader';
 import { transaction_elements } from '@/constants/transactions';
 import { getContractTypeName } from '@/external/bot-skeleton';
 import { isDbotRTL } from '@/external/bot-skeleton/utils/workspace';
+import { useStore } from '@/hooks/useStore';
 import { MarketIcon } from '../market/market-icon';
 import { convertDateFormat } from '../shared';
 import Popover from '../shared_ui/popover';
@@ -54,6 +55,30 @@ const CellLoader = () => (
         <rect x='0' y='0' rx='0' ry='0' width='60' height='12' />
     </ContentLoader>
 );
+
+// Component to display the account ID based on SVG mode setting
+const DisplayAccountId = ({ accountId }: { accountId: string }) => {
+    const { client } = useStore();
+    const { accounts } = client;
+    
+    // Check if SVG mode is enabled
+    const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+    
+    if (isSvgModeEnabled && accounts) {
+        // Find real USD account for SVG mode
+        const realUsdAccountId = Object.keys(accounts).find(id => 
+            !id.startsWith('VR') && 
+            accounts[id]?.currency?.toLowerCase() === 'usd'
+        );
+        
+        if (realUsdAccountId) {
+            return <>{realUsdAccountId}</>;
+        }
+    }
+    
+    // Return the original account ID if SVG mode is disabled or no USD account found
+    return <>{accountId}</>;
+};
 
 export default function DesktopTransactionTable({
     result,
@@ -161,7 +186,10 @@ export default function DesktopTransactionTable({
             >
                 <TableHeader columns={result_columns} />
                 <div className={`${PARENT_CLASS}__table-row`}>
-                    <TableCell label={account} extra_classes={[`${PARENT_CLASS}__table-cell--grow-mid`]} />
+                    <TableCell 
+                        label={<DisplayAccountId accountId={account} />} 
+                        extra_classes={[`${PARENT_CLASS}__table-cell--grow-mid`]} 
+                    />
                     <TableCell label={result?.number_of_runs} />
                     <TableCell label={Math.abs(result?.total_stake ?? 0).toFixed(2)} />
                     <TableCell label={Math.abs(result?.total_payout ?? 0).toFixed(2)} />
