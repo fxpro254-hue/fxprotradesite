@@ -7,6 +7,7 @@ import { useStore } from '@/hooks/useStore';
 import useThemeSwitcher from '@/hooks/useThemeSwitcher';
 import marketAnalyzer, { TradeRecommendation } from '../../services/market-analyzer';
 import { botNotification } from '@/components/bot-notification/bot-notification';
+import EmojiAnimation from '@/components/emoji-animation';
 
 const TradingHubDisplay: React.FC = () => {
     const MINIMUM_STAKE = '0.35';
@@ -48,6 +49,10 @@ const TradingHubDisplay: React.FC = () => {
     const [lastTradeWin, setLastTradeWin] = useState<boolean | null>(null);
     const [activeContractId, setActiveContractId] = useState<string | null>(null);
     const [consecutiveLosses, setConsecutiveLosses] = useState(0);
+    
+    // State variables for emoji animation
+    const [showEmojiAnimation, setShowEmojiAnimation] = useState(false);
+    const [isProfitPositive, setIsProfitPositive] = useState(false);
 
     const activeContractRef = useRef<string | null>(null);
     const [lastTradeResult, setLastTradeResult] = useState<string>('');
@@ -2974,6 +2979,20 @@ const TradingHubDisplay: React.FC = () => {
         // Emit state change for the run button
         globalObserver.emit('trading_hub.state_changed', { isRunning: false });
         
+        // Get profit information and trigger emoji animation
+        const total_profit = transactions?.statistics?.total_profit || 0;
+        
+        // Show emoji animation based on profit
+        setIsProfitPositive(total_profit >= 0);
+        setShowEmojiAnimation(true);
+        
+        // Hide emoji animation after 6 seconds
+        setTimeout(() => {
+            setShowEmojiAnimation(false);
+        }, 6000);
+        
+        console.log('Trading Hub: Showing emoji animation with profit positive:', total_profit >= 0);
+        
         manageStake('reset');
         
         // Reset O5U4 contract tracking when stopping
@@ -3007,6 +3026,10 @@ const TradingHubDisplay: React.FC = () => {
 
     return (
         <div className={`trading-hub-modern ${is_dark_mode_on ? 'theme--dark' : 'theme--light'}`}>
+            {/* Show emoji animation when stopping trading and profit/loss is available */}
+            {showEmojiAnimation && (
+                <EmojiAnimation isPositive={isProfitPositive} />
+            )}
             <div className='trading-hub-content'>
                 {/* Header Section */}
                 <div className='hub-header'>

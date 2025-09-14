@@ -8,6 +8,7 @@ import { api_base } from '../../external/bot-skeleton/services/api/api-base';
 import { doUntilDone } from '../../external/bot-skeleton/services/tradeEngine/utils/helpers';
 import { observer as globalObserver } from '../../external/bot-skeleton/utils/observer';
 import './smart-trading-display.scss';
+import EmojiAnimation from '@/components/emoji-animation';
 
 // Extend Window interface for volatility analyzer
 declare global {
@@ -190,6 +191,10 @@ const SmartTradingDisplay = observer(() => {
     const [consecutiveLosses, setConsecutiveLosses] = useState<Record<string, number>>({});
     const [currentStakes, setCurrentStakes] = useState<Record<string, number>>({});
     const [lastConditionStates, setLastConditionStates] = useState<Record<string, boolean>>({});
+    
+    // State variables for emoji animation
+    const [showEmojiAnimation, setShowEmojiAnimation] = useState(false);
+    const [isProfitPositive, setIsProfitPositive] = useState(false);
 
     // Reference to store per-strategy state that should not trigger re-renders
     const strategyRefsMap = useRef<Record<string, any>>({});
@@ -608,6 +613,20 @@ const SmartTradingDisplay = observer(() => {
             activeStrategies.forEach(strategy => {
                 handleAutoTrade(strategy.id);
             });
+            
+            // Get profit information and trigger emoji animation
+            const total_profit = transactions?.statistics?.total_profit || 0;
+            
+            // Show emoji animation based on profit
+            setIsProfitPositive(total_profit >= 0);
+            setShowEmojiAnimation(true);
+            
+            // Hide emoji animation after 6 seconds
+            setTimeout(() => {
+                setShowEmojiAnimation(false);
+            }, 6000);
+            
+            console.log('Smart Trading: Showing emoji animation with profit positive:', total_profit >= 0);
         };
 
         globalObserver.register('smart_trading.start', handleRunButtonStart);
@@ -3506,6 +3525,10 @@ const SmartTradingDisplay = observer(() => {
         <div className={classNames('smart-trading-display', {
             'smart-trading-display--run-panel-open': is_drawer_open
         })}>
+            {/* Show emoji animation when stopping trading and profit/loss is available */}
+            {showEmojiAnimation && (
+                <EmojiAnimation isPositive={isProfitPositive} />
+            )}
             <div className="smart-trading-header">
                 <h2>{localize('Smart Trading')}</h2>
                 <div className="controls-container">

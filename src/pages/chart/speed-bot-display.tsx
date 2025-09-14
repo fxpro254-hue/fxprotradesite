@@ -7,6 +7,7 @@ import { api_base } from '@/external/bot-skeleton';
 import { doUntilDone } from '@/external/bot-skeleton/services/tradeEngine/utils/helpers';
 import { observer as globalObserver } from '@/external/bot-skeleton/utils/observer';
 import './speed-bot-display.scss';
+import EmojiAnimation from '@/components/emoji-animation';
 
 // Available symbols and their display names
 const AVAILABLE_SYMBOLS = [
@@ -71,6 +72,10 @@ const SpeedBotDisplay = observer(() => {
     const [isTrading, setIsTrading] = useState(false);
     const [tradesExecuted, setTradesExecuted] = useState(0);
     const [isConnected, setIsConnected] = useState(false);
+    
+    // Emoji animation state
+    const [showEmojiAnimation, setShowEmojiAnimation] = useState(false);
+    const [isProfitPositive, setIsProfitPositive] = useState(false);
     
     // Define types for trade results
     interface TradeResult {
@@ -501,13 +506,30 @@ const SpeedBotDisplay = observer(() => {
         
         // Emit state change for the run button
         globalObserver.emit('speed_bot.state_changed', { isRunning: false });
+        
+        // Get profit information and trigger emoji animation
+        const total_profit = transactions?.statistics?.total_profit || 0;
+        
+        // Show emoji animation based on profit
+        setIsProfitPositive(total_profit >= 0);
+        setShowEmojiAnimation(true);
+        
+        // Hide emoji animation after 6 seconds
+        setTimeout(() => {
+            setShowEmojiAnimation(false);
+        }, 6000);
+        
+        console.log('Speed Bot: Showing emoji animation with profit positive:', total_profit >= 0);
     };
     
     const selectedContractTypeInfo = CONTRACT_TYPES.find(ct => ct.value === selectedContractType);
     
     return (
         <div className='speed-bot-display'>
-            
+            {/* Show emoji animation when stopping trading and profit/loss is available */}
+            {showEmojiAnimation && (
+                <EmojiAnimation isPositive={isProfitPositive} />
+            )}
 
             <div className='speed-bot-container'>
                 <div className='trading-config-card'>
