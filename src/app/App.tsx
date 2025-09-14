@@ -1,6 +1,7 @@
 import { initSurvicate } from '../public-path';
 import { lazy, Suspense, useEffect, useState } from 'react'; // Added useState
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import ChunkLoader from '@/components/loader/chunk-loader';
 import RoutePromptDialog from '@/components/route-prompt-dialog';
 import { StoreProvider } from '@/hooks/useStore';
@@ -191,6 +192,7 @@ function App() {
                 onInstall={handlePWAInstall}
                 onClose={handlePWAModalClose}
             />
+            <Analytics />
         </>
     );
 }
