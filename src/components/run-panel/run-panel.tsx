@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import Journal from '@/components/journal';
@@ -12,6 +12,7 @@ import Text from '@/components/shared_ui/text';
 import Summary from '@/components/summary';
 import TradeAnimation from '@/components/trade-animation';
 import Transactions from '@/components/transactions';
+import EmojiAnimation from '@/components/emoji-animation';
 import { DBOT_TABS } from '@/constants/bot-contents';
 import { popover_zindex } from '@/constants/z-indexes';
 import { useStore } from '@/hooks/useStore';
@@ -245,11 +246,19 @@ const RunPanel = observer(() => {
         onClearStatClick,
         onMount,
         onRunButtonClick,
+        onStopButtonClick, // Make sure we have access to this function
         onUnmount,
         setActiveTabIndex,
         toggleDrawer,
         toggleStatisticsInfoModal,
     } = run_panel;
+    
+    // Log when emoji animation is shown for tracking purposes
+    useEffect(() => {
+        if (run_panel.show_emoji_animation) {
+            console.log('Emoji animation displayed - Profit positive:', run_panel.is_profit_positive);
+        }
+    }, [run_panel.show_emoji_animation, run_panel.is_profit_positive]);
     const { statistics } = transactions;
     const { active_tour, active_tab } = dashboard;
     const { total_payout, total_profit, total_stake, won_contracts, lost_contracts, number_of_runs } = statistics;
@@ -322,7 +331,7 @@ const RunPanel = observer(() => {
                     })}
                     contentClassName='run-panel__content'
                     header={header}
-                    footer={isDesktop && footer}
+                    footer={isDesktop ? footer : undefined}
                     is_open={is_drawer_open}
                     toggleDrawer={toggleDrawer}
                     width={366}
@@ -333,12 +342,17 @@ const RunPanel = observer(() => {
                 {!isDesktop && <MobileDrawerFooter />}
             </div>
 
-            <SelfExclusion onRunButtonClick={onRunButtonClick} />
+            <SelfExclusion />
             <StatisticsInfoModal
                 is_mobile={!isDesktop}
                 is_statistics_info_modal_open={is_statistics_info_modal_open}
                 toggleStatisticsInfoModal={toggleStatisticsInfoModal}
             />
+            
+            {/* Show emoji animation when the stop button is clicked and profit/loss is available */}
+            {run_panel.show_emoji_animation && (
+                <EmojiAnimation isPositive={run_panel.is_profit_positive} />
+            )}
         </>
     );
 });

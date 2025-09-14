@@ -29,8 +29,14 @@ export default class RunPanelStore {
     disposeReactionsFn: () => void;
     timer: NodeJS.Timeout | null;
     stake: string | null = null;
+    show_emoji_animation: boolean = false;
+    is_profit_positive: boolean = false;
 
     constructor(root_store: RootStore, core: TStores) {
+        this.root_store = root_store;
+        this.dbot = this.root_store.dbot;
+        this.core = core;
+        
         makeObservable(this, {
             active_index: observable,
             contract_stage: observable,
@@ -44,52 +50,63 @@ export default class RunPanelStore {
             run_id: observable,
             error_type: observable,
             show_bot_stop_message: observable,
+            show_emoji_animation: observable,
+            is_profit_positive: observable,
             is_stop_button_visible: computed,
             is_stop_button_disabled: computed,
             is_clear_stat_disabled: computed,
-            toggleDrawer: action,
-            onBotSellEvent: action,
-            setContractStage: action,
-            setHasOpenContract: action,
-            setIsRunning: action,
-            onRunButtonClick: action,
+            toggleDrawer: action.bound,
+            onBotSellEvent: action.bound,
+            setContractStage: action.bound,
+            setHasOpenContract: action.bound,
+            setIsRunning: action.bound,
+            onRunButtonClick: action.bound,
             is_contracy_buying_in_progress: observable,
-            OpenPositionLimitExceededEvent: action,
-            onStopButtonClick: action,
-            onClearStatClick: action,
-            clearStat: action,
-            toggleStatisticsInfoModal: action,
-            setActiveTabIndex: action,
-            onCloseDialog: action,
-            stopMyBot: action,
-            closeMultiplierContract: action,
-            showStopMultiplierContractDialog: action,
-            showLoginDialog: action,
-            showRealAccountDialog: action,
-            showClearStatDialog: action,
-            showIncompatibleStrategyDialog: action,
-            showContractUpdateErrorDialog: action,
-            registerBotListeners: action,
-            registerReactions: action,
-            onBotRunningEvent: action,
-            onBotStopEvent: action,
-            onBotReadyEvent: action,
-            onBotTradeAgain: action,
-            onContractStatusEvent: action,
-            onClickSell: action,
-            clear: action,
-            onBotContractEvent: action,
-            onError: action,
-            showErrorMessage: action,
-            switchToJournal: action,
-            unregisterBotListeners: action,
-            handleInvalidToken: action,
-            preloadAudio: action,
-            onMount: action,
-            onUnmount: action,
+            OpenPositionLimitExceededEvent: action.bound,
+            onStopButtonClick: action.bound,
+            onClearStatClick: action.bound,
+            clearStat: action.bound,
+            toggleStatisticsInfoModal: action.bound,
+            setActiveTabIndex: action.bound,
+            onCloseDialog: action.bound,
+            stopMyBot: action.bound,
+            closeMultiplierContract: action.bound,
+            showStopMultiplierContractDialog: action.bound,
+            showLoginDialog: action.bound,
+            showRealAccountDialog: action.bound,
+            showClearStatDialog: action.bound,
+            showIncompatibleStrategyDialog: action.bound,
+            showContractUpdateErrorDialog: action.bound,
+            registerBotListeners: action.bound,
+            registerReactions: action.bound,
+            onBotRunningEvent: action.bound,
+            onBotStopEvent: action.bound,
+            onBotReadyEvent: action.bound,
+            onBotTradeAgain: action.bound,
+            onContractStatusEvent: action.bound,
+            onClickSell: action.bound,
+            clear: action.bound,
+            onBotContractEvent: action.bound,
+            onError: action.bound,
+            showErrorMessage: action.bound,
+            switchToJournal: action.bound,
+            unregisterBotListeners: action.bound,
+            handleInvalidToken: action.bound,
+            preloadAudio: action.bound,
+            onMount: action.bound,
+            onUnmount: action.bound,
             is_auto_differ: observable,
-            setAutoDiffer: action,
+            setAutoDiffer: action.bound,
+            showEmojiAnimation: action.bound,
+            hideEmojiAnimation: action.bound,
         });
+        
+        this.disposeReactionsFn = this.registerReactions();
+        this.timer = null;
+        
+        // Set initial state of auto differ toggle
+        const is_auto_differ = localStorage.getItem('is_auto_differ') === 'true' ? true : false;
+        this.setAutoDiffer(is_auto_differ);
 
         this.root_store = root_store;
         this.dbot = this.root_store.dbot;
@@ -230,8 +247,16 @@ export default class RunPanelStore {
     };
 
     onStopButtonClick = () => {
+        console.log('DEBUG: onStopButtonClick called');
         this.is_contracy_buying_in_progress = false;
         const { is_multiplier } = this.root_store.summary_card;
+        const { statistics } = this.root_store.transactions;
+        
+        console.log('DEBUG: Statistics:', statistics);
+        
+        // Force show emoji animation regardless of run count for testing
+        this.showEmojiAnimation(statistics.total_profit >= 0);
+        console.log('DEBUG: Showing emoji animation with profit positive:', statistics.total_profit >= 0);
 
         if (is_multiplier) {
             this.showStopMultiplierContractDialog();
@@ -249,7 +274,8 @@ export default class RunPanelStore {
         } else {
             this.stopBot();
             summary_card.clear();
-            this.setShowBotStopMessage(true);
+            // Don't show bot stop message notification
+            // this.setShowBotStopMessage(true);
         }
     };
 
@@ -704,8 +730,26 @@ export default class RunPanelStore {
         this.is_running = is_running;
     };
 
-    setAutoDiffer = (enabled: boolean) => {
-        this.is_auto_differ = enabled;
+    setAutoDiffer = (is_auto_differ: boolean) => {
+        this.is_auto_differ = is_auto_differ;
+    };
+    
+    showEmojiAnimation = (is_profit_positive: boolean) => {
+        runInAction(() => {
+            this.is_profit_positive = is_profit_positive;
+            this.show_emoji_animation = true;
+        });
+        
+        // Hide emoji animation after 6 seconds
+        setTimeout(() => {
+            this.hideEmojiAnimation();
+        }, 6000);
+    };
+    
+    hideEmojiAnimation = () => {
+        runInAction(() => {
+            this.show_emoji_animation = false;
+        });
     };
 
     onMount = () => {

@@ -28,6 +28,7 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
         is_stop_button_disabled,
         onRunButtonClick,
         onStopBotClick,
+        onStopButtonClick, // Add onStopButtonClick to trigger emoji animations
         performSelfExclusionCheck,
     } = run_panel;
     const { account_status } = client;
@@ -207,7 +208,7 @@ const TradeAnimation = observer(({ className, should_show_overlay }: TTradeAnima
                         
                         // For other tabs, use the regular run panel functions
                         if (is_stop_button_visible) {
-                            onStopBotClick();
+                            onStopButtonClick(); // Call onStopButtonClick instead of onStopBotClick to trigger emoji animations
                             return;
                         }
                         onRunButtonClick();
