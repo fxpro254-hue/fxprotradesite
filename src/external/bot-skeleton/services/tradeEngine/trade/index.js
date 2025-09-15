@@ -75,6 +75,20 @@ export default class TradeEngine extends Balance(Purchase(Sell(OpenContract(Prop
         this.subscription_id_for_accumulators = null;
         this.is_proposal_requested_for_accumulators = false;
         this.store = createStore(rootReducer, applyMiddleware(thunk));
+        this.nextSymbol = null; // For SPECIFY mode symbol switching
+    }
+
+    // Method to set the symbol for the next trade (used by Symbol Switcher blocks)
+    setNextSymbol(symbol) {
+        this.nextSymbol = symbol;
+        console.log(`🔧 Bot.setNextSymbol: Next trade will use ${symbol}`);
+    }
+
+    // Method to get and consume the next symbol (used by Purchase class)
+    getAndConsumeNextSymbol() {
+        const symbol = this.nextSymbol;
+        this.nextSymbol = null; // Clear after use
+        return symbol;
     }
 
     init(...args) {
@@ -97,7 +111,11 @@ export default class TradeEngine extends Balance(Purchase(Sell(OpenContract(Prop
 
         const validated_trade_options = this.validateTradeOptions(tradeOptions);
 
-        this.tradeOptions = { ...validated_trade_options, symbol: this.options.symbol };
+        this.tradeOptions = { 
+            ...validated_trade_options, 
+            symbol: this.options.symbol,
+            originalSymbol: this.options.originalSymbol 
+        };
         this.store.dispatch(start());
         this.checkLimits(validated_trade_options);
 

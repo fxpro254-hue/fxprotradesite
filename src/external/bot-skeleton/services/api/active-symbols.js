@@ -242,7 +242,12 @@ export default class ActiveSymbols {
             return config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
         }
 
-        return this.sortDropdownOptions(symbol_options, this.isSymbolClosed);
+        // Add "All Markets" and "Specify" options at the beginning of the dropdown
+        const sorted_options = this.sortDropdownOptions(symbol_options, this.isSymbolClosed);
+        sorted_options.unshift([localize('All Markets'), 'ALL_MARKETS']);
+        sorted_options.unshift([localize('Specify'), 'SPECIFY']);
+
+        return sorted_options;
     }
 
     isMarketClosed(market_name) {

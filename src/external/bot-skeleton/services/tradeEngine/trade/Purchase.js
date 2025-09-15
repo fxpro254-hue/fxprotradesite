@@ -124,9 +124,17 @@ export default Engine =>
                     }
                 };
                 
+                // Determine symbol for tick monitoring
+                let symbolForTicks = this.tradeOptions.symbol;
+                if (symbolForTicks === 'ALL_MARKETS' || 
+                    (this.tradeOptions.originalSymbol && this.tradeOptions.originalSymbol === 'ALL_MARKETS')) {
+                    symbolForTicks = this.getRandomAvailableSymbol();
+                    console.log('Using symbol for tick monitoring:', symbolForTicks);
+                }
+                
                 // Monitor ticks and get the listener key
                 this.tickTradeListenerKey = await ticksService.monitor({ 
-                    symbol: this.tradeOptions.symbol, 
+                    symbol: symbolForTicks, 
                     callback: tickCallback 
                 });
             }
@@ -139,8 +147,16 @@ export default Engine =>
         async disableTickTrading() {
             if (this.tickTradeListenerKey) {
                 const { ticksService } = this.$scope;
+                
+                // Determine symbol for tick stopping
+                let symbolForTicks = this.tradeOptions.symbol;
+                if (symbolForTicks === 'ALL_MARKETS') {
+                    // For stopping, we can use any symbol since we're just stopping the monitor
+                    symbolForTicks = 'R_100';
+                }
+                
                 await ticksService.stopMonitor({
-                    symbol: this.tradeOptions.symbol,
+                    symbol: symbolForTicks,
                     key: this.tickTradeListenerKey,
                 });
                 this.tickTradeListenerKey = null;
@@ -164,6 +180,34 @@ export default Engine =>
             // Create enhanced trade options with barrier values
             const enhancedTradeOptions = { ...this.tradeOptions };
             console.log('Base trade options:', enhancedTradeOptions);
+            console.log('🔍 ALL_MARKETS Detection Check:');
+            console.log(`   enhancedTradeOptions.symbol: "${enhancedTradeOptions.symbol}"`);
+            console.log(`   this.tradeOptions.originalSymbol: "${this.tradeOptions.originalSymbol}"`);
+            
+            // Handle symbol selection based on mode
+            if (enhancedTradeOptions.symbol === 'ALL_MARKETS' || 
+                (this.tradeOptions.originalSymbol && this.tradeOptions.originalSymbol === 'ALL_MARKETS')) {
+                const randomSymbol = this.getRandomAvailableSymbol();
+                const previousSymbol = enhancedTradeOptions.symbol;
+                console.log(`🎲 ALL_MARKETS: Trading on ${randomSymbol} (previous: ${previousSymbol})`);
+                enhancedTradeOptions.symbol = randomSymbol;
+            } else if (enhancedTradeOptions.symbol === 'SPECIFY' || 
+                      (this.tradeOptions.originalSymbol && this.tradeOptions.originalSymbol === 'SPECIFY')) {
+                // Check if a Symbol Switcher block has set a specific symbol
+                const nextSymbol = this.getAndConsumeNextSymbol ? this.getAndConsumeNextSymbol() : null;
+                if (nextSymbol) {
+                    const previousSymbol = enhancedTradeOptions.symbol;
+                    console.log(`🔧 SPECIFY: Trading on ${nextSymbol} (from Symbol Switcher, previous: ${previousSymbol})`);
+                    enhancedTradeOptions.symbol = nextSymbol;
+                } else {
+                    // No symbol specified by Symbol Switcher, use default
+                    const defaultSymbol = 'R_100';
+                    console.log(`⚠️ SPECIFY: No Symbol Switcher found, using default ${defaultSymbol}`);
+                    enhancedTradeOptions.symbol = defaultSymbol;
+                }
+            } else {
+                console.log(`📌 Regular trading: Using symbol ${enhancedTradeOptions.symbol} (no randomization)`);
+            }
             
             // For DIGITEVEN and DIGITODD, immediately clear any barrier inheritance from trading parameters
             if (['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
@@ -421,6 +465,41 @@ export default Engine =>
             });
 
             return response;
+        }
+
+        // Helper method to get a random available symbol when ALL_MARKETS is selected
+        getRandomAvailableSymbol() {
+            try {
+                // Use the specific symbols from signals.js ticksStorage
+                const availableSymbols = [
+                    'R_10',
+                    'R_25', 
+                    'R_50',
+                    'R_75',
+                    'R_100',
+                    '1HZ10V',
+                    '1HZ15V',
+                    '1HZ20V',
+                    '1HZ25V',
+                    '1HZ30V',
+                    '1HZ50V',
+                    '1HZ75V',
+                    '1HZ100V'
+                ];
+                
+                // Select random symbol from the available list
+                const randomIndex = Math.floor(Math.random() * availableSymbols.length);
+                const selectedSymbol = availableSymbols[randomIndex];
+                
+                console.log(`🎯 Random symbol selected: ${selectedSymbol} (${randomIndex + 1}/${availableSymbols.length})`);
+                return selectedSymbol;
+                
+            } catch (error) {
+                console.error('Error getting random symbol:', error);
+                // Ultimate fallback to R_100 if something goes wrong
+                console.log('🛡️ Fallback: Using R_100');
+                return 'R_100';
+            }
         }
 
         getPurchaseReference = () => purchase_reference;

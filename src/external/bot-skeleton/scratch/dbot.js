@@ -57,7 +57,17 @@ class DBot {
                     if (!is_trade_type_accumulator) forgetAccumulatorsProposalRequest(that);
 
                     if (is_symbol_list_change) {
-                        contracts_for?.getTradeTypeCategories?.(market, submarket, symbol).then(categories => {
+                        // Handle ALL_MARKETS and SPECIFY: use R_100 for trade type category fetching
+                        let symbolForTradeTypes = symbol;
+                        if (symbol === 'ALL_MARKETS') {
+                            symbolForTradeTypes = 'R_100';
+                            console.log('🎯 ALL_MARKETS detected: Using R_100 to fetch trade type categories');
+                        } else if (symbol === 'SPECIFY') {
+                            symbolForTradeTypes = 'R_100';
+                            console.log('🎯 SPECIFY detected: Using R_100 to fetch trade type categories');
+                        }
+                        
+                        contracts_for?.getTradeTypeCategories?.(market, submarket, symbolForTradeTypes).then(categories => {
                             const category_field = this.getField('TRADETYPECAT_LIST');
                             if (category_field) {
                                 category_field.updateOptions(categories, {
@@ -82,7 +92,15 @@ class DBot {
                             });
                         }
                     } else if (is_trade_type_cat_list_change && event.blockId === this.id) {
-                        contracts_for?.getTradeTypes?.(market, submarket, symbol, category).then(trade_types => {
+                        // Handle ALL_MARKETS and SPECIFY: use R_100 for trade type fetching
+                        let symbolForTradeTypes = symbol;
+                        if (symbol === 'ALL_MARKETS') {
+                            symbolForTradeTypes = 'R_100';
+                        } else if (symbol === 'SPECIFY') {
+                            symbolForTradeTypes = 'R_100';
+                        }
+                        
+                        contracts_for?.getTradeTypes?.(market, submarket, symbolForTradeTypes, category).then(trade_types => {
                             const trade_type_field = this.getField('TRADETYPE_LIST');
                             trade_type_field.updateOptions(trade_types, {
                                 default_value: trade_type,

@@ -1495,6 +1495,9 @@ export const ToolboxItems = () =>
                         </Block>
                     </Statement>
                 </Block>
+                <Block type='symbol_switcher'>
+                    <Field name='SYMBOL_LIST'>R_100</Field>
+                </Block>
             </Category>
 
             <Examples id='examples'>
