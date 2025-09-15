@@ -80,7 +80,7 @@
                         <field name="VAR" id="KhH.u8QT6|rKZKl@t9wO">prediction</field>
                         <value name="VALUE">
                           <block type="math_number" id="n(b!E#XQM8/8:%_1Q`)l">
-                            <field name="NUM">1</field>
+                            <field name="NUM">2</field>
                           </block>
                         </value>
                         <next>
@@ -88,7 +88,7 @@
                             <field name="VAR" id="*i~O0{Fg3IV7v5N9fN%H">prediction 2</field>
                             <value name="VALUE">
                               <block type="math_number" id="WBYcS8M]!N(bt?9p8Y5G">
-                                <field name="NUM">8</field>
+                                <field name="NUM">7</field>
                               </block>
                             </value>
                             <next>
