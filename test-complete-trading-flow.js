@@ -14,7 +14,7 @@ console.log('   ✅ Frontend: Dropdown option available\n');
 
 // 2. Simulate trade definition block generation
 console.log('2️⃣ Trade Definition Block generates JavaScript');
-const availableSymbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ15V', '1HZ20V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ100V'];
+const availableSymbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ15V', '1HZ90V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ100V'];
 const randomSymbol = availableSymbols[Math.floor(Math.random() * availableSymbols.length)];
 
 console.log(`   Input symbol: ALL_MARKETS`);

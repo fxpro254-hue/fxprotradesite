@@ -83,7 +83,7 @@ Unique Symbols: 3/3 (100% diversity in test)
 
 ### Symbol Pool Available (13 symbols):
 - **Volatility Indices**: R_10, R_25, R_50, R_75, R_100
-- **High-Frequency**: 1HZ10V, 1HZ15V, 1HZ20V, 1HZ25V, 1HZ30V, 1HZ50V, 1HZ75V, 1HZ100V
+- **High-Frequency**: 1HZ10V, 1HZ15V, 1HZ90V, 1HZ25V, 1HZ30V, 1HZ50V, 1HZ75V, 1HZ100V
 
 ### Trading Scenarios Fixed:
 - ✅ **Normal Trading**: Each purchase block = new random symbol

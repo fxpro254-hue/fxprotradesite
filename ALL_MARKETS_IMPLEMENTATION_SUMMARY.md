@@ -52,7 +52,7 @@ async executeSingleTrade(tradeOptions) {
 getRandomAvailableSymbol() {
     const availableSymbols = [
         'R_10', 'R_25', 'R_50', 'R_75', 'R_100',
-        '1HZ10V', '1HZ15V', '1HZ20V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ100V'
+        '1HZ10V', '1HZ15V', '1HZ90V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ100V'
     ];
     const randomIndex = Math.floor(Math.random() * availableSymbols.length);
     return availableSymbols[randomIndex];
@@ -65,7 +65,7 @@ getRandomAvailableSymbol() {
 ```javascript
 // Updated JavaScript generator to resolve symbols before Bot.init()
 if (symbol === 'ALL_MARKETS') {
-    const availableSymbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ15V', '1HZ20V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ100V'];
+    const availableSymbols = ['R_10', 'R_25', 'R_50', 'R_75', 'R_100', '1HZ10V', '1HZ15V', '1HZ90V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ100V'];
     const randomIndex = Math.floor(Math.random() * availableSymbols.length);
     const resolvedSymbol = availableSymbols[randomIndex];
     
@@ -114,7 +114,7 @@ The feature randomly selects from 13 high-quality markets:
 - R_10, R_25, R_50, R_75, R_100
 
 **High-Frequency Indices:**
-- 1HZ10V, 1HZ15V, 1HZ20V, 1HZ25V, 1HZ30V, 1HZ50V, 1HZ75V, 1HZ100V
+- 1HZ10V, 1HZ15V, 1HZ90V, 1HZ25V, 1HZ30V, 1HZ50V, 1HZ75V, 1HZ100V
 
 ## 🧪 Testing Suite
 

@@ -15,7 +15,7 @@ window.Blockly.Blocks.symbol_switcher = {
             ['Volatility 100 Index', 'R_100'],
             ['Volatility 10 (1s) Index', '1HZ10V'],
             ['Volatility 15 (1s) Index', '1HZ15V'],
-            ['Volatility 20 (1s) Index', '1HZ20V'],
+            ['Volatility 20 (1s) Index', '1HZ90V'],
             ['Volatility 25 (1s) Index', '1HZ25V'],
             ['Volatility 30 (1s) Index', '1HZ30V'],
             ['Volatility 50 (1s) Index', '1HZ50V'],

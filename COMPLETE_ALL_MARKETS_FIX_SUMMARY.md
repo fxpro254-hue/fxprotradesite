@@ -84,7 +84,7 @@ Result: Perfect memory behavior
 
 ## 📊 Available Symbols (13 Total)
 - **Volatility Indices**: R_10, R_25, R_50, R_75, R_100
-- **High-Frequency**: 1HZ10V, 1HZ15V, 1HZ20V, 1HZ25V, 1HZ30V, 1HZ50V, 1HZ75V, 1HZ100V
+- **High-Frequency**: 1HZ10V, 1HZ15V, 1HZ90V, 1HZ25V, 1HZ30V, 1HZ50V, 1HZ75V, 1HZ100V
 
 ## 🚀 User Experience Flow
 
