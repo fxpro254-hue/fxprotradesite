@@ -31,6 +31,7 @@ class DBot {
 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         var that = this;
+        // Patch: Show notification using botNotification when 'SPECIFY' is selected
         window.Blockly.Blocks.trade_definition_tradetype.onchange = function (event) {
             if (!this.workspace || window.Blockly.derivWorkspace.isFlyoutVisible || this.workspace.isDragging()) {
                 return;
@@ -57,6 +58,22 @@ class DBot {
                     if (!is_trade_type_accumulator) forgetAccumulatorsProposalRequest(that);
 
                     if (is_symbol_list_change) {
+                        // Notify user if 'SPECIFY' or 'ALL_MARKETS' is selected
+                        if (symbol === 'SPECIFY' || symbol === 'ALL_MARKETS') {
+                            const message = symbol === 'SPECIFY' 
+                                ? 'You selected "Specify". If no Symbol Switcher block is used, the default market will be Volatility 100 Index.'
+                                : 'You selected "All Markets". Trades will be done on random volatilities.';
+
+                            // Try to use botNotification if available, else fallback to globalObserver
+                            if (window.botNotification && window.notification_message) {
+                                window.botNotification(message, {
+                                    label: 'OK',
+                                    onClick: closeToast => closeToast?.(),
+                                });
+                            } else {
+                                globalObserver.emit('ui.log.info', message);
+                            }
+                        }
                         // Handle ALL_MARKETS and SPECIFY: use R_100 for trade type category fetching
                         let symbolForTradeTypes = symbol;
                         if (symbol === 'ALL_MARKETS') {
@@ -66,7 +83,7 @@ class DBot {
                             symbolForTradeTypes = 'R_100';
                             console.log('🎯 SPECIFY detected: Using R_100 to fetch trade type categories');
                         }
-                        
+
                         contracts_for?.getTradeTypeCategories?.(market, submarket, symbolForTradeTypes).then(categories => {
                             const category_field = this.getField('TRADETYPECAT_LIST');
                             if (category_field) {
@@ -99,7 +116,7 @@ class DBot {
                         } else if (symbol === 'SPECIFY') {
                             symbolForTradeTypes = 'R_100';
                         }
-                        
+
                         contracts_for?.getTradeTypes?.(market, submarket, symbolForTradeTypes, category).then(trade_types => {
                             const trade_type_field = this.getField('TRADETYPE_LIST');
                             trade_type_field.updateOptions(trade_types, {
@@ -159,6 +176,78 @@ class DBot {
                         if (is_mobile && block && event.element == 'collapsed') {
                             block.contextMenu = false;
                         }
+                    }
+                });
+
+                // Add a listener to clean up orphaned shadow blocks for Purchase block inputs
+                this.workspace.addChangeListener(event => {
+                    if (
+                        event.type === window.Blockly.Events.BLOCK_DELETE ||
+                        (event.type === window.Blockly.Events.BLOCK_CHANGE && event.element === 'collapsed')
+                    ) {
+                        // For each deleted/collapsed block, check if it was a purchase block
+                        const deletedBlockIds = event.ids || (event.blockId ? [event.blockId] : []);
+                        deletedBlockIds.forEach(id => {
+                            const block = this.workspace.getBlockById(id);
+                            if (!block || block.type !== 'purchase') return;
+                            // Clean up any orphaned shadow blocks for its inputs
+                            ['BARRIER_OFFSET', 'SECONDBARRIER_OFFSET', 'PREDICTION'].forEach(inputName => {
+                                const input = block.getInput(inputName);
+                                if (input && input.connection) {
+                                    const target = input.connection.targetBlock();
+                                    if (target && target.isShadow()) {
+                                        target.dispose(false, true);
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+
+                // Enhanced: Clean up any orphaned math_number or math_number_positive shadow blocks after a block is deleted (with setTimeout)
+                this.workspace.addChangeListener(event => {
+                    if (event.type === window.Blockly.Events.BLOCK_DELETE) {
+                        setTimeout(() => {
+                            this.workspace.getAllBlocks(false).forEach(block => {
+                                if (
+                                    block.isShadow() &&
+                                    (block.type === 'math_number' || block.type === 'math_number_positive') &&
+                                    !block.getParent()
+                                ) {
+                                    block.dispose(false, true);
+                                }
+                            });
+                        }, 0);
+                    }
+                });
+
+                // After a block is deleted, force a workspace render and DOM cleanup
+                this.workspace.addChangeListener(event => {
+                    if (event.type === window.Blockly.Events.BLOCK_DELETE) {
+                        setTimeout(() => {
+                            // Remove orphaned shadow blocks (previous logic)
+                            this.workspace.getAllBlocks(false).forEach(block => {
+                                if (
+                                    block.isShadow() &&
+                                    (block.type === 'math_number' || block.type === 'math_number_positive') &&
+                                    !block.getParent()
+                                ) {
+                                    block.dispose(false, true);
+                                }
+                            });
+                            // Force workspace render
+                            if (this.workspace.render) this.workspace.render();
+                            if (this.workspace.resizeContents) this.workspace.resizeContents();
+                            // Extra: Remove any SVG block nodes not in workspace.getAllBlocks()
+                            const allBlockIds = new Set(this.workspace.getAllBlocks(false).map(b => b.id));
+                            const svgBlocks = this.workspace.getCanvas().querySelectorAll('.blocklyBlockCanvas > g.blocklyDraggable');
+                            svgBlocks.forEach(node => {
+                                const blockId = node.getAttribute('data-id');
+                                if (blockId && !allBlockIds.has(blockId)) {
+                                    node.remove();
+                                }
+                            });
+                        }, 0);
                     }
                 });
 

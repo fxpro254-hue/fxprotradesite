@@ -4,6 +4,9 @@ declare global {
         Analytics: unknown;
         DD_RUM: object | undefined;
         GrowthbookFeatures: { [key: string]: boolean };
+        botNotification?: Function;
+        notification_message?: Function;
+        localize?: Function;
         LC_API: {
             on_chat_ended: VoidFunction;
             open_chat_window: VoidFunction;
