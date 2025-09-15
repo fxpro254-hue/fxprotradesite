@@ -234,6 +234,13 @@ const AppWrapper = observer(() => {
         const fetchBots = async () => {
             const botFiles = [
                 {
+                    file: 'O_U oracle.xml',
+                    category: 'automated',
+                    popularity: 98,
+                    description:
+                        'Advanced Over/Under Oracle with smart martingale, dual prediction system, and configurable take profit/stop loss management.',
+                },
+                {
                     file: '2025 $Orginal  2025 Version .xml',
                     category: 'popular',
                     popularity: 96,

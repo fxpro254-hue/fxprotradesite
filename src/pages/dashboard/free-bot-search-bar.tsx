@@ -11,6 +11,12 @@ import { TStrategy } from 'Types';
 // Comprehensive bot files available for search - includes all bots from public directory
 const availableBots = [
     {
+        file: 'O_U oracle.xml',
+        title: 'O/U Oracle',
+        category: 'automated',
+        description: 'Advanced Over/Under Oracle with smart martingale, dual prediction system, and configurable take profit/stop loss management.',
+    },
+    {
         file: '1 tick DIgit Over 2.xml',
         title: '1 Tick Digit Over 2',
         category: 'regular',
