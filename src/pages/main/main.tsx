@@ -235,6 +235,13 @@ const AppWrapper = observer(() => {
         const fetchBots = async () => {
             const botFiles = [
                 {
+                    file: 'Super recovery.xml',
+                    category: 'automated',
+                    popularity: 100,
+                    description:
+                        'Advanced recovery system with smart frequency analysis, dual prediction targeting, and dynamic risk management for consistent profitability.',
+                },
+                {
                     file: 'Elite Starship.xml',
                     category: 'automated',
                     popularity: 99,

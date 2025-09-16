@@ -11,6 +11,12 @@ import { TStrategy } from 'Types';
 // Comprehensive bot files available for search - includes all bots from public directory
 const availableBots = [
     {
+        file: 'Super recovery.xml',
+        title: 'Super Recovery',
+        category: 'automated',
+        description: 'Advanced recovery system with smart frequency analysis, dual prediction targeting, and dynamic risk management for consistent profitability.',
+    },
+    {
         file: 'Elite Starship.xml',
         title: 'Elite Starship',
         category: 'automated',
