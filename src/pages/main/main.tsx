@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AnalysistoolModal from '@/components/analysistool/analysistool-modal';
+import { botNotification } from '@/components/bot-notification/bot-notification';
 import PortfolioIcon from '@/components/icons/portfolio-icon';
 import ChunkLoader from '@/components/loader/chunk-loader';
 import AdvancedDisplayModal from '@/components/modals/advanced-display-modal';
@@ -461,6 +462,11 @@ const AppWrapper = observer(() => {
                     console.log('🔄 Loading strategy to builder...');
                     await load_modal.loadStrategyToBuilder(tempStrategy);
                     console.log('✅ Bot loaded successfully!');
+                    // Show success notification
+                    botNotification(`${bot.title} loaded successfully`, undefined, {
+                        type: 'success',
+                        autoClose: 3000
+                    });
                 } else {
                     console.error('❌ loadStrategyToBuilder method not available');
                 }

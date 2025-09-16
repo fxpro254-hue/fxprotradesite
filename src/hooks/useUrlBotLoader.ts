@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DBOT_TABS } from '@/constants/bot-contents';
+import { botNotification } from '@/components/bot-notification/bot-notification';
 
 interface Bot {
     title: string;
@@ -106,6 +107,12 @@ export const useUrlBotLoader = ({ bots, setActiveTab, loadModal }: UseUrlBotLoad
                         console.log('🔄 Loading strategy to builder...');
                         await loadModal.loadStrategyToBuilder(strategy);
                         console.log('🎉 Bot loaded successfully from URL!');
+                        
+                        // Show success notification
+                        botNotification(`${decodedBotName} loaded successfully`, undefined, {
+                            type: 'success',
+                            autoClose: 3000
+                        });
                         
                         // Clear the URL parameters after successful load
                         const newSearchParams = new URLSearchParams(searchParams);
