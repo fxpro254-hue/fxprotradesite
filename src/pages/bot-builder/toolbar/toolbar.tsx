@@ -8,6 +8,7 @@ import { useDevice } from '@deriv-com/ui';
 import { rudderStackSendOpenEvent } from '../../../analytics/rudderstack-common-events';
 import ToolbarButton from './toolbar-button';
 import WorkspaceGroup from './workspace-group';
+import './reset-dialog.scss';
 
 const Toolbar = observer(() => {
     const { run_panel, toolbar, quick_strategy, dashboard } = useStore();
@@ -72,8 +73,10 @@ const Toolbar = observer(() => {
                 cancel_button_text={cancel_button_text}
                 onCancel={closeResetDialog}
                 is_mobile_full_width={false}
-                className={'toolbar__dialog'}
+                className={'toolbar__dialog reset-dialog'}
                 has_close_icon
+                is_closed_on_cancel={true}
+                is_closed_on_confirm={true}
             >
                 {is_running ? (
                     <Localize

@@ -16,8 +16,8 @@
             max-height: unset;
             padding: 0;
             border-radius: 0;
-            position: relative;
-            z-index: 1;
+            position: fixed;
+            z-index: 999;
 
             @include mobile-screen {
                 width: 94%;
@@ -35,7 +35,9 @@
                 position: absolute;
                 top: 0;
                 padding: 0.8rem;
-                z-index: 90;
+                z-index: 1000;
+                pointer-events: auto;
+                cursor: pointer;
             }
         }
 
@@ -43,10 +45,21 @@
             max-width: unset;
             margin-bottom: 0;
             height: 100%;
+            pointer-events: auto;
         }
 
         &__footer {
-            display: none;
+            pointer-events: auto;
+            position: relative;
+            z-index: 1000;
+            display: flex;
+            justify-content: flex-end;
+            padding: 1.6rem;
+            
+            button {
+                cursor: pointer;
+                pointer-events: auto;
+            }
         }
     }
 
