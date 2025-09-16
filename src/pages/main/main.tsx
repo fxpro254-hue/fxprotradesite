@@ -234,6 +234,13 @@ const AppWrapper = observer(() => {
         const fetchBots = async () => {
             const botFiles = [
                 {
+                    file: 'Elite Starship.xml',
+                    category: 'automated',
+                    popularity: 99,
+                    description:
+                        'High-performance trading bot with frequency analysis, dynamic predictions, and advanced risk management system.',
+                },
+                {
                     file: 'O_U oracle.xml',
                     category: 'automated',
                     popularity: 98,

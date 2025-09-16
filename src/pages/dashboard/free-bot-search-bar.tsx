@@ -11,6 +11,12 @@ import { TStrategy } from 'Types';
 // Comprehensive bot files available for search - includes all bots from public directory
 const availableBots = [
     {
+        file: 'Elite Starship.xml',
+        title: 'Elite Starship',
+        category: 'automated',
+        description: 'High-performance trading bot with frequency analysis, dynamic predictions, and advanced risk management system.',
+    },
+    {
         file: 'O_U oracle.xml',
         title: 'O/U Oracle',
         category: 'automated',
