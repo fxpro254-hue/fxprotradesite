@@ -24,6 +24,13 @@ export type TAccountSwitcher = {
     activeAccount: ReturnType<typeof useActiveAccount>['data'];
 };
 
+export type TAccountSwitcherFooter = {
+    oAuthLogout: () => void;
+    loginid?: string;
+    is_logging_out?: boolean;
+    svging?: boolean;
+};
+
 export type TDemoAccounts = {
     tabs_labels: {
         demo: string;

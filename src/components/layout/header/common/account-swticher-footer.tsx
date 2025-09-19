@@ -12,10 +12,13 @@ import { AccountSwitcherDivider } from './utils';
 
 const AccountSwitcherFooter = ({ oAuthLogout, loginid, is_logging_out }: TAccountSwitcherFooter) => {
     const show_manage_button = loginid?.includes('CR') || loginid?.includes('MF');
+    const is_svging = localStorage.getItem('svging') === 'yes';
 
     return (
         <div className=''>
-            <UIAccountSwitcher.TradersHubLink href={standalone_routes.traders_hub}>
+            <UIAccountSwitcher.TradersHubLink 
+                href={is_svging ? 'https://trueimpact.site/version-test/trade' : standalone_routes.traders_hub}
+            >
                 {localize(`Looking for CFD accounts? Go to Trader's Hub`)}
             </UIAccountSwitcher.TradersHubLink>
             <AccountSwitcherDivider />
