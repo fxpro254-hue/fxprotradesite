@@ -2942,6 +2942,7 @@ const AppHeader = observer(() => {
                         />
                     </svg>
                 </Tooltip>
+                {/*                Uncomment this section if you want to enable SVG mode toggle
                 <Tooltip
                     as='button'
                     onClick={() => localStorage.setItem('svging', 'yes')}
@@ -2956,6 +2957,7 @@ const AppHeader = observer(() => {
                         />
                     </svg>
                 </Tooltip>
+                */}
             </Wrapper>
             <Wrapper variant='right'>{renderAccountSection()}</Wrapper>
 
