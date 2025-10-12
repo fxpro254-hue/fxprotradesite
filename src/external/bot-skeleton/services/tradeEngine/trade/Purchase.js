@@ -59,7 +59,8 @@ export default Engine =>
 
             // Check if a purchase has already been made in this execution cycle
             const botState = this.store.getState();
-            if (botState.purchaseInProgress || this.pendingPurchase) {
+            // Allow purchases to proceed during tick trading mode (for conditional logic re-evaluation)
+            if (!this.tickTradeEnabled && (botState.purchaseInProgress || this.pendingPurchase)) {
                 console.log('Purchase skipped - another purchase is already in progress');
                 return Promise.resolve({ skipped: true, reason: 'Purchase already in progress' });
             }
@@ -86,11 +87,15 @@ export default Engine =>
             if (trade_each_tick === true || trade_each_tick === 'true') {
                 // If tick trading is already enabled, just execute the trade (called from conditional logic)
                 if (this.tickTradeEnabled) {
-                    console.log('Tick trading already enabled - executing single trade for:', contract_type);
+                    console.log('🔄 Tick trading already enabled - executing trade from condition evaluation');
+                    console.log('   Contract type from condition:', contract_type);
+                    console.log('   Previous contract:', this.tickTradeContract);
+                    console.log('   Barriers:', { barrier, second_barrier, prediction });
                     return await this.executeSingleTrade(contract_type);
                 } else {
                     // First time enabling tick trading - set up the listener
-                    console.log('Enabling tick trading mode for the first time with barriers');
+                    console.log('🚀 Enabling tick trading mode for the first time');
+                    console.log('   Initial contract type:', contract_type);
                     return await this.enableTickTrading(contract_type);
                 }
             } else {
@@ -122,20 +127,24 @@ export default Engine =>
                 const { ticksService } = this.$scope;
                 
                 const tickCallback = () => {
-                    console.log('Tick received, tick trading enabled:', this.tickTradeEnabled, 'contract:', this.tickTradeContract);
+                    console.log('📊 Tick received for tick trading');
+                    console.log('   Tick trading enabled:', this.tickTradeEnabled);
+                    console.log('   Stored contract:', this.tickTradeContract);
+                    
                     if (this.tickTradeEnabled && this.tickTradeContract) {
-                        console.log('Re-evaluating purchase conditions on new tick...');
+                        console.log('🔍 Re-evaluating purchase conditions on new tick...');
                         // Re-evaluate conditional logic on each tick by calling BinaryBotPrivateBeforePurchase
                         // This ensures IF/ELSE conditions are checked every tick
                         if (window.BinaryBotPrivateBeforePurchase) {
                             try {
+                                console.log('✅ Calling BinaryBotPrivateBeforePurchase() to re-check conditions');
                                 window.BinaryBotPrivateBeforePurchase();
                             } catch (error) {
-                                console.error('Error re-evaluating purchase conditions:', error);
+                                console.error('❌ Error re-evaluating purchase conditions:', error);
                             }
                         } else {
                             // Fallback: if no conditional logic, execute directly
-                            console.log('No conditional logic found, executing tick trade directly for contract:', this.tickTradeContract);
+                            console.log('⚠️ No conditional logic found, executing tick trade directly for contract:', this.tickTradeContract);
                             this.executeSingleTrade(this.tickTradeContract);
                         }
                     }
