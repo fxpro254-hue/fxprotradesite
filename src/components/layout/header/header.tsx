@@ -20,6 +20,7 @@ import PlatformSwitcher from './platform-switcher';
 import { getAppId } from '@/components/shared';
 import { botNotification } from '@/components/bot-notification/bot-notification';
 import { DisclaimerPopup } from '@/components/disclaimer';
+import { usePlatform } from '@/context/PlatformContext';
 import './header.scss';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Modal from '@/components/shared_ui/modal'; // Import the modal component
@@ -244,6 +245,7 @@ const AppHeader = observer(() => {
     const { isDesktop } = useDevice();
     const { isAuthorizing, activeLoginid } = useApiBase();
     const { client } = useStore() ?? {};
+    const { currentPlatform, togglePlatform } = usePlatform();
 
     const { data: activeAccount, error: activeAccountError } = useActiveAccount({
         allBalanceData: client?.all_accounts_balance,
@@ -3018,6 +3020,42 @@ const AppHeader = observer(() => {
                 <AppLogo />
                 <MobileMenu />
                 <InfoIcon />
+                
+                {/* Navigation Buttons - D-Bot and D-Trader Toggle */}
+                <div className='app-header__nav-buttons'>
+                    <Tooltip
+                        as='button'
+                        onClick={() => togglePlatform('bot')}
+                        tooltipContent={localize('D-Bot Trading')}
+                        tooltipPosition='bottom'
+                        className={clsx('app-header__nav-btn', {
+                            'app-header__nav-btn--active': currentPlatform === 'bot'
+                        })}
+                    >
+                        <svg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                            <path d='M12 2L2 7L12 12L22 7L12 2Z' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                            <path d='M2 17L12 22L22 17' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                            <path d='M2 12L12 17L22 12' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                        </svg>
+                        <span>D-Bot</span>
+                    </Tooltip>
+                    <Tooltip
+                        as='button'
+                        onClick={() => togglePlatform('trader')}
+                        tooltipContent={localize('D-Trader Manual Trading')}
+                        tooltipPosition='bottom'
+                        className={clsx('app-header__nav-btn', {
+                            'app-header__nav-btn--active': currentPlatform === 'trader'
+                        })}
+                    >
+                        <svg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                            <path d='M3 3v18h18' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                            <path d='M18.5 9.5L13 15l-4-4L3 17' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                        </svg>
+                        <span>D-Trader</span>
+                    </Tooltip>
+                </div>
+                
                 {/* Mobile: Show menu popup button */}
                 {!isDesktop && (
                     <Tooltip

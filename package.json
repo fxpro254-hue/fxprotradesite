@@ -7,7 +7,9 @@
     },
     "scripts": {
         "start": "rsbuild dev",
-        "build": "rsbuild build",
+        "build": "npm run build:dtrader && rsbuild build",
+        "build:bot": "rsbuild build",
+        "build:dtrader": "cd dtrader && npm run build:all && cd ..",
         "watch": "rsbuild build --watch",
         "serve": "live-server --port=8443 --host=localhost dist",
         "start:webpack": "webpack serve --open --config webpack.config.js",
@@ -18,7 +20,14 @@
         "coverage": "jest --coverage",
         "prepare": "husky install",
         "build:analyze": "BUNDLE_ANALYZE=true rsbuild build",
-        "telegram-server": "node telegram-file-server.js"
+        "telegram-server": "node telegram-file-server.js",
+        "dtrader:install": "cd dtrader && npm run bootstrap",
+        "dtrader:serve:core": "cd dtrader/packages/core && npm run serve",
+        "dtrader:serve:trader": "cd dtrader/packages/trader && npm run serve",
+        "dtrader:build": "cd dtrader && npm run build:all",
+        "dtrader:test": "cd dtrader && npm run test",
+        "dtrader:deploy": "powershell -ExecutionPolicy Bypass -File ./deploy-dtrader-live.ps1 separate",
+        "dtrader:deploy:integrated": "powershell -ExecutionPolicy Bypass -File ./deploy-dtrader-live.ps1 integrated"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
