@@ -62,6 +62,17 @@ const TradingHubDisplay: React.FC = () => {
     const lastMartingaleActionRef = useRef<string>('initial');
     const lastWinTimeRef = useRef<number>(0);
 
+    // Stop Loss and Take Profit - Always active
+    const [stopLossAmount, setStopLossAmount] = useState('5.00');
+    const [takeProfitAmount, setTakeProfitAmount] = useState('10.00');
+    const stopLossAmountRef = useRef('5.00'); // Ref for immediate access in closures
+    const takeProfitAmountRef = useRef('10.00'); // Ref for immediate access in closures
+    const [cumulativeProfit, setCumulativeProfit] = useState(0);
+    const cumulativeProfitRef = useRef(0); // Ref to track latest profit for interval closure
+    const stopLossCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const isContinuousTradingRef = useRef(false); // Ref to track trading state in interval
+    const slTpTriggeredRef = useRef(false); // Prevent multiple triggers
+
     // Function to extract the last digit from a price based on its actual decimal places
     const getLastDigitFromPrice = (price: number): number => {
         // Convert to string to preserve exact decimal representation
@@ -369,6 +380,19 @@ const TradingHubDisplay: React.FC = () => {
                 setIsAutoMatchesActive(false);
             }
             
+            // Load stop loss and take profit amounts (always enabled)
+            const savedStopLossAmount = localStorage.getItem('tradingHub_stopLossAmount');
+            const savedTakeProfitAmount = localStorage.getItem('tradingHub_takeProfitAmount');
+
+            if (savedStopLossAmount) {
+                setStopLossAmount(savedStopLossAmount);
+                stopLossAmountRef.current = savedStopLossAmount;
+            }
+            if (savedTakeProfitAmount) {
+                setTakeProfitAmount(savedTakeProfitAmount);
+                takeProfitAmountRef.current = savedTakeProfitAmount;
+            }
+
             // Ensure only one strategy is active, prioritizing O5U4
             setTimeout(() => {
                 console.log(`Strategy states after init - O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
@@ -397,6 +421,9 @@ const TradingHubDisplay: React.FC = () => {
         }
     }, [client?.loginid]);
 
+    // Sync cumulativeProfit state with ref for interval access
+    // No longer need useEffect to sync - we update ref directly with state now
+    
     useEffect(() => {
         const session_id = `tradingHub_${Date.now()}`;
         setSessionRunId(session_id);
@@ -423,7 +450,8 @@ const TradingHubDisplay: React.FC = () => {
         const o5u4MonitorInterval = setInterval(() => {
             if (isAutoO5U4Active && isContinuousTrading && !isTradeInProgress && 
                 !o5u4ActiveContracts.current.over5ContractId && 
-                !o5u4ActiveContracts.current.under4ContractId) {
+                !o5u4ActiveContracts.current.under4ContractId &&
+                !slTpTriggeredRef.current && isContinuousTradingRef.current) {
                 
                 const now = Date.now();
                 const timeSinceLastO5U4Trade = now - o5u4LastTradeTime.current;
@@ -449,7 +477,8 @@ const TradingHubDisplay: React.FC = () => {
         // Aggressive Matches monitoring - trades when analysis is ready
         const matchesMonitorInterval = setInterval(() => {
             if (isAutoMatchesActive && isContinuousTrading && !isTradeInProgress && 
-                !hasActiveMatchesContracts()) {
+                !hasActiveMatchesContracts() &&
+                !slTpTriggeredRef.current && isContinuousTradingRef.current) {
                 
                 const now = Date.now();
                 const timeSinceLastMatchesTrade = now - matchesLastTradeTime.current;
@@ -482,6 +511,16 @@ const TradingHubDisplay: React.FC = () => {
             }
         }, 1000); // Check every 1 second for maximum responsiveness
 
+        // Stop Loss and Take Profit monitoring - Always active when trading
+        stopLossCheckIntervalRef.current = setInterval(() => {
+            if (isContinuousTradingRef.current && !slTpTriggeredRef.current) {
+                const now = new Date().toLocaleTimeString();
+                const currentProfit = cumulativeProfitRef.current;
+                console.log(`[${now}] Checking SL/TP - P/L: $${currentProfit.toFixed(2)}, SL: -$${stopLossAmountRef.current}, TP: $${takeProfitAmountRef.current}`);
+                checkStopLossAndTakeProfit();
+            }
+        }, 2000); // Check every 2 seconds
+
         // Store the interval reference for cleanup
         const cleanupO5U4Monitor = () => clearInterval(o5u4MonitorInterval);
         const cleanupMatchesMonitor = () => clearInterval(matchesMonitorInterval);
@@ -502,7 +541,8 @@ const TradingHubDisplay: React.FC = () => {
             }
 
             // Check for O5U4 trade execution - AGGRESSIVE MODE (trade on every met condition)
-            if (isAutoO5U4Active && isContinuousTrading && !isTradeInProgress) {
+            if (isAutoO5U4Active && isContinuousTrading && !isTradeInProgress &&
+                !slTpTriggeredRef.current && isContinuousTradingRef.current) {
                 console.log('📊 O5U4: Market analyzer callback - AGGRESSIVE checking...');
                 const now = Date.now();
                 const timeSinceLastO5U4Trade = now - o5u4LastTradeTime.current;
@@ -572,6 +612,12 @@ const TradingHubDisplay: React.FC = () => {
                         const under4Won = o5u4ActiveContracts.current.under4Result === 'win';
                         
                         console.log(`O5U4 Both contracts settled via handler. Over5: ${over5Won ? 'WIN' : 'LOSS'}, Under4: ${under4Won ? 'WIN' : 'LOSS'}`);
+                        
+                        // Update cumulative profit for stop loss/take profit (state + ref)
+                        const newProfit = cumulativeProfitRef.current + contract_info.profit;
+                        cumulativeProfitRef.current = newProfit;
+                        setCumulativeProfit(newProfit);
+                        console.log(`💰 Updated cumulative profit: $${newProfit.toFixed(2)}`);
                         
                         // Process combined result
                         if (over5Won || under4Won) {
@@ -664,6 +710,12 @@ const TradingHubDisplay: React.FC = () => {
                         profit: contract_info.profit,
                     };
 
+                    // Update cumulative profit for stop loss/take profit (state + ref)
+                    const newProfit = cumulativeProfitRef.current + contract_info.profit;
+                    cumulativeProfitRef.current = newProfit;
+                    setCumulativeProfit(newProfit);
+                    console.log(`💰 Cumulative P/L: $${newProfit.toFixed(2)}`);
+
                     if (isWin) {
                         manageStake('reset');
                     } else {
@@ -737,6 +789,12 @@ const TradingHubDisplay: React.FC = () => {
                     if (allMatchesSettled && totalMatchesContracts > 0) {
                         const matchesWon = matchesWinCount > 0;
                         console.log(`🎯 Matches: All ${totalMatchesContracts} contracts settled. Wins: ${matchesWinCount}, Total profit: ${totalMatchesProfit}`);
+
+                        // Update cumulative profit for stop loss/take profit (state + ref)
+                        const newProfit = cumulativeProfitRef.current + totalMatchesProfit;
+                        cumulativeProfitRef.current = newProfit;
+                        setCumulativeProfit(newProfit);
+                        console.log(`💰 Cumulative P/L: $${newProfit.toFixed(2)}`);
 
                         if (matchesWon) {
                             setLastTradeWin(true);
@@ -844,6 +902,12 @@ const TradingHubDisplay: React.FC = () => {
 
                         console.log(`O5U4 Both contracts settled. Over5: ${over5Won ? 'WIN' : 'LOSS'}, Under4: ${under4Won ? 'WIN' : 'LOSS'}, Total Profit: ${totalProfit}`);
 
+                        // Update cumulative profit for stop loss/take profit (state + ref)
+                        const newProfit = cumulativeProfitRef.current + totalProfit;
+                        cumulativeProfitRef.current = newProfit;
+                        setCumulativeProfit(newProfit);
+                        console.log(`💰 Cumulative P/L: $${newProfit.toFixed(2)}`);
+
                         // Update trade counts
                         if (over5Won || under4Won) {
                             setWinCount(prev => prev + 1);
@@ -928,6 +992,12 @@ const TradingHubDisplay: React.FC = () => {
                             `Current stake before update: ${currentStakeRef.current}, Consecutive losses: ${currentConsecutiveLossesRef.current}`
                         );
 
+                        // Update cumulative profit for stop loss/take profit (state + ref)
+                        const newProfit = cumulativeProfitRef.current + profit;
+                        cumulativeProfitRef.current = newProfit;
+                        setCumulativeProfit(newProfit);
+                        console.log(`💰 Cumulative P/L: $${newProfit.toFixed(2)}`);
+
                         if (isWin) {
                             setWinCount(prev => prev + 1);
                             manageStake('reset');
@@ -965,6 +1035,9 @@ const TradingHubDisplay: React.FC = () => {
             cleanupMatchesMonitor(); // Clean up the Matches dedicated monitor
             if (contractUpdateInterval.current) {
                 clearInterval(contractUpdateInterval.current);
+            }
+            if (stopLossCheckIntervalRef.current) {
+                clearInterval(stopLossCheckIntervalRef.current);
             }
             globalObserver.emit('bot.stopped');
             marketAnalyzer.stop();
@@ -1122,6 +1195,16 @@ const TradingHubDisplay: React.FC = () => {
 
                 if (timeSinceSettlement < 500) { // Reduced from 1000ms to 500ms for O5U4 faster recovery
                     console.log('Recent settlement, waiting for martingale calculation to complete...');
+                    return;
+                }
+
+                // Check if stop loss/take profit triggered - abort trading
+                if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                    console.log('🚫 Continuous trading aborted - SL/TP triggered or trading stopped');
+                    if (tradingIntervalRef.current) {
+                        clearInterval(tradingIntervalRef.current);
+                        tradingIntervalRef.current = null;
+                    }
                     return;
                 }
 
@@ -1786,6 +1869,12 @@ const TradingHubDisplay: React.FC = () => {
     };
     
     const executeMatchesTrades = async () => {
+        // Check if stop loss/take profit triggered - abort immediately
+        if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+            console.log('🚫 Matches trade execution aborted - SL/TP triggered or trading stopped');
+            return;
+        }
+        
         if (!isAutoMatchesActive || isTradeInProgress) return;
         
         // Check if there are already active Matches contracts
@@ -1864,8 +1953,22 @@ const TradingHubDisplay: React.FC = () => {
                 }
             });
             
+            // Final check before executing trades - abort if SL/TP triggered
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Matches trade execution aborted at final checkpoint - SL/TP triggered');
+                setIsTradeInProgress(false);
+                return;
+            }
+            
             const results = await Promise.all(tradePromises);
             console.log('🎯 Matches: All trades completed:', results);
+            
+            // Post-execution check - if SL/TP triggered during execution, don't add contracts to tracking
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Matches contracts purchased but not tracked - SL/TP triggered during execution');
+                setIsTradeInProgress(false);
+                return;
+            }
             
             // Add contracts to activeContracts state for UI display
             const successfulTrades = results.filter((result): result is { digit: number; contractId: string; buyResponse: any } => 
@@ -1960,6 +2063,111 @@ const TradingHubDisplay: React.FC = () => {
         } finally {
             setIsTradeInProgress(false);
         }
+    };
+
+    const checkStopLossAndTakeProfit = () => {
+        // Prevent multiple triggers
+        if (slTpTriggeredRef.current) {
+            return;
+        }
+        
+        const currentProfit = cumulativeProfitRef.current;
+        const slThreshold = parseFloat(stopLossAmountRef.current);
+        const tpThreshold = parseFloat(takeProfitAmountRef.current);
+        
+        // Check stop loss
+        if (currentProfit <= -slThreshold) {
+            console.log(`\n🛑🛑🛑 STOP LOSS HIT! 🛑🛑🛑`);
+            console.log(`Current P/L: $${currentProfit.toFixed(2)}`);
+            console.log(`Stop Loss Threshold: -$${slThreshold.toFixed(2)}`);
+            console.log(`Stopping trading immediately...\n`);
+            
+            // Set triggered flag immediately
+            slTpTriggeredRef.current = true;
+            
+            // Clear the monitoring interval immediately
+            if (stopLossCheckIntervalRef.current) {
+                clearInterval(stopLossCheckIntervalRef.current);
+                stopLossCheckIntervalRef.current = null;
+            }
+            
+            // Stop trading immediately
+            stopTrading();
+            
+            // Show notification
+            botNotification(
+                `🛑 STOP LOSS HIT! Loss: $${Math.abs(currentProfit).toFixed(2)} | Threshold: $${slThreshold.toFixed(2)}`
+            );
+            
+            return;
+        }
+
+        // Check take profit
+        if (currentProfit >= tpThreshold) {
+            console.log(`\n🎯🎯🎯 TAKE PROFIT HIT! 🎯🎯🎯`);
+            console.log(`Current P/L: $${currentProfit.toFixed(2)}`);
+            console.log(`Take Profit Threshold: $${tpThreshold.toFixed(2)}`);
+            console.log(`Stopping trading immediately...\n`);
+            
+            // Set triggered flag immediately
+            slTpTriggeredRef.current = true;
+            
+            // Clear the monitoring interval immediately
+            if (stopLossCheckIntervalRef.current) {
+                clearInterval(stopLossCheckIntervalRef.current);
+                stopLossCheckIntervalRef.current = null;
+            }
+            
+            // Stop trading immediately
+            stopTrading();
+            
+            // Show notification
+            botNotification(
+                `🎯 TAKE PROFIT HIT! Profit: $${currentProfit.toFixed(2)} | Threshold: $${tpThreshold.toFixed(2)}`
+            );
+            
+            return;
+        }
+    };
+
+    const closeAllActiveContracts = async (reason: string) => {
+        console.log(`🔒 Closing all active contracts due to: ${reason}`);
+        
+        const contractIds = Object.keys(activeContracts);
+        if (contractIds.length === 0) {
+            console.log('No active contracts to close');
+            return;
+        }
+
+        for (const contractId of contractIds) {
+            try {
+                console.log(`Attempting to sell contract ${contractId}...`);
+                const response = await api_base.api.send({
+                    sell: contractId,
+                    price: 0, // Sell at current market price
+                });
+                
+                if (response?.sell) {
+                    console.log(`✅ Successfully sold contract ${contractId} for ${response.sell.sold_for}`);
+                } else {
+                    console.warn(`⚠️ Could not sell contract ${contractId}`);
+                }
+            } catch (error) {
+                console.error(`❌ Error selling contract ${contractId}:`, error);
+            }
+        }
+
+        // Clear active contracts
+        setActiveContracts({});
+        activeContractRef.current = null;
+        o5u4ActiveContracts.current = {
+            over5ContractId: null,
+            under4ContractId: null,
+            over5Result: null,
+            under4Result: null,
+            bothSettled: false
+        };
+        matchesActiveContracts.current = {};
     };
 
     const handleSaveSettings = () => {
@@ -2059,6 +2267,11 @@ const TradingHubDisplay: React.FC = () => {
             setMartingale(validMartingale);
         }
 
+        // Save stop loss and take profit amounts to localStorage
+        localStorage.setItem('tradingHub_stopLossAmount', stopLossAmount);
+        localStorage.setItem('tradingHub_takeProfitAmount', takeProfitAmount);
+        console.log(`Saved SL/TP settings - SL: $${stopLossAmount}, TP: $${takeProfitAmount}`);
+
         // setIsSettingsOpen(false);
     };
 
@@ -2082,6 +2295,12 @@ const TradingHubDisplay: React.FC = () => {
     const executeDigitDifferTrade = async () => {
         console.log('🎯 DIFFER TRADE EXECUTION FUNCTION CALLED - Active cards: ' + 
             `O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
+        
+        // Check if stop loss/take profit triggered - abort immediately
+        if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+            console.log('🚫 Trade execution aborted - SL/TP triggered or trading stopped');
+            return;
+        }
             
         if (isTradeInProgress) {
             console.log('Trade already in progress, skipping new trade request');
@@ -2180,9 +2399,23 @@ const TradingHubDisplay: React.FC = () => {
                 }
             }
 
+            // Final check before executing trades - abort if SL/TP triggered
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Differ trade execution aborted at final checkpoint - SL/TP triggered');
+                setIsTradeInProgress(false);
+                return;
+            }
+
             // Execute all trades
             const results = await Promise.all(trades);
             const successfulTrades = results.filter(result => result && result.buy);
+
+            // Post-execution check - if SL/TP triggered during execution, don't add contracts to tracking
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Differ contracts purchased but not tracked - SL/TP triggered during execution');
+                setIsTradeInProgress(false);
+                return;
+            }
 
             if (successfulTrades.length > 0) {
                 const result = successfulTrades[0]; // Use the main account result for UI updates
@@ -2257,6 +2490,12 @@ const TradingHubDisplay: React.FC = () => {
     };
 
     const executeDigitOverTrade = async () => {
+        // Check if stop loss/take profit triggered - abort immediately
+        if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+            console.log('🚫 Trade execution aborted - SL/TP triggered or trading stopped');
+            return;
+        }
+        
         if (isTradeInProgress) {
             console.log('Trade already in progress, skipping new trade request');
             return;
@@ -2364,8 +2603,22 @@ const TradingHubDisplay: React.FC = () => {
                 }
             }
 
+            // Final check before executing trades - abort if SL/TP triggered
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Over/Under trade execution aborted at final checkpoint - SL/TP triggered');
+                setIsTradeInProgress(false);
+                return;
+            }
+
             const results = await Promise.all(trades);
             const successfulTrades = results.filter(result => result && result.buy);
+
+            // Post-execution check - if SL/TP triggered during execution, don't add contracts to tracking
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Over/Under contracts purchased but not tracked - SL/TP triggered during execution');
+                setIsTradeInProgress(false);
+                return;
+            }
 
             if (successfulTrades.length > 0) {
                 const result = successfulTrades[0];
@@ -2442,6 +2695,12 @@ const TradingHubDisplay: React.FC = () => {
     const executeO5U4Trade = async () => {
         console.log('🎯 O5U4 TRADE EXECUTION FUNCTION CALLED - Active cards: ' + 
             `O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
+        
+        // Check if stop loss/take profit triggered - abort immediately
+        if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+            console.log('🚫 Trade execution aborted - SL/TP triggered or trading stopped');
+            return;
+        }
             
         if (isTradeInProgress) {
             console.log('O5U4: Trade already in progress, skipping new trade request');
@@ -2603,9 +2862,23 @@ const TradingHubDisplay: React.FC = () => {
                 }
             }
 
+            // Final check before executing trades - abort if SL/TP triggered
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 O5U4 trade execution aborted at final checkpoint - SL/TP triggered');
+                setIsTradeInProgress(false);
+                return;
+            }
+
             // Execute all trades
             const results = await Promise.all(trades);
             const successfulTrades = results.filter(result => result && result.buy);
+
+            // Post-execution check - if SL/TP triggered during execution, don't add contracts to tracking
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 O5U4 contracts purchased but not tracked - SL/TP triggered during execution');
+                setIsTradeInProgress(false);
+                return;
+            }
 
             if (successfulTrades.length >= 2) { // At least the main over and under trades should succeed
                 const overResult = successfulTrades[0];
@@ -2903,9 +3176,12 @@ const TradingHubDisplay: React.FC = () => {
         console.log('🚀 START TRADING clicked!');
         console.log(`Current strategy states - O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
         console.log('🚀 Strategy priority: 1. O5U4, 2. Matches, 3. OverUnder, 4. Differ');
+        console.log(`💰 Stop Loss/Take Profit enabled - Monitoring will start. SL: -$${stopLossAmount}, TP: $${takeProfitAmount}`);
         
         prepareRunPanelForTradingHub();
         setIsContinuousTrading(true);
+        isContinuousTradingRef.current = true; // Set ref immediately
+        slTpTriggeredRef.current = false; // Reset triggered flag
         
         // Emit state change for the run button
         globalObserver.emit('trading_hub.state_changed', { isRunning: true });
@@ -2922,6 +3198,13 @@ const TradingHubDisplay: React.FC = () => {
 
         setTimeout(() => {
             console.log('🚀 Starting strategy execution after delay...');
+            
+            // Check if stop loss/take profit triggered during startup delay
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Strategy execution aborted - SL/TP triggered or trading stopped during startup');
+                return;
+            }
+            
             console.log(`🚀 STRATEGY CHECK - O5U4: ${isAutoO5U4Active ? 'ACTIVE' : 'inactive'}, Matches: ${isAutoMatchesActive ? 'ACTIVE' : 'inactive'}, OverUnder: ${isAutoOverUnderActive ? 'ACTIVE' : 'inactive'}, Differ: ${isAutoDifferActive ? 'ACTIVE' : 'inactive'}`);
             // Check which strategy is active and execute in order of priority
             
@@ -2972,8 +3255,16 @@ const TradingHubDisplay: React.FC = () => {
     };
 
     const stopTrading = () => {
+        console.log('Stopping continuous trading...');
         setIsContinuousTrading(false);
+        isContinuousTradingRef.current = false; // Update ref immediately
         setIsTrading(false);
+        
+        // Reset cumulative profit when stopping
+        console.log(`💰 Session ended with cumulative profit: $${cumulativeProfit.toFixed(2)}`);
+        setCumulativeProfit(0);
+        cumulativeProfitRef.current = 0; // Also reset the ref
+        
         globalObserver.emit('bot.stopped');
         
         // Emit state change for the run button
@@ -3030,6 +3321,7 @@ const TradingHubDisplay: React.FC = () => {
             {showEmojiAnimation && (
                 <EmojiAnimation isPositive={isProfitPositive} />
             )}
+            
             <div className='trading-hub-content'>
                 {/* Header Section */}
                 <div className='hub-header'>
@@ -3088,6 +3380,46 @@ const TradingHubDisplay: React.FC = () => {
                                     className='compact-input'
                                 />
                             </div>
+
+                            <div className='control-group stop-loss-group'>
+                                <label htmlFor='stop-loss-input'>Stop Loss ($)</label>
+                                <input
+                                    id='stop-loss-input'
+                                    type='number'
+                                    min='0.01'
+                                    step='0.01'
+                                    value={stopLossAmount}
+                                    onChange={e => {
+                                        const value = e.target.value;
+                                        setStopLossAmount(value);
+                                        stopLossAmountRef.current = value;
+                                    }}
+                                    onBlur={handleSaveSettings}
+                                    disabled={isContinuousTrading}
+                                    className='compact-input'
+                                    placeholder='5.00'
+                                />
+                            </div>
+
+                            <div className='control-group take-profit-group'>
+                                <label htmlFor='take-profit-input'>Take Profit ($)</label>
+                                <input
+                                    id='take-profit-input'
+                                    type='number'
+                                    min='0.01'
+                                    step='0.01'
+                                    value={takeProfitAmount}
+                                    onChange={e => {
+                                        const value = e.target.value;
+                                        setTakeProfitAmount(value);
+                                        takeProfitAmountRef.current = value;
+                                    }}
+                                    onBlur={handleSaveSettings}
+                                    disabled={isContinuousTrading}
+                                    className='compact-input'
+                                    placeholder='10.00'
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -3101,6 +3433,16 @@ const TradingHubDisplay: React.FC = () => {
                         <div className='status-item'>
                             <span>Stake: {displayStake()}</span>
                         </div>
+                        {isContinuousTrading && (
+                            <>
+                                <div className='status-separator'></div>
+                                <div className={`status-item profit-tracker ${cumulativeProfit >= 0 ? 'positive' : 'negative'}`}>
+                                    <span>Session P/L: ${cumulativeProfit.toFixed(2)}</span>
+                                    <span className='threshold stop-loss' title='Stop Loss'>SL: -${stopLossAmount}</span>
+                                    <span className='threshold take-profit' title='Take Profit'>TP: ${takeProfitAmount}</span>
+                                </div>
+                            </>
+                        )}
                         {Object.keys(activeContracts).length > 0 && (
                             <>
                                 <div className='status-separator'></div>
