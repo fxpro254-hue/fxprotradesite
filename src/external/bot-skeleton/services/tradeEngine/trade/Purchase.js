@@ -139,6 +139,25 @@ export default Engine =>
                             try {
                                 console.log('✅ Calling BinaryBotPrivateBeforePurchase() to re-check conditions');
                                 window.BinaryBotPrivateBeforePurchase();
+                                
+                                // After purchase executes, wait for contract completion and run after-purchase logic
+                                // This ensures "Trade Again" blocks and restart conditions work correctly
+                                this.waitForContractCompletion().then(() => {
+                                    console.log('✅ Contract completed - executing after-purchase logic');
+                                    if (window.BinaryBotPrivateAfterPurchase) {
+                                        try {
+                                            const shouldContinue = window.BinaryBotPrivateAfterPurchase();
+                                            if (shouldContinue === false) {
+                                                console.log('⛔ After-purchase returned false - stopping tick trading');
+                                                this.disableTickTrading();
+                                            }
+                                        } catch (error) {
+                                            console.error('❌ Error in after-purchase logic:', error);
+                                        }
+                                    }
+                                }).catch(error => {
+                                    console.error('❌ Error waiting for contract completion:', error);
+                                });
                             } catch (error) {
                                 console.error('❌ Error re-evaluating purchase conditions:', error);
                             }
@@ -189,6 +208,35 @@ export default Engine =>
             }
             this.tickTradeEnabled = false;
             this.tickTradeContract = null;
+        }
+        
+        // Wait for the current contract to complete before continuing
+        async waitForContractCompletion() {
+            return new Promise((resolve) => {
+                if (!this.contractId) {
+                    console.log('⚠️ No active contract to wait for');
+                    resolve();
+                    return;
+                }
+                
+                // Set up a listener for contract completion
+                const checkInterval = setInterval(() => {
+                    const botState = this.store.getState();
+                    // Check if contract is no longer in progress
+                    if (!botState.purchaseInProgress) {
+                        console.log('✅ Contract completed, clearing interval');
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 100); // Check every 100ms
+                
+                // Timeout after 30 seconds to prevent infinite waiting
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    console.log('⏱️ Contract wait timeout - continuing anyway');
+                    resolve();
+                }, 30000);
+            });
         }
         
         // Execute a single trade (extracted from original purchase method)
