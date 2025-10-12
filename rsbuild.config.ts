@@ -66,15 +66,6 @@ export default defineConfig({
             { from: 'node_modules/@deriv/deriv-charts/dist/chart/assets/fonts/*', to: 'assets/fonts/[name][ext]' },
             { from: 'node_modules/@deriv/deriv-charts/dist/chart/assets/shaders/*', to: 'assets/shaders/[name][ext]' },
             { from: path.join(__dirname, 'public') },
-            // Copy dtrader build files
-            { 
-                from: path.join(__dirname, 'dtrader/packages/core/dist'),
-                to: 'dtrader',
-                noErrorOnMissing: true,
-                globOptions: {
-                    ignore: ['**/index.html'], // We'll handle index.html separately
-                },
-            },
         ],
     },
     html: {

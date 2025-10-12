@@ -10,7 +10,6 @@ import Endpoint from '@/pages/endpoint';
 import PWAInstallModal from '@/components/pwa-install-modal/PWAInstallModal'; // Import the new modal
 import { TAuthData } from '@/types/api-types';
 import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
-import { PlatformProvider } from '@/context/PlatformContext';
 import CoreStoreProvider from './CoreStoreProvider';
 import './app-root.scss';
 
@@ -41,14 +40,12 @@ const router = createBrowserRouter(
                     fallback={<ChunkLoader message={localize('Please wait while we connect to the server...')} />}
                 >
                     <TranslationProvider defaultLang='EN' i18nInstance={i18nInstance}>
-                        <PlatformProvider>
-                            <StoreProvider>
-                                <RoutePromptDialog />
-                                <CoreStoreProvider>
-                                    <Layout />
-                                </CoreStoreProvider>
-                            </StoreProvider>
-                        </PlatformProvider>
+                        <StoreProvider>
+                            <RoutePromptDialog />
+                            <CoreStoreProvider>
+                                <Layout />
+                            </CoreStoreProvider>
+                        </StoreProvider>
                     </TranslationProvider>
                 </Suspense>
             }

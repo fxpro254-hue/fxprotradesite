@@ -39,6 +39,7 @@ declare global {
 }
 
 const Chart = lazy(() => import('../chart'));
+const DTrader = lazy(() => import('../dtrader'));
 
 const DashboardIcon = () => (
     <svg width='20' height='20' fill='var(--text-general)' viewBox='0 0 24 24'>
@@ -146,6 +147,37 @@ const BotIcon = () => (
         <circle cx='12' cy='4' r='1' fill='var(--text-general)' />
         <path d='M4 11H2' stroke='var(--text-general)' strokeWidth='1.5' strokeLinecap='round' />
         <path d='M22 11H20' stroke='var(--text-general)' strokeWidth='1.5' strokeLinecap='round' />
+    </svg>
+);
+
+const DTraderIcon = () => (
+    <svg width='20px' height='20px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+        <path
+            d='M3 13L7 9L11 13L17 7L21 11'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        />
+        <path
+            d='M17 7H21V11'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        />
+        <rect
+            x='2'
+            y='17'
+            width='20'
+            height='5'
+            rx='1'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            fill='none'
+        />
+        <path d='M6 19H6.01' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
+        <path d='M10 19H10.01' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
     </svg>
 );
 
@@ -1103,6 +1135,19 @@ const AppWrapper = observer(() => {
                                     </button>
                                 )}
                             </div>
+                        </div>
+                        <div
+                            label={
+                                <>
+                                    <DTraderIcon />
+                                    <Localize i18n_default_text='DTrader' />
+                                </>
+                            }
+                            id='id-dtrader'
+                        >
+                            <Suspense fallback={<ChunkLoader message={localize('Loading DTrader...')} />}>
+                                <DTrader />
+                            </Suspense>
                         </div>
                     </Tabs>
                 </div>

@@ -7,9 +7,7 @@
     },
     "scripts": {
         "start": "rsbuild dev",
-        "build": "npm run build:dtrader && rsbuild build",
-        "build:bot": "rsbuild build",
-        "build:dtrader": "cd dtrader && npm run build:all && cd ..",
+        "build": "rsbuild build",
         "watch": "rsbuild build --watch",
         "serve": "live-server --port=8443 --host=localhost dist",
         "start:webpack": "webpack serve --open --config webpack.config.js",

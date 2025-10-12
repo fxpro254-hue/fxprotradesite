@@ -12,13 +12,10 @@ import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
 import NotificationBanner from '../notification-banner';
-import DTraderContainer from '../dtrader-iframe';
-import { usePlatform } from '@/context/PlatformContext';
 import './layout.scss';
 
 const Layout = () => {
     const { isDesktop } = useDevice();
-    const { currentPlatform } = usePlatform();
 
     const { isOAuth2Enabled } = useOauth2();
 
@@ -97,15 +94,11 @@ const Layout = () => {
         <div className={clsx('layout', { responsive: isDesktop })}>
             {!isCallbackPage && <AppHeader />}
             {!isCallbackPage && <NotificationBanner />}
-            {currentPlatform === 'trader' ? (
-                <DTraderContainer />
-            ) : (
-                <Body>
-                    <Outlet />
-                </Body>
-            )}
-            {!isCallbackPage && currentPlatform === 'bot' && <DisclaimerButton />}
-            {!isCallbackPage && isDesktop && currentPlatform === 'bot' && <Footer />}
+            <Body>
+                <Outlet />
+            </Body>
+            {!isCallbackPage && <DisclaimerButton />}
+            {!isCallbackPage && isDesktop && <Footer />}
         </div>
     );
 };

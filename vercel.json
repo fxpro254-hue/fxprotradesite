@@ -3,14 +3,6 @@
     "buildCommand": "npm run build",
     "rewrites": [
         {
-            "source": "/dtrader",
-            "destination": "/dtrader/index.html"
-        },
-        {
-            "source": "/dtrader/:path*",
-            "destination": "/dtrader/:path*"
-        },
-        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
