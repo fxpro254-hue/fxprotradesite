@@ -72,7 +72,7 @@
     flex-direction: column;
     height: 100%;
     padding: 0;
-    background-color: #ffffff;
+    background-color: var(--general-main-1, #ffffff);
     color: var(--text-general);
     max-height: 100%; /* Ensure content doesn't exceed container */
     overflow: hidden; /* Hide any overflow */
@@ -84,7 +84,7 @@
         align-items: center;
         padding: 16px 24px;
         border-bottom: 1px solid var(--border-normal, #e6e9e9);
-        background-color: var(--general-main-1, #f2f3f4);
+        background-color: var(--general-section-1, #f2f3f4);
         flex-shrink: 0; /* Prevent header from shrinking */
         width: 100%;
         box-sizing: border-box;
@@ -174,7 +174,7 @@
     
     &__note {
         padding: 12px 16px;
-        background-color: rgba(255, 68, 79, 0.08);
+        background-color: var(--general-section-1, rgba(255, 68, 79, 0.08));
         border-left: 4px solid var(--brand-red-coral, #ff444f);
         border-radius: 4px;
         font-size: 13px;
@@ -184,6 +184,7 @@
         box-sizing: border-box;
         width: 100%; /* Ensure full width within container */
         overflow-wrap: break-word; /* Handle long words */
+        color: var(--text-general);
         
         @media (max-width: 480px) {
             padding: 10px 12px;

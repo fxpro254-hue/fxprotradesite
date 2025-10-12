@@ -35,12 +35,12 @@
             position: relative;
             
             &:hover {
-                background: rgba(0, 0, 0, 0.03);
+                background: var(--general-hover, rgba(0, 0, 0, 0.03));
             }
             
             &:active {
                 cursor: grabbing;
-                background: rgba(0, 0, 0, 0.05);
+                background: var(--general-active, rgba(0, 0, 0, 0.05));
             }
             
             &::before {
