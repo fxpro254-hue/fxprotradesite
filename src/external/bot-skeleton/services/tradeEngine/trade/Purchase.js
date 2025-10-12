@@ -1,11 +1,10 @@
 import { LogTypes } from '../../../constants/messages';
 import { api_base } from '../../api/api-base';
 import { contractStatus, info, log } from '../utils/broadcast';
-import { doUntilDone, getUUID, tradeOptionToBuy, tradeCopyOptionToBuy } from '../utils/helpers';
+import { doUntilDone, getUUID, tradeOptionToBuy } from '../utils/helpers';
 import { purchaseSuccessful } from './state/actions';
 import { BEFORE_PURCHASE } from './state/constants';
 
-let delayIndex = 0;
 let purchase_reference;
 
 export default Engine =>
@@ -85,8 +84,15 @@ export default Engine =>
 
             // Handle tick trading mode
             if (trade_each_tick === true || trade_each_tick === 'true') {
-                console.log('Enabling tick trading mode with barriers');
-                return await this.enableTickTrading(contract_type);
+                // If tick trading is already enabled, just execute the trade (called from conditional logic)
+                if (this.tickTradeEnabled) {
+                    console.log('Tick trading already enabled - executing single trade for:', contract_type);
+                    return await this.executeSingleTrade(contract_type);
+                } else {
+                    // First time enabling tick trading - set up the listener
+                    console.log('Enabling tick trading mode for the first time with barriers');
+                    return await this.enableTickTrading(contract_type);
+                }
             } else {
                 console.log('Using normal trading mode with barriers');
                 // Set pending purchase flag to prevent multiple simultaneous purchases
@@ -115,12 +121,23 @@ export default Engine =>
             if (!this.tickTradeListenerKey) {
                 const { ticksService } = this.$scope;
                 
-                const tickCallback = (ticks) => {
+                const tickCallback = () => {
                     console.log('Tick received, tick trading enabled:', this.tickTradeEnabled, 'contract:', this.tickTradeContract);
                     if (this.tickTradeEnabled && this.tickTradeContract) {
-                        console.log('Executing tick trade for contract:', this.tickTradeContract);
-                        // Execute trade on each new tick
-                        this.executeSingleTrade(this.tickTradeContract);
+                        console.log('Re-evaluating purchase conditions on new tick...');
+                        // Re-evaluate conditional logic on each tick by calling BinaryBotPrivateBeforePurchase
+                        // This ensures IF/ELSE conditions are checked every tick
+                        if (window.BinaryBotPrivateBeforePurchase) {
+                            try {
+                                window.BinaryBotPrivateBeforePurchase();
+                            } catch (error) {
+                                console.error('Error re-evaluating purchase conditions:', error);
+                            }
+                        } else {
+                            // Fallback: if no conditional logic, execute directly
+                            console.log('No conditional logic found, executing tick trade directly for contract:', this.tickTradeContract);
+                            this.executeSingleTrade(this.tickTradeContract);
+                        }
                     }
                 };
                 
@@ -426,7 +443,8 @@ export default Engine =>
             });
         }
 
-        handlePurchaseSuccess(response, contract_type, stake) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        handlePurchaseSuccess(response, contract_type, _stake) {
             if (!response || !response.buy) return;
 
             const buy = response.buy;
@@ -444,7 +462,6 @@ export default Engine =>
                 this.renewProposalsOnPurchase();
             }
 
-            delayIndex = 0;
             log(LogTypes.PURCHASE, { longcode: buy.longcode, transaction_id: buy.transaction_id });
             info({
                 accountID: this.accountInfo.loginid,
