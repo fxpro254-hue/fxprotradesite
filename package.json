@@ -21,6 +21,7 @@
         "telegram-server": "node telegram-file-server.js"
     },
     "dependencies": {
+        "@bufbuild/protobuf": "^2.9.0",
         "@datadog/browser-rum": "^5.31.1",
         "@deriv-com/analytics": "^1.5.3",
         "@deriv-com/auth-client": "^1.3.10",
