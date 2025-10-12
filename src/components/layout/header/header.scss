@@ -3702,3 +3702,240 @@ detail-value.negative {
         transform: translateY(0);
     }
 }
+
+// Settings Popup Styles
+.settings-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-out;
+    padding-top: 80px;
+
+    @media (max-width: 768px) {
+        padding-top: 60px;
+        align-items: center;
+    }
+}
+
+.settings-popup {
+    background: var(--general-main-1);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 420px;
+    animation: slideDown 0.3s ease-out;
+    overflow: hidden;
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.6rem 2rem;
+        border-bottom: 1px solid var(--general-section-2);
+        background: var(--general-section-1);
+
+        h3 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--text-prominent);
+        }
+    }
+
+    &__close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        color: var(--text-general);
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: var(--general-section-2);
+            color: var(--text-prominent);
+        }
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+    }
+
+    &__content {
+        padding: 1rem;
+    }
+
+    &__item {
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        padding: 1.4rem 1.6rem;
+        background: var(--general-main-1);
+        border: 1px solid var(--general-section-2);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        width: 100%;
+        text-align: left;
+        margin-bottom: 1rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        &:hover {
+            background: var(--general-section-1);
+            border-color: var(--button-primary);
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+            .settings-popup__item-arrow {
+                transform: translateX(4px);
+            }
+        }
+
+        &:active {
+            transform: translateX(2px);
+        }
+    }
+
+    &__item-icon {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #6b48ff 0%, #5a3dd9 100%);
+        border-radius: 8px;
+        color: white;
+
+        svg {
+            width: 24px;
+            height: 24px;
+
+            path {
+                fill: white;
+            }
+        }
+    }
+
+    &__item-content {
+        flex: 1;
+
+        h4 {
+            margin: 0 0 0.4rem 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-prominent);
+        }
+
+        p {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--text-general);
+            line-height: 1.4;
+        }
+    }
+
+    &__item-arrow {
+        flex-shrink: 0;
+        color: var(--text-general);
+        transition: transform 0.2s ease;
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+    }
+}
+
+// Menu toggle button specific styling
+.app-header__menu-toggle {
+    position: relative;
+
+    &:hover {
+        transform: scale(1.1);
+        
+        svg circle {
+            fill: var(--text-prominent);
+        }
+    }
+
+    svg circle {
+        transition: fill 0.2s ease;
+    }
+}
+
+// Disclaimer toggle button specific styling
+.app-header__disclaimer-toggle {
+    position: relative;
+    color: #ff444f;
+
+    &:hover {
+        transform: scale(1.1);
+        background-color: rgba(255, 68, 79, 0.1);
+        
+        svg circle,
+        svg path {
+            stroke: #ff444f;
+        }
+    }
+
+    svg {
+        circle,
+        path {
+            stroke: #ff444f;
+            transition: stroke 0.2s ease;
+        }
+    }
+
+    // Pulse animation to draw attention
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(255, 68, 79, 0.2);
+        animation: disclaimerPulse 2s ease-in-out infinite;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    @keyframes disclaimerPulse {
+        0%, 100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+    }
+}

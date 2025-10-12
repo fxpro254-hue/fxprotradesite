@@ -19,9 +19,79 @@ import MobileMenu from './mobile-menu';
 import PlatformSwitcher from './platform-switcher';
 import { getAppId } from '@/components/shared';
 import { botNotification } from '@/components/bot-notification/bot-notification';
+import { DisclaimerPopup } from '@/components/disclaimer';
 import './header.scss';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Modal from '@/components/shared_ui/modal'; // Import the modal component
+
+const SettingsPopup = ({ isOpen, onClose, onOpenSettings, onOpenCopyTrading }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className='settings-popup-overlay' onClick={onClose}>
+            <div className='settings-popup' onClick={(e) => e.stopPropagation()}>
+                <div className='settings-popup__header'>
+                    <h3>Quick Settings</h3>
+                    <button className='settings-popup__close' onClick={onClose}>
+                        <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
+                            <path
+                                d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+                                fill='currentColor'
+                            />
+                        </svg>
+                    </button>
+                </div>
+                <div className='settings-popup__content'>
+                    <button className='settings-popup__item' onClick={() => {
+                        onOpenSettings();
+                        onClose();
+                    }}>
+                        <div className='settings-popup__item-icon'>
+                            <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
+                                <path
+                                    d='M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z'
+                                    fill='currentColor'
+                                />
+                            </svg>
+                        </div>
+                        <div className='settings-popup__item-content'>
+                            <h4>Account Settings</h4>
+                            <p>Manage your account details and preferences</p>
+                        </div>
+                        <div className='settings-popup__item-arrow'>
+                            <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+                                <path d='M9 18l6-6-6-6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                            </svg>
+                        </div>
+                    </button>
+                    
+                    <button className='settings-popup__item' onClick={() => {
+                        onOpenCopyTrading();
+                        onClose();
+                    }}>
+                        <div className='settings-popup__item-icon'>
+                            <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
+                                <path
+                                    d='M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z'
+                                    fill='currentColor'
+                                />
+                            </svg>
+                        </div>
+                        <div className='settings-popup__item-content'>
+                            <h4>Copy Trading</h4>
+                            <p>Manage copy trading tokens and settings</p>
+                        </div>
+                        <div className='settings-popup__item-arrow'>
+                            <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+                                <path d='M9 18l6-6-6-6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const InfoIcon = () => {
     const [showModal, setShowModal] = useState(false);
@@ -258,7 +328,9 @@ const AppHeader = observer(() => {
     const { isOAuth2Enabled } = useOauth2();
 
     const [isToggled, setIsToggled] = useState(false);
+    const [isSettingsPopupOpen, setIsSettingsPopupOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false);
     const [isCopyModalOpen, setIsCopyModalOpen] = useState(false); // State for the new copy modal
     const [stake, setStake] = useState('');
     const [martingale, setMartingale] = useState('');
@@ -2900,6 +2972,20 @@ const AppHeader = observer(() => {
         }
     };
 
+    // Disclaimer handlers
+    const handleDisclaimerClose = () => {
+        setIsDisclaimerOpen(false);
+    };
+
+    const handleDisclaimerDontShowAgain = () => {
+        localStorage.setItem('disclaimer_hidden', 'true');
+        setIsDisclaimerOpen(false);
+        botNotification('Disclaimer preference saved. You can always view it again from the header.', undefined, {
+            type: 'success',
+            autoClose: 3000
+        });
+    };
+
     // Since we're now using botNotification, this function just returns null
     // Toast notifications are now handled by react-toastify through botNotification
     const renderNotifications = () => null;
@@ -2916,30 +3002,76 @@ const AppHeader = observer(() => {
             })}
         >
             {renderNotifications()}
+            {isDisclaimerOpen && (
+                <DisclaimerPopup
+                    onClose={handleDisclaimerClose}
+                    onDontShowAgain={handleDisclaimerDontShowAgain}
+                />
+            )}
+            <SettingsPopup 
+                isOpen={isSettingsPopupOpen}
+                onClose={() => setIsSettingsPopupOpen(false)}
+                onOpenSettings={() => setIsModalOpen(true)}
+                onOpenCopyTrading={() => setIsCopyModalOpen(true)}
+            />
             <Wrapper variant='left'>
                 <AppLogo />
                 <MobileMenu />
                 <InfoIcon />
-                <button className='app-header__toggle' onClick={handleToggle} aria-pressed={isToggled}>
-                    <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                        <path
-                            d='M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z'
-                            fill='currentColor'
-                        />
-                    </svg>
-                </button>
+                {/* Mobile: Show menu popup button */}
+                {!isDesktop && (
+                    <Tooltip
+                        as='button'
+                        onClick={() => setIsSettingsPopupOpen(true)}
+                        tooltipContent={localize('Settings Menu')}
+                        tooltipPosition='bottom'
+                        className='app-header__toggle app-header__menu-toggle'
+                    >
+                        <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                            <circle cx='12' cy='5' r='2' fill='currentColor'/>
+                            <circle cx='12' cy='12' r='2' fill='currentColor'/>
+                            <circle cx='12' cy='19' r='2' fill='currentColor'/>
+                        </svg>
+                    </Tooltip>
+                )}
+                {/* Desktop: Show individual buttons */}
+                {isDesktop && (
+                    <>
+                        <button className='app-header__toggle' onClick={handleToggle} aria-pressed={isToggled}>
+                            <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                                <path
+                                    d='M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z'
+                                    fill='currentColor'
+                                />
+                            </svg>
+                        </button>
+                        <Tooltip
+                            as='button'
+                            onClick={() => setIsCopyModalOpen(true)}
+                            tooltipContent={localize('Copy Trading Settings')}
+                            tooltipPosition='bottom'
+                            className='app-header__toggle'
+                        >
+                            <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                                <path
+                                    d='M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z'
+                                    fill='currentColor'
+                                />
+                            </svg>
+                        </Tooltip>
+                    </>
+                )}
+                {/* Disclaimer icon - Always visible at the end */}
                 <Tooltip
                     as='button'
-                    onClick={() => setIsCopyModalOpen(true)} // Update onClick to open the new modal
-                    tooltipContent={localize('Copy Trading Settings')}
+                    onClick={() => setIsDisclaimerOpen(true)}
+                    tooltipContent={localize('Risk Disclaimer')}
                     tooltipPosition='bottom'
-                    className='app-header__toggle' // Add a class for potential styling
+                    className='app-header__toggle app-header__disclaimer-toggle'
                 >
                     <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                        <path
-                            d='M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z'
-                            fill='currentColor'
-                        />
+                        <circle cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='2' fill='none'/>
+                        <path d='M12 8v4M12 16h.01' stroke='currentColor' strokeWidth='2' strokeLinecap='round'/>
                     </svg>
                 </Tooltip>
                 {/*                Uncomment this section if you want to enable SVG mode toggle
