@@ -23,11 +23,11 @@ const DTrader: React.FC = observer(() => {
                 const hostname = window.location.hostname; // localhost or bot.binaryfx.site
                 const port = window.location.port; // Current port
                 
-                // For local dev, use same server (with port). For production, use same domain.
+                // Use official Deriv DTrader for production, local DTrader for development
                 const isLocal = /localhost/i.test(hostname);
                 const baseUrl = isLocal 
                     ? `${protocol}//${hostname}:${port}/dtrader` 
-                    : `${protocol}//${hostname}/dtrader`;
+                    : 'https://app.deriv.com';
 
                 // Get app ID
                 const appId = getAppId();
