@@ -18,11 +18,22 @@ const DTrader: React.FC = observer(() => {
         // Build DTrader URL with authentication
         const buildDTraderUrl = () => {
             try {
+                // Build base URL dynamically
+                const protocol = window.location.protocol; // https: or http:
+                const hostname = window.location.hostname; // localhost or bot.binaryfx.site
+                
+                // For production, use same domain with /dtrader path. For local dev, use port 8443 with /dtrader
+                const isLocal = /localhost/i.test(hostname);
+                const baseUrl = isLocal 
+                    ? `${protocol}//localhost:8443/dtrader` 
+                    : `${protocol}//${hostname}/dtrader`;
+
                 // Get app ID
                 const appId = getAppId();
-                console.log('� Local Dev - App ID:', appId);
-                console.log('🔍 Hostname:', window.location.hostname);
-                console.log('🔍 Is Local:', /localhost(:\d+)?$/i.test(window.location.hostname));
+                console.log('🔍 Environment - App ID:', appId);
+                console.log('🔍 Hostname:', hostname);
+                console.log('🔍 Is Local:', isLocal);
+                console.log('🔍 Base URL:', baseUrl);
 
                 // Get authentication tokens from localStorage
                 const accountsList = localStorage.getItem('accountsList');
@@ -63,7 +74,7 @@ const DTrader: React.FC = observer(() => {
                         params.append('token1', activeAccount.token);
                         params.append('acct1', activeLoginId);
 
-                        const url = `https://localhost:8443/?${params.toString()}`;
+                        const url = `${baseUrl}/?${params.toString()}`;
                         console.log('✅ DTrader URL built with authentication');
                         console.log('🔗 URL:', url.replace(activeAccount.token, 'TOKEN_HIDDEN'));
                         setDtraderUrl(url);
@@ -72,7 +83,7 @@ const DTrader: React.FC = observer(() => {
                 }
 
                 // Fallback: just pass app_id if tokens not available yet
-                const url = `https://localhost:8443/?app_id=${appId}`;
+                const url = `${baseUrl}/?app_id=${appId}`;
                 console.log('⚠️ DTrader URL built WITHOUT authentication (tokens not ready)');
                 console.log('🔗 URL:', url);
                 setDtraderUrl(url);
