@@ -54,29 +54,43 @@ const DTrader: React.FC = observer(() => {
 
                     // Handle both array and object formats
                     let activeAccount;
+                    let accountToken;
+                    
                     if (Array.isArray(accounts)) {
                         activeAccount = accounts.find((acc: any) => acc.loginid === activeLoginId);
+                        accountToken = activeAccount?.token;
                     } else if (typeof accounts === 'object' && accounts !== null) {
-                        // If it's an object, try to get the account directly by loginid key
+                        // If it's an object, the structure might be { loginid: { token: 'xxx', ... } }
                         activeAccount = accounts[activeLoginId];
+                        
+                        // Try different token locations in the object
+                        if (activeAccount) {
+                            accountToken = activeAccount.token || activeAccount.Token || activeAccount.TOKEN;
+                        }
+                        
+                        // If still no token, the object might BE the token string directly
+                        if (!accountToken && typeof activeAccount === 'string') {
+                            accountToken = activeAccount;
+                        }
                     }
 
                     console.log('🔍 Active Account:', activeAccount ? 'Found' : 'Not found');
+                    console.log('🔍 Account Structure:', activeAccount);
                     if (activeAccount) {
-                        console.log('   - Login ID:', activeAccount.loginid);
-                        console.log('   - Has Token:', !!activeAccount.token);
+                        console.log('   - Login ID:', activeAccount.loginid || activeLoginId);
+                        console.log('   - Token Found:', !!accountToken);
                     }
 
-                    if (activeAccount?.token) {
+                    if (accountToken) {
                         // Build URL with authentication parameters
                         const params = new URLSearchParams();
                         params.append('app_id', appId.toString());
-                        params.append('token1', activeAccount.token);
+                        params.append('token1', accountToken);
                         params.append('acct1', activeLoginId);
 
                         const url = `${baseUrl}/?${params.toString()}`;
                         console.log('✅ DTrader URL built with authentication');
-                        console.log('🔗 URL:', url.replace(activeAccount.token, 'TOKEN_HIDDEN'));
+                        console.log('🔗 URL:', url.replace(accountToken, 'TOKEN_HIDDEN'));
                         setDtraderUrl(url);
                         return;
                     }

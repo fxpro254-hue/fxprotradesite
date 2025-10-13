@@ -1,123 +1,222 @@
-# DTrader Iframe Integration
+# DTrader Iframe Integration - FINAL
 
 ## Overview
-DTrader is integrated into the bot using a simple iframe approach. This avoids all the complexity of direct imports, webpack conflicts, and SCSS infrastructure issues.
+DTrader is integrated into the bot using a simple iframe approach with URL-based authentication.
 
-## How It Works
+## Architecture
 
-### 1. **Simple Iframe Embedding**
-- DTrader loads in an iframe at `https://localhost:8443/dtrader`
-- No webpack module conflicts
-- No SCSS preprocessing needed
-- Clean separation between bot and DTrader code
+### URL Structure
+**Local Development:**
+- Bot: `https://localhost:8444/`
+- DTrader: `https://localhost:8443/dtrader`
+- Iframe URL: `https://localhost:8443/dtrader?app_id=36300&token1=TOKEN&acct1=ACCOUNT`
 
-### 2. **Authentication Passing**
-The bot automatically passes authentication to DTrader via URL parameters:
+**Production:**
+- Bot: `https://bot.binaryfx.site/`
+- DTrader: `https://bot.binaryfx.site/dtrader`  
+- Iframe URL: `https://bot.binaryfx.site/dtrader?app_id=68848&token1=TOKEN&acct1=ACCOUNT`
 
-```typescript
-https://localhost:8443/dtrader?app_id=68848&token1=YOUR_TOKEN&acct1=YOUR_ACCOUNT
-```
-
-**Parameters:**
-- `app_id`: Bot's app ID (68848 for production)
-- `token1`: User's authentication token from localStorage
-- `acct1`: Active account login ID
-
-### 3. **Automatic Authentication Flow**
-1. Bot authenticates with Deriv API
-2. Tokens stored in localStorage
-3. DTrader component reads tokens
-4. Builds iframe URL with authentication parameters
-5. DTrader iframe loads and auto-authenticates
+### How It Works
+1. Bot detects environment (localhost vs production)
+2. Builds appropriate DTrader URL with authentication parameters
+3. Passes `app_id`, `token1`, and `acct1` via query string
+4. DTrader iframe loads and auto-authenticates with provided tokens
 
 ## File Structure
 
 ### Main Files
-- **`src/pages/dtrader.tsx`** - DTrader iframe component
-- **`src/pages/dtrader.scss`** - Iframe container styling
-- **`dtrader/packages/core/build/webpack.config.js`** - DTrader webpack config (port 8443)
+- **`src/pages/dtrader.tsx`** - DTrader iframe component (~120 lines)
+- **`src/pages/dtrader.scss`** - Iframe container styling  
+- **`dtrader/packages/core/build/webpack.config.js`** - DTrader webpack config
+- **`dtrader/packages/core/src/index.tsx`** - DTrader entry with debug logs
+- **`dtrader/packages/core/src/App/initStore.js`** - Store initialization with logs
+- **`dtrader/packages/core/src/Stores/client-store.js`** - Authentication with logs
 
 ### Key Code
-```tsx
-// src/pages/dtrader.tsx
-const DTrader: React.FC = observer(() => {
-    // Builds URL with authentication
-    const url = `https://localhost:8443/dtrader?app_id=${appId}&token1=${token}&acct1=${accountId}`;
+
+**Bot - Dynamic URL Building (`src/pages/dtrader.tsx`):**
+```typescript
+// Automatically detects environment
+const protocol = window.location.protocol;
+const hostname = window.location.hostname;
+const isLocal = /localhost/i.test(hostname);
+
+// Builds appropriate URL
+const baseUrl = isLocal 
+    ? `${protocol}//localhost:8443/dtrader`     // Local: specific port + path
+    : `${protocol}//${hostname}/dtrader`;        // Production: same domain + path
+
+// Add authentication parameters
+const params = new URLSearchParams();
+params.append('app_id', appId);
+params.append('token1', activeAccount.token);
+params.append('acct1', activeLoginId);
+
+const url = `${baseUrl}?${params.toString()}`;
+```
+
+**DTrader - Webpack Config (`dtrader/packages/core/build/webpack.config.js`):**
+```javascript
+module.exports = function (env) {
+    const base = '/dtrader/';  // Serve from /dtrader path
     
-    return (
-        <iframe
-            src={url}
-            sandbox='allow-same-origin allow-scripts allow-popups allow-forms allow-downloads allow-modals'
-            allow='clipboard-read; clipboard-write; payment; usb'
-        />
-    );
-});
+    return {
+        devServer: {
+            port: 8443,
+            server: 'https',
+            historyApiFallback: true,
+        },
+        output: {
+            publicPath: base,  // All assets load from /dtrader/
+        },
+    };
+};
 ```
 
 ## Running DTrader
 
-### Port Configuration
-- **Bot**: Automatically uses port 8444 (8443 if available)
-- **DTrader**: Port 8443
-- **Iframe**: Points from bot (8444) to DTrader (8443)
+### Development Setup
 
-### Commands
-
-**Terminal 1 - DTrader (MUST START FIRST):**
+**Step 1 - Start DTrader (Terminal 1):**
 ```powershell
 npm run dtrader:serve:core
 ```
-This will start DTrader on port 8443.
+This starts DTrader on `https://localhost:8443/dtrader`
 
-**Terminal 2 - Bot:**
+**Step 2 - Start Bot (Terminal 2):**
 ```powershell
-npm start
+npm start  
 ```
-This will start the bot on port 8444 (since 8443 is taken by DTrader).
+Bot automatically uses port 8444 (since 8443 is taken)
 
-**Important:** Start DTrader first, then start the bot. This ensures DTrader gets port 8443 and the bot automatically uses 8444.
+**Step 3 - Access:**
+- Open browser to: `https://localhost:8444/`
+- Log in to bot
+- Click "DTrader" tab
+- DTrader loads in iframe with authentication
+
+### Important Notes
+1. **Start DTrader FIRST** - It needs port 8443
+2. **Bot auto-switches** to port 8444
+3. **Accept SSL warnings** for both (self-signed certs in dev)
+
+## Debug Logs
+
+### Bot Console (`https://localhost:8444/`)
+```
+🔍 Environment - App ID: 36300
+🔍 Hostname: localhost
+🔍 Is Local: true
+🔍 Base URL: https://localhost:8443/dtrader
+🔍 Accounts List: Found
+🔍 Active Login ID: CR4071525
+🔍 Parsed Accounts: Array with 1 items
+🔍 Active Account: Found
+   - Login ID: CR4071525
+   - Has Token: true
+✅ DTrader URL built with authentication
+🔗 URL: https://localhost:8443/dtrader?app_id=36300&token1=TOKEN_HIDDEN&acct1=CR4071525
+```
+
+### DTrader Iframe Console (`https://localhost:8443/dtrader`)
+```
+🎯 DTrader Init - URL Parameters:
+   - app_id: 36300
+   - token1: PRESENT
+   - acct1: CR4071525
+   - Full URL: https://localhost:8443/dtrader?app_id=36300&token1=...&acct1=CR4071525
+✅ DTrader mounting to DOM...
+
+🏪 initStore - Starting initialization
+   - Accounts passed: NO
+   - URL params: [["app_id","36300"],["token1","..."],["acct1","CR4071525"]]
+🏗️ Creating RootStore...
+👤 Initializing client store...
+
+🔐 client-store.init() - Starting authentication...
+   - Search params: ?app_id=36300&token1=...&acct1=CR4071525
+   - app_id: 36300
+   - token1: PRESENT
+   - acct1: CR4071525
+   - One-time token from URL: PRESENT
+   - Existing session token: MISSING
+
+🔑 Authenticating with token from URL...
+📞 Exchanging one-time token for session token...
+✅ Session token received, storing...
+📞 Authorizing with session token...
+✅ Authorization successful!
+   - Login ID: CR4071525
+   - Currency: USD
+   - Balance: 10000.00
+```
 
 ## Benefits
 
-✅ **No Import Complexity** - No direct imports, no module resolution issues
-✅ **No SCSS Infrastructure** - No need for shared SCSS, no preprocessing
+✅ **Environment-Aware** - Works in both local and production
+✅ **No Import Complexity** - No module resolution, no SCSS infrastructure
 ✅ **No Webpack Conflicts** - Completely isolated builds
+✅ **Path Separation** - Bot: `/`, DTrader: `/dtrader` (no conflicts)
 ✅ **Shared Authentication** - Tokens passed via URL
-✅ **Same Origin** - Both on localhost:8443, no CORS issues
-✅ **Easy Maintenance** - Simple iframe, easy to debug
+✅ **Easy Debugging** - Comprehensive console logs at every step
+✅ **Production Ready** - Same code works locally and in production
 
-## Authentication Security
+## Production Deployment
 
-- Tokens passed via HTTPS URL parameters
-- Iframe sandbox restricts capabilities
-- Same origin policy applies
-- Tokens only passed on localhost (development)
-- Production would use proper token exchange mechanism
+### Requirements
+1. Both bot and DTrader must be on same domain
+2. Configure reverse proxy or routing:
+   - `/` → Bot application
+   - `/dtrader` → DTrader application
+3. Ensure HTTPS is configured properly
+4. Both services must be running
+
+### Nginx Example
+```nginx
+server {
+    listen 443 ssl;
+    server_name bot.binaryfx.site;
+
+    # Bot (root path)
+    location / {
+        proxy_pass http://bot-service:8444;
+    }
+
+    # DTrader (sub path)
+    location /dtrader {
+        proxy_pass http://dtrader-service:8443;
+    }
+}
+```
 
 ## Troubleshooting
 
 ### DTrader Not Loading
-1. Check if DTrader is running: `npm run dtrader:serve:core`
-2. Verify it's on port 8443
-3. Check console for authentication errors
-4. Ensure bot is authenticated before switching to DTrader tab
+1. Check both servers are running
+2. Verify DTrader on: `https://localhost:8443/dtrader`
+3. Check browser console for errors
+4. Ensure SSL certificate accepted for both
 
-### Authentication Not Working
-1. Check localStorage for `accountsList` and `active_loginid`
-2. Verify bot is authenticated (`api_base.is_authorized`)
-3. Check console logs for URL being built
-4. Verify tokens are being passed in URL
+### Authentication Not Working  
+1. Check bot console logs for token presence
+2. Verify `accountsList` in localStorage
+3. Check DTrader console for authentication flow
+4. Ensure tokens are being passed in URL
+
+### 404 Errors
+1. Verify DTrader webpack is using `/dtrader/` base path
+2. Check if DTrader server is running on correct port
+3. Ensure bot iframe URL includes `/dtrader` path
 
 ### Port Conflicts
-If you need to run on different ports:
-1. Change bot port in `rsbuild.config.ts` (port: 8443)
-2. Change DTrader port in `dtrader/packages/core/build/webpack.config.js` (port: 8443)
-3. Update iframe URL in `src/pages/dtrader.tsx`
+1. Kill all node processes: `Get-Process node | Stop-Process -Force`
+2. Start DTrader first (port 8443)
+3. Then start bot (auto-switches to 8444)
 
 ## Future Enhancements
 
 - [ ] PostMessage API for better iframe communication
-- [ ] Hide DTrader header via CSS injection or PostMessage
+- [ ] Hide/customize DTrader header via CSS or PostMessage
 - [ ] Sync state between bot and DTrader
 - [ ] Error recovery and retry mechanisms
-- [ ] Production deployment with proper authentication
+- [ ] Remove debug logs in production build
