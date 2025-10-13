@@ -13,186 +13,21 @@
     width: 100%;
     height: 100%;
     border: none;
-    transition: opacity 0.3s ease-in-out;
-    opacity: 1;
-    margin-top: -60px; // Offset to hide header area
-    height: calc(100% + 60px); // Extend height to compensate
-
-    &--hidden {
-        opacity: 0;
-        pointer-events: none;
-        position: absolute;
-    }
+    background-color: #fff;
 }
 
-// Loading State
-.dtrader-loading {
+.dtrader-waiting {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    padding: 40px;
-}
-
-.dtrader-spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid var(--general-section-3);
-    border-top-color: var(--brand-red-coral);
-    border-radius: 50%;
-    animation: dtrader-spin 0.8s linear infinite;
-}
-
-@keyframes dtrader-spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.dtrader-loading-text {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-prominent);
-    margin: 0;
-}
-
-.dtrader-loading-subtext {
-    font-size: 14px;
-    color: var(--text-less-prominent);
-    margin: 0;
-    font-family: 'IBM Plex Mono', monospace;
-}
-
-// Error State
-.dtrader-error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    padding: 40px;
-    max-width: 600px;
-    text-align: center;
-}
-
-.dtrader-error-icon {
-    font-size: 64px;
-}
-
-.dtrader-error-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text-prominent);
-    margin: 0;
-}
-
-.dtrader-error-message {
-    font-size: 16px;
     color: var(--text-general);
-    margin: 0;
-    line-height: 1.5;
-}
-
-.dtrader-error-instructions {
-    background-color: var(--general-section-1);
-    border: 1px solid var(--general-section-3);
-    border-radius: 8px;
-    padding: 24px;
-    text-align: left;
-    width: 100%;
-    margin-top: 8px;
-
-    h3 {
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--text-prominent);
-        margin: 0 0 16px 0;
-    }
-
-    ol {
-        margin: 0;
-        padding-left: 20px;
-        
-        li {
-            font-size: 14px;
-            color: var(--text-general);
-            margin-bottom: 8px;
-            line-height: 1.6;
-
-            &:last-child {
-                margin-bottom: 0;
-            }
-
-            code {
-                background-color: var(--general-section-3);
-                padding: 2px 8px;
-                border-radius: 4px;
-                font-family: 'IBM Plex Mono', monospace;
-                font-size: 13px;
-                color: var(--brand-red-coral);
-            }
-        }
-    }
-}
-
-.dtrader-retry-button {
-    background: linear-gradient(135deg, var(--brand-red-coral) 0%, var(--brand-red-coral-hover) 100%);
-    color: var(--text-colored-background);
-    border: none;
-    padding: 12px 32px;
-    font-size: 16px;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-top: 8px;
-
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 68, 79, 0.3);
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
+    font-size: 14px;
+    opacity: 0.7;
 }
 
 // Responsive Design
 @media (max-width: 768px) {
     .dtrader-container {
         height: calc(100vh - 100px);
-    }
-
-    .dtrader-loading-text {
-        font-size: 16px;
-    }
-
-    .dtrader-error-title {
-        font-size: 20px;
-    }
-
-    .dtrader-error-message {
-        font-size: 14px;
-    }
-
-    .dtrader-error-instructions {
-        padding: 16px;
-
-        h3 {
-            font-size: 14px;
-        }
-
-        ol li {
-            font-size: 13px;
-        }
-    }
-}
-
-// Dark mode specific adjustments
-[data-theme='dark'] {
-    .dtrader-error-instructions {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
     }
 }

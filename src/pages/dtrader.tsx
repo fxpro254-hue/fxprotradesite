@@ -1,147 +1,117 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { api_base } from '@/external/bot-skeleton';
+import { getAppId } from '@/components/shared/utils/config';
 import './dtrader.scss';
 
 /**
- * DTrader Component
+ * DTrader Component - Simple Iframe Integration
  * 
- * This component integrates the Deriv Trader (DTrader) interface into the bot application.
- * It embeds the DTrader webpack dev server running on https://localhost:8443/
- * 
- * Features:
- * - Full-screen iframe embedding
- * - Loading state with spinner
- * - Error handling for connection issues
- * - Responsive design
- * - Seamless integration with bot layout
+ * Embeds DTrader via iframe with bot's authentication passed through URL parameters.
+ * The iframe handles its own loading state - no need for page loaders.
  */
 
-interface DTraderProps {
-    /** Optional custom URL for DTrader instance */
-    url?: string;
-}
-
-const DTrader: React.FC<DTraderProps> = observer(({ url = 'https://localhost:8443/' }) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasError, setHasError] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
-    const iframeRef = useRef<HTMLIFrameElement>(null);
+const DTrader: React.FC = observer(() => {
+    const [dtraderUrl, setDtraderUrl] = useState<string>('');
 
     useEffect(() => {
-        // Reset states when URL changes
-        setIsLoading(true);
-        setHasError(false);
-        setErrorMessage('');
+        // Build DTrader URL with authentication
+        const buildDTraderUrl = () => {
+            try {
+                // Get app ID
+                const appId = getAppId();
+                console.log('� Local Dev - App ID:', appId);
+                console.log('🔍 Hostname:', window.location.hostname);
+                console.log('🔍 Is Local:', /localhost(:\d+)?$/i.test(window.location.hostname));
 
-        // Set timeout to detect loading issues
-        const timeout = setTimeout(() => {
-            if (isLoading) {
-                setHasError(true);
-                setErrorMessage(
-                    'DTrader is taking longer than expected to load. Please ensure the DTrader dev server is running on https://localhost:8443/'
-                );
-                setIsLoading(false);
-            }
-        }, 15000); // 15 second timeout
+                // Get authentication tokens from localStorage
+                const accountsList = localStorage.getItem('accountsList');
+                const activeLoginId = localStorage.getItem('active_loginid');
 
-        return () => clearTimeout(timeout);
-    }, [url, isLoading]);
+                console.log('🔍 Accounts List:', accountsList ? 'Found' : 'Not found');
+                console.log('🔍 Active Login ID:', activeLoginId);
 
-    const handleIframeLoad = () => {
-        setIsLoading(false);
-        setHasError(false);
-        
-        // Hide DTrader header after iframe loads
-        try {
-            const iframe = iframeRef.current;
-            if (iframe && iframe.contentWindow) {
-                // Add CSS to hide the header
-                const style = iframe.contentWindow.document.createElement('style');
-                style.textContent = `
-                    header, 
-                    .header,
-                    [class*="header"],
-                    [id*="header"],
-                    .account-switcher-wrapper,
-                    .traders-hub-header {
-                        display: none !important;
-                        height: 0 !important;
-                        overflow: hidden !important;
+                if (accountsList && activeLoginId) {
+                    let accounts;
+                    try {
+                        accounts = JSON.parse(accountsList);
+                        console.log('🔍 Parsed Accounts:', Array.isArray(accounts) ? `Array with ${accounts.length} items` : typeof accounts);
+                    } catch (parseError) {
+                        console.error('❌ Failed to parse accountsList:', parseError);
+                        throw parseError;
                     }
-                    body, #root, .app {
-                        padding-top: 0 !important;
-                        margin-top: 0 !important;
+
+                    // Handle both array and object formats
+                    let activeAccount;
+                    if (Array.isArray(accounts)) {
+                        activeAccount = accounts.find((acc: any) => acc.loginid === activeLoginId);
+                    } else if (typeof accounts === 'object' && accounts !== null) {
+                        // If it's an object, try to get the account directly by loginid key
+                        activeAccount = accounts[activeLoginId];
                     }
-                `;
-                iframe.contentWindow.document.head.appendChild(style);
+
+                    console.log('🔍 Active Account:', activeAccount ? 'Found' : 'Not found');
+                    if (activeAccount) {
+                        console.log('   - Login ID:', activeAccount.loginid);
+                        console.log('   - Has Token:', !!activeAccount.token);
+                    }
+
+                    if (activeAccount?.token) {
+                        // Build URL with authentication parameters
+                        const params = new URLSearchParams();
+                        params.append('app_id', appId.toString());
+                        params.append('token1', activeAccount.token);
+                        params.append('acct1', activeLoginId);
+
+                        const url = `https://localhost:8443/?${params.toString()}`;
+                        console.log('✅ DTrader URL built with authentication');
+                        console.log('🔗 URL:', url.replace(activeAccount.token, 'TOKEN_HIDDEN'));
+                        setDtraderUrl(url);
+                        return;
+                    }
+                }
+
+                // Fallback: just pass app_id if tokens not available yet
+                const url = `https://localhost:8443/?app_id=${appId}`;
+                console.log('⚠️ DTrader URL built WITHOUT authentication (tokens not ready)');
+                console.log('🔗 URL:', url);
+                setDtraderUrl(url);
+            } catch (error) {
+                console.error('❌ Error building DTrader URL:', error);
             }
-        } catch (error) {
-            // CORS might prevent access to iframe content
-            console.log('Unable to modify iframe content (CORS):', error);
-        }
-    };
+        };
 
-    const handleIframeError = () => {
-        setIsLoading(false);
-        setHasError(true);
-        setErrorMessage(
-            'Failed to load DTrader. Please ensure the DTrader dev server is running. Run: npm run dtrader:serve:trader'
-        );
-    };
+        // Build URL when authenticated
+        if (api_base?.is_authorized) {
+            buildDTraderUrl();
+        } else {
+            // Wait for authentication
+            const interval = setInterval(() => {
+                if (api_base?.is_authorized) {
+                    buildDTraderUrl();
+                    clearInterval(interval);
+                }
+            }, 500);
 
-    const handleRetry = () => {
-        setIsLoading(true);
-        setHasError(false);
-        setErrorMessage('');
-        // Force iframe reload by updating key
-        if (iframeRef.current) {
-            iframeRef.current.src = iframeRef.current.src;
+            return () => clearInterval(interval);
         }
-    };
+    }, [api_base?.is_authorized]);
 
     return (
         <div className='dtrader-container'>
-            {isLoading && !hasError && (
-                <div className='dtrader-loading'>
-                    <div className='dtrader-spinner' />
-                    <p className='dtrader-loading-text'>Loading DTrader...</p>
-                    <p className='dtrader-loading-subtext'>
-                        Connecting to https://localhost:8443/
-                    </p>
+            {dtraderUrl ? (
+                <iframe
+                    src={dtraderUrl}
+                    className='dtrader-iframe'
+                    title='DTrader'
+                    sandbox='allow-same-origin allow-scripts allow-popups allow-forms allow-downloads allow-modals'
+                    allow='clipboard-read; clipboard-write; payment; usb'
+                />
+            ) : (
+                <div className='dtrader-waiting'>
+                    <p>Waiting for authentication...</p>
                 </div>
             )}
-
-            {hasError && (
-                <div className='dtrader-error'>
-                    <div className='dtrader-error-icon'>⚠️</div>
-                    <h2 className='dtrader-error-title'>Unable to Load DTrader</h2>
-                    <p className='dtrader-error-message'>{errorMessage}</p>
-                    <div className='dtrader-error-instructions'>
-                        <h3>How to start DTrader:</h3>
-                        <ol>
-                            <li>Open a terminal in the project directory</li>
-                            <li>Run: <code>npm run dtrader:serve:trader</code></li>
-                            <li>Wait for the server to start on https://localhost:8443/</li>
-                            <li>Click the retry button below</li>
-                        </ol>
-                    </div>
-                    <button className='dtrader-retry-button' onClick={handleRetry}>
-                        Retry Connection
-                    </button>
-                </div>
-            )}
-
-            <iframe
-                ref={iframeRef}
-                src={url}
-                className={`dtrader-iframe ${isLoading || hasError ? 'dtrader-iframe--hidden' : ''}`}
-                title='Deriv Trader'
-                onLoad={handleIframeLoad}
-                onError={handleIframeError}
-                allow='accelerometer; autoplay; camera; clipboard-read; clipboard-write; encrypted-media; fullscreen; geolocation; gyroscope; magnetometer; microphone; midi; payment; picture-in-picture; publickey-credentials-get; usb; xr-spatial-tracking'
-                sandbox='allow-downloads allow-forms allow-modals allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-storage-access-by-user-activation'
-                loading='eager'
-            />
         </div>
     );
 });
