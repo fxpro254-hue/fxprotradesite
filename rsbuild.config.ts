@@ -4,6 +4,11 @@ import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginBasicSsl } from '@rsbuild/plugin-basic-ssl';
 
 const path = require('path');
+const fs = require('fs');
+
+// Check if DTrader build exists
+const dtraderDistPath = path.join(__dirname, 'dtrader/packages/core/dist');
+const hasDTraderBuild = fs.existsSync(dtraderDistPath);
 
 export default defineConfig({
     plugins: [
@@ -66,8 +71,8 @@ export default defineConfig({
             { from: 'node_modules/@deriv/deriv-charts/dist/chart/assets/fonts/*', to: 'assets/fonts/[name][ext]' },
             { from: 'node_modules/@deriv/deriv-charts/dist/chart/assets/shaders/*', to: 'assets/shaders/[name][ext]' },
             { from: path.join(__dirname, 'public') },
-            // Copy DTrader build files to /dtrader path
-            { from: path.join(__dirname, 'dtrader/packages/core/dist'), to: 'dtrader' },
+            // Copy DTrader build files to /dtrader path (only if built)
+            ...(hasDTraderBuild ? [{ from: dtraderDistPath, to: 'dtrader' }] : []),
         ],
     },
     html: {
@@ -76,14 +81,14 @@ export default defineConfig({
     server: {
         port: 8443,
         compress: true,
-        historyApiFallback: {
+        historyApiFallback: hasDTraderBuild ? {
             rewrites: [
                 // Serve DTrader's index.html for /dtrader routes
                 { from: /^\/dtrader/, to: '/dtrader/index.html' },
                 // Default fallback for bot routes
                 { from: /./, to: '/index.html' },
             ],
-        },
+        } : true,
     },
     dev: {
         hmr: true,
