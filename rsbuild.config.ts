@@ -66,6 +66,8 @@ export default defineConfig({
             { from: 'node_modules/@deriv/deriv-charts/dist/chart/assets/fonts/*', to: 'assets/fonts/[name][ext]' },
             { from: 'node_modules/@deriv/deriv-charts/dist/chart/assets/shaders/*', to: 'assets/shaders/[name][ext]' },
             { from: path.join(__dirname, 'public') },
+            // Copy DTrader build files to /dtrader path
+            { from: path.join(__dirname, 'dtrader/packages/core/dist'), to: 'dtrader' },
         ],
     },
     html: {
@@ -74,6 +76,14 @@ export default defineConfig({
     server: {
         port: 8443,
         compress: true,
+        historyApiFallback: {
+            rewrites: [
+                // Serve DTrader's index.html for /dtrader routes
+                { from: /^\/dtrader/, to: '/dtrader/index.html' },
+                // Default fallback for bot routes
+                { from: /./, to: '/index.html' },
+            ],
+        },
     },
     dev: {
         hmr: true,

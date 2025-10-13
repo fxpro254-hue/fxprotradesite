@@ -21,11 +21,12 @@ const DTrader: React.FC = observer(() => {
                 // Build base URL dynamically
                 const protocol = window.location.protocol; // https: or http:
                 const hostname = window.location.hostname; // localhost or bot.binaryfx.site
+                const port = window.location.port; // Current port
                 
-                // For production, use same domain with /dtrader path. For local dev, use port 8443 with /dtrader
+                // For local dev, use same server (with port). For production, use same domain.
                 const isLocal = /localhost/i.test(hostname);
                 const baseUrl = isLocal 
-                    ? `${protocol}//localhost:8443/dtrader` 
+                    ? `${protocol}//${hostname}:${port}/dtrader` 
                     : `${protocol}//${hostname}/dtrader`;
 
                 // Get app ID
