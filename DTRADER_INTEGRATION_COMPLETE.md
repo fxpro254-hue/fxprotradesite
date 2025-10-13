@@ -258,6 +258,31 @@ Test-Path "dtrader/packages/core/dist/index.html"
 Test-Path "dist/dtrader/index.html"
 ```
 
+### Issue: Build fails with "unable to locate dtrader/packages/core/dist"
+
+**Cause**: DTrader not built yet (normal for first deployment)
+
+**Solution**: The bot now handles this automatically! The config checks if DTrader is built:
+- ✅ If DTrader is built: Includes it in the deployment
+- ✅ If DTrader is NOT built: Skips it (bot still works without DTrader)
+
+To add DTrader to production:
+```powershell
+npm run dtrader:build  # Build DTrader locally
+npm run build          # Build bot with DTrader included
+```
+
+### Issue: Build fails with "Multiple assets emit different content to the same filename"
+
+**Cause**: DTrader's smartcharts conflicts with bot's smartcharts
+
+**Solution**: Already fixed! The config now excludes DTrader's smartcharts folder:
+```typescript
+globOptions: {
+    ignore: ['**/js/smartcharts/**'],
+}
+```
+
 ### Issue: DTrader styles not loading
 
 **Cause**: Webpack publicPath mismatch
