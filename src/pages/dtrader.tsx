@@ -13,9 +13,11 @@ import './dtrader.scss';
 
 const DTrader: React.FC = observer(() => {
     const [dtraderUrl, setDtraderUrl] = useState<string>('');
+    const [urlKey, setUrlKey] = useState<number>(0);
+    const [currentAccount, setCurrentAccount] = useState<string>('')
 
     useEffect(() => {
-        // Build DTrader URL with authentication
+        // Build DTrader URL with fresh authentication parameters on each load
         const buildDTraderUrl = () => {
             try {
                 // Build base URL dynamically
@@ -38,6 +40,12 @@ const DTrader: React.FC = observer(() => {
 
                 console.log('🔍 Accounts List:', accountsList ? 'Found' : 'Not found');
                 console.log('🔍 Active Login ID:', activeLoginId);
+
+                // Check if account changed and update state
+                if (activeLoginId && activeLoginId !== currentAccount) {
+                    console.log('🔄 Account changed from', currentAccount, 'to', activeLoginId);
+                    setCurrentAccount(activeLoginId);
+                }
 
                 if (accountsList && activeLoginId) {
                     let accounts;
@@ -89,6 +97,8 @@ const DTrader: React.FC = observer(() => {
                         console.log('✅ DTrader URL built with authentication');
                         console.log('🔗 URL:', url.replace(accountToken, 'TOKEN_HIDDEN'));
                         setDtraderUrl(url);
+                        // Force iframe reload with new URL by updating key
+                        setUrlKey(prev => prev + 1);
                         return;
                     }
                 }
@@ -98,31 +108,48 @@ const DTrader: React.FC = observer(() => {
                 console.log('⚠️ DTrader URL built WITHOUT authentication (tokens not ready)');
                 console.log('🔗 URL:', url);
                 setDtraderUrl(url);
+                setUrlKey(prev => prev + 1);
             } catch (error) {
                 console.error('❌ Error building DTrader URL:', error);
             }
         };
 
-        // Build URL when authenticated
-        if (api_base?.is_authorized) {
-            buildDTraderUrl();
-        } else {
+        // Rebuild URL on every component mount (tab activation)
+        buildDTraderUrl();
+
+        // Set up interval to check for account changes
+        const accountCheckInterval = setInterval(() => {
+            const activeLoginId = localStorage.getItem('active_loginid');
+            if (activeLoginId && activeLoginId !== currentAccount) {
+                console.log('🔄 Account change detected, rebuilding DTrader URL');
+                buildDTraderUrl();
+            }
+        }, 1000); // Check every second
+
+        // Also rebuild when authentication state changes
+        if (!api_base?.is_authorized) {
             // Wait for authentication
-            const interval = setInterval(() => {
+            const authInterval = setInterval(() => {
                 if (api_base?.is_authorized) {
                     buildDTraderUrl();
-                    clearInterval(interval);
+                    clearInterval(authInterval);
                 }
             }, 500);
 
-            return () => clearInterval(interval);
+            return () => {
+                clearInterval(authInterval);
+                clearInterval(accountCheckInterval);
+            };
         }
-    }, [api_base?.is_authorized]);
+
+        return () => clearInterval(accountCheckInterval);
+    }, []); // Empty dependency array - runs on every mount
 
     return (
         <div className='dtrader-container'>
             {dtraderUrl ? (
                 <iframe
+                    key={urlKey}
                     src={dtraderUrl}
                     className='dtrader-iframe'
                     title='DTrader'
