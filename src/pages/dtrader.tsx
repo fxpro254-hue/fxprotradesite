@@ -114,10 +114,11 @@ const DTrader: React.FC = observer(() => {
             }
         };
 
-        // Rebuild URL on every component mount (tab activation)
+        // Build URL immediately on component mount (handles tab activation AND page refresh)
+        console.log('🔄 DTrader component mounted - building URL');
         buildDTraderUrl();
 
-        // Set up interval to check for account changes
+        // Set up interval to check for account changes during runtime
         const accountCheckInterval = setInterval(() => {
             const activeLoginId = localStorage.getItem('active_loginid');
             if (activeLoginId && activeLoginId !== currentAccount) {
