@@ -36,12 +36,6 @@ const DTrader: React.FC = observer(() => {
                 console.log('🔍 Accounts List:', accountsList ? 'Found' : 'Not found');
                 console.log('🔍 Active Login ID:', activeLoginId);
 
-                // Check if account changed and update state
-                if (activeLoginId && activeLoginId !== currentAccount) {
-                    console.log('🔄 Account changed from', currentAccount, 'to', activeLoginId);
-                    setCurrentAccount(activeLoginId);
-                }
-
                 if (accountsList && activeLoginId) {
                     let accounts;
                     try {
@@ -96,8 +90,13 @@ const DTrader: React.FC = observer(() => {
                             console.log('🔗 URL:', url.replace(accountToken, 'TOKEN_HIDDEN'));
                             setPreviousUrl(url);
                             setDtraderUrl(url);
-                            // Force iframe reload with new URL by updating key
                             setUrlKey(prev => prev + 1);
+                            
+                            // Update current account after URL is set
+                            if (activeLoginId !== currentAccount) {
+                                console.log('🔄 Account tracked:', activeLoginId);
+                                setCurrentAccount(activeLoginId);
+                            }
                         }
                         return;
                     }
@@ -126,11 +125,12 @@ const DTrader: React.FC = observer(() => {
         // Set up interval to check for account changes during runtime
         const accountCheckInterval = setInterval(() => {
             const activeLoginId = localStorage.getItem('active_loginid');
+            // Only rebuild if account actually changed
             if (activeLoginId && activeLoginId !== currentAccount) {
-                console.log('🔄 Account change detected, rebuilding DTrader URL');
+                console.log('🔄 Account change detected in interval:', currentAccount, '->', activeLoginId);
                 buildDTraderUrl();
             }
-        }, 1000); // Check every second
+        }, 2000); // Check every 2 seconds (less frequent)
 
         // Also rebuild when authentication state changes
         if (!api_base?.is_authorized) {
