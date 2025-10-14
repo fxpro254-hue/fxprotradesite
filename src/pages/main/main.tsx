@@ -647,6 +647,19 @@ const AppWrapper = observer(() => {
                         <div
                             label={
                                 <>
+                                    <DTraderIcon />
+                                    <Localize i18n_default_text='DTrader' />
+                                </>
+                            }
+                            id='id-dtrader'
+                        >
+                            <Suspense fallback={<ChunkLoader message={localize('Loading DTrader...')} />}>
+                                <DTrader />
+                            </Suspense>
+                        </div>
+                        <div
+                            label={
+                                <>
                                     <ChartsIcon />
                                     <Localize i18n_default_text='Smart trading' />
                                 </>
@@ -1135,19 +1148,6 @@ const AppWrapper = observer(() => {
                                     </button>
                                 )}
                             </div>
-                        </div>
-                        <div
-                            label={
-                                <>
-                                    <DTraderIcon />
-                                    <Localize i18n_default_text='DTrader' />
-                                </>
-                            }
-                            id='id-dtrader'
-                        >
-                            <Suspense fallback={<ChunkLoader message={localize('Loading DTrader...')} />}>
-                                <DTrader />
-                            </Suspense>
                         </div>
                     </Tabs>
                 </div>
