@@ -1154,7 +1154,7 @@ const AppWrapper = observer(() => {
             </div>
             <DesktopWrapper>
                 <div className='main__run-strategy-wrapper'>
-                    <RunStrategy />
+                    {active_tab !== DBOT_TABS.DTRADER && <RunStrategy />}
                     {showRunPanel && <RunPanel />}
                 </div>
                 <ChartModal />
