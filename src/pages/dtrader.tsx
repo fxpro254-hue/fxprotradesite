@@ -14,6 +14,36 @@ import './dtrader.scss';
 const DTrader: React.FC = observer(() => {
     const [dtraderUrl, setDtraderUrl] = useState<string>('');
     const hasBuiltUrl = React.useRef(false);
+    const localStorageBackup = React.useRef<{[key: string]: string | null}>({});
+
+    useEffect(() => {
+        // Backup critical localStorage items before loading DTrader
+        const backupKeys = ['accountsList', 'active_loginid', 'authToken', 'clientAccounts'];
+        backupKeys.forEach(key => {
+            localStorageBackup.current[key] = localStorage.getItem(key);
+        });
+
+        // Monitor localStorage changes and restore if DTrader tries to clear them
+        const checkAndRestoreStorage = () => {
+            backupKeys.forEach(key => {
+                const currentValue = localStorage.getItem(key);
+                const backupValue = localStorageBackup.current[key];
+                
+                // If a key was deleted or changed unexpectedly, restore it
+                if (backupValue && !currentValue) {
+                    console.warn(`🛡️ Restoring localStorage key: ${key}`);
+                    localStorage.setItem(key, backupValue);
+                }
+            });
+        };
+
+        // Check every second for localStorage tampering
+        const storageMonitor = setInterval(checkAndRestoreStorage, 1000);
+
+        return () => {
+            clearInterval(storageMonitor);
+        };
+    }, []);
 
     useEffect(() => {
         // Only build URL once on mount
