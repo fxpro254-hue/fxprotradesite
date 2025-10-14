@@ -262,7 +262,7 @@ const RunPanel = observer(() => {
     const { statistics } = transactions;
     const { active_tour, active_tab } = dashboard;
     const { total_payout, total_profit, total_stake, won_contracts, lost_contracts, number_of_runs } = statistics;
-    const { BOT_BUILDER, CHART, AUTO, SIGNALS, ANALYSIS_TOOL, TRADING_HUB } = DBOT_TABS;
+    const { BOT_BUILDER, CHART, AUTO, SIGNALS, ANALYSIS_TOOL, TRADING_HUB, DTRADER } = DBOT_TABS;
 
     useEffect(() => {
         onMount();
@@ -318,6 +318,10 @@ const RunPanel = observer(() => {
 
     const show_run_panel =
         [BOT_BUILDER, CHART, AUTO, ANALYSIS_TOOL, SIGNALS, TRADING_HUB].includes(active_tab) || active_tour;
+    
+    // Hide run panel when DTrader tab is active
+    if (active_tab === DTRADER) return null;
+    
     if ((!show_run_panel && isDesktop) || active_tour === 'bot_builder') return null;
 
     return (
