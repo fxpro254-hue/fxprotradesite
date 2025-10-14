@@ -18,15 +18,7 @@
         "coverage": "jest --coverage",
         "prepare": "husky install",
         "build:analyze": "BUNDLE_ANALYZE=true rsbuild build",
-        "telegram-server": "node telegram-file-server.js",
-        "dtrader:install": "cd dtrader && npm run bootstrap",
-        "dtrader:serve:core": "cd dtrader/packages/core && npm run serve",
-        "dtrader:serve:trader": "cd dtrader/packages/core && npm run serve",
-        "dtrader:build:core": "cd dtrader/packages/core && npm run build",
-        "dtrader:build": "npm run dtrader:build:core",
-        "dtrader:test": "cd dtrader && npm run test",
-        "dtrader:deploy": "powershell -ExecutionPolicy Bypass -File ./deploy-dtrader-live.ps1 separate",
-        "dtrader:deploy:integrated": "powershell -ExecutionPolicy Bypass -File ./deploy-dtrader-live.ps1 integrated"
+        "telegram-server": "node telegram-file-server.js"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
