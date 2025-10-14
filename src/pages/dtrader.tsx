@@ -13,7 +13,8 @@ import './dtrader.scss';
 
 const DTrader: React.FC = observer(() => {
     const [dtraderUrl, setDtraderUrl] = useState<string>('');
-    const hasBuiltUrl = React.useRef(false);
+    const [urlKey, setUrlKey] = useState<number>(0);
+    const currentAccountRef = React.useRef<string>('');
     const localStorageBackup = React.useRef<{[key: string]: string | null}>({});
 
     useEffect(() => {
@@ -46,9 +47,6 @@ const DTrader: React.FC = observer(() => {
     }, []);
 
     useEffect(() => {
-        // Only build URL once on mount
-        if (hasBuiltUrl.current) return;
-        
         const buildDTraderUrl = () => {
             try {
                 // Use custom Vercel deployment for all environments
@@ -121,7 +119,13 @@ const DTrader: React.FC = observer(() => {
                         console.log('✅ DTrader URL built with authentication');
                         console.log('🔗 URL:', url.replace(accountToken, 'TOKEN_HIDDEN'));
                         setDtraderUrl(url);
-                        hasBuiltUrl.current = true;
+                        
+                        // Track account for change detection
+                        if (currentAccountRef.current !== activeLoginId) {
+                            console.log('🔄 Account changed:', currentAccountRef.current, '->', activeLoginId);
+                            currentAccountRef.current = activeLoginId;
+                            setUrlKey(prev => prev + 1);
+                        }
                         return;
                     }
                 }
@@ -131,21 +135,32 @@ const DTrader: React.FC = observer(() => {
                 console.log('⚠️ DTrader URL built WITHOUT authentication (tokens not ready)');
                 console.log('🔗 URL:', url);
                 setDtraderUrl(url);
-                hasBuiltUrl.current = true;
             } catch (error) {
                 console.error('❌ Error building DTrader URL:', error);
             }
         };
 
-        // Build URL once on component mount
-        console.log('🔄 DTrader component mounted - building URL once');
+        // Build URL on component mount
+        console.log('🔄 DTrader component mounted - building URL');
         buildDTraderUrl();
+        
+        // Set up interval to check for account changes
+        const accountCheckInterval = setInterval(() => {
+            const activeLoginId = localStorage.getItem('active_loginid');
+            if (activeLoginId && activeLoginId !== currentAccountRef.current) {
+                console.log('🔄 Account change detected, rebuilding URL');
+                buildDTraderUrl();
+            }
+        }, 1000);
+        
+        return () => clearInterval(accountCheckInterval);
     }, []); // Empty dependency array - runs only once on mount
 
     return (
         <div className='dtrader-container'>
             {dtraderUrl ? (
                 <iframe
+                    key={urlKey}
                     src={dtraderUrl}
                     className='dtrader-iframe'
                     title='DTrader'
