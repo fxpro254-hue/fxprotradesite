@@ -23,17 +23,13 @@ const DTrader: React.FC = observer(() => {
                 const hostname = window.location.hostname; // localhost or bot.binaryfx.site
                 const port = window.location.port; // Current port
                 
-                // Use official Deriv DTrader for production, local DTrader for development
-                const isLocal = /localhost/i.test(hostname);
-                const baseUrl = isLocal 
-                    ? `${protocol}//${hostname}:${port}/dtrader` 
-                    : 'https://app.deriv.com';
+                // Use custom Vercel deployment for all environments
+                const baseUrl = 'https://deriv-dtrader.vercel.app/dtrader';
 
-                // Get app ID
-                const appId = getAppId();
+                // Use App ID 98586 as specified
+                const appId = 68848;
                 console.log('🔍 Environment - App ID:', appId);
                 console.log('🔍 Hostname:', hostname);
-                console.log('🔍 Is Local:', isLocal);
                 console.log('🔍 Base URL:', baseUrl);
 
                 // Get authentication tokens from localStorage
@@ -130,7 +126,6 @@ const DTrader: React.FC = observer(() => {
                     src={dtraderUrl}
                     className='dtrader-iframe'
                     title='DTrader'
-                    sandbox='allow-same-origin allow-scripts allow-popups allow-forms allow-downloads allow-modals'
                     allow='clipboard-read; clipboard-write; payment; usb'
                 />
             ) : (
