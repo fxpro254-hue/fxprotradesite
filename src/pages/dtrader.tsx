@@ -14,24 +14,19 @@ import './dtrader.scss';
 const DTrader: React.FC = observer(() => {
     const [dtraderUrl, setDtraderUrl] = useState<string>('');
     const [urlKey, setUrlKey] = useState<number>(0);
-    const [currentAccount, setCurrentAccount] = useState<string>('')
+    const [currentAccount, setCurrentAccount] = useState<string>('');
+    const [previousUrl, setPreviousUrl] = useState<string>('')
 
     useEffect(() => {
         // Build DTrader URL with fresh authentication parameters on each load
         const buildDTraderUrl = () => {
             try {
-                // Build base URL dynamically
-                const protocol = window.location.protocol; // https: or http:
-                const hostname = window.location.hostname; // localhost or bot.binaryfx.site
-                const port = window.location.port; // Current port
-                
                 // Use custom Vercel deployment for all environments
                 const baseUrl = 'https://deriv-dtrader.vercel.app/dtrader';
 
                 // Use App ID 98586 as specified
                 const appId = 68848;
                 console.log('🔍 Environment - App ID:', appId);
-                console.log('🔍 Hostname:', hostname);
                 console.log('🔍 Base URL:', baseUrl);
 
                 // Get authentication tokens from localStorage
@@ -94,21 +89,31 @@ const DTrader: React.FC = observer(() => {
                         params.append('acct1', activeLoginId);
 
                         const url = `${baseUrl}/?${params.toString()}`;
-                        console.log('✅ DTrader URL built with authentication');
-                        console.log('🔗 URL:', url.replace(accountToken, 'TOKEN_HIDDEN'));
-                        setDtraderUrl(url);
-                        // Force iframe reload with new URL by updating key
-                        setUrlKey(prev => prev + 1);
+                        
+                        // Only update if URL changed
+                        if (url !== previousUrl) {
+                            console.log('✅ DTrader URL built with authentication');
+                            console.log('🔗 URL:', url.replace(accountToken, 'TOKEN_HIDDEN'));
+                            setPreviousUrl(url);
+                            setDtraderUrl(url);
+                            // Force iframe reload with new URL by updating key
+                            setUrlKey(prev => prev + 1);
+                        }
                         return;
                     }
                 }
 
                 // Fallback: just pass app_id if tokens not available yet
                 const url = `${baseUrl}/?app_id=${appId}`;
-                console.log('⚠️ DTrader URL built WITHOUT authentication (tokens not ready)');
-                console.log('🔗 URL:', url);
-                setDtraderUrl(url);
-                setUrlKey(prev => prev + 1);
+                
+                // Only update if URL changed
+                if (url !== previousUrl) {
+                    console.log('⚠️ DTrader URL built WITHOUT authentication (tokens not ready)');
+                    console.log('🔗 URL:', url);
+                    setPreviousUrl(url);
+                    setDtraderUrl(url);
+                    setUrlKey(prev => prev + 1);
+                }
             } catch (error) {
                 console.error('❌ Error building DTrader URL:', error);
             }
