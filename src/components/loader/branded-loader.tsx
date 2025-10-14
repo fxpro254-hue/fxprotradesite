@@ -11,7 +11,7 @@ const BrandedLoader: React.FC<BrandedLoaderProps> = ({
     subMessage
 }) => {
     return (
-        <div className="simple-loader">
+        <div className="simple-loader light-theme">
             <div className="simple-loader__content">
                 <div className="simple-loader__spinner"></div>
                 <div className="simple-loader__message">{message}</div>
