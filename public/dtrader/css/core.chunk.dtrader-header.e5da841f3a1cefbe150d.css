@@ -1,0 +1,1613 @@
+/*------------------------------------*
+ *  # Base Constants
+ *------------------------------------*/
+/* LAYOUT CONSTANTS */
+/*------------------------------------*
+ *  # SASS Mixins and Functions
+ *------------------------------------*/
+/*
+ * RTL Language Mixin
+ */
+/*
+ * SASS interpolation
+ */
+/*
+ * PX to EM
+ * @param $px - px value to be converted
+ * @param $base - base font size (in `em`)
+ * Note: 'em' values are calculate based on the element font-size
+ *       to properly converts 'px' to 'em', please pass in the element font-size with it
+ * Usage example:
+    padding: em(16px, 1.6em); // font-size in 'em'
+ */
+/*
+ * Set property by passing a property name, and values.
+ * @param $property name - padding, margin etc.
+ * @param $values        - values in `px` (space separated for multiple values)
+ * @param $font-size     - base font-size in `em`
+ * Usage example:
+   @include toEm(padding, 8px 16px 8px, 1.6em);
+ */
+/*
+ * Generate typefaces key-value pair of variable name and config
+ * Example:
+   --paragraph-center-bold-black: (14px, center, bold, black)
+ */
+/*
+ * Sets font-size, font-weight, color, text-transform, text-align and line-height
+ * Usage example:
+   @include setTypeface(16px, bold, black, uppercase);
+ */
+/*
+ * Set typefaces by passing a typeface variable name
+ * @param $var   - typeface variable
+ * @param $tt    - text-transform property
+ * @param $align - text-align property
+ * Usage example:
+   @include typeface(--paragraph-bold-black, uppercase, center);
+ */
+/*
+ * Range Slider Thumb styling is set here
+ */
+/*
+ * SVG icons colors
+ */
+/*
+ * Bar Spinner Animation
+ * @param $count    - number of bars
+ * @param $duration - duration of animation
+ * @param $phase    - each bar phase change delay
+ * Usage example:
+   @include createBarspinnerAnimation(5, 1.2s, 0,1);
+ */
+/*
+ * Tooltip colors
+ * @param $color - color property
+ * Usage example:
+   @include tooltipColor(var(--brand-primary));
+ */
+/*
+ * Convert Tooltip colors
+ * @param $color - css color property
+ * Usage example:
+   @include convertTooltipColor(var(--status-default));
+ */
+/*
+    Constants
+*/
+/*
+    Variables
+*/
+/*
+    List of all typefaces variables in the format: --$FONT_SIZES-$TEXT_ALIGN-$FONT_WEIGHTS-COLORS.
+    See $FONT_SIZES, $TEXT_ALIGN, $FONT_WEIGHTS, $COLORS maps above for references.
+    Variables name example: --title-center-semibold-red
+ */
+/*
+    to use styles without modifier class on .inline-icon
+    use @extend
+
+    e.g. style icon on parent hover:
+        a:hover .inline-icon {
+            @extend %inline-icon-active;
+        }
+*/
+.notifications-toggle:hover .notifications-toggle__icon {
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+}
+
+.notifications-toggle:hover .notifications-toggle__icon .color1-fill {
+  fill: var(--color-text-primary);
+}
+
+.notifications-toggle:hover .notifications-toggle__icon .color1-stroke {
+  stroke: var(--color-text-primary);
+}
+
+.notifications-toggle:hover .notifications-toggle__icon .color2-fill {
+  fill: none;
+}
+
+.notifications-toggle:hover .notifications-toggle__icon .color2-stroke {
+  stroke: none;
+}
+/**
+ * Define Breakpoints here.
+ */
+/** Need to add new breakpoints for mixins */
+.notifications {
+  /** @define notifications-toggle; weak */
+  /** @define notifications-dialog; weak */
+  /** @define notifications-empty; weak */
+  /** @define notifications-item; weak */
+}
+
+.notifications-toggle {
+  position: relative;
+}
+
+[dir="ltr"] .notifications-toggle {
+  margin-right: 0.8rem;
+}
+
+[dir="rtl"] .notifications-toggle {
+  margin-left: 0.8rem;
+}
+
+.notifications-toggle__icon {
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+}
+
+.notifications-toggle__icon-wrapper {
+  cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.notifications-toggle__icon-wrapper--active {
+  cursor: default;
+}
+
+.notifications-toggle__icon .color1-fill {
+  fill: var(--color-text-secondary);
+}
+
+.notifications-toggle__icon .color1-stroke {
+  stroke: var(--color-text-secondary);
+}
+
+.notifications-toggle__step {
+  position: absolute;
+  top: -2px;
+  pointer-events: none;
+}
+
+[dir="ltr"] .notifications-toggle__step {
+  left: 1rem;
+}
+
+[dir="rtl"] .notifications-toggle__step {
+  right: 1rem;
+}
+
+.notifications-toggle--active .dc-popover {
+  pointer-events: none;
+}
+
+.notifications-dialog {
+  position: fixed;
+  width: 264px;
+  height: 525px;
+  background: var(--color-surface-primary);
+  border-radius: 4px;
+  box-shadow: 0 4px 8px 2px var(--color-shadow-medium);
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.25s linear;
+  opacity: 0;
+  transform: translate3d(0, -20px, 0);
+}
+
+@media (min-width: 1280px) {
+  .notifications-dialog {
+    top: 58px;
+  }
+
+  [dir="ltr"] .notifications-dialog {
+    right: 2.8rem;
+  }
+
+  [dir="rtl"] .notifications-dialog {
+    left: 2.8rem;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 1279px) {
+  .notifications-dialog {
+    top: 48px;
+  }
+
+  [dir="ltr"] .notifications-dialog {
+    right: 2.8rem;
+  }
+
+  [dir="rtl"] .notifications-dialog {
+    left: 2.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .notifications-dialog {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-shadow: none;
+    opacity: 1;
+    opacity: initial;
+    transform: none;
+  }
+
+  [dir="ltr"] .notifications-dialog {
+    right: auto;
+    right: initial;
+  }
+
+  [dir="rtl"] .notifications-dialog {
+    left: auto;
+    left: initial;
+  }
+}
+
+.notifications-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--color-surface-border);
+}
+
+.notifications-dialog__header-text {
+  margin: 1rem 0;
+}
+
+@media (max-width: 600px) {
+  .notifications-dialog__header {
+    display: none;
+  }
+}
+
+.notifications-dialog__footer {
+  height: 3.7rem;
+  align-items: end;
+  display: flex;
+  justify-content: end;
+  background: var(--color-surface-primary);
+  box-shadow: 0 4px 8px 2px var(--color-shadow-medium);
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.25s linear;
+  border-bottom-right-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+[dir="ltr"] .notifications-dialog__footer {
+  padding-left: 1.3rem;
+}
+
+[dir="rtl"] .notifications-dialog__footer {
+  padding-right: 1.3rem;
+}
+
+.notifications-dialog__separator {
+  border-bottom: 1px solid var(--color-notification-info-border);
+}
+
+.notifications-dialog__clear {
+  border: 1px solid var(--color-notification-info-border);
+  height: 2.4rem;
+  width: auto;
+  bottom: 0.6rem;
+  padding: 0.7rem;
+}
+
+[dir="ltr"] .notifications-dialog__clear {
+  right: 1.7rem;
+}
+
+[dir="rtl"] .notifications-dialog__clear {
+  left: 1.7rem;
+}
+
+.notifications-dialog__clear:hover {
+  background: var(--color-button-secondary-hover);
+}
+
+.notifications-dialog__content {
+  padding: 0.8rem 0;
+  height: calc(100% - 37px);
+  border-radius: 4px;
+}
+
+.notifications-dialog__content--empty {
+  display: flex;
+}
+
+.notifications-dialog__content--sticky {
+  display: flex;
+  position: sticky;
+  bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .notifications-dialog__content {
+    height: calc(100vh - 40px);
+  }
+}
+
+.notifications-dialog--enter-done {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.notifications-dialog--enter, .notifications-dialog--exit {
+  opacity: 0;
+  transform: translate3d(0, -20px, 0);
+}
+
+.notifications-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.notifications-empty__container {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notifications-empty__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.notifications-empty__icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
+}
+
+.notifications-empty__icon .color1-fill {
+  fill: var(--color-text-secondary);
+}
+
+.notifications-empty__header {
+  padding: 8px;
+}
+
+.notifications-item {
+  padding: 0.8rem;
+  position: relative;
+}
+
+[dir="ltr"] .notifications-item {
+  margin-left: 3.2rem;
+  margin-right: 0.8rem;
+}
+
+[dir="rtl"] .notifications-item {
+  margin-right: 3.2rem;
+  margin-left: 0.8rem;
+}
+
+.notifications-item:not(:last-child):after {
+  position: absolute;
+  content: "";
+  bottom: 0;
+  width: calc(100% + 4rem);
+  height: 1px;
+  background: var(--color-interactive-disabled);
+}
+
+[dir="ltr"] .notifications-item:not(:last-child):after {
+  left: -3.2rem;
+}
+
+[dir="rtl"] .notifications-item:not(:last-child):after {
+  right: -3.2rem;
+}
+
+.notifications-item__cta-button {
+  padding: 0.3rem 0.8rem;
+  height: auto;
+  width: auto;
+  white-space: normal;
+}
+
+[dir="ltr"] .notifications-item__cta-button {
+  margin: 0.8rem 0 0.8rem auto;
+}
+
+[dir="rtl"] .notifications-item__cta-button {
+  margin: 0.8rem auto 0.8rem 0;
+}
+
+@media (max-width: 600px) {
+  [dir="ltr"] .notifications-item__cta-button {
+    margin: 0.8rem 0 1.6rem auto;
+  }
+
+  [dir="rtl"] .notifications-item__cta-button {
+    margin: 0.8rem auto 1.6rem 0;
+  }
+}
+
+.notifications-item__link-wrapper {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.notifications-item__title {
+  margin-bottom: 4px;
+  position: relative;
+}
+
+.notifications-item__title-icon {
+  position: absolute;
+  top: 2px;
+  height: 16px;
+  width: 16px;
+  pointer-events: none;
+}
+
+[dir="ltr"] .notifications-item__title-icon {
+  left: -26px;
+}
+
+[dir="rtl"] .notifications-item__title-icon {
+  right: -26px;
+}
+
+.notifications-item__message {
+  font-size: 1.2rem;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.notifications-item__message a {
+  text-decoration: none;
+  font-weight: bold;
+  color: var(--color-text-primary);
+}
+
+.notifications-item__action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+  .notifications-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .notifications-item:after {
+    width: calc(100% + 1.4em);
+    height: 2px;
+  }
+
+  [dir="ltr"] .notifications-item:after {
+    left: -1.8rem;
+  }
+
+  [dir="rtl"] .notifications-item:after {
+    right: -1.8rem;
+  }
+}
+/*------------------------------------*
+ *  # Base Constants
+ *------------------------------------*/
+/* LAYOUT CONSTANTS */
+/*------------------------------------*
+ *  # SASS Mixins and Functions
+ *------------------------------------*/
+/*
+ * RTL Language Mixin
+ */
+/*
+ * SASS interpolation
+ */
+/*
+ * PX to EM
+ * @param $px - px value to be converted
+ * @param $base - base font size (in `em`)
+ * Note: 'em' values are calculate based on the element font-size
+ *       to properly converts 'px' to 'em', please pass in the element font-size with it
+ * Usage example:
+    padding: em(16px, 1.6em); // font-size in 'em'
+ */
+/*
+ * Set property by passing a property name, and values.
+ * @param $property name - padding, margin etc.
+ * @param $values        - values in `px` (space separated for multiple values)
+ * @param $font-size     - base font-size in `em`
+ * Usage example:
+   @include toEm(padding, 8px 16px 8px, 1.6em);
+ */
+/*
+ * Generate typefaces key-value pair of variable name and config
+ * Example:
+   --paragraph-center-bold-black: (14px, center, bold, black)
+ */
+/*
+ * Sets font-size, font-weight, color, text-transform, text-align and line-height
+ * Usage example:
+   @include setTypeface(16px, bold, black, uppercase);
+ */
+/*
+ * Set typefaces by passing a typeface variable name
+ * @param $var   - typeface variable
+ * @param $tt    - text-transform property
+ * @param $align - text-align property
+ * Usage example:
+   @include typeface(--paragraph-bold-black, uppercase, center);
+ */
+/*
+ * Range Slider Thumb styling is set here
+ */
+/*
+ * SVG icons colors
+ */
+/*
+ * Bar Spinner Animation
+ * @param $count    - number of bars
+ * @param $duration - duration of animation
+ * @param $phase    - each bar phase change delay
+ * Usage example:
+   @include createBarspinnerAnimation(5, 1.2s, 0,1);
+ */
+/*
+ * Tooltip colors
+ * @param $color - color property
+ * Usage example:
+   @include tooltipColor(var(--brand-primary));
+ */
+/*
+ * Convert Tooltip colors
+ * @param $color - css color property
+ * Usage example:
+   @include convertTooltipColor(var(--status-default));
+ */
+/*
+    Constants
+*/
+/*
+    Variables
+*/
+/*
+    List of all typefaces variables in the format: --$FONT_SIZES-$TEXT_ALIGN-$FONT_WEIGHTS-COLORS.
+    See $FONT_SIZES, $TEXT_ALIGN, $FONT_WEIGHTS, $COLORS maps above for references.
+    Variables name example: --title-center-semibold-red
+ */
+/*
+    to use styles without modifier class on .inline-icon
+    use @extend
+
+    e.g. style icon on parent hover:
+        a:hover .inline-icon {
+            @extend %inline-icon-active;
+        }
+*/
+/**
+ * Define Breakpoints here.
+ */
+/** Need to add new breakpoints for mixins */
+.cashier__counter {
+  position: absolute;
+  top: 0.4rem;
+}
+
+[dir="ltr"] .cashier__counter {
+  right: -1.5rem;
+}
+
+[dir="rtl"] .cashier__counter {
+  left: -1.5rem;
+}
+/*------------------------------------*
+ *  # Base Constants
+ *------------------------------------*/
+/* LAYOUT CONSTANTS */
+/*------------------------------------*
+ *  # SASS Mixins and Functions
+ *------------------------------------*/
+/*
+ * RTL Language Mixin
+ */
+/*
+ * SASS interpolation
+ */
+/*
+ * PX to EM
+ * @param $px - px value to be converted
+ * @param $base - base font size (in `em`)
+ * Note: 'em' values are calculate based on the element font-size
+ *       to properly converts 'px' to 'em', please pass in the element font-size with it
+ * Usage example:
+    padding: em(16px, 1.6em); // font-size in 'em'
+ */
+/*
+ * Set property by passing a property name, and values.
+ * @param $property name - padding, margin etc.
+ * @param $values        - values in `px` (space separated for multiple values)
+ * @param $font-size     - base font-size in `em`
+ * Usage example:
+   @include toEm(padding, 8px 16px 8px, 1.6em);
+ */
+/*
+ * Generate typefaces key-value pair of variable name and config
+ * Example:
+   --paragraph-center-bold-black: (14px, center, bold, black)
+ */
+/*
+ * Sets font-size, font-weight, color, text-transform, text-align and line-height
+ * Usage example:
+   @include setTypeface(16px, bold, black, uppercase);
+ */
+/*
+ * Set typefaces by passing a typeface variable name
+ * @param $var   - typeface variable
+ * @param $tt    - text-transform property
+ * @param $align - text-align property
+ * Usage example:
+   @include typeface(--paragraph-bold-black, uppercase, center);
+ */
+/*
+ * Range Slider Thumb styling is set here
+ */
+/*
+ * SVG icons colors
+ */
+/*
+ * Bar Spinner Animation
+ * @param $count    - number of bars
+ * @param $duration - duration of animation
+ * @param $phase    - each bar phase change delay
+ * Usage example:
+   @include createBarspinnerAnimation(5, 1.2s, 0,1);
+ */
+/*
+ * Tooltip colors
+ * @param $color - color property
+ * Usage example:
+   @include tooltipColor(var(--brand-primary));
+ */
+/*
+ * Convert Tooltip colors
+ * @param $color - css color property
+ * Usage example:
+   @include convertTooltipColor(var(--status-default));
+ */
+/*
+    Constants
+*/
+/*
+    Variables
+*/
+/*
+    List of all typefaces variables in the format: --$FONT_SIZES-$TEXT_ALIGN-$FONT_WEIGHTS-COLORS.
+    See $FONT_SIZES, $TEXT_ALIGN, $FONT_WEIGHTS, $COLORS maps above for references.
+    Variables name example: --title-center-semibold-red
+ */
+/*
+    to use styles without modifier class on .inline-icon
+    use @extend
+
+    e.g. style icon on parent hover:
+        a:hover .inline-icon {
+            @extend %inline-icon-active;
+        }
+*/
+.acc-switcher__logout-icon, .acc-info__select-arrow {
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+}
+
+.acc-switcher__logout-icon .color1-fill, .acc-info__select-arrow .color1-fill {
+  fill: var(--color-text-secondary);
+}
+
+.acc-switcher__logout-icon .color1-stroke, .acc-info__select-arrow .color1-stroke {
+  stroke: var(--color-text-secondary);
+}
+
+.acc-switcher__logout-icon .color2-fill, .acc-info__select-arrow .color2-fill {
+  fill: none;
+}
+
+.acc-switcher__logout-icon .color2-stroke, .acc-info__select-arrow .color2-stroke {
+  stroke: none;
+}
+.active.acc-switcher__logout-icon, .active.acc-info__select-arrow {
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+}
+
+.active.acc-switcher__logout-icon .color1-fill, .active.acc-info__select-arrow .color1-fill {
+  fill: var(--color-text-primary);
+}
+
+.active.acc-switcher__logout-icon .color1-stroke, .active.acc-info__select-arrow .color1-stroke {
+  stroke: var(--color-text-primary);
+}
+
+.active.acc-switcher__logout-icon .color2-fill, .active.acc-info__select-arrow .color2-fill {
+  fill: none;
+}
+
+.active.acc-switcher__logout-icon .color2-stroke, .active.acc-info__select-arrow .color2-stroke {
+  stroke: none;
+}
+.disabled.acc-switcher__logout-icon, .disabled.acc-info__select-arrow {
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+}
+
+.disabled.acc-switcher__logout-icon .color1-fill, .disabled.acc-info__select-arrow .color1-fill {
+  fill: var(--color-text-disabled);
+}
+
+.disabled.acc-switcher__logout-icon .color1-stroke, .disabled.acc-info__select-arrow .color1-stroke {
+  stroke: var(--color-text-disabled);
+}
+
+.disabled.acc-switcher__logout-icon .color2-fill, .disabled.acc-info__select-arrow .color2-fill {
+  fill: none;
+}
+
+.disabled.acc-switcher__logout-icon .color2-stroke, .disabled.acc-info__select-arrow .color2-stroke {
+  stroke: none;
+}
+.white.acc-switcher__logout-icon, .white.acc-info__select-arrow {
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+}
+
+.white.acc-switcher__logout-icon .color1-fill, .white.acc-info__select-arrow .color1-fill {
+  fill: var(--color-text-primary);
+}
+
+.white.acc-switcher__logout-icon .color1-stroke, .white.acc-info__select-arrow .color1-stroke {
+  stroke: var(--color-text-primary);
+}
+.border_hover_color.acc-switcher__logout-icon, .border_hover_color.acc-info__select-arrow {
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+}
+
+.border_hover_color.acc-switcher__logout-icon .color1-fill, .border_hover_color.acc-info__select-arrow .color1-fill {
+  fill: var(--color-text-primary);
+}
+
+.border_hover_color.acc-switcher__logout-icon .color1-stroke, .border_hover_color.acc-info__select-arrow .color1-stroke {
+  stroke: var(--color-text-primary);
+}
+.secondary.acc-switcher__logout-icon, .secondary.acc-info__select-arrow {
+  /* postcss-bem-linter: ignore */
+  /* postcss-bem-linter: ignore */
+}
+
+.secondary.acc-switcher__logout-icon .color1-fill, .secondary.acc-info__select-arrow .color1-fill {
+  fill: var(--color-text-secondary);
+}
+
+.secondary.acc-switcher__logout-icon .color1-stroke, .secondary.acc-info__select-arrow .color1-stroke {
+  stroke: var(--color-text-secondary);
+}
+
+/**
+ * Define Breakpoints here.
+ */
+/** Need to add new breakpoints for mixins */
+/** @define acc-info */
+.acc-info {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 1280px) {
+  .acc-info {
+    padding: 0 1.6rem;
+  }
+}
+
+.acc-info__preloader {
+  position: absolute;
+  top: 0;
+  width: 35rem;
+  height: 4.7rem;
+  z-index: 2;
+  background: var(--color-surface-primary);
+}
+
+[dir="ltr"] .acc-info__preloader {
+  right: 0;
+}
+
+[dir="rtl"] .acc-info__preloader {
+  left: 0;
+}
+
+.acc-info__preloader:before {
+  content: "";
+  width: 8rem;
+}
+
+[dir="ltr"] .acc-info__preloader:before {
+  left: -8rem;
+}
+
+[dir="rtl"] .acc-info__preloader:before {
+  right: -8rem;
+}
+
+.acc-info__preloader--no-currency:before {
+  width: 9rem;
+}
+
+[dir="ltr"] .acc-info__preloader--no-currency:before {
+  left: -9rem;
+}
+
+[dir="rtl"] .acc-info__preloader--no-currency:before {
+  right: -9rem;
+}
+
+@media (max-width: 1279px) {
+  .acc-info__preloader {
+    width: 16.1rem;
+    height: 3.9rem;
+  }
+
+  .acc-info__preloader:before {
+    display: none;
+  }
+}
+
+.acc-info__container {
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  gap: 1.6rem;
+}
+
+[dir="ltr"] .acc-info__container {
+  padding-right: 0.8rem;
+}
+
+[dir="rtl"] .acc-info__container {
+  padding-left: 0.8rem;
+}
+
+@media (max-width: 600px) {
+  .acc-info__container {
+    gap: 0.8rem;
+  }
+}
+
+.acc-info__wrapper {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  justify-content: center;
+  position: relative;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.acc-info__id {
+  pointer-events: none;
+}
+
+.acc-info__id-icon {
+  vertical-align: middle;
+}
+
+[dir="ltr"] .acc-info__id-icon {
+  margin-right: 0.8rem;
+}
+
+[dir="rtl"] .acc-info__id-icon {
+  margin-left: 0.8rem;
+}
+
+.acc-info__separator {
+  height: 3.2rem;
+}
+
+[dir="ltr"] .acc-info__separator {
+  border-right: 1px solid var(--color-surface-border);
+}
+
+[dir="rtl"] .acc-info__separator {
+  border-left: 1px solid var(--color-surface-border);
+}
+
+.acc-info__balance {
+  font-size: 1.6rem;
+  text-align: center;
+  font-weight: 700;
+  color: var(--color-text-success);
+  text-transform: default;
+  line-height: 1.75;
+  line-height: 2.2rem;
+  pointer-events: none;
+  font-size: 1.4rem;
+}
+
+[dir="ltr"] .acc-info__balance {
+  margin-right: 0.8rem;
+}
+
+[dir="rtl"] .acc-info__balance {
+  margin-left: 0.8rem;
+}
+
+.acc-info__account-type-and-balance {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  pointer-events: none;
+}
+
+[dir="ltr"] .acc-info__account-type-and-balance {
+  padding: 0 1rem 0.1rem 0;
+}
+
+[dir="rtl"] .acc-info__account-type-and-balance {
+  padding: 0 0 0.1rem 1rem;
+}
+
+.acc-info__select-arrow {
+  pointer-events: none;
+  transform: rotate(0);
+  transform-origin: 50% 45%;
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  font-size: 1.2rem;
+  color: var(--color-text-secondary);
+}
+
+[dir="ltr"] .acc-info__select-arrow--invert {
+  transform: rotate(180deg);
+}
+
+[dir="rtl"] .acc-info__select-arrow--invert {
+  transform: rotate(-180deg);
+}
+@media (min-width: 1280px) {
+  .acc-info {
+    /* Removed hover effect for acc-info */
+    /* &:hover:not(.show):not(&--is-disabled) {
+        background: var(--color-interactive-hover);
+
+        .symbols {
+            background: transparent;
+        }
+    } */
+  }
+}
+
+@media (max-width: 600px) {
+  .acc-info__balance {
+    font-size: 1.4rem;
+  }
+
+  .acc-info__balance--no-currency {
+    white-space: nowrap;
+  }
+}
+
+.acc-info--is-demo .acc-info__balance {
+  color: var(--color-text-success);
+}
+
+.acc-info--is-disabled {
+  cursor: not-allowed;
+}
+
+[dir="ltr"] .acc-info--show .acc-info__select-arrow {
+  transform: rotate(180deg);
+}
+
+[dir="rtl"] .acc-info--show .acc-info__select-arrow {
+  transform: rotate(-180deg);
+}
+
+.acc-info--show .acc-info__select-arrow--invert {
+  transform: rotate(0deg);
+}
+
+@media (max-width: 600px) {
+  .acc-info__button {
+    height: 2.8rem !important;
+  }
+}
+
+.acc-info__wallets {
+  gap: 0.8rem;
+}
+
+.acc-info__wallets-container {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+}
+
+.acc-info__wallets-account-type-and-balance {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0;
+  pointer-events: none;
+}
+
+.acc-info__wallets-balance {
+  color: var(--color-text-secondary);
+}
+
+[dir="ltr"] .acc-info__wallets-balance {
+  margin-right: 0;
+}
+
+[dir="rtl"] .acc-info__wallets-balance {
+  margin-left: 0;
+}
+
+.acc-info__account-type-header {
+  display: flex;
+  align-items: center;
+}
+
+.acc-info__account-type {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin-bottom: 0;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+[dir="ltr"] .acc-info__account-type {
+  margin-right: 0.4rem;
+}
+
+[dir="rtl"] .acc-info__account-type {
+  margin-left: 0.4rem;
+}
+
+.acc-info__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.acc-info__balance-section {
+  display: flex;
+  flex-direction: column;
+  line-height: 2.2rem;
+}
+
+/* @define acc-switcher; weak */
+.acc-switcher {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  height: 4rem;
+  position: relative;
+}
+
+.acc-switcher--is-loading {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  background: var(--color-surface-primary);
+}
+
+[dir="ltr"] .acc-switcher--is-loading {
+  left: 0;
+}
+
+[dir="rtl"] .acc-switcher--is-loading {
+  right: 0;
+}
+
+.acc-switcher__wrapper {
+  border-radius: 4px;
+  position: absolute;
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.25s linear;
+  box-shadow: 0 8px 16px 0 var(--color-shadow-medium);
+  top: calc(100% + 4px);
+  width: 320px;
+  background-color: var(--color-surface-primary);
+}
+
+[dir="ltr"] .acc-switcher__wrapper {
+  right: 0;
+}
+
+[dir="rtl"] .acc-switcher__wrapper {
+  left: 0;
+}
+
+@media (min-width: 601px) and (max-width: 1279px) {
+  .acc-switcher__wrapper {
+    position: static;
+    position: initial;
+  }
+}
+
+.acc-switcher__wrapper--wallets {
+  width: 32rem;
+}
+
+[dir="ltr"] .acc-switcher__wrapper--wallets {
+  right: -3.2rem;
+}
+
+[dir="rtl"] .acc-switcher__wrapper--wallets {
+  left: -3.2rem;
+}
+
+.acc-switcher__wrapper--enter-done {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.acc-switcher__wrapper--enter, .acc-switcher__wrapper--exit {
+  opacity: 0;
+  transform: translate3d(0, -20px, 0);
+}
+
+.acc-switcher__wrapper .acc-switcher__button {
+  max-width: calc(100% - 1.6rem);
+  margin: 0.2rem 0.8rem 0.8rem;
+  height: 4rem;
+}
+
+@media (max-width: 1279px) {
+  .acc-switcher__wrapper {
+    position: relative;
+    top: auto;
+    top: initial;
+    left: auto;
+    left: initial;
+    right: auto;
+    right: initial;
+    width: 100%;
+    box-shadow: none;
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+.acc-switcher__wrapper .dc-themed-scrollbars {
+  scrollbar-color: var(--color-text-secondary) transparent;
+}
+
+.acc-switcher__wrapper .dc-themed-scrollbars::-webkit-scrollbar-thumb {
+  background-color: var(--color-text-secondary);
+}
+
+.acc-switcher__new-account {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.6rem 1.8rem;
+  font-size: var(--text-size-xs);
+}
+
+[dir="ltr"] .acc-switcher__new-account-text {
+  margin-left: 0.8rem;
+}
+
+[dir="rtl"] .acc-switcher__new-account-text {
+  margin-right: 0.8rem;
+}
+
+[dir="ltr"] .acc-switcher__new-account-btn {
+  margin-left: auto;
+}
+
+[dir="rtl"] .acc-switcher__new-account-btn {
+  margin-right: auto;
+}
+
+.acc-switcher__new-account--disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+[dir="ltr"] .acc-switcher__reset-account-btn {
+  margin-left: auto;
+}
+
+[dir="rtl"] .acc-switcher__reset-account-btn {
+  margin-right: auto;
+}
+
+.acc-switcher__list {
+  border-radius: 4px;
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+  background: var(--color-surface-primary);
+}
+
+.acc-switcher__list-wrapper {
+  padding: 0.4rem 0.8rem 0;
+}
+
+.acc-switcher__list-title {
+  flex: 1;
+}
+
+.acc-switcher__list-container {
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.acc-switcher__help-icon {
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+[dir="ltr"] .acc-switcher__help-icon {
+  margin-left: 0.8rem;
+}
+
+[dir="rtl"] .acc-switcher__help-icon {
+  margin-right: 0.8rem;
+}
+
+.acc-switcher__accounts {
+  border-radius: 4px;
+  background: var(--color-surface-primary);
+  position: relative;
+}
+
+.acc-switcher__accounts .acc-switcher__account {
+  margin-bottom: 2px;
+  background: var(--color-surface-primary);
+}
+
+.acc-switcher__accounts .acc-switcher__account:hover:not(.acc-switcher__account--selected) {
+  background-color: var(--color-interactive-hover);
+  border-radius: 4px;
+}
+
+.acc-switcher__accounts .acc-switcher__account.acc-switcher__account--disabled:hover {
+  background-color: var(--color-surface-primary);
+}
+
+.acc-switcher__accounts .acc-switcher__account .acc-switcher__id {
+  color: var(--color-text-secondary);
+  width: 100%;
+  line-height: 1.43;
+}
+
+.acc-switcher__accounts .acc-switcher__account--selected {
+  background: var(--color-interactive-active);
+}
+
+.acc-switcher__accounts .acc-switcher__account--selected .acc-switcher__id {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.acc-switcher__accounts .acc-switcher__account--selected .acc-switcher__id--virtual:before {
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-surface-border);
+}
+
+.acc-switcher__accounts .acc-switcher__account--disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.acc-switcher__accounts .acc-switcher__account:only-child {
+  border-radius: 4px;
+}
+
+.acc-switcher__accounts .acc-switcher__account:last-child {
+  margin-bottom: 8px;
+}
+
+.acc-switcher__accounts--is-loading {
+  padding-bottom: 0.8rem;
+}
+
+.acc-switcher__account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 0.3rem 1.6rem;
+  position: relative;
+  background: var(--color-surface-primary);
+  text-decoration: none;
+}
+
+[dir="ltr"] .acc-switcher__account .acc-switcher__id {
+  text-align: left;
+}
+
+[dir="rtl"] .acc-switcher__account .acc-switcher__id {
+  text-align: right;
+}
+
+.acc-switcher__account .acc-switcher__id {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--color-text-black);
+  text-transform: none;
+  line-height: 1.5;
+  align-items: center;
+  display: flex;
+  color: var(--color-text-primary);
+}
+
+[dir="ltr"] .acc-switcher__account .acc-switcher__id-icon {
+  margin-right: 8px;
+}
+
+[dir="rtl"] .acc-switcher__account .acc-switcher__id-icon {
+  margin-left: 8px;
+}
+
+.acc-switcher__account:hover:not(.acc-switcher__account--selected) {
+  background: var(--color-interactive-hover);
+}
+
+.acc-switcher__account--selected {
+  background: var(--color-interactive-active);
+  border-radius: 4px;
+}
+
+[dir="ltr"] .acc-switcher__account--selected .acc-switcher__id {
+  text-align: left;
+}
+
+[dir="rtl"] .acc-switcher__account--selected .acc-switcher__id {
+  text-align: right;
+}
+
+.acc-switcher__account--selected .acc-switcher__id {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-transform: none;
+  line-height: 1.5;
+}
+
+.acc-switcher__account--selected .acc-switcher__id--virtual:before {
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-surface-border);
+}
+
+.acc-switcher__account--selected .acc-switcher__loginid-text {
+  color: var(--color-text-primary);
+  font-weight: normal;
+}
+
+.acc-switcher__account--selected .no-currency {
+  color: var(--color-text-primary);
+}
+
+.acc-switcher__footer {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+  padding: 1.6rem;
+}
+
+.acc-switcher__compare {
+  justify-self: end;
+  grid-column: 1/2;
+}
+
+.acc-switcher__logout {
+  grid-column: 2/3;
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+  justify-self: start;
+  padding: 1.6em 1.3em;
+}
+
+.acc-switcher__logout-text {
+  cursor: pointer;
+}
+
+.acc-switcher__logout-icon {
+  cursor: pointer;
+}
+
+[dir="ltr"] .acc-switcher__logout-icon {
+  margin-left: 8px;
+}
+
+[dir="rtl"] .acc-switcher__logout-icon {
+  margin-right: 8px;
+}
+
+[dir="ltr"] .acc-switcher__balance {
+  margin-left: auto;
+  text-align: right;
+}
+
+[dir="rtl"] .acc-switcher__balance {
+  margin-right: auto;
+  text-align: left;
+}
+
+.acc-switcher__separator {
+  display: block;
+  position: relative;
+  height: 1px;
+}
+
+@media (min-width: 1280px) {
+  .acc-switcher__separator {
+    height: 2px;
+  }
+}
+
+.acc-switcher__separator:after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background-color: var(--color-surface-primary);
+  z-index: 1;
+}
+
+@media (min-width: 1280px) {
+  .acc-switcher__separator:after {
+    height: 2px;
+  }
+}
+
+.acc-switcher__separator--no-padding:after {
+  width: calc(100% + 0.4rem);
+}
+
+.acc-switcher__separator--auto-margin {
+  margin-top: auto;
+}
+
+.acc-switcher__total {
+  height: auto;
+  padding: 1.6rem 1.6rem 0.8rem;
+  align-items: center;
+  display: flex;
+}
+
+.acc-switcher__total-subtitle {
+  padding: 0 1.6rem 1.6rem;
+}
+
+.acc-switcher__loginid-text {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.acc-switcher__loginid-text--disabled {
+  color: var(--color-text-disabled);
+}
+
+.acc-switcher__loader {
+  margin: 1rem auto !important;
+}
+
+.acc-switcher__loader {
+  font-size: 0.8rem;
+}
+
+.acc-switcher__btn {
+  width: calc(100% - 32px);
+  margin: 0 16px 8px;
+}
+
+.acc-switcher__traders-hub {
+  display: flex;
+  justify-content: center;
+  padding: 0.8rem 1.6rem;
+}
+
+.acc-switcher__traders-hub--link {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.acc-switcher__traders-hub--link :hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.acc-switcher__traders-hub--text {
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
+/** @define set-currency; weak */
+[dir="ltr"] .set-currency {
+  margin-right: 8px;
+}
+
+[dir="rtl"] .set-currency {
+  margin-left: 8px;
+}
+
+.set-currency .dc-btn {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .set-currency .dc-btn {
+    height: 2.8rem !important;
+  }
+}
+
+/** @define no-currency; weak */
+.no-currency {
+  font-size: 0.8rem;
+  text-align: center;
+  font-weight: 400;
+  color: var(--color-text-black);
+  text-transform: none;
+  line-height: inherit;
+  text-transform: none;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+[dir="ltr"] .no-currency {
+  text-align: right;
+}
+
+[dir="rtl"] .no-currency {
+  text-align: left;
+}
+
+/** @define badge-server; weak */
+.badge-server {
+  display: inline-block;
+  background-color: var(--brand-info)-2;
+  padding: 0.2rem;
+  border-radius: 0.2rem;
+  height: 2.2rem;
+}
+
+[dir="ltr"] .badge-server {
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] .badge-server {
+  margin-right: 0.5rem;
+}
+
+.badge-server-bot {
+  color: var(--color-surface-primary);
+}
+
+.badge-server--disabled {
+  background-color: var(--color-interactive-disabled);
+}
+
+@media (min-width: 601px) and (max-width: 1279px) {
+  .dc-modal__container_accounts-switcher {
+    left: 0;
+    right: 0;
+    max-width: 44rem;
+    margin: auto;
+  }
+}

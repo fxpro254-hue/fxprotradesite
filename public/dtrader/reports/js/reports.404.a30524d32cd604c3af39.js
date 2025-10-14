@@ -1,0 +1,32 @@
+"use strict";
+/*
+ * ATTENTION: An "eval-source-map" devtool has been used.
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+ */
+(self["webpackChunk_deriv_reports"] = self["webpackChunk_deriv_reports"] || []).push([["404"],{
+
+/***/ "./src/Modules/Page404/Components/Page404.tsx":
+/*!****************************************************!*\
+  !*** ./src/Modules/Page404/Components/Page404.tsx ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("{__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ \"react\");\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _deriv_components__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @deriv/components */ \"@deriv/components\");\n/* harmony import */ var _deriv_components__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_deriv_components__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var _deriv_shared__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @deriv/shared */ \"@deriv/shared\");\n/* harmony import */ var _deriv_shared__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_deriv_shared__WEBPACK_IMPORTED_MODULE_2__);\n/* harmony import */ var _deriv_com_translations__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @deriv-com/translations */ \"@deriv-com/translations\");\n/* harmony import */ var _deriv_com_translations__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_deriv_com_translations__WEBPACK_IMPORTED_MODULE_3__);\n\n\n\n\nvar Page404 = function Page404() {\n  var _useTranslations = (0,_deriv_com_translations__WEBPACK_IMPORTED_MODULE_3__.useTranslations)(),\n    localize = _useTranslations.localize;\n  return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_deriv_components__WEBPACK_IMPORTED_MODULE_1__.PageError, {\n    header: localize('We couldn’t find that page'),\n    messages: [localize('You may have followed a broken link, or the page has moved to a new address.'), localize('Error code: {{error_code}} page not found', {\n      error_code: 404\n    })],\n    redirect_urls: [_deriv_shared__WEBPACK_IMPORTED_MODULE_2__.routes.index],\n    redirect_labels: [localize('Return to trade')],\n    classNameImage: \"page-404__image\",\n    image_url: (0,_deriv_shared__WEBPACK_IMPORTED_MODULE_2__.getUrlBase)('/public/images/common/404.png')\n  });\n};\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Page404);//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiLi9zcmMvTW9kdWxlcy9QYWdlNDA0L0NvbXBvbmVudHMvUGFnZTQwNC50c3giLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUE7QUFFQTtBQUNBO0FBQ0E7QUFFQTtBQUNBO0FBQUE7QUFDQTtBQUVBO0FBQ0E7QUFFQTtBQUFBO0FBRUE7QUFDQTtBQUNBO0FBQ0E7QUFBQTtBQUdBO0FBRUEiLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9AZGVyaXYvcmVwb3J0cy8uL3NyYy9Nb2R1bGVzL1BhZ2U0MDQvQ29tcG9uZW50cy9QYWdlNDA0LnRzeD84ZTgyIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBSZWFjdCBmcm9tICdyZWFjdCc7XHJcblxyXG5pbXBvcnQgeyBQYWdlRXJyb3IgfSBmcm9tICdAZGVyaXYvY29tcG9uZW50cyc7XHJcbmltcG9ydCB7IGdldFVybEJhc2UsIHJvdXRlcyB9IGZyb20gJ0BkZXJpdi9zaGFyZWQnO1xyXG5pbXBvcnQgeyB1c2VUcmFuc2xhdGlvbnMgfSBmcm9tICdAZGVyaXYtY29tL3RyYW5zbGF0aW9ucyc7XHJcblxyXG5jb25zdCBQYWdlNDA0ID0gKCkgPT4ge1xyXG4gICAgY29uc3QgeyBsb2NhbGl6ZSB9ID0gdXNlVHJhbnNsYXRpb25zKCk7XHJcbiAgICByZXR1cm4gKFxyXG4gICAgICAgIDxQYWdlRXJyb3JcclxuICAgICAgICAgICAgaGVhZGVyPXtsb2NhbGl6ZSgnV2UgY291bGRu4oCZdCBmaW5kIHRoYXQgcGFnZScpfVxyXG4gICAgICAgICAgICBtZXNzYWdlcz17W1xyXG4gICAgICAgICAgICAgICAgbG9jYWxpemUoJ1lvdSBtYXkgaGF2ZSBmb2xsb3dlZCBhIGJyb2tlbiBsaW5rLCBvciB0aGUgcGFnZSBoYXMgbW92ZWQgdG8gYSBuZXcgYWRkcmVzcy4nKSxcclxuICAgICAgICAgICAgICAgIGxvY2FsaXplKCdFcnJvciBjb2RlOiB7e2Vycm9yX2NvZGV9fSBwYWdlIG5vdCBmb3VuZCcsIHsgZXJyb3JfY29kZTogNDA0IH0pLFxyXG4gICAgICAgICAgICBdfVxyXG4gICAgICAgICAgICByZWRpcmVjdF91cmxzPXtbcm91dGVzLmluZGV4XX1cclxuICAgICAgICAgICAgcmVkaXJlY3RfbGFiZWxzPXtbbG9jYWxpemUoJ1JldHVybiB0byB0cmFkZScpXX1cclxuICAgICAgICAgICAgY2xhc3NOYW1lSW1hZ2U9J3BhZ2UtNDA0X19pbWFnZSdcclxuICAgICAgICAgICAgaW1hZ2VfdXJsPXtnZXRVcmxCYXNlKCcvcHVibGljL2ltYWdlcy9jb21tb24vNDA0LnBuZycpfVxyXG4gICAgICAgIC8+XHJcbiAgICApO1xyXG59O1xyXG5cclxuZXhwb3J0IGRlZmF1bHQgUGFnZTQwNDtcclxuIl0sIm5hbWVzIjpbXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./src/Modules/Page404/Components/Page404.tsx\n\n}");
+
+/***/ }),
+
+/***/ "./src/Modules/Page404/index.ts":
+/*!**************************************!*\
+  !*** ./src/Modules/Page404/index.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("{__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _Components_Page404__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Components/Page404 */ \"./src/Modules/Page404/Components/Page404.tsx\");\n\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_Components_Page404__WEBPACK_IMPORTED_MODULE_0__[\"default\"]);//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiLi9zcmMvTW9kdWxlcy9QYWdlNDA0L2luZGV4LnRzIiwibWFwcGluZ3MiOiI7Ozs7O0FBQUE7QUFFQSIsInNvdXJjZXMiOlsid2VicGFjazovL0BkZXJpdi9yZXBvcnRzLy4vc3JjL01vZHVsZXMvUGFnZTQwNC9pbmRleC50cz9hMjg2Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBQYWdlNDA0IGZyb20gJy4vQ29tcG9uZW50cy9QYWdlNDA0JztcclxuXHJcbmV4cG9ydCBkZWZhdWx0IFBhZ2U0MDQ7XHJcbiJdLCJuYW1lcyI6W10sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./src/Modules/Page404/index.ts\n\n}");
+
+/***/ })
+
+}]);
