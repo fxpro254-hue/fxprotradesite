@@ -14,6 +14,7 @@ import MobileWrapper from '@/components/shared_ui/mobile-wrapper';
 import Tabs from '@/components/shared_ui/tabs/tabs';
 import SignalsModal from '@/components/signals/signals-modal';
 import DisplayToggle from '@/components/trading-hub/display-toggle';
+import InstancesAnalysis from '@/components/trading-hub/instances-analysis';
 import TradingViewModal from '@/components/trading-view-chart/trading-view-modal';
 import { DBOT_TABS, TAB_IDS } from '@/constants/bot-contents';
 import { api_base } from '@/external/bot-skeleton';
@@ -251,11 +252,20 @@ const AppWrapper = observer(() => {
 
     useEffect(() => {
         const tab_param = searchParams.get('tab');
+        const subtab_param = searchParams.get('subtab');
+        
         if (tab_param !== null) {
             const tab_index = TAB_IDS.findIndex(id => id === tab_param);
             if (tab_index >= 0) {
                 setActiveTab(tab_index);
-                setSearchParams({ tab: TAB_IDS[tab_index] });
+                
+                // Handle subtab parameter for Analysis Tool
+                if (tab_param === 'id-analysis-tool' && subtab_param) {
+                    const validSubtabs = ['ai', 'ldpanalyzer', 'arbitrage', 'instances'];
+                    if (validSubtabs.includes(subtab_param)) {
+                        setAnalysisToolUrl(subtab_param);
+                    }
+                }
             }
         }
 
@@ -574,6 +584,32 @@ const AppWrapper = observer(() => {
 
     const toggleAnalysisTool = (url: string) => {
         setAnalysisToolUrl(url);
+        // Update URL parameter to reflect current subtab
+        const currentParams = new URLSearchParams(searchParams);
+        currentParams.set('subtab', url);
+        setSearchParams(currentParams);
+    };
+
+    const renderAnalysisToolContent = () => {
+        if (analysisToolUrl === 'instances') {
+            return (
+                <div style={{ height: '600px', overflow: 'hidden', paddingBottom: '36px' }}>
+                    <Suspense fallback={<ChunkLoader message={localize('Loading Analysis Tool...')} />}>
+                        <InstancesAnalysis />
+                    </Suspense>
+                </div>
+            );
+        }
+        
+        return (
+            <iframe
+                src={analysisToolUrl}
+                width='100%'
+                height='600px'
+                style={{ border: 'none', display: 'block' }}
+                scrolling='yes'
+            />
+        );
     };
 
     const showRunPanel = [
@@ -759,14 +795,24 @@ const AppWrapper = observer(() => {
                                     >
                                         Arbitrage
                                     </button>
+                                    <button
+                                        onClick={() => toggleAnalysisTool('instances')}
+                                        style={{
+                                            backgroundColor:
+                                                analysisToolUrl === 'instances'
+                                                    ? 'var(--button-primary-default)'
+                                                    : 'transparent',
+                                            color: analysisToolUrl === 'instances' ? 'white' : 'var(--text-general)',
+                                            padding: '8px 16px',
+                                            border: '1px solid var(--border-normal)',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        Instances
+                                    </button>
                                 </div>
-                                <iframe
-                                    src={analysisToolUrl}
-                                    width='100%'
-                                    height='600px'
-                                    style={{ border: 'none', display: 'block' }}
-                                    scrolling='yes'
-                                />
+                                {renderAnalysisToolContent()}
                             </div>
                         </div>
                         <div
