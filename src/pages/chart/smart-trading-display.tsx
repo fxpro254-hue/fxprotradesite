@@ -56,6 +56,26 @@ interface TradeSettings {
     // Trading barrier properties (for over/under strategies)
     tradingBarrier?: number; // Independent trading barrier digit (0-9)
     tradingBarrierInput?: string; // For UI handling of trading barrier input
+
+    // Tick direction condition properties (for rise-fall strategy)
+    tickDirectionEnabled?: boolean; // Whether to check tick direction
+    tickDirectionCount?: number; // Number of ticks to check (e.g., last 3 ticks)
+    tickDirectionCountInput?: string; // For UI handling of input
+    tickDirectionType?: string; // 'rise', 'fall', or 'no-change'
+
+    // Tick digit pattern properties (for even-odd strategy)
+    tickDigitEnabled?: boolean; // Whether to check tick digit pattern
+    tickDigitCount?: number; // Number of last digits to check
+    tickDigitCountInput?: string; // For UI handling of input
+    tickDigitType?: string; // 'even' or 'odd'
+
+    // Tick digit comparison properties (for over-under strategy)
+    tickComparisonEnabled?: boolean; // Whether to check tick digit comparison
+    tickComparisonCount?: number; // Number of last digits to check
+    tickComparisonCountInput?: string; // For UI handling of input
+    tickComparisonType?: string; // 'over', 'under', or 'equals'
+    tickComparisonBarrier?: number; // Barrier digit to compare against (0-9)
+    tickComparisonBarrierInput?: string; // For UI handling of barrier input
 }
 
 interface AnalysisStrategy {
@@ -80,7 +100,10 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
             conditionType: 'rise',
             conditionOperator: '>',
             conditionValue: 65,
-            conditionAction: 'Rise'
+            conditionAction: 'Rise',
+            tickDirectionEnabled: false,
+            tickDirectionCount: 3,
+            tickDirectionType: 'rise'
         },
         activeContractType: null,
     },
@@ -95,7 +118,10 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
             conditionType: 'even',
             conditionOperator: '>',
             conditionValue: 60,
-            conditionAction: 'Even'
+            conditionAction: 'Even',
+            tickDigitEnabled: false,
+            tickDigitCount: 3,
+            tickDigitType: 'even'
         },
         activeContractType: null,
     },
@@ -124,7 +150,11 @@ const initialAnalysisStrategies: AnalysisStrategy[] = [
             conditionOperator: '>',
             conditionValue: 55,
             conditionAction: 'Over',
-            tradingBarrier: 5
+            tradingBarrier: 5,
+            tickComparisonEnabled: false,
+            tickComparisonCount: 3,
+            tickComparisonType: 'over',
+            tickComparisonBarrier: 5
         },
         activeContractType: null,
     },
@@ -195,6 +225,10 @@ const SmartTradingDisplay = observer(() => {
     // State variables for emoji animation
     const [showEmojiAnimation, setShowEmojiAnimation] = useState(false);
     const [isProfitPositive, setIsProfitPositive] = useState(false);
+
+    // Price history buffer for tick direction analysis (stores last 25 prices)
+    const priceHistoryRef = useRef<number[]>([]);
+    const MAX_PRICE_HISTORY = 25; // Store enough for up to 20 tick checks + buffer
 
     // Reference to store per-strategy state that should not trigger re-renders
     const strategyRefsMap = useRef<Record<string, any>>({});
@@ -293,7 +327,18 @@ const SmartTradingDisplay = observer(() => {
                     break;
 
                 case 'PRICE_UPDATE':
+                    const newPrice = parseFloat(event.data.price);
                     setCurrentPrice(event.data.price);
+                    
+                    // Update price history buffer for tick direction analysis
+                    if (!isNaN(newPrice)) {
+                        priceHistoryRef.current.push(newPrice);
+                        // Keep only the last MAX_PRICE_HISTORY prices
+                        if (priceHistoryRef.current.length > MAX_PRICE_HISTORY) {
+                            priceHistoryRef.current.shift();
+                        }
+                        console.log(`💰 [PRICE HISTORY] Updated buffer: ${priceHistoryRef.current.length} prices, latest: ${newPrice}`);
+                    }
                     break;
 
                 case 'ANALYZER_CONNECTION_STATUS':
@@ -1951,6 +1996,45 @@ const SmartTradingDisplay = observer(() => {
                             </div>
                         </div>
 
+                        {/* Tick Direction Additional Condition */}
+                        <div className="condition-row tick-direction-row">
+                            <div className="tick-condition-wrapper">
+                                <label className="tick-checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={strategy.settings.tickDirectionEnabled || false}
+                                        onChange={(e) => handleTickDirectionEnabledChange(strategyId, e.target.checked)}
+                                        className="tick-checkbox"
+                                        disabled={!!strategy.activeContractType}
+                                    />
+                                    <span className="tick-label-text">{localize('and last')}</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    value={strategy.settings.tickDirectionCountInput !== undefined ?
+                                        strategy.settings.tickDirectionCountInput :
+                                        strategy.settings.tickDirectionCount || 3}
+                                    onChange={(e) => handleTickDirectionCountChange(strategyId, e.target.value)}
+                                    onBlur={(e) => handleTickDirectionCountBlur(strategyId, e.target.value)}
+                                    className="tick-count-input"
+                                    disabled={!!strategy.activeContractType || !strategy.settings.tickDirectionEnabled}
+                                />
+                                <span className="tick-label-text">{localize('ticks are')}</span>
+                                <select
+                                    value={strategy.settings.tickDirectionType || 'rise'}
+                                    onChange={(e) => handleTickDirectionTypeChange(strategyId, e.target.value)}
+                                    className="tick-type-select"
+                                    disabled={!!strategy.activeContractType || !strategy.settings.tickDirectionEnabled}
+                                >
+                                    <option value="rise">{localize('Rising')}</option>
+                                    <option value="fall">{localize('Falling')}</option>
+                                    <option value="no-change">{localize('No Change')}</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div className="condition-row">
                             <div className="condition-label">{localize('Then')}</div>
                             <select
@@ -2375,6 +2459,44 @@ const SmartTradingDisplay = observer(() => {
                                 </div>
                             </div>
 
+                            {/* Tick Digit Pattern Additional Condition */}
+                            <div className="condition-row tick-direction-row">
+                                <div className="tick-condition-wrapper">
+                                    <label className="tick-checkbox-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={strategy.settings.tickDigitEnabled || false}
+                                            onChange={(e) => handleTickDigitEnabledChange(strategyId, e.target.checked)}
+                                            className="tick-checkbox"
+                                            disabled={!!strategy.activeContractType}
+                                        />
+                                        <span className="tick-label-text">{localize('and last')}</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="20"
+                                        value={strategy.settings.tickDigitCountInput !== undefined ?
+                                            strategy.settings.tickDigitCountInput :
+                                            strategy.settings.tickDigitCount || 3}
+                                        onChange={(e) => handleTickDigitCountChange(strategyId, e.target.value)}
+                                        onBlur={(e) => handleTickDigitCountBlur(strategyId, e.target.value)}
+                                        className="tick-count-input"
+                                        disabled={!!strategy.activeContractType || !strategy.settings.tickDigitEnabled}
+                                    />
+                                    <span className="tick-label-text">{localize('ticks are')}</span>
+                                    <select
+                                        value={strategy.settings.tickDigitType || 'even'}
+                                        onChange={(e) => handleTickDigitTypeChange(strategyId, e.target.value)}
+                                        className="tick-type-select"
+                                        disabled={!!strategy.activeContractType || !strategy.settings.tickDigitEnabled}
+                                    >
+                                        <option value="even">{localize('Even')}</option>
+                                        <option value="odd">{localize('Odd')}</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div className="condition-row">
                                 <div className="condition-label">{localize('Then')}</div>
                                 <select
@@ -2696,6 +2818,59 @@ const SmartTradingDisplay = observer(() => {
                                     <span className="condition-percent">%</span>
                                 </div>
                             </div>
+
+                            {/* Tick Digit Comparison Row */}
+                            <div className="condition-row tick-direction-row">
+                                <div className="tick-condition-wrapper">
+                                    <label className="tick-checkbox-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={strategy.settings.tickComparisonEnabled || false}
+                                            onChange={(e) => handleTickComparisonEnabledChange(strategyId, e.target.checked)}
+                                            className="tick-checkbox"
+                                            disabled={!!strategy.activeContractType}
+                                        />
+                                        <span className="tick-label-text">{localize('and last')}</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="20"
+                                        value={strategy.settings.tickComparisonCountInput !== undefined ?
+                                            strategy.settings.tickComparisonCountInput :
+                                            strategy.settings.tickComparisonCount || 3}
+                                        onChange={(e) => handleTickComparisonCountChange(strategyId, e.target.value)}
+                                        onBlur={(e) => handleTickComparisonCountBlur(strategyId, e.target.value)}
+                                        className="tick-count-input"
+                                        disabled={!!strategy.activeContractType || !strategy.settings.tickComparisonEnabled}
+                                    />
+                                    <span className="tick-label-text">{localize('ticks')}</span>
+                                    <select
+                                        value={strategy.settings.tickComparisonType || 'over'}
+                                        onChange={(e) => handleTickComparisonTypeChange(strategyId, e.target.value)}
+                                        className="tick-type-select"
+                                        disabled={!!strategy.activeContractType || !strategy.settings.tickComparisonEnabled}
+                                    >
+                                        <option value="over">{localize('Over')}</option>
+                                        <option value="under">{localize('Under')}</option>
+                                        <option value="equals">{localize('Equals')}</option>
+                                    </select>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="9"
+                                        value={strategy.settings.tickComparisonBarrierInput !== undefined ?
+                                            strategy.settings.tickComparisonBarrierInput :
+                                            strategy.settings.tickComparisonBarrier || 5}
+                                        onChange={(e) => handleTickComparisonBarrierChange(strategyId, e.target.value)}
+                                        onBlur={(e) => handleTickComparisonBarrierBlur(strategyId, e.target.value)}
+                                        className="tick-barrier-input"
+                                        disabled={!!strategy.activeContractType || !strategy.settings.tickComparisonEnabled}
+                                        title={localize('Barrier digit (0-9)')}
+                                    />
+                                </div>
+                            </div>
+                            
                             <div className="condition-row">
                                 <div className="condition-label">{localize('Then')}</div>
                                 <select
@@ -3002,7 +3177,268 @@ const SmartTradingDisplay = observer(() => {
                     : strategy
             )
         );
-    }; const handleConditionDigitChange = (strategyId: string, value: string) => {
+    };
+
+    // Tick direction handlers for rise-fall strategy
+    const handleTickDirectionEnabledChange = (strategyId: string, enabled: boolean) => {
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickDirectionEnabled: enabled,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    const handleTickDirectionCountChange = (strategyId: string, value: string) => {
+        const numValue = parseInt(value, 10);
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickDirectionCountInput: value,
+                            tickDirectionCount: !isNaN(numValue) ? Math.min(Math.max(numValue, 1), 20) : strategy.settings.tickDirectionCount,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    const handleTickDirectionCountBlur = (strategyId: string, value: string) => {
+        const numValue = parseInt(value, 10);
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy => {
+                if (strategy.id === strategyId) {
+                    const finalValue = !isNaN(numValue) && numValue >= 1 && numValue <= 20
+                        ? numValue
+                        : strategy.settings.tickDirectionCount || 3;
+                    return {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickDirectionCountInput: finalValue.toString(),
+                            tickDirectionCount: finalValue,
+                        }
+                    };
+                }
+                return strategy;
+            })
+        );
+    };
+
+    const handleTickDirectionTypeChange = (strategyId: string, value: string) => {
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickDirectionType: value,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    // Tick digit pattern handlers for even-odd strategy
+    const handleTickDigitEnabledChange = (strategyId: string, enabled: boolean) => {
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickDigitEnabled: enabled,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    const handleTickDigitCountChange = (strategyId: string, value: string) => {
+        const numValue = parseInt(value, 10);
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickDigitCountInput: value,
+                            tickDigitCount: !isNaN(numValue) ? Math.min(Math.max(numValue, 1), 20) : strategy.settings.tickDigitCount,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    const handleTickDigitCountBlur = (strategyId: string, value: string) => {
+        const numValue = parseInt(value, 10);
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy => {
+                if (strategy.id === strategyId) {
+                    const finalValue = !isNaN(numValue) && numValue >= 1 && numValue <= 20
+                        ? numValue
+                        : strategy.settings.tickDigitCount || 3;
+                    return {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickDigitCountInput: finalValue.toString(),
+                            tickDigitCount: finalValue,
+                        }
+                    };
+                }
+                return strategy;
+            })
+        );
+    };
+
+    const handleTickDigitTypeChange = (strategyId: string, value: string) => {
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickDigitType: value,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    // Tick digit comparison handlers for over-under strategy
+    const handleTickComparisonEnabledChange = (strategyId: string, enabled: boolean) => {
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickComparisonEnabled: enabled,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    const handleTickComparisonCountChange = (strategyId: string, value: string) => {
+        const numValue = parseInt(value, 10);
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickComparisonCountInput: value,
+                            tickComparisonCount: !isNaN(numValue) ? Math.min(Math.max(numValue, 1), 20) : strategy.settings.tickComparisonCount,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    const handleTickComparisonCountBlur = (strategyId: string, value: string) => {
+        const numValue = parseInt(value, 10);
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy => {
+                if (strategy.id === strategyId) {
+                    const finalValue = !isNaN(numValue) && numValue >= 1 && numValue <= 20
+                        ? numValue
+                        : strategy.settings.tickComparisonCount || 3;
+                    return {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickComparisonCountInput: finalValue.toString(),
+                            tickComparisonCount: finalValue,
+                        }
+                    };
+                }
+                return strategy;
+            })
+        );
+    };
+
+    const handleTickComparisonTypeChange = (strategyId: string, value: string) => {
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickComparisonType: value,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    const handleTickComparisonBarrierChange = (strategyId: string, value: string) => {
+        const numValue = parseInt(value, 10);
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy =>
+                strategy.id === strategyId
+                    ? {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickComparisonBarrierInput: value,
+                            tickComparisonBarrier: !isNaN(numValue) ? Math.min(Math.max(numValue, 0), 9) : strategy.settings.tickComparisonBarrier,
+                        },
+                    }
+                    : strategy
+            )
+        );
+    };
+
+    const handleTickComparisonBarrierBlur = (strategyId: string, value: string) => {
+        const numValue = parseInt(value, 10);
+        setAnalysisStrategies(prevStrategies =>
+            prevStrategies.map(strategy => {
+                if (strategy.id === strategyId) {
+                    const finalValue = !isNaN(numValue) && numValue >= 0 && numValue <= 9
+                        ? numValue
+                        : strategy.settings.tickComparisonBarrier || 5;
+                    return {
+                        ...strategy,
+                        settings: {
+                            ...strategy.settings,
+                            tickComparisonBarrierInput: finalValue.toString(),
+                            tickComparisonBarrier: finalValue,
+                        }
+                    };
+                }
+                return strategy;
+            })
+        );
+    };
+
+    const handleConditionDigitChange = (strategyId: string, value: string) => {
         const numValue = parseInt(value, 10);
 
         setAnalysisStrategies(prevStrategies =>
@@ -3316,7 +3752,7 @@ const SmartTradingDisplay = observer(() => {
             console.log(`📈 [DETAILED] Using ${conditionType} metric: ${metric}%`);
             console.log(`📈 [DETAILED] Comparing: ${metric} ${conditionOperator} ${conditionValue}`);
 
-            const result = (() => {
+            const probabilityConditionMet = (() => {
                 switch (conditionOperator) {
                     case '>':
                         const gtResult = metric > (conditionValue ?? 0);
@@ -3344,22 +3780,116 @@ const SmartTradingDisplay = observer(() => {
                 }
             })();
 
-            console.log(`📈 [DETAILED] Final Rise/Fall condition result: ${result}`);
+            console.log(`📈 [DETAILED] Probability condition result: ${probabilityConditionMet}`);
 
             // Additional validation
             if (!analysis.riseRatio && !analysis.fallRatio) {
                 console.warn(`⚠️ Rise/Fall strategy missing ratio data. Available properties:`, Object.keys(analysis));
             }
 
-            return result;
+            // Check tick direction condition if enabled
+            const { tickDirectionEnabled, tickDirectionCount, tickDirectionType } = strategy.settings;
+            if (tickDirectionEnabled && tickDirectionCount && tickDirectionType) {
+                console.log(`📈 [TICK DIRECTION] ⚙️ Feature ENABLED - Checking last ${tickDirectionCount} ticks for ${tickDirectionType}`);
+                console.log(`📈 [TICK DIRECTION] ⚙️ Settings:`, { tickDirectionEnabled, tickDirectionCount, tickDirectionType });
+                
+                // Try multiple sources for price data
+                let priceData = analysis.recentPrices || analysis.prices || analysis.tickPrices || [];
+                
+                // If still no price data, try to extract from other analysis properties
+                if (!priceData || priceData.length === 0) {
+                    // Try to build from tick history if available
+                    if (analysis.tickHistory && Array.isArray(analysis.tickHistory)) {
+                        priceData = analysis.tickHistory.map((tick: any) => 
+                            typeof tick === 'object' ? tick.quote || tick.price || tick.value : tick
+                        );
+                    }
+                }
+                
+                // If analysis doesn't have prices, use our own price history buffer
+                if (!priceData || priceData.length === 0) {
+                    console.log(`📈 [TICK DIRECTION] 💾 Using local price history buffer`);
+                    priceData = priceHistoryRef.current;
+                }
+                
+                // Get recent tick prices from analysis
+                if (!priceData || priceData.length < tickDirectionCount + 1) {
+                    console.warn(`📈 [TICK DIRECTION] ❌ BLOCKING TRADE - Insufficient tick data`);
+                    console.warn(`📈 [TICK DIRECTION] Need ${tickDirectionCount + 1} prices, have ${priceData?.length || 0}`);
+                    console.warn(`📈 [TICK DIRECTION] Available analysis keys:`, Object.keys(analysis));
+                    console.warn(`📈 [TICK DIRECTION] Price history buffer:`, priceHistoryRef.current.length);
+                    console.warn(`📈 [TICK DIRECTION] Tick direction is ENABLED but data unavailable - cannot validate condition`);
+                    // STRICT: Block trades when tick direction is enabled but data is unavailable
+                    const result = false;
+                    console.log(`📈 [DETAILED] Final Rise/Fall condition result: ${result} (probability: ${probabilityConditionMet} && ticks: UNAVAILABLE)`);
+                    return result;
+                }
+
+                const recentPrices = priceData.slice(-(tickDirectionCount + 1));
+                console.log(`📈 [TICK DIRECTION] 📊 Analyzing recent prices:`, recentPrices);
+
+                // Check if all ticks match the expected direction
+                let tickConditionMet = true;
+                for (let i = 1; i < recentPrices.length; i++) {
+                    const prev = parseFloat(recentPrices[i - 1]);
+                    const curr = parseFloat(recentPrices[i]);
+                    
+                    if (isNaN(prev) || isNaN(curr)) {
+                        console.warn(`📈 [TICK DIRECTION] ❌ BLOCKING TRADE - Invalid price data at index ${i}: prev=${prev}, curr=${curr}`);
+                        // STRICT: Block trades when data is invalid
+                        const result = false;
+                        console.log(`📈 [DETAILED] Final Rise/Fall condition result: ${result} (probability: ${probabilityConditionMet} && ticks: INVALID_DATA)`);
+                        return result;
+                    }
+                    
+                    if (tickDirectionType === 'rise') {
+                        if (curr <= prev) {
+                            tickConditionMet = false;
+                            console.log(`📈 [TICK DIRECTION] ❌ Tick ${i}: ${curr} <= ${prev} (NOT rising)`);
+                            break;
+                        } else {
+                            console.log(`📈 [TICK DIRECTION] ✅ Tick ${i}: ${curr} > ${prev} (rising)`);
+                        }
+                    } else if (tickDirectionType === 'fall') {
+                        if (curr >= prev) {
+                            tickConditionMet = false;
+                            console.log(`📈 [TICK DIRECTION] ❌ Tick ${i}: ${curr} >= ${prev} (NOT falling)`);
+                            break;
+                        } else {
+                            console.log(`📈 [TICK DIRECTION] ✅ Tick ${i}: ${curr} < ${prev} (falling)`);
+                        }
+                    } else if (tickDirectionType === 'no-change') {
+                        if (curr !== prev) {
+                            tickConditionMet = false;
+                            console.log(`📈 [TICK DIRECTION] ❌ Tick ${i}: ${curr} !== ${prev} (changed)`);
+                            break;
+                        } else {
+                            console.log(`📈 [TICK DIRECTION] ✅ Tick ${i}: ${curr} === ${prev} (no change)`);
+                        }
+                    }
+                }
+
+                console.log(`📈 [TICK DIRECTION] ${tickConditionMet ? '✅' : '❌'} Tick direction condition: ${tickConditionMet ? 'MET' : 'NOT MET'}`);
+                
+                const finalResult = probabilityConditionMet && tickConditionMet;
+                console.log(`📈 [DETAILED] ⚖️ Final Rise/Fall condition result: ${finalResult}`);
+                console.log(`📈 [DETAILED] └─ Probability condition: ${probabilityConditionMet ? '✅' : '❌'}`);
+                console.log(`📈 [DETAILED] └─ Tick direction condition: ${tickConditionMet ? '✅' : '❌'}`);
+                console.log(`📈 [DETAILED] └─ Combined (AND): ${finalResult ? '✅ TRADE ALLOWED' : '❌ TRADE BLOCKED'}`);
+                return finalResult;
+            }
+
+            console.log(`📈 [DETAILED] Final Rise/Fall condition result: ${probabilityConditionMet} (no tick direction check)`);
+            return probabilityConditionMet;
         }
 
         // even/odd first card
         if (strategyId === 'even-odd') {
-            const metric = conditionType === 'even'
-                ? parseFloat(analysis.evenProbability || '0')
-                : parseFloat(analysis.oddProbability || '0');
-            const result = (() => {
+            const evenProbability = parseFloat(analysis.evenProbability || '0');
+            const oddProbability = parseFloat(analysis.oddProbability || '0');
+            const metric = conditionType === 'even' ? evenProbability : oddProbability;
+            
+            const probabilityConditionMet = (() => {
                 switch (conditionOperator) {
                     case '>': return metric > (conditionValue ?? 0);
                     case '<': return metric < (conditionValue ?? 0);
@@ -3369,8 +3899,69 @@ const SmartTradingDisplay = observer(() => {
                     default: return false;
                 }
             })();
-            console.log(`Even/Odd condition check: ${metric} ${conditionOperator} ${conditionValue} = ${result}`);
-            return result;
+            
+            console.log(`🎲 [EVEN/ODD] Probability condition: ${metric} ${conditionOperator} ${conditionValue} = ${probabilityConditionMet}`);
+
+            // Check tick digit pattern condition if enabled
+            const { tickDigitEnabled, tickDigitCount, tickDigitType } = strategy.settings;
+            if (tickDigitEnabled && tickDigitCount && tickDigitType) {
+                console.log(`🎲 [TICK DIGIT] ⚙️ Feature ENABLED - Checking last ${tickDigitCount} digits for ${tickDigitType}`);
+                
+                // Use price history buffer to get last digits
+                if (!priceHistoryRef.current || priceHistoryRef.current.length < tickDigitCount) {
+                    console.warn(`🎲 [TICK DIGIT] ❌ BLOCKING TRADE - Insufficient price data`);
+                    console.warn(`🎲 [TICK DIGIT] Need ${tickDigitCount} prices, have ${priceHistoryRef.current?.length || 0}`);
+                    const result = false;
+                    console.log(`🎲 [DETAILED] Final Even/Odd condition result: ${result} (probability: ${probabilityConditionMet} && digits: UNAVAILABLE)`);
+                    return result;
+                }
+
+                const recentPrices = priceHistoryRef.current.slice(-tickDigitCount);
+                console.log(`🎲 [TICK DIGIT] 📊 Analyzing recent prices:`, recentPrices);
+                
+                // Extract last digits from prices
+                const lastDigits = recentPrices.map(price => {
+                    const priceStr = price.toString();
+                    const lastChar = priceStr.charAt(priceStr.length - 1);
+                    return parseInt(lastChar, 10);
+                });
+                
+                console.log(`🎲 [TICK DIGIT] 📊 Last digits:`, lastDigits);
+
+                // Check if all digits match the expected pattern
+                let digitConditionMet = true;
+                for (let i = 0; i < lastDigits.length; i++) {
+                    const digit = lastDigits[i];
+                    
+                    if (isNaN(digit)) {
+                        console.warn(`🎲 [TICK DIGIT] ❌ BLOCKING TRADE - Invalid digit at index ${i}: ${digit}`);
+                        return false;
+                    }
+                    
+                    const isEven = digit % 2 === 0;
+                    const expected = tickDigitType === 'even';
+                    
+                    if (isEven !== expected) {
+                        digitConditionMet = false;
+                        console.log(`🎲 [TICK DIGIT] ❌ Digit ${i}: ${digit} is ${isEven ? 'even' : 'odd'} (expected ${tickDigitType})`);
+                        break;
+                    } else {
+                        console.log(`🎲 [TICK DIGIT] ✅ Digit ${i}: ${digit} is ${isEven ? 'even' : 'odd'}`);
+                    }
+                }
+
+                console.log(`🎲 [TICK DIGIT] ${digitConditionMet ? '✅' : '❌'} Digit pattern condition: ${digitConditionMet ? 'MET' : 'NOT MET'}`);
+                
+                const finalResult = probabilityConditionMet && digitConditionMet;
+                console.log(`🎲 [DETAILED] ⚖️ Final Even/Odd condition result: ${finalResult}`);
+                console.log(`🎲 [DETAILED] └─ Probability condition: ${probabilityConditionMet ? '✅' : '❌'}`);
+                console.log(`🎲 [DETAILED] └─ Digit pattern condition: ${digitConditionMet ? '✅' : '❌'}`);
+                console.log(`🎲 [DETAILED] └─ Combined (AND): ${finalResult ? '✅ TRADE ALLOWED' : '❌ TRADE BLOCKED'}`);
+                return finalResult;
+            }
+            
+            console.log(`🎲 [DETAILED] Final Even/Odd condition result: ${probabilityConditionMet} (no digit pattern check)`);
+            return probabilityConditionMet;
         }
 
         // over/under first card
@@ -3378,7 +3969,8 @@ const SmartTradingDisplay = observer(() => {
             const metric = conditionType === 'over'
                 ? parseFloat(analysis.overProbability || '0')
                 : parseFloat(analysis.underProbability || '0');
-            const result = (() => {
+            
+            const probabilityConditionMet = (() => {
                 switch (conditionOperator) {
                     case '>': return metric > (conditionValue ?? 0);
                     case '<': return metric < (conditionValue ?? 0);
@@ -3388,8 +3980,70 @@ const SmartTradingDisplay = observer(() => {
                     default: return false;
                 }
             })();
-            console.log(`Over/Under condition check: ${metric} ${conditionOperator} ${conditionValue} = ${result}`);
-            return result;
+            
+            console.log(`💰 [OVER/UNDER] Probability condition: ${metric} ${conditionOperator} ${conditionValue} = ${probabilityConditionMet}`);
+
+            // Check tick digit comparison condition if enabled
+            const { tickComparisonEnabled, tickComparisonCount, tickComparisonType, tickComparisonBarrier } = strategy.settings;
+            if (tickComparisonEnabled && tickComparisonCount && tickComparisonType !== undefined && tickComparisonBarrier !== undefined) {
+                console.log(`💰 [TICK COMPARISON] ⚙️ Feature ENABLED - Checking last ${tickComparisonCount} digits ${tickComparisonType} ${tickComparisonBarrier}`);
+                
+                // Use price history buffer to get last digits
+                if (!priceHistoryRef.current || priceHistoryRef.current.length < tickComparisonCount) {
+                    console.warn(`💰 [TICK COMPARISON] ❌ BLOCKING TRADE - Insufficient price data`);
+                    console.warn(`💰 [TICK COMPARISON] Need ${tickComparisonCount} prices, have ${priceHistoryRef.current?.length || 0}`);
+                    const result = false;
+                    console.log(`💰 [DETAILED] Final Over/Under condition result: ${result} (probability: ${probabilityConditionMet} && comparison: UNAVAILABLE)`);
+                    return result;
+                }
+
+                const recentPrices = priceHistoryRef.current.slice(-tickComparisonCount);
+                console.log(`💰 [TICK COMPARISON] 📊 Analyzing recent prices:`, recentPrices);
+                
+                // Extract last digits from prices
+                const lastDigits = recentPrices.map(price => {
+                    const priceStr = price.toString();
+                    const lastChar = priceStr.charAt(priceStr.length - 1);
+                    return parseInt(lastChar, 10);
+                });
+                console.log(`💰 [TICK COMPARISON] 🔢 Last digits extracted:`, lastDigits);
+                console.log(`💰 [TICK COMPARISON] 🎯 Checking if all digits are ${tickComparisonType} ${tickComparisonBarrier}`);
+                
+                // Check if all digits match the comparison condition
+                let comparisonConditionMet = true;
+                for (let i = 0; i < lastDigits.length; i++) {
+                    const digit = lastDigits[i];
+                    let digitMeetsCondition = false;
+                    
+                    if (tickComparisonType === 'over') {
+                        digitMeetsCondition = digit > tickComparisonBarrier;
+                    } else if (tickComparisonType === 'under') {
+                        digitMeetsCondition = digit < tickComparisonBarrier;
+                    } else if (tickComparisonType === 'equals') {
+                        digitMeetsCondition = digit === tickComparisonBarrier;
+                    }
+                    
+                    if (!digitMeetsCondition) {
+                        console.log(`💰 [TICK COMPARISON] ❌ BLOCKING - Digit ${i + 1}: ${digit} is NOT ${tickComparisonType} ${tickComparisonBarrier}`);
+                        comparisonConditionMet = false;
+                        break;
+                    } else {
+                        console.log(`💰 [TICK COMPARISON] ✅ Digit ${i + 1}: ${digit} is ${tickComparisonType} ${tickComparisonBarrier}`);
+                    }
+                }
+
+                console.log(`💰 [TICK COMPARISON] ${comparisonConditionMet ? '✅' : '❌'} Digit comparison condition: ${comparisonConditionMet ? 'MET' : 'NOT MET'}`);
+                
+                const finalResult = probabilityConditionMet && comparisonConditionMet;
+                console.log(`💰 [DETAILED] ⚖️ Final Over/Under condition result: ${finalResult}`);
+                console.log(`💰 [DETAILED] └─ Probability condition: ${probabilityConditionMet ? '✅' : '❌'}`);
+                console.log(`💰 [DETAILED] └─ Digit comparison condition: ${comparisonConditionMet ? '✅' : '❌'}`);
+                console.log(`💰 [DETAILED] └─ Combined (AND): ${finalResult ? '✅ TRADE ALLOWED' : '❌ TRADE BLOCKED'}`);
+                return finalResult;
+            }
+            
+            console.log(`💰 [DETAILED] Final Over/Under condition result: ${probabilityConditionMet} (no digit comparison check)`);
+            return probabilityConditionMet;
         }
 
         // even-odd-2 pattern card (streak-based)

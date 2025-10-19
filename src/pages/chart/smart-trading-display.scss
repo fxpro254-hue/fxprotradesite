@@ -1416,6 +1416,214 @@ html {
         &:last-child {
             margin-bottom: 0;
         }
+
+        &.tick-direction-row {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-normal);
+            transition: opacity 0.2s ease;
+            background-color: rgba(var(--brand-red-coral-rgb), 0.03);
+            padding: 12px;
+            border-radius: 6px;
+            
+            &.disabled {
+                .condition-value,
+                .condition-select {
+                    opacity: 0.5;
+                }
+                
+                .condition-label:not(.tick-direction-label) {
+                    opacity: 0.5;
+                }
+            }
+            
+            // Wrapper for all tick condition controls
+            .tick-condition-wrapper {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            
+            .tick-direction-label {
+                label {
+                    display: flex;
+                    align-items: center;
+                    user-select: none;
+                    
+                    span {
+                        font-weight: 600;
+                        color: var(--text-prominent);
+                    }
+                }
+            }
+            
+            input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+                accent-color: var(--brand-red-coral);
+                flex-shrink: 0;
+                border: 2px solid var(--border-normal);
+                border-radius: 3px;
+                background-color: var(--general-main-1);
+                position: relative;
+                margin: 0;
+                
+                // Force checkbox visibility with custom styling
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                
+                // Custom checkmark when checked
+                &:checked {
+                    background-color: var(--brand-red-coral);
+                    border-color: var(--brand-red-coral);
+                    
+                    &::after {
+                        content: '✓';
+                        position: absolute;
+                        color: white;
+                        font-size: 11px;
+                        font-weight: bold;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                    }
+                }
+                
+                &:hover:not(:disabled) {
+                    transform: scale(1.05);
+                    transition: transform 0.15s ease;
+                    border-color: var(--brand-red-coral);
+                    box-shadow: 0 0 0 2px rgba(var(--brand-red-coral-rgb), 0.2);
+                }
+                
+                &:focus {
+                    outline: none;
+                    box-shadow: 0 0 0 2px rgba(var(--brand-red-coral-rgb), 0.25);
+                }
+                
+                &:disabled {
+                    cursor: not-allowed;
+                    opacity: 0.4;
+                    background-color: var(--general-disabled);
+                }
+            }
+            
+            // Tick condition label styles
+            .tick-checkbox-label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 0;
+                user-select: none;
+                cursor: pointer;
+                
+                .tick-checkbox {
+                    margin: 0;
+                }
+            }
+            
+            .tick-label-text {
+                font-size: 13px;
+                font-weight: 500;
+                color: var(--text-general);
+                white-space: nowrap;
+            }
+            
+            // Tick count input
+            .tick-count-input {
+                width: 50px;
+                padding: 4px 8px;
+                border: 1px solid var(--border-normal);
+                border-radius: 4px;
+                background-color: var(--general-main-1);
+                color: var(--text-general);
+                font-size: 13px;
+                text-align: center;
+                transition: all 0.2s ease;
+                
+                &:hover:not(:disabled) {
+                    border-color: var(--border-hover);
+                }
+                
+                &:focus {
+                    outline: none;
+                    border-color: var(--brand-red-coral);
+                    box-shadow: 0 0 0 1px rgba(var(--brand-red-coral-rgb), 0.2);
+                }
+                
+                &:disabled {
+                    opacity: 0.5;
+                    background-color: var(--general-disabled);
+                    cursor: not-allowed;
+                }
+            }
+            
+            // Tick type select (Rise/Fall, Even/Odd, Over/Under/Equals)
+            .tick-type-select {
+                padding: 4px 24px 4px 8px;
+                border: 1px solid var(--border-normal);
+                border-radius: 4px;
+                background-color: var(--general-main-1);
+                color: var(--text-general);
+                font-size: 13px;
+                appearance: none;
+                background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 4px center;
+                background-size: 16px;
+                transition: all 0.2s ease;
+                min-width: 100px;
+                cursor: pointer;
+                
+                &:hover:not(:disabled) {
+                    border-color: var(--border-hover);
+                }
+                
+                &:focus {
+                    outline: none;
+                    border-color: var(--brand-red-coral);
+                    box-shadow: 0 0 0 1px rgba(var(--brand-red-coral-rgb), 0.2);
+                }
+                
+                &:disabled {
+                    opacity: 0.5;
+                    background-color: var(--general-disabled);
+                    cursor: not-allowed;
+                }
+            }
+            
+            // Tick barrier input (for Over/Under strategy)
+            .tick-barrier-input {
+                width: 45px;
+                padding: 4px 8px;
+                border: 1px solid var(--border-normal);
+                border-radius: 4px;
+                background-color: var(--general-main-1);
+                color: var(--text-general);
+                font-size: 13px;
+                text-align: center;
+                transition: all 0.2s ease;
+                
+                &:hover:not(:disabled) {
+                    border-color: var(--border-hover);
+                }
+                
+                &:focus {
+                    outline: none;
+                    border-color: var(--brand-red-coral);
+                    box-shadow: 0 0 0 1px rgba(var(--brand-red-coral-rgb), 0.2);
+                }
+                
+                &:disabled {
+                    opacity: 0.5;
+                    background-color: var(--general-disabled);
+                    cursor: not-allowed;
+                }
+            }
+        }
     }
     
     .condition-label {
