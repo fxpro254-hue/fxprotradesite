@@ -254,12 +254,19 @@ const SpeedBotDisplay = observer(() => {
             }
         };
 
+        const handleStateRequest = () => {
+            console.log('Speed Bot: State requested, emitting current state:', isTrading);
+            globalObserver.emit('speed_bot.state_changed', { isRunning: isTrading });
+        };
+
         globalObserver.register('speed_bot.start', handleRunButtonStart);
         globalObserver.register('speed_bot.stop', handleRunButtonStop);
+        globalObserver.register('speed_bot.request_state', handleStateRequest);
 
         return () => {
             globalObserver.unregisterAll('speed_bot.start');
             globalObserver.unregisterAll('speed_bot.stop');
+            globalObserver.unregisterAll('speed_bot.request_state');
         };
     }, [isTrading]); // Re-register when trading state changes
 

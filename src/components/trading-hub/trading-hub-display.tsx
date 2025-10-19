@@ -1127,12 +1127,19 @@ const TradingHubDisplay: React.FC = () => {
             }
         };
 
+        const handleStateRequest = () => {
+            console.log('Trading Hub: State requested, emitting current state:', isContinuousTrading);
+            globalObserver.emit('trading_hub.state_changed', { isRunning: isContinuousTrading });
+        };
+
         globalObserver.register('trading_hub.start', handleRunButtonStart);
         globalObserver.register('trading_hub.stop', handleRunButtonStop);
+        globalObserver.register('trading_hub.request_state', handleStateRequest);
 
         return () => {
             globalObserver.unregisterAll('trading_hub.start');
             globalObserver.unregisterAll('trading_hub.stop');
+            globalObserver.unregisterAll('trading_hub.request_state');
         };
     }, [isContinuousTrading]); // Re-register when trading state changes
 

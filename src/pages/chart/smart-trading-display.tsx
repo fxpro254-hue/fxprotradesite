@@ -674,12 +674,20 @@ const SmartTradingDisplay = observer(() => {
             console.log('Smart Trading: Showing emoji animation with profit positive:', total_profit >= 0);
         };
 
+        const handleStateRequest = () => {
+            const hasActiveStrategy = analysisStrategies.some(s => s.activeContractType);
+            console.log('Smart Trading: State requested, emitting current state:', hasActiveStrategy);
+            globalObserver.emit('smart_trading.state_changed', { isRunning: hasActiveStrategy, strategyId: 'requested' });
+        };
+
         globalObserver.register('smart_trading.start', handleRunButtonStart);
         globalObserver.register('smart_trading.stop', handleRunButtonStop);
+        globalObserver.register('smart_trading.request_state', handleStateRequest);
 
         return () => {
             globalObserver.unregisterAll('smart_trading.start');
             globalObserver.unregisterAll('smart_trading.stop');
+            globalObserver.unregisterAll('smart_trading.request_state');
         };
     }, [analysisStrategies]); // Re-register when strategies change
 
