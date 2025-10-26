@@ -298,6 +298,13 @@ const AppWrapper = observer(() => {
                         'Advanced Over/Under Oracle with smart martingale, dual prediction system, and configurable take profit/stop loss management.',
                 },
                 {
+                    file: '2025 BOT - 0008 - Over Under.xml',
+                    category: 'automated',
+                    popularity: 97,
+                    description:
+                        'Advanced 2025 Over/Under bot with digit analysis, frequency tracking, and intelligent prediction system for optimal market timing.',
+                },
+                {
                     file: '2025 $Orginal  2025 Version .xml',
                     category: 'popular',
                     popularity: 96,

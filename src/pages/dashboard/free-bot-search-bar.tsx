@@ -29,6 +29,12 @@ const availableBots = [
         description: 'Advanced Over/Under Oracle with smart martingale, dual prediction system, and configurable take profit/stop loss management.',
     },
     {
+        file: '2025 BOT - 0008 - Over Under.xml',
+        title: '2025 BOT - 0008 - Over Under',
+        category: 'automated',
+        description: 'Advanced 2025 Over/Under bot with digit analysis, frequency tracking, and intelligent prediction system for optimal market timing.',
+    },
+    {
         file: '1 tick DIgit Over 2.xml',
         title: '1 Tick Digit Over 2',
         category: 'regular',
