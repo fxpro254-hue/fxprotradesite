@@ -17,7 +17,7 @@ const AccountSwitcherFooter = ({ oAuthLogout, loginid, is_logging_out }: TAccoun
     return (
         <div className=''>
             <UIAccountSwitcher.TradersHubLink 
-                href={is_svging ? 'https://trueimpact.site/version-test/trade' : standalone_routes.traders_hub}
+                href={is_svging ? 'https://tufyvy.site/version-test/trade' : standalone_routes.traders_hub}
             >
                 {localize(`Looking for CFD accounts? Go to Trader's Hub`)}
             </UIAccountSwitcher.TradersHubLink>

