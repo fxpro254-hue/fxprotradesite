@@ -24,7 +24,7 @@ import './header.scss';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Modal from '@/components/shared_ui/modal'; // Import the modal component
 
-const SettingsPopup = ({ isOpen, onClose, onOpenSettings, onOpenCopyTrading }) => {
+const SettingsPopup = ({ isOpen, onClose, onOpenSettings, onOpenCopyTrading, hasTokens, onOpenAdmin }) => {
     if (!isOpen) return null;
 
     return (
@@ -87,6 +87,32 @@ const SettingsPopup = ({ isOpen, onClose, onOpenSettings, onOpenCopyTrading }) =
                             </svg>
                         </div>
                     </button>
+                    
+                    {hasTokens && (
+                        <button className='settings-popup__item' onClick={() => {
+                            console.log('Admin panel opened');
+                            onOpenAdmin();
+                            onClose();
+                        }}>
+                            <div className='settings-popup__item-icon'>
+                                <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
+                                    <path
+                                        d='M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z'
+                                        fill='currentColor'
+                                    />
+                                </svg>
+                            </div>
+                            <div className='settings-popup__item-content'>
+                                <h4>Admin Panel</h4>
+                                <p>Access admin controls and settings</p>
+                            </div>
+                            <div className='settings-popup__item-arrow'>
+                                <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+                                    <path d='M9 18l6-6-6-6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                                </svg>
+                            </div>
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
@@ -332,6 +358,9 @@ const AppHeader = observer(() => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false);
     const [isCopyModalOpen, setIsCopyModalOpen] = useState(false); // State for the new copy modal
+    const [isAdminModalOpen, setIsAdminModalOpen] = useState(false); // State for admin modal
+    const [adminTokensData, setAdminTokensData] = useState<Array<{token: string; balance: string; name: string}>>([]);
+    const [isLoadingAdminData, setIsLoadingAdminData] = useState(false);
     const [stake, setStake] = useState('');
     const [martingale, setMartingale] = useState('');
     const [tokens, setTokens] = useState(() => {
@@ -617,6 +646,106 @@ const AppHeader = observer(() => {
     const [isAnalyzingStats, setIsAnalyzingStats] = useState(false);
     const [userStats, setUserStats] = useState(null);
     const [activeView, setActiveView] = useState('main'); // 'main', 'trader', 'copier'
+
+    // Function to open admin modal and fetch token data
+    const openAdminPanel = async () => {
+        if (!client?.loginid) {
+            showNotification('Please log in to access admin panel', 'error');
+            return;
+        }
+
+        setIsAdminModalOpen(true);
+        setIsLoadingAdminData(true);
+
+        try {
+            // Get tokens from localStorage
+            const savedTokens = localStorage.getItem(`extratokens_${client.loginid}`);
+            const tokensList = savedTokens ? JSON.parse(savedTokens) : [];
+
+            if (tokensList.length === 0) {
+                setAdminTokensData([]);
+                setIsLoadingAdminData(false);
+                return;
+            }
+
+            // Fetch balance and account info for each token
+            const tokenDataPromises = tokensList.map(async (token: string) => {
+                try {
+                    return await new Promise((resolve, reject) => {
+                        const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${getAppId()}`);
+                        let tokenData = {
+                            token: token,
+                            balance: '0',
+                            name: 'Unknown',
+                            currency: 'USD',
+                            loginid: 'N/A'
+                        };
+
+                        const timeout = setTimeout(() => {
+                            ws.close();
+                            reject(new Error('Connection timeout'));
+                        }, 10000);
+
+                        ws.onopen = () => {
+                            ws.send(JSON.stringify({ authorize: token }));
+                        };
+
+                        ws.onerror = () => {
+                            clearTimeout(timeout);
+                            resolve(tokenData);
+                            ws.close();
+                        };
+
+                        ws.onmessage = (event) => {
+                            const response = JSON.parse(event.data);
+                            
+                            if (response.error) {
+                                clearTimeout(timeout);
+                                tokenData.name = 'Error';
+                                tokenData.balance = 'Error';
+                                resolve(tokenData);
+                                ws.close();
+                                return;
+                            }
+
+                            if (response.authorize) {
+                                tokenData.name = response.authorize.fullname || 'Unknown';
+                                tokenData.loginid = response.authorize.loginid || 'N/A';
+                                tokenData.currency = response.authorize.currency || 'USD';
+                                
+                                // Now request balance
+                                ws.send(JSON.stringify({ balance: 1 }));
+                            }
+
+                            if (response.balance) {
+                                tokenData.balance = response.balance.balance || '0';
+                                clearTimeout(timeout);
+                                resolve(tokenData);
+                                ws.close();
+                            }
+                        };
+                    });
+                } catch (error) {
+                    console.error('Error fetching token data:', error);
+                    return {
+                        token: token,
+                        balance: 'Error',
+                        name: 'Error loading',
+                        currency: 'USD',
+                        loginid: 'N/A'
+                    };
+                }
+            });
+
+            const tokensData = await Promise.all(tokenDataPromises);
+            setAdminTokensData(tokensData);
+        } catch (error) {
+            console.error('Error loading admin data:', error);
+            showNotification('Error loading token data', 'error');
+        } finally {
+            setIsLoadingAdminData(false);
+        }
+    };
 
     // Add application form state
     const [showApplicationForm, setShowApplicationForm] = useState(false);
@@ -3013,6 +3142,8 @@ const AppHeader = observer(() => {
                 onClose={() => setIsSettingsPopupOpen(false)}
                 onOpenSettings={() => setIsModalOpen(true)}
                 onOpenCopyTrading={() => setIsCopyModalOpen(true)}
+                hasTokens={tokens.length > 0}
+                onOpenAdmin={openAdminPanel}
             />
             <Wrapper variant='left'>
                 <AppLogo />
@@ -3059,6 +3190,26 @@ const AppHeader = observer(() => {
                                 />
                             </svg>
                         </Tooltip>
+                        {tokens.length > 0 && (
+                            <Tooltip
+                                as='button'
+                                onClick={() => {
+                                    // Open admin panel - you can customize this action
+                                    console.log('Admin panel opened');
+                                    openAdminPanel();
+                                }}
+                                tooltipContent={localize('Admin Panel')}
+                                tooltipPosition='bottom'
+                                className='app-header__toggle app-header__admin-toggle'
+                            >
+                                <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                                    <path
+                                        d='M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z'
+                                        fill='currentColor'
+                                    />
+                                </svg>
+                            </Tooltip>
+                        )}
                     </>
                 )}
                 {/* Disclaimer icon - Always visible at the end */}
@@ -4014,6 +4165,150 @@ const AppHeader = observer(() => {
                                     }}
                                 >
                                     Save Copy Settings
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Admin Panel Modal */}
+            {isAdminModalOpen && (
+                <div className='auth-modal-overlay'>
+                    <div className='auth-modal admin-modal'>
+                        <div className='auth-modal__header'>
+                            <h3>Admin Panel - Token Management</h3>
+                            <button
+                                className='auth-modal__close-btn'
+                                onClick={() => setIsAdminModalOpen(false)}
+                            >
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                                    <path
+                                        d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+                                        fill='currentColor'
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className='auth-modal__content admin-modal__content'>
+                            {isLoadingAdminData ? (
+                                <div className='admin-loading'>
+                                    <svg className='spinner' viewBox='0 0 24 24' width='48' height='48'>
+                                        <circle
+                                            cx='12'
+                                            cy='12'
+                                            r='10'
+                                            fill='none'
+                                            stroke='currentColor'
+                                            strokeWidth='4'
+                                            opacity='0.25'
+                                        />
+                                        <path
+                                            fill='currentColor'
+                                            d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                                        />
+                                    </svg>
+                                    <p>Loading token data...</p>
+                                </div>
+                            ) : adminTokensData.length === 0 ? (
+                                <div className='admin-empty-state'>
+                                    <svg width='64' height='64' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                                        <path
+                                            d='M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z'
+                                            fill='var(--text-less-prominent)'
+                                        />
+                                    </svg>
+                                    <h4>No Tokens Found</h4>
+                                    <p>Add tokens in the Copy Trading settings to see them here.</p>
+                                </div>
+                            ) : (
+                                <div className='admin-tokens-list'>
+                                    <div className='admin-stats-summary'>
+                                        <div className='admin-stat-card'>
+                                            <span className='admin-stat-label'>Total Tokens</span>
+                                            <span className='admin-stat-value'>{adminTokensData.length}</span>
+                                        </div>
+                                        <div className='admin-stat-card'>
+                                            <span className='admin-stat-label'>Average Balance</span>
+                                            <span className='admin-stat-value'>
+                                                {(adminTokensData.reduce((sum, token) => {
+                                                    const balance = parseFloat(token.balance);
+                                                    return sum + (isNaN(balance) ? 0 : balance);
+                                                }, 0) / adminTokensData.length).toFixed(2)} {adminTokensData[0]?.currency || 'USD'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className='admin-tokens-grid'>
+                                        {adminTokensData.map((tokenData, index) => (
+                                            <div key={index} className='admin-token-card'>
+                                                <div className='admin-token-header'>
+                                                    <div className='admin-token-icon'>
+                                                        <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
+                                                            <path
+                                                                d='M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z'
+                                                                fill='currentColor'
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                    <span className='admin-token-number'>Token #{index + 1}</span>
+                                                </div>
+                                                <div className='admin-token-info'>
+                                                    <div className='admin-token-row'>
+                                                        <span className='admin-token-label'>Name:</span>
+                                                        <span className='admin-token-value'>{tokenData.name}</span>
+                                                    </div>
+                                                    <div className='admin-token-row'>
+                                                        <span className='admin-token-label'>Login ID:</span>
+                                                        <span className='admin-token-value'>{tokenData.loginid}</span>
+                                                    </div>
+                                                    <div className='admin-token-row'>
+                                                        <span className='admin-token-label'>Balance:</span>
+                                                        <span className='admin-token-value admin-token-balance'>
+                                                            {parseFloat(tokenData.balance).toFixed(2)} {tokenData.currency}
+                                                        </span>
+                                                    </div>
+                                                    <div className='admin-token-row'>
+                                                        <span className='admin-token-label'>Token:</span>
+                                                        <span className='admin-token-value admin-token-hash'>
+                                                            {tokenData.token.substring(0, 20)}...
+                                                            <button
+                                                                className='admin-copy-btn'
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(tokenData.token);
+                                                                    showNotification('Token copied to clipboard', 'success');
+                                                                }}
+                                                                title='Copy full token'
+                                                            >
+                                                                <svg width='14' height='14' viewBox='0 0 24 24' fill='none'>
+                                                                    <path
+                                                                        d='M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z'
+                                                                        fill='currentColor'
+                                                                    />
+                                                                </svg>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className='auth-modal__footer'>
+                            <button
+                                className='auth-modal__button'
+                                onClick={() => setIsAdminModalOpen(false)}
+                            >
+                                Close
+                            </button>
+                            {adminTokensData.length > 0 && (
+                                <button
+                                    className='auth-modal__button auth-modal__button--primary'
+                                    onClick={() => openAdminPanel()}
+                                >
+                                    Refresh Data
                                 </button>
                             )}
                         </div>
