@@ -17,8 +17,9 @@ const ScreenshotPromptModal: React.FC<ScreenshotPromptModalProps> = ({
     const { localize } = useTranslations();
 
     useEffect(() => {
-        if (isOpen && process.env.NODE_ENV === 'development') {
+        if (isOpen) {
             console.log('📸 Screenshot toast opened!');
+            console.log('📸 Toast should be visible now');
         }
     }, [isOpen]);
 
@@ -39,6 +40,8 @@ const ScreenshotPromptModal: React.FC<ScreenshotPromptModalProps> = ({
     };
 
     if (!isOpen) return null;
+
+    console.log('📸 Rendering screenshot toast - isOpen:', isOpen);
 
     return (
         <div className={`screenshot-prompt-toast ${isOpen ? 'screenshot-prompt-toast--visible' : ''}`}>

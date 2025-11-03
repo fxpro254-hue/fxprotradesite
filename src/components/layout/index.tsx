@@ -23,6 +23,13 @@ const Layout = () => {
 
     // Screenshot detection
     const { isScreenshotDetected, resetScreenshotDetection } = useScreenshotDetection();
+    
+    // Debug: Log when detection state changes
+    useEffect(() => {
+        if (isScreenshotDetected) {
+            console.log('🔔 Layout: Screenshot detected state changed to TRUE');
+        }
+    }, [isScreenshotDetected]);
 
     const isCallbackPage = window.location.pathname === '/callback';
     const isLoggedInCookie = Cookies.get('logged_state') === 'true';
