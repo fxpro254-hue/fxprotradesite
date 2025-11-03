@@ -12,7 +12,7 @@ import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
 import NotificationBanner from '../notification-banner';
-import { ScreenshotPromptModal, FloatingScreenshotButton } from '../screenshot-prompt';
+import { ScreenshotPromptModal } from '../screenshot-prompt';
 import { useScreenshotDetection } from '@/hooks/useScreenshotDetection';
 import './layout.scss';
 
@@ -22,7 +22,7 @@ const Layout = () => {
     const { isOAuth2Enabled } = useOauth2();
 
     // Screenshot detection
-    const { isScreenshotDetected, resetScreenshotDetection, showFloatingButton } = useScreenshotDetection();
+    const { isScreenshotDetected, resetScreenshotDetection } = useScreenshotDetection();
     
     // Debug: Log when detection state changes
     useEffect(() => {
@@ -112,15 +112,12 @@ const Layout = () => {
             {!isCallbackPage && <DisclaimerButton />}
             {!isCallbackPage && isDesktop && <Footer />}
             
-            {/* Desktop: Screenshot detection modal */}
+            {/* Automatic screenshot detection - works on all devices */}
             <ScreenshotPromptModal
                 isOpen={isScreenshotDetected}
                 onClose={resetScreenshotDetection}
                 whatsappNumber='254740009453'
             />
-            
-            {/* Mobile: Floating screenshot share button */}
-            {showFloatingButton && <FloatingScreenshotButton whatsappNumber='254740009453' />}
         </div>
     );
 };
