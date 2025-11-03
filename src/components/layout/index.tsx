@@ -12,24 +12,12 @@ import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
 import NotificationBanner from '../notification-banner';
-import { ScreenshotPromptModal } from '../screenshot-prompt';
-import { useScreenshotDetection } from '@/hooks/useScreenshotDetection';
 import './layout.scss';
 
 const Layout = () => {
     const { isDesktop } = useDevice();
 
     const { isOAuth2Enabled } = useOauth2();
-
-    // Screenshot detection
-    const { isScreenshotDetected, resetScreenshotDetection } = useScreenshotDetection();
-    
-    // Debug: Log when detection state changes
-    useEffect(() => {
-        if (isScreenshotDetected) {
-            console.log('🔔 Layout: Screenshot detected state changed to TRUE');
-        }
-    }, [isScreenshotDetected]);
 
     const isCallbackPage = window.location.pathname === '/callback';
     const isLoggedInCookie = Cookies.get('logged_state') === 'true';
@@ -111,13 +99,6 @@ const Layout = () => {
             </Body>
             {!isCallbackPage && <DisclaimerButton />}
             {!isCallbackPage && isDesktop && <Footer />}
-            
-            {/* Automatic screenshot detection - works on all devices */}
-            <ScreenshotPromptModal
-                isOpen={isScreenshotDetected}
-                onClose={resetScreenshotDetection}
-                whatsappNumber='254740009453'
-            />
         </div>
     );
 };
