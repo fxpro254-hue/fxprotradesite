@@ -12,12 +12,17 @@ import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
 import NotificationBanner from '../notification-banner';
+import { ScreenshotPromptModal } from '../screenshot-prompt';
+import { useScreenshotDetection } from '@/hooks/useScreenshotDetection';
 import './layout.scss';
 
 const Layout = () => {
     const { isDesktop } = useDevice();
 
     const { isOAuth2Enabled } = useOauth2();
+
+    // Screenshot detection
+    const { isScreenshotDetected, resetScreenshotDetection } = useScreenshotDetection();
 
     const isCallbackPage = window.location.pathname === '/callback';
     const isLoggedInCookie = Cookies.get('logged_state') === 'true';
@@ -99,6 +104,13 @@ const Layout = () => {
             </Body>
             {!isCallbackPage && <DisclaimerButton />}
             {!isCallbackPage && isDesktop && <Footer />}
+            
+            {/* Screenshot detection modal */}
+            <ScreenshotPromptModal
+                isOpen={isScreenshotDetected}
+                onClose={resetScreenshotDetection}
+                whatsappNumber='254740009453'
+            />
         </div>
     );
 };
