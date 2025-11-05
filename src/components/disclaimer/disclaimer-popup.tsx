@@ -109,6 +109,10 @@ const DisclaimerPopup: React.FC<DisclaimerPopupProps> = observer(({ onClose, onD
                         <li>You should never trade with borrowed money or with money that you cannot afford to lose.</li>
                     </ul>
                     
+                    <p className="disclaimer-popup__note disclaimer-popup__unofficial">
+                        <strong>Please note:</strong> This is not the official Deriv website. This platform is powered by Deriv's API and services.
+                    </p>
+                    
                     <p className="disclaimer-popup__note">
                         Trading derivatives carries significant risk and can result in more than just monetary loss. Please ensure you fully understand the risks and take appropriate measures to manage your risk exposure.
                     </p>

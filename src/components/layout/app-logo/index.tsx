@@ -1,5 +1,5 @@
 import { standalone_routes } from '@/components/shared';
-import { DerivLogo, useDevice } from '@deriv-com/ui';
+import { useDevice } from '@deriv-com/ui';
 import './app-logo.scss';
 
 export const AppLogo = () => {
@@ -7,6 +7,8 @@ export const AppLogo = () => {
 
     if (!isDesktop) return null;
     return (
-        <DerivLogo className='app-header__logo' href='https://app.binaryfx.site' target='_blank' variant='wallets' />
+        <a className='app-header__logo' href='https://app.binaryfx.site' target='_blank' rel='noopener noreferrer'>
+            <img src='/deriv-logo.png' alt='BinaryFX' className='app-header__logo-image' />
+        </a>
     );
 };

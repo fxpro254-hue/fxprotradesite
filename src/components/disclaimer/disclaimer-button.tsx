@@ -37,9 +37,13 @@ const DisclaimerButton: React.FC = observer(() => {
     const shouldShowDisclaimer = typeof active_tab === 'number' && active_tab === DBOT_TABS.DASHBOARD;
 
     useEffect(() => {
-        // Check if user has previously dismissed the disclaimer
-        const isHidden = localStorage.getItem(STORAGE_KEY) === 'true';
-        setShouldShow(!isHidden);
+        // Always show disclaimer button
+        setShouldShow(true);
+        
+        // Auto-show popup on page load when on dashboard tab
+        if (shouldShowDisclaimer) {
+            setIsPopupOpen(true);
+        }
         
         // Try to restore the position from local storage
         try {
@@ -51,7 +55,7 @@ const DisclaimerButton: React.FC = observer(() => {
         } catch (e) {
             console.error('Failed to restore disclaimer position', e);
         }
-    }, []);
+    }, [shouldShowDisclaimer]);
 
     const handleMouseDown = (e: React.MouseEvent) => {
         // We want the entire button to be draggable
@@ -203,8 +207,9 @@ const DisclaimerButton: React.FC = observer(() => {
     };
 
     const handleDontShowAgain = () => {
-        localStorage.setItem(STORAGE_KEY, 'true');
-        setShouldShow(false);
+        // Just close the popup for this session, but keep the button visible
+        // Remove the localStorage setting so disclaimer shows on next page load
+        localStorage.removeItem(STORAGE_KEY);
         setIsPopupOpen(false);
     };
 

@@ -11,12 +11,12 @@ interface NotificationBannerProps {
 }
 
 const NotificationBanner: React.FC<NotificationBannerProps> = ({
-    message = "📚 Join our DAILY Trading Masterclass! 🚀 Live sessions every day at 9:00 PM - Learn advanced trading strategies and watch real-time trades. Don't miss out on transforming your trading journey! Click to join our exclusive Telegram community.",
+    message = "Deriv offers complex products, including options and CFDs, which carry significant risks. Trading CFDs involves leverage, which can amplify both profits and losses, potentially leading to the loss of your entire investment. Trade only with money you can afford to lose and never borrow to trade. Understand the risks before trading.",
     isVisible = true,
     canClose = true,
     autoHide = false,
     autoHideDelay = 5000,
-    telegramUrl = "https://t.me/binaryfx_site"
+    telegramUrl = ""
 }) => {
     const [visible, setVisible] = useState(isVisible);
 
@@ -45,8 +45,10 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
             return;
         }
         
-        // Open Telegram channel in new tab
-        window.open(telegramUrl, '_blank', 'noopener,noreferrer');
+        // Only open link if telegramUrl is provided
+        if (telegramUrl) {
+            window.open(telegramUrl, '_blank', 'noopener,noreferrer');
+        }
     };
 
     if (!visible) return null;
@@ -55,8 +57,8 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
         <div 
             className="notification-banner"
             onClick={handleBannerClick}
-            style={{ cursor: 'pointer' }}
-            title="Click to visit our Telegram channel"
+            style={{ cursor: telegramUrl ? 'pointer' : 'default' }}
+            title={telegramUrl ? "Click to visit our Telegram channel" : "Risk Disclaimer"}
         >
             <div className="notification-banner__content">
                 <div className="notification-banner__marquee">
@@ -64,7 +66,7 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
                         <span className="notification-banner__text-item">{message}</span>
                         <span className="notification-banner__text-item">{message}</span>
                         <span className="notification-banner__text-item">{message}</span>
-                        <span className="notification-b</div>anner__text-item">{message}</span>
+                        <span className="notification-banner__text-item">{message}</span>
                     </div>
                     {/* Clone for seamless scrolling */}
                     <div className="notification-banner__text">
