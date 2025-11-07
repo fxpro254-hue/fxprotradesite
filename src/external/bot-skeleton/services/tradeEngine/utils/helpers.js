@@ -152,6 +152,8 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
         buy.parameters.selected_tick = trade_option.prediction;
     }
     if (trade_option.secondBarrierOffset !== undefined) buy.parameters.barrier2 = trade_option.secondBarrierOffset;
+    if (trade_option.growth_rate !== undefined) buy.parameters.growth_rate = trade_option.growth_rate;
+    if (trade_option.limit_order !== undefined) buy.parameters.limit_order = trade_option.limit_order;
     if (!isEmptyObject(trade_option.app_markup_percentage))
         buy.parameters.app_markup_percentage = trade_option.app_markup_percentage;
 

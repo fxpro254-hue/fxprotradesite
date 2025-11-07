@@ -20,6 +20,8 @@ export default Engine =>
             this.currentBarrier = null;
             this.currentSecondBarrier = null;
             this.currentPrediction = null;
+            this.currentGrowthRate = null;
+            this.currentTakeProfit = null;
             this.pendingPurchase = false;
         }
 
@@ -30,7 +32,7 @@ export default Engine =>
         }
 
         // This is the main purchase method that will be called from TradingHubDisplay
-        async purchase(contract_type, trade_each_tick = false, barrier = null, second_barrier = null, prediction = null) {
+        async purchase(contract_type, trade_each_tick = false, barrier = null, second_barrier = null, prediction = null, growth_rate = null, take_profit = null) {
             console.log('Purchase called with:', {
                 contract_type, 
                 trade_each_tick, 
@@ -82,6 +84,15 @@ export default Engine =>
             this.currentBarrier = barrier;
             this.currentSecondBarrier = second_barrier;
             this.currentPrediction = prediction;
+            
+            // Read growth rate and take profit from tradeOptions
+            this.currentGrowthRate = this.tradeOptions.growth_rate || null;
+            this.currentTakeProfit = this.tradeOptions.take_profit || null;
+            
+            console.log('Reading from tradeOptions:', {
+                growth_rate: this.currentGrowthRate,
+                take_profit: this.currentTakeProfit
+            });
 
             // Handle tick trading mode
             if (trade_each_tick === true || trade_each_tick === 'true') {
@@ -363,6 +374,38 @@ export default Engine =>
                 }
             }
 
+            // Apply growth rate for accumulator contracts
+            if (this.currentGrowthRate !== null && this.currentGrowthRate !== 'null' && this.currentGrowthRate !== undefined) {
+                const growthRateValue = Number(this.currentGrowthRate);
+                if (!isNaN(growthRateValue)) {
+                    if (contract_type === 'ACCU') {
+                        enhancedTradeOptions.growth_rate = growthRateValue;
+                        console.log('Applied accumulator growth rate:', enhancedTradeOptions.growth_rate);
+                    } else {
+                        console.log(`Growth rate ignored for ${contract_type} - only used for ACCU contracts`);
+                    }
+                } else {
+                    console.warn('Invalid growth rate value:', this.currentGrowthRate);
+                }
+            }
+
+            // Apply take profit for accumulator contracts
+            if (this.currentTakeProfit !== null && this.currentTakeProfit !== 'null' && this.currentTakeProfit !== undefined) {
+                const takeProfitValue = Number(this.currentTakeProfit);
+                if (!isNaN(takeProfitValue) && takeProfitValue > 0) {
+                    if (contract_type === 'ACCU') {
+                        enhancedTradeOptions.limit_order = {
+                            take_profit: takeProfitValue
+                        };
+                        console.log('Applied accumulator take profit:', takeProfitValue);
+                    } else {
+                        console.log(`Take profit ignored for ${contract_type} - only used for ACCU contracts`);
+                    }
+                } else {
+                    console.warn('Invalid take profit value:', this.currentTakeProfit);
+                }
+            }
+
             // Standard option for current account
             const standard_option = tradeOptionToBuy(contract_type, enhancedTradeOptions);
             console.log('Generated standard option:', standard_option);
@@ -420,6 +463,18 @@ export default Engine =>
                     console.log(`Copy trade: No barriers added for ${contract_type}`);
                 }
 
+                // Add growth rate for accumulator contracts
+                if (contract_type === 'ACCU' && enhancedTradeOptions.growth_rate !== undefined) {
+                    copy_option.parameters.growth_rate = enhancedTradeOptions.growth_rate;
+                    console.log(`Copy trade: Growth rate added for ACCU: ${enhancedTradeOptions.growth_rate}`);
+                }
+
+                // Add take profit for accumulator contracts
+                if (contract_type === 'ACCU' && enhancedTradeOptions.limit_order !== undefined) {
+                    copy_option.parameters.limit_order = enhancedTradeOptions.limit_order;
+                    console.log(`Copy trade: Take profit added for ACCU: ${enhancedTradeOptions.limit_order.take_profit}`);
+                }
+
                 trades.push(doUntilDone(() => api_base.api.send(copy_option)));
             }
 
@@ -457,6 +512,18 @@ export default Engine =>
                             }
                         } else {
                             console.log(`Real account copy: No barriers added for ${contract_type}`);
+                        }
+
+                        // Add growth rate for accumulator contracts
+                        if (contract_type === 'ACCU' && enhancedTradeOptions.growth_rate !== undefined) {
+                            real_option.parameters.growth_rate = enhancedTradeOptions.growth_rate;
+                            console.log(`Real account copy: Growth rate added for ACCU: ${enhancedTradeOptions.growth_rate}`);
+                        }
+
+                        // Add take profit for accumulator contracts
+                        if (contract_type === 'ACCU' && enhancedTradeOptions.limit_order !== undefined) {
+                            real_option.parameters.limit_order = enhancedTradeOptions.limit_order;
+                            console.log(`Real account copy: Take profit added for ACCU: ${enhancedTradeOptions.limit_order.take_profit}`);
                         }
 
                         trades.push(doUntilDone(() => api_base.api.send(real_option)));

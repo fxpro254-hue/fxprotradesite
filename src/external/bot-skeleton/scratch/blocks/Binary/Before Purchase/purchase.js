@@ -214,6 +214,14 @@ window.Blockly.Blocks.purchase = {
         // Handle contract type changes to show/hide barrier inputs
         if (event.type === window.Blockly.Events.BLOCK_CHANGE && event.name === 'PURCHASE_LIST') {
             this.updateBarrierInputsVisibility();
+            // Sync with trade options when contract type changes to ACCU
+            const contractType = this.getFieldValue('PURCHASE_LIST');
+            if (contractType === 'ACCU') {
+                console.log('Contract type changed to ACCU, triggering sync');
+                setTimeout(() => {
+                    this.syncBarriersAndPrediction();
+                }, 100);
+            }
         } else if (event.type === window.Blockly.Events.BLOCK_CREATE && event.ids.includes(this.id)) {
             this.updateBarrierInputsVisibility();
             // Sync with trade definition contract type when block is created
@@ -382,6 +390,7 @@ window.Blockly.Blocks.purchase = {
         const contractsNeedingBarrier = ['CALL', 'PUT', 'ONETOUCH', 'NOTOUCH', 'RUNHIGH', 'RUNLOW', 'RESETCALL', 'RESETPUT'];
         const contractsNeedingTwoBarriers = ['EXPIRYRANGE', 'EXPIRYMISS', 'RANGE', 'UPORDOWN', 'CALLSPREAD', 'PUTSPREAD'];
         const contractsNeedingPrediction = ['DIGITOVER', 'DIGITUNDER', 'DIGITMATCH', 'DIGITDIFF'];
+        const contractsNeedingGrowthRate = ['ACCU'];
 
         console.log(`Purchase block: Syncing for contract type ${contractType}`);
 
@@ -600,6 +609,8 @@ window.Blockly.Blocks.purchase = {
             predictionShadow.initSvg();
             predictionShadow.renderEfficiently();
         }
+
+        // Growth rate is a dropdown field, no shadow block needed
     },
     populatePurchaseList(event) {
         // Purchase list is now pre-populated with all contract types
@@ -673,6 +684,10 @@ window.Blockly.JavaScript.javascriptGenerator.forBlock.purchase = block => {
         predictionValue = prediction && prediction !== '' ? prediction : 'null';
     }
 
+    // Growth rate and take profit are read from trade options block, pass null here
+    const growthRateValue = 'null';
+    const takeProfitValue = 'null';
+
     // Generate unique identifier for debugging conditional execution
     const uniqueId = Math.random().toString(36).substr(2, 9);
     
@@ -681,8 +696,10 @@ window.Blockly.JavaScript.javascriptGenerator.forBlock.purchase = block => {
     console.log('Executing purchase ${uniqueId}: ${purchaseList}', 
         'barriers:', ${barrierValue}, ${secondBarrierValue}, 
         'prediction:', ${predictionValue},
+        'growthRate:', ${growthRateValue},
+        'takeProfit:', ${takeProfitValue},
         'eachTick:', ${tradeEachTick});
-    Bot.purchase('${purchaseList}', ${tradeEachTick}, ${barrierValue}, ${secondBarrierValue}, ${predictionValue});
+    Bot.purchase('${purchaseList}', ${tradeEachTick}, ${barrierValue}, ${secondBarrierValue}, ${predictionValue}, ${growthRateValue}, ${takeProfitValue});
 } catch (e) {
     console.warn('Purchase block ${uniqueId} execution failed:', e.message);
 }

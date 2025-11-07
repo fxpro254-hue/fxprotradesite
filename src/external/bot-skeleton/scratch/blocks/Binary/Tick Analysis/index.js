@@ -10,6 +10,7 @@ import './last_digit';
 import './lastDigitList';
 import './stat';
 import './stat_list';
+import './stat_comparison';
 import './even_odd_percentage';
 import './over_under_percentage';
 import './digit_frequency_rank';

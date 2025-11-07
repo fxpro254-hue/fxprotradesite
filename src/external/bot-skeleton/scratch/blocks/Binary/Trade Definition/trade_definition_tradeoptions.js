@@ -82,9 +82,19 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
     },
     onchange(event) {
         if (event.type === 'change') {
+            console.log('[TRADE OPTIONS] Change event detected:', {
+                blockId: event.blockId,
+                element: event.element,
+                name: event.name,
+                oldValue: event.oldValue,
+                newValue: event.newValue
+            });
+            
             const selected_block = this.workspace.getBlockById(event.blockId);
+            console.log('[TRADE OPTIONS] Selected block:', selected_block?.type);
+            
             selected_block?.parentBlock_?.inputList
-                .filter(item => ['DURATION', 'AMOUNT'].includes(item.name))
+                .filter(item => ['DURATION', 'AMOUNT', 'TAKE_PROFIT'].includes(item.name))
                 .forEach(input => {
                     const input_target = input.connection.targetBlock();
                     const value = input_target.getFieldValue('NUM')?.toString();
@@ -93,6 +103,39 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
                         input_target.setFieldValue(new_value.toString(), 'NUM');
                     }
                 });
+            
+            // Notify purchase blocks when take profit value changes
+            if (selected_block) {
+                // Check if the changed block is connected to TAKE_PROFIT input
+                const parentBlock = selected_block.parentBlock_ || selected_block.getParent();
+                console.log('[TRADE OPTIONS] Parent block:', parentBlock?.type);
+                
+                if (parentBlock && parentBlock.type === 'trade_definition_tradeoptions') {
+                    const takeProfitInput = parentBlock.getInput('TAKE_PROFIT');
+                    const connectedBlock = takeProfitInput?.connection?.targetBlock();
+                    console.log('[TRADE OPTIONS] Take profit connected block:', connectedBlock?.id, 'Event block:', event.blockId);
+                    
+                    if (takeProfitInput && connectedBlock?.id === event.blockId) {
+                        console.log('[TRADE OPTIONS] Take profit value changed in trade options, notifying purchase blocks');
+                        setTimeout(() => {
+                            parentBlock.notifyPurchaseBlocksToSync();
+                        }, 50);
+                    }
+                }
+                // Also check if this block itself is trade_definition_tradeoptions and has TAKE_PROFIT
+                if (selected_block.type === 'trade_definition_tradeoptions') {
+                    const takeProfitInput = selected_block.getInput('TAKE_PROFIT');
+                    const takeProfitBlock = takeProfitInput?.connection?.targetBlock();
+                    console.log('[TRADE OPTIONS] Checking if descendant changed, take profit block:', takeProfitBlock?.id);
+                    
+                    if (takeProfitBlock && (takeProfitBlock.id === event.blockId || takeProfitBlock.getDescendants(false).some(b => b.id === event.blockId))) {
+                        console.log('[TRADE OPTIONS] Take profit value changed (descendant), notifying purchase blocks');
+                        setTimeout(() => {
+                            selected_block.notifyPurchaseBlocksToSync();
+                        }, 50);
+                    }
+                }
+            }
         }
 
         if (!this.workspace || this.workspace.isDragging() || window.Blockly.derivWorkspace.isFlyoutVisible) {
@@ -139,12 +182,14 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
                 this.updateBarrierInputs(false, false);
                 this.updateDurationInput(false, false);
                 this.updatePredictionInput(false);
+                this.updateGrowthRateInput(false);
                 this.updateAmountLimits();
             } else {
                 this.updateBarrierInputs(true, true);
                 this.enforceSingleBarrierType('BARRIEROFFSETTYPE_LIST', true);
                 this.updateDurationInput(true, true);
                 this.updatePredictionInput(true);
+                this.updateGrowthRateInput(true);
             }
         } else if (event.type === window.Blockly.Events.BLOCK_CHANGE) {
             if (is_load_event) {
@@ -153,6 +198,7 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
                     this.enforceSingleBarrierType(event.name, true);
                     this.updateDurationInput(false, false);
                     this.updatePredictionInput(false);
+                    this.updateGrowthRateInput(false);
                 }
             } else if (event.blockId === this.id) {
                 switch (event.name) {
@@ -168,6 +214,12 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
                         this.enforceSingleBarrierType(event.name, false);
                         break;
                     }
+                    case 'GROWTH_RATE_VALUE': {
+                        console.log('Growth rate changed in trade options:', event.newValue);
+                        // Notify purchase blocks to sync
+                        this.notifyPurchaseBlocksToSync();
+                        break;
+                    }
                     default:
                         break;
                 }
@@ -176,6 +228,7 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
                 this.enforceSingleBarrierType(event.name, true);
                 this.updateDurationInput(true, true);
                 this.updatePredictionInput(true);
+                this.updateGrowthRateInput(true);
                 this.updateAmountLimits();
             }
         } else if (event.type === window.Blockly.Events.BLOCK_DRAG && !event.isStart && event.blockId === this.id) {
@@ -499,6 +552,82 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
             }
         });
     },
+    updateGrowthRateInput(should_create) {
+        // Growth rate is only for accumulator (ACCU) contracts
+        const is_accumulator = this.selected_trade_type === 'accumulator';
+        
+        console.log('updateGrowthRateInput called:', { 
+            should_create, 
+            is_accumulator, 
+            selected_trade_type: this.selected_trade_type 
+        });
+        
+        if (is_accumulator && should_create) {
+            this.createGrowthRateInput();
+        } else if (!is_accumulator) {
+            this.removeInput('GROWTH_RATE_LABEL', true);
+            this.removeInput('GROWTH_RATE_FIELD', true);
+            this.removeInput('TAKE_PROFIT', true);
+        }
+    },
+    createGrowthRateInput() {
+        runIrreversibleEvents(() => {
+            if (!this.getInput('GROWTH_RATE_FIELD')) {
+                console.log('Creating growth rate input in trade options');
+                this.appendDummyInput('GROWTH_RATE_LABEL').appendField(localize('Growth rate:'));
+                
+                const growthRateInput = this.appendDummyInput('GROWTH_RATE_FIELD')
+                    .appendField(
+                        new window.Blockly.FieldDropdown([
+                            ['1%', '0.01'],
+                            ['2%', '0.02'],
+                            ['3%', '0.03'],
+                            ['4%', '0.04'],
+                            ['5%', '0.05']
+                        ]),
+                        'GROWTH_RATE_VALUE'
+                    );
+                    
+                console.log('Growth rate input created successfully');
+            } else {
+                console.log('Growth rate input already exists');
+            }
+            
+            // Also create take profit input for accumulators
+            if (!this.getInput('TAKE_PROFIT')) {
+                console.log('Creating take profit input in trade options');
+                const takeProfitInput = this.appendValueInput('TAKE_PROFIT')
+                    .appendField(localize('Take profit:'));
+                    
+                const shadow_block = this.workspace.newBlock('math_number_positive');
+                shadow_block.setInputsInline(true);
+                shadow_block.setShadow(true);
+                shadow_block.setFieldValue('100', 'NUM');
+                shadow_block.outputConnection.connect(takeProfitInput.connection);
+                shadow_block.initSvg();
+                shadow_block.renderEfficiently();
+                
+                console.log('Take profit input created successfully');
+            } else {
+                console.log('Take profit input already exists');
+            }
+        });
+    },
+    notifyPurchaseBlocksToSync() {
+        // Find all purchase blocks in the workspace and trigger their sync
+        const purchaseBlocks = this.workspace
+            .getAllBlocks(true)
+            .filter(block => block.type === 'purchase');
+            
+        console.log(`Found ${purchaseBlocks.length} purchase blocks to sync`);
+        
+        purchaseBlocks.forEach(purchaseBlock => {
+            if (purchaseBlock.syncBarriersAndPrediction) {
+                console.log('Triggering sync on purchase block');
+                purchaseBlock.syncBarriersAndPrediction();
+            }
+        });
+    },
     enforceSingleBarrierType(barrier_input_name, should_force_distinct) {
         const new_value = this.getFieldValue(barrier_input_name || '');
         const other_barrier_input_name =
@@ -524,6 +653,7 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
         const has_first_barrier = xmlElement.getAttribute('has_first_barrier') === 'true';
         const has_second_barrier = xmlElement.getAttribute('has_second_barrier') === 'true';
         const has_prediction = xmlElement.getAttribute('has_prediction') === 'true';
+        const has_growth_rate = xmlElement.getAttribute('has_growth_rate') === 'true';
 
         if (has_first_barrier && has_second_barrier) {
             this.createBarrierInputs({ values: [1, -1] }); // These values are overwritten with XML values.
@@ -531,6 +661,8 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
             this.createBarrierInputs({ values: [1] });
         } else if (has_prediction) {
             this.createPredictionInput([1]);
+        } else if (has_growth_rate) {
+            this.createGrowthRateInput();
         }
     },
     mutationToDom() {
@@ -539,6 +671,8 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
         container.setAttribute('has_first_barrier', !!this.getInput('BARRIEROFFSET'));
         container.setAttribute('has_second_barrier', !!this.getInput('SECONDBARRIEROFFSET'));
         container.setAttribute('has_prediction', !!this.getInput('PREDICTION'));
+        container.setAttribute('has_growth_rate', !!this.getInput('GROWTH_RATE_FIELD'));
+        container.setAttribute('has_take_profit', !!this.getInput('TAKE_PROFIT'));
 
         return container;
     },
@@ -662,6 +796,25 @@ window.Blockly.JavaScript.javascriptGenerator.forBlock.trade_definition_tradeopt
         second_barrier_offset_value = getBarrierValue(barrier_offset_type, value);
     }
 
+    // Get growth rate and take profit for accumulator contracts
+    let growth_rate_value, take_profit_value;
+    
+    if (block.getField('GROWTH_RATE_VALUE')) {
+        const growthRateField = block.getFieldValue('GROWTH_RATE_VALUE');
+        if (growthRateField) {
+            growth_rate_value = parseFloat(growthRateField);
+        }
+    }
+    
+    if (block.getInput('TAKE_PROFIT')) {
+        take_profit_value =
+            window.Blockly.JavaScript.javascriptGenerator.valueToCode(
+                block,
+                'TAKE_PROFIT',
+                window.Blockly.JavaScript.javascriptGenerator.ORDER_ATOMIC
+            ) || 'undefined';
+    }
+
     const code = `
         Bot.start({
             limitations        : BinaryBotPrivateLimitations,
@@ -672,6 +825,8 @@ window.Blockly.JavaScript.javascriptGenerator.forBlock.trade_definition_tradeopt
             prediction         : ${prediction_value || 'undefined'},
             barrierOffset      : ${barrier_offset_value || 'undefined'},
             secondBarrierOffset: ${second_barrier_offset_value || 'undefined'},
+            growth_rate        : ${growth_rate_value || 'undefined'},
+            take_profit        : ${take_profit_value || 'undefined'},
             basis              : '${block.type === 'trade_definition_tradeoptions' ? 'stake' : 'payout'}',
         });
         BinaryBotPrivateHasCalledTradeOptions = true;

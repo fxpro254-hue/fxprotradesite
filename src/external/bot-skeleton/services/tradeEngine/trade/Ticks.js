@@ -515,6 +515,60 @@ export default Engine =>
             }
         }
 
+        async checkStatComparison(operator, targetValue) {
+            return new Promise(async resolve => {
+                try {
+                    // Get historical stat list from accumulator API
+                    // Each stat represents consecutive ticks that stayed within range before breaking out
+                    const stats = await this.getStatList();
+                    
+                    if (!stats || stats.length === 0) {
+                        // No stat data available
+                        console.log('No stat data available for comparison');
+                        resolve(false);
+                        return;
+                    }
+                    
+                    // Use the most recent stat (index 0) as the "previous" stat
+                    // This represents the last recorded breakout sequence
+                    const previousStat = stats[0];
+                    const target = parseInt(targetValue, 10);
+                    
+                    console.log(`Stat Comparison: ${previousStat} ${operator} ${target}`);
+                    
+                    let result = false;
+                    
+                    switch (operator) {
+                        case 'equal':
+                            result = previousStat === target;
+                            break;
+                        case 'not_equal':
+                            result = previousStat !== target;
+                            break;
+                        case 'greater':
+                            result = previousStat > target;
+                            break;
+                        case 'less':
+                            result = previousStat < target;
+                            break;
+                        case 'greater_equal':
+                            result = previousStat >= target;
+                            break;
+                        case 'less_equal':
+                            result = previousStat <= target;
+                            break;
+                        default:
+                            result = false;
+                    }
+                    
+                    resolve(result);
+                } catch (error) {
+                    globalObserver.emit('Error in checkStatComparison:', error);
+                    resolve(false);
+                }
+            });
+        }
+
         async getDelayTickValue(tick_value) {
             return new Promise((resolve, reject) => {
                 try {

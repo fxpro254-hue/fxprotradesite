@@ -1331,6 +1331,14 @@ export const ToolboxItems = () =>
                 </Category>
             </Category>
             <Category id='binaryfx' name={localize('binaryfx')}>
+                <Block type='stat_comparison'>
+                    <Field name='OPERATOR'>greater</Field>
+                    <Value name='VALUE'>
+                        <Shadow type='math_number'>
+                            <Field name='NUM'>10</Field>
+                        </Shadow>
+                    </Value>
+                </Block>
                 <Block type='even_odd_percentage'>
                     <Field name='PATTERN'>even</Field>
                     <Value name='COUNT'>
