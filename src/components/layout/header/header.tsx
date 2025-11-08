@@ -1534,7 +1534,7 @@ const AppHeader = observer(() => {
 
         // Use an array of possible field names for each value
         const fullName = getValue(['full_name_text', 'full_name', 'Full Name', 'fullName', 'name'], 'Unnamed Trader');
-        const accountId = getValue([
+        let accountId = getValue([
             'account_id_text',
             'account id',
             'login_id',
@@ -1543,6 +1543,20 @@ const AppHeader = observer(() => {
             'account_id',
             'Account ID',
         ]);
+        
+        // If user is in SVG mode, find and use the USD account ID (same method as in account switcher)
+        const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
+        if (isSvgModeEnabled && accountId?.startsWith('VR') && client?.accounts) {
+            // Find USD account (non-VR account with USD currency)
+            const usdLoginId = Object.keys(client.accounts).find(id => {
+                const account = client.accounts[id];
+                return !id.startsWith('VR') && account?.currency?.toLowerCase() === 'usd';
+            });
+            if (usdLoginId) {
+                accountId = usdLoginId;
+            }
+        }
+        
         const email = getValue(['email_text', 'email', 'Email', 'email_address', 'emailAddress']);
         const minBalance = getValue([
             'min_balance_number',
