@@ -55,8 +55,8 @@ const SettingsPopup = ({ isOpen, onClose, onOpenSettings, onOpenCopyTrading, has
                             </svg>
                         </div>
                         <div className='settings-popup__item-content'>
-                            <h4>Account Settings</h4>
-                            <p>Manage your account details and preferences</p>
+                            <h4>Token Management</h4>
+                            <p>Manage your token details and preferences</p>
                         </div>
                         <div className='settings-popup__item-arrow'>
                             <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
@@ -2184,6 +2184,48 @@ const AppHeader = observer(() => {
         const [copySuccess, setCopySuccess] = useState<{ [key: string]: boolean }>({});
         const [copyError, setCopyError] = useState<{ [key: string]: string | null }>({});
 
+        // Add state for search and filtering
+        const [searchQuery, setSearchQuery] = useState('');
+        const [sortBy, setSortBy] = useState<'winRate' | 'copiers' | 'minBalance' | 'trades'>('winRate');
+        const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+        const [filterMinWinRate, setFilterMinWinRate] = useState<number>(0);
+        const [showOnlyVerified, setShowOnlyVerified] = useState(false);
+
+        // State for custom dropdowns
+        const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+        const [winRateDropdownOpen, setWinRateDropdownOpen] = useState(false);
+
+        // Sort options
+        const sortOptions = [
+            { value: 'winRate', label: 'Win Rate' },
+            { value: 'copiers', label: 'Copiers' },
+            { value: 'trades', label: 'Trades' },
+            { value: 'minBalance', label: 'Balance' },
+        ];
+
+        // Win rate filter options
+        const winRateOptions = [
+            { value: 0, label: 'All Rates' },
+            { value: 50, label: '50%+' },
+            { value: 60, label: '60%+' },
+            { value: 70, label: '70%+' },
+            { value: 80, label: '80%+' },
+        ];
+
+        // Close dropdowns when clicking outside
+        React.useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                const target = event.target as HTMLElement;
+                if (!target.closest('.custom-dropdown')) {
+                    setSortDropdownOpen(false);
+                    setWinRateDropdownOpen(false);
+                }
+            };
+
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }, []);
+
         // Add this bluetick icon component
         const VerifiedBadge = () => (
             <svg width='10px' height='10px' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'>
@@ -2622,9 +2664,32 @@ const AppHeader = observer(() => {
         // Handle loading state
         if (isLoadingProviders) {
             return (
-                <div className='providers-loading'>
-                    <div className='providers-loading-spinner'></div>
-                    <p>Loading strategy providers...</p>
+                <div className='providers-list-container'>
+                    <h3 className='providers-list-title'>Available Strategy Providers</h3>
+                    <p className='providers-list-subtitle'>Loading providers...</p>
+                    
+                    <div className='providers-skeleton'>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className='provider-card-skeleton'>
+                                <div className='skeleton-header'>
+                                    <div className='skeleton-avatar'></div>
+                                    <div className='skeleton-info'>
+                                        <div className='skeleton-name'></div>
+                                        <div className='skeleton-stats'>
+                                            <div className='skeleton-stat'></div>
+                                            <div className='skeleton-stat'></div>
+                                            <div className='skeleton-stat'></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className='skeleton-details'>
+                                    <div className='skeleton-detail'></div>
+                                    <div className='skeleton-detail'></div>
+                                </div>
+                                <div className='skeleton-button'></div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             );
         }
@@ -2649,6 +2714,82 @@ const AppHeader = observer(() => {
                 </div>
             );
         }
+
+        // Filter and sort providers
+        const filteredAndSortedProviders = React.useMemo(() => {
+            if (!approvedProviders || approvedProviders.length === 0) return [];
+
+            // First, filter providers
+            let filtered = approvedProviders.filter(provider => {
+                // Search filter
+                if (searchQuery) {
+                    const fullName = getValue(
+                        provider,
+                        ['full_name_text', 'full_name', 'Full Name', 'fullName', 'name'],
+                        ''
+                    ).toLowerCase();
+                    if (!fullName.includes(searchQuery.toLowerCase())) {
+                        return false;
+                    }
+                }
+
+                // Win rate filter
+                if (filterMinWinRate > 0) {
+                    const winRate = parseFloat(
+                        getValue(provider, ['win_rate_number', 'win_rate', 'Win Rate', 'winRate'], 0)
+                    );
+                    if (winRate < filterMinWinRate) {
+                        return false;
+                    }
+                }
+
+                // Verified filter
+                if (showOnlyVerified) {
+                    const isVerified =
+                        getValue(
+                            provider,
+                            ['verified_boolean', 'verified', 'Verified', 'is_verified', 'isVerified'],
+                            false
+                        ) === true;
+                    if (!isVerified) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // Then, sort providers
+            filtered.sort((a, b) => {
+                let aValue: number;
+                let bValue: number;
+
+                switch (sortBy) {
+                    case 'winRate':
+                        aValue = parseFloat(getValue(a, ['win_rate_number', 'win_rate'], 0));
+                        bValue = parseFloat(getValue(b, ['win_rate_number', 'win_rate'], 0));
+                        break;
+                    case 'copiers':
+                        aValue = parseInt(getValue(a, ['copiers', 'num_copiers', 'copierCount'], 0));
+                        bValue = parseInt(getValue(b, ['copiers', 'num_copiers', 'copierCount'], 0));
+                        break;
+                    case 'minBalance':
+                        aValue = parseFloat(getValue(a, ['min_balance_number', 'min_balance'], 0));
+                        bValue = parseFloat(getValue(b, ['min_balance_number', 'min_balance'], 0));
+                        break;
+                    case 'trades':
+                        aValue = parseInt(getValue(a, ['total_trades_number', 'total_trades'], 0));
+                        bValue = parseInt(getValue(b, ['total_trades_number', 'total_trades'], 0));
+                        break;
+                    default:
+                        return 0;
+                }
+
+                return sortOrder === 'desc' ? bValue - aValue : aValue - bValue;
+            });
+
+            return filtered;
+        }, [approvedProviders, searchQuery, sortBy, sortOrder, filterMinWinRate, showOnlyVerified]);
 
         // Handle empty state
         if (!approvedProviders || approvedProviders.length === 0) {
@@ -2675,8 +2816,176 @@ const AppHeader = observer(() => {
                     Choose a provider to copy their trades automatically to your account
                 </p>
 
+                {/* Modern Search and Filter Section */}
+                <div className='providers-controls'>
+                    <div className='controls-row'>
+                        {/* Search Bar */}
+                        <div className='providers-search'>
+                            <svg className='search-icon' viewBox='0 0 24 24' width='18' height='18'>
+                                <path
+                                    d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'
+                                    fill='currentColor'
+                                />
+                            </svg>
+                            <input
+                                type='text'
+                                placeholder='Search providers...'
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                className='search-input'
+                            />
+                            {searchQuery && (
+                                <button className='search-clear' onClick={() => setSearchQuery('')} aria-label='Clear search'>
+                                    <svg viewBox='0 0 24 24' width='14' height='14'>
+                                        <path
+                                            d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+                                            fill='currentColor'
+                                        />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Compact Filter Controls */}
+                        <div className='providers-filters'>
+                            {/* Sort Dropdown with Icon - Custom */}
+                            <div className='filter-compact custom-dropdown'>
+                                <svg viewBox='0 0 24 24' width='16' height='16' className='filter-icon'>
+                                    <path d='M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z' fill='currentColor' />
+                                </svg>
+                                <button
+                                    className='custom-select-trigger'
+                                    onClick={() => {
+                                        setSortDropdownOpen(!sortDropdownOpen);
+                                        setWinRateDropdownOpen(false);
+                                    }}
+                                    title='Sort by'
+                                >
+                                    {sortOptions.find(opt => opt.value === sortBy)?.label}
+                                    <svg viewBox='0 0 24 24' width='14' height='14' className='dropdown-arrow'>
+                                        <path d='M7 10l5 5 5-5z' fill='currentColor' />
+                                    </svg>
+                                </button>
+                                {sortDropdownOpen && (
+                                    <div className='custom-dropdown-menu'>
+                                        {sortOptions.map(option => (
+                                            <button
+                                                key={option.value}
+                                                className={`dropdown-item ${sortBy === option.value ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    setSortBy(option.value as any);
+                                                    setSortDropdownOpen(false);
+                                                }}
+                                            >
+                                                {option.label}
+                                                {sortBy === option.value && (
+                                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                                        <path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z' fill='currentColor' />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                <button
+                                    className='sort-toggle'
+                                    onClick={() => setSortOrder(prev => (prev === 'desc' ? 'asc' : 'desc'))}
+                                    aria-label='Toggle sort order'
+                                    title={sortOrder === 'desc' ? 'Descending' : 'Ascending'}
+                                >
+                                    {sortOrder === 'desc' ? '↓' : '↑'}
+                                </button>
+                            </div>
+
+                            {/* Win Rate Filter - Custom */}
+                            <div className='filter-compact custom-dropdown'>
+                                <svg viewBox='0 0 24 24' width='16' height='16' className='filter-icon'>
+                                    <path d='M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z' fill='currentColor' />
+                                </svg>
+                                <button
+                                    className='custom-select-trigger'
+                                    onClick={() => {
+                                        setWinRateDropdownOpen(!winRateDropdownOpen);
+                                        setSortDropdownOpen(false);
+                                    }}
+                                    title='Min win rate'
+                                >
+                                    {winRateOptions.find(opt => opt.value === filterMinWinRate)?.label}
+                                    <svg viewBox='0 0 24 24' width='14' height='14' className='dropdown-arrow'>
+                                        <path d='M7 10l5 5 5-5z' fill='currentColor' />
+                                    </svg>
+                                </button>
+                                {winRateDropdownOpen && (
+                                    <div className='custom-dropdown-menu'>
+                                        {winRateOptions.map(option => (
+                                            <button
+                                                key={option.value}
+                                                className={`dropdown-item ${filterMinWinRate === option.value ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    setFilterMinWinRate(option.value);
+                                                    setWinRateDropdownOpen(false);
+                                                }}
+                                            >
+                                                {option.label}
+                                                {filterMinWinRate === option.value && (
+                                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                                        <path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z' fill='currentColor' />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Verified Toggle */}
+                            <button
+                                className={`filter-toggle ${showOnlyVerified ? 'active' : ''}`}
+                                onClick={() => setShowOnlyVerified(!showOnlyVerified)}
+                                title='Show verified only'
+                            >
+                                <svg viewBox='0 0 24 24' width='16' height='16'>
+                                    <path
+                                        d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z'
+                                        fill='currentColor'
+                                    />
+                                </svg>
+                                {showOnlyVerified && <span className='toggle-text'>Verified</span>}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Results Count */}
+                    <div className='providers-count'>
+                        {filteredAndSortedProviders.length} of {approvedProviders.length} providers
+                        {searchQuery && ` · "${searchQuery}"`}
+                        {filterMinWinRate > 0 && ` · ${filterMinWinRate}%+ win rate`}
+                        {showOnlyVerified && ` · verified only`}
+                    </div>
+                </div>
+
+                {/* Filtered Empty State */}
+                {filteredAndSortedProviders.length === 0 && approvedProviders.length > 0 && (
+                    <div className='providers-no-results'>
+                        <svg viewBox='0 0 24 24' width='48' height='48'>
+                            <path
+                                d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'
+                                fill='currentColor'
+                            />
+                        </svg>
+                        <p>No providers match your search criteria</p>
+                        <button className='clear-filters-btn' onClick={() => {
+                            setSearchQuery('');
+                            setFilterMinWinRate(0);
+                            setShowOnlyVerified(false);
+                        }}>
+                            Clear all filters
+                        </button>
+                    </div>
+                )}
+
                 <div className='providers-list'>
-                    {approvedProviders.map((provider, index) => {
+                    {filteredAndSortedProviders.map((provider, index) => {
                         // Extract values using getValue function for consistency
                         const fullName = getValue(
                             provider,
@@ -2816,121 +3125,192 @@ const AppHeader = observer(() => {
                         const isCopied = isProviderCopied(providerId);
 
                         return (
-                            <div key={index} className='provider-card'>
+                            <div key={index} className={`provider-card ${isCopied ? 'provider-card--copied' : ''}`}>
+                                {/* Top Badge for Copied Status */}
+                                {isCopied && (
+                                    <div className='provider-copied-badge'>
+                                        <svg viewBox='0 0 24 24' width='14' height='14'>
+                                            <path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z' fill='currentColor' />
+                                        </svg>
+                                        <span>Copying</span>
+                                    </div>
+                                )}
+
                                 <div className='provider-card-header'>
-                                    <div className='provider-avatar'>
-                                        {profilePicture && typeof profilePicture === 'string' ? (
-                                            <img
-                                                src={profilePicture}
-                                                alt={fullName}
-                                                crossOrigin='anonymous'
-                                                referrerPolicy='no-referrer'
-                                                onError={e => {
-                                                    console.log(`Image failed to load: ${profilePicture}`);
-                                                    const target = e.target as HTMLImageElement;
-                                                    target.onerror = null;
+                                    <div className='provider-avatar-wrapper'>
+                                        <div className='provider-avatar'>
+                                            {profilePicture && typeof profilePicture === 'string' ? (
+                                                <img
+                                                    src={profilePicture}
+                                                    alt={fullName}
+                                                    crossOrigin='anonymous'
+                                                    referrerPolicy='no-referrer'
+                                                    onError={e => {
+                                                        console.log(`Image failed to load: ${profilePicture}`);
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.onerror = null;
 
-                                                    // Try appending a dummy query param to bypass cache if it's an S3-like URL
-                                                    if (
-                                                        !target.src.includes('?') &&
-                                                        (target.src.includes('s3.amazonaws.com') ||
-                                                            target.src.includes('appforest_uf'))
-                                                    ) {
-                                                        console.log('Retrying S3 URL with cache busting');
-                                                        target.src = `${profilePicture}?t=${Date.now()}`;
-                                                        return;
-                                                    }
+                                                        // Try appending a dummy query param to bypass cache if it's an S3-like URL
+                                                        if (
+                                                            !target.src.includes('?') &&
+                                                            (target.src.includes('s3.amazonaws.com') ||
+                                                                target.src.includes('appforest_uf'))
+                                                        ) {
+                                                            console.log('Retrying S3 URL with cache busting');
+                                                            target.src = `${profilePicture}?t=${Date.now()}`;
+                                                            return;
+                                                        }
 
-                                                    // If retry fails, use placeholder
-                                                    target.src =
-                                                        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23cccccc"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-                                                }}
-                                                style={{
-                                                    objectFit: 'cover',
-                                                    width: '100%',
-                                                    height: '100%',
-                                                }}
-                                            />
-                                        ) : (
-                                            <div className='provider-avatar provider-avatar-placeholder'>
-                                                <svg viewBox='0 0 24 24' width='36' height='36'>
-                                                    <path
-                                                        d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'
-                                                        fill='currentColor'
-                                                    />
-                                                </svg>
+                                                        // If retry fails, use placeholder
+                                                        target.src =
+                                                            'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23cccccc"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+                                                    }}
+                                                    style={{
+                                                        objectFit: 'cover',
+                                                        width: '100%',
+                                                        height: '100%',
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className='provider-avatar provider-avatar-placeholder'>
+                                                    <svg viewBox='0 0 24 24' width='40' height='40'>
+                                                        <path
+                                                            d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'
+                                                            fill='currentColor'
+                                                        />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {isVerified && (
+                                            <div className='provider-verified-badge'>
+                                                <VerifiedBadge />
                                             </div>
                                         )}
                                     </div>
+
                                     <div className='provider-info'>
-                                        <h4 className='provider-name'>
-                                            {fullName}
-                                            {isVerified && <VerifiedBadge />}
-                                        </h4>
-                                        <div className='provider-stats'>
-                                            <div className='provider-stat'>
-                                                <span className='stat-label'>Win Rate:</span>
-                                                <span className='stat-value win-rate'>
-                                                    {winRate ? `${parseFloat(String(winRate)).toFixed(1)}%` : 'N/A'}
-                                                </span>
+                                        <h4 className='provider-name'>{fullName}</h4>
+
+                                        {/* Main Stats Row */}
+                                        <div className='provider-main-stats'>
+                                            <div className='provider-stat-card win-rate-card'>
+                                                <div className='stat-icon'>
+                                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                                        <path d='M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z' fill='currentColor' />
+                                                    </svg>
+                                                </div>
+                                                <div className='stat-content'>
+                                                    <span className='stat-label'>Win Rate</span>
+                                                    <span className='stat-value win-rate'>
+                                                        {winRate ? `${parseFloat(String(winRate)).toFixed(1)}%` : 'N/A'}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className='provider-stat'>
-                                                <span className='stat-label'>Min Balance:</span>
-                                                <span className='stat-value min-balance'>
-                                                    {minBalance
-                                                        ? new Intl.NumberFormat('en-US', {
-                                                              style: 'currency',
-                                                              currency: currency,
-                                                              minimumFractionDigits: 0,
-                                                              maximumFractionDigits: 0,
-                                                          }).format(parseFloat(String(minBalance)))
-                                                        : 'N/A'}
-                                                </span>
+
+                                            <div className='provider-stat-card'>
+                                                <div className='stat-icon'>
+                                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                                        <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z' fill='currentColor' />
+                                                    </svg>
+                                                </div>
+                                                <div className='stat-content'>
+                                                    <span className='stat-label'>Copiers</span>
+                                                    <span className='stat-value'>{numCopiers}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className='provider-stat-card'>
+                                                <div className='stat-icon'>
+                                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                                        <path d='M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z' fill='currentColor' />
+                                                    </svg>
+                                                </div>
+                                                <div className='stat-content'>
+                                                    <span className='stat-label'>Min Balance</span>
+                                                    <span className='stat-value'>
+                                                        {minBalance
+                                                            ? new Intl.NumberFormat('en-US', {
+                                                                  style: 'currency',
+                                                                  currency: currency,
+                                                                  minimumFractionDigits: 0,
+                                                                  maximumFractionDigits: 0,
+                                                              }).format(parseFloat(String(minBalance)))
+                                                            : 'N/A'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div className='provider-actions'>
-                                        <button
-                                            className={`provider-copy-button ${
-                                                isCopying[providerId]
-                                                    ? 'loading'
-                                                    : copySuccess[providerId]
-                                                      ? 'success'
-                                                      : copyError[providerId]
-                                                        ? 'error'
-                                                        : isCopied
-                                                          ? 'copied'
-                                                          : ''
-                                            }`}
-                                            onClick={() =>
-                                                isCopied
-                                                    ? handleStopCopying(provider, index)
-                                                    : handleCopyProvider(provider, index)
-                                            }
-                                            disabled={isCopying[providerId]}
-                                        >
-                                            {isCopied ? 'Stop Copying' : 'Copy Trades'}
-                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Additional provider details that can be shown/hidden */}
+                                {/* Secondary Stats */}
                                 <div className='provider-details'>
                                     <div className='details-row'>
                                         <div className='detail-item'>
-                                            <span className='detail-label'>Total Trades:</span>
-                                            <span className='detail-value'>{totalTrades || 'N/A'}</span>
+                                            <svg viewBox='0 0 24 24' width='14' height='14' className='detail-icon'>
+                                                <path d='M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z' fill='currentColor' />
+                                            </svg>
+                                            <div>
+                                                <span className='detail-label'>Total Trades</span>
+                                                <span className='detail-value'>{totalTrades || 'N/A'}</span>
+                                            </div>
                                         </div>
                                         <div className='detail-item'>
-                                            <span className='detail-label'>Copiers:</span>
-                                            <span className='detail-value'>{numCopiers}</span>
-                                        </div>
-                                        <div className='detail-item'>
-                                            <span className='detail-label'>Currency:</span>
-                                            <span className='detail-value'>{currency}</span>
+                                            <svg viewBox='0 0 24 24' width='14' height='14' className='detail-icon'>
+                                                <path d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z' fill='currentColor' />
+                                            </svg>
+                                            <div>
+                                                <span className='detail-label'>Currency</span>
+                                                <span className='detail-value'>{currency}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* Action Button */}
+                                <div className='provider-actions'>
+                                    <button
+                                        className={`provider-copy-button ${
+                                            isCopying[providerId]
+                                                ? 'loading'
+                                                : copySuccess[providerId]
+                                                  ? 'success'
+                                                  : copyError[providerId]
+                                                    ? 'error'
+                                                    : isCopied
+                                                      ? 'copied'
+                                                      : ''
+                                        }`}
+                                        onClick={() =>
+                                            isCopied
+                                                ? handleStopCopying(provider, index)
+                                                : handleCopyProvider(provider, index)
+                                        }
+                                        disabled={isCopying[providerId]}
+                                    >
+                                        {isCopying[providerId] ? (
+                                            <>
+                                                <span className='button-spinner'></span>
+                                                <span>Processing...</span>
+                                            </>
+                                        ) : isCopied ? (
+                                            <>
+                                                <svg viewBox='0 0 24 24' width='18' height='18'>
+                                                    <path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z' fill='currentColor' />
+                                                </svg>
+                                                <span>Stop Copying</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                                                    <rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect>
+                                                    <path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path>
+                                                </svg>
+                                                <span>Copy Trades</span>
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                             </div>
                         );
@@ -3158,10 +3538,8 @@ const AppHeader = observer(() => {
                         tooltipPosition='bottom'
                         className='app-header__toggle app-header__menu-toggle'
                     >
-                        <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                            <circle cx='12' cy='5' r='2' fill='currentColor'/>
-                            <circle cx='12' cy='12' r='2' fill='currentColor'/>
-                            <circle cx='12' cy='19' r='2' fill='currentColor'/>
+                        <svg width='24' height='24' viewBox='0 0 24 24' fill='currentColor' xmlns='http://www.w3.org/2000/svg'>
+                            <path d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z'/>
                         </svg>
                     </Tooltip>
                 )}
