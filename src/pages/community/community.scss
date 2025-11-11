@@ -11,8 +11,8 @@
     position: relative;
 
     @include mobile-or-tablet-screen {
-        height: 780px;
-        max-height: 100%;
+        height: calc(100vh - 120px);
+        max-height: calc(100vh - 120px);
     }
 
     // Mobile Menu Toggle Button
