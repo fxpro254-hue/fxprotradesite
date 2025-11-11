@@ -149,6 +149,24 @@ const availableBots = [
         category: 'advanced',
         description: 'Enhanced candlestick mining strategy with upgraded pattern recognition and market analysis.',
     },
+    {
+        file: '🤑 Unstoppable Differ Bot 🤑.xml',
+        title: 'Unstoppable Differ Bot',
+        category: 'automated',
+        description: 'Unstoppable difference-based trading strategy with advanced digit tracking and smart recovery system for consistent wins.',
+    },
+    {
+        file: 'Under 9 Bot.xml',
+        title: 'Under 9 Bot',
+        category: 'regular',
+        description: 'Sequential digit under strategy targeting digits under 9 with smart prediction rotation and adaptive stake management.',
+    },
+    {
+        file: "Accumulator Reverse D'Alembert.xml",
+        title: "Accumulator Reverse D'Alembert",
+        category: 'advanced',
+        description: "Advanced accumulator bot with Reverse D'Alembert strategy, featuring profit/loss thresholds, adaptive stake management, and tick-based sell controls.",
+    },
 ];
 
 type TFreeBotSearchBar = {

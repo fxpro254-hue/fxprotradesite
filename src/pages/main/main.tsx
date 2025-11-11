@@ -374,6 +374,27 @@ const AppWrapper = observer(() => {
                     description:
                         'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.',
                 },
+                {
+                    file: '🤑 Unstoppable Differ Bot 🤑.xml',
+                    category: 'automated',
+                    popularity: 91,
+                    description:
+                        'Unstoppable difference-based trading strategy with advanced digit tracking and smart recovery system for consistent wins.',
+                },
+                {
+                    file: 'Under 9 Bot.xml',
+                    category: 'regular',
+                    popularity: 84,
+                    description:
+                        'Sequential digit under strategy targeting digits under 9 with smart prediction rotation and adaptive stake management.',
+                },
+                {
+                    file: "Accumulator Reverse D'Alembert.xml",
+                    category: 'advanced',
+                    popularity: 87,
+                    description:
+                        "Advanced accumulator bot with Reverse D'Alembert strategy, featuring profit/loss thresholds, adaptive stake management, and tick-based sell controls.",
+                },
             ];
 
             const botPromises = botFiles.map(async ({ file, category, popularity, description }) => {
