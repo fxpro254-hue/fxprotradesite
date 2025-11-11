@@ -19,7 +19,12 @@
         "prepare": "husky install",
         "build:analyze": "BUNDLE_ANALYZE=true rsbuild build",
         "telegram-server": "node telegram-file-server.js",
-        "community-api": "node server/index.js"
+        "community-api": "node server/index.js",
+        "deploy": "npm run build && pm2 restart ecosystem.config.js",
+        "pm2:start": "pm2 start ecosystem.config.js",
+        "pm2:stop": "pm2 stop ecosystem.config.js",
+        "pm2:restart": "pm2 restart ecosystem.config.js",
+        "pm2:logs": "pm2 logs"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
