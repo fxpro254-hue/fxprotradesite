@@ -327,6 +327,60 @@
         font-size: 2rem;
     }
 
+    &__header-right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        @include mobile-or-tablet-screen {
+            gap: 0.5rem;
+        }
+    }
+
+    &__online-count {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: var(--general-section-1);
+        border-radius: 24px;
+        font-size: 0.95rem;
+        color: var(--text-prominent);
+
+        @include mobile-or-tablet-screen {
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+        }
+    }
+
+    &__online-indicator {
+        width: 10px;
+        height: 10px;
+        background: #4caf50;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+        }
+    }
+
+    &__online-text {
+        font-weight: 600;
+        white-space: nowrap;
+
+        @include mobile-or-tablet-screen {
+            font-size: 0.85rem;
+        }
+    }
+
     &__user-info {
         display: flex;
         align-items: center;

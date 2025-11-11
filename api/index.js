@@ -260,6 +260,20 @@ app.get('/api/users/:loginId/stats', async (req, res) => {
     }
 });
 
+// Get online users count
+app.get('/api/users/online/count', async (req, res) => {
+    try {
+        const onlineUsers = await prisma.user.count({
+            where: { status: 'online' }
+        });
+        
+        res.json({ success: true, data: { count: onlineUsers } });
+    } catch (error) {
+        console.error('Error fetching online users count:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Remove the root route we added earlier since we already have it
 // Export for Vercel serverless
 module.exports = app;

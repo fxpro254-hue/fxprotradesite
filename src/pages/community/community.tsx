@@ -10,6 +10,7 @@ import {
     handleUpdateUserStatus,
     handleGetUserStats,
     handleToggleReaction,
+    handleGetOnlineUsersCount,
 } from '../../api/community.api';
 import './community.scss';
 
@@ -67,6 +68,7 @@ const Community: React.FC = observer(() => {
     const [loading, setLoading] = useState(true);
     const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
     const [usernameInput, setUsernameInput] = useState('');
+    const [onlineUsersCount, setOnlineUsersCount] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const isInitialLoadRef = useRef(true);
@@ -148,6 +150,24 @@ const Community: React.FC = observer(() => {
             const loginId = getLoginId();
             handleUpdateUserStatus(loginId, 'offline');
         };
+    }, []);
+
+    // Fetch online users count periodically
+    useEffect(() => {
+        const fetchOnlineCount = async () => {
+            const result = await handleGetOnlineUsersCount();
+            if (result.success && result.data) {
+                setOnlineUsersCount(result.data.count);
+            }
+        };
+
+        // Initial fetch
+        fetchOnlineCount();
+
+        // Update every 10 seconds
+        const interval = setInterval(fetchOnlineCount, 10000);
+
+        return () => clearInterval(interval);
     }, []);
 
     // Load messages when category changes
@@ -486,19 +506,27 @@ const Community: React.FC = observer(() => {
                             <p>{activeCategory?.description}</p>
                         </div>
                     </div>
-                    {currentUser && (
-                        <div className="community__user-info" onClick={() => handleViewProfile({
-                            id: currentUser.id,
-                            userId: currentUser.id,
-                            userName: currentUser.name,
-                            userAvatar: currentUser.avatar,
-                            content: '',
-                            timestamp: new Date(),
-                        })}>
-                            <span className="community__user-avatar">{currentUser.avatar}</span>
-                            <span className="community__user-name">{currentUser.name}</span>
+                    <div className="community__header-right">
+                        <div className="community__online-count">
+                            <span className="community__online-indicator"></span>
+                            <span className="community__online-text">
+                                {onlineUsersCount} {onlineUsersCount === 1 ? 'trader' : 'traders'} online
+                            </span>
                         </div>
-                    )}
+                        {currentUser && (
+                            <div className="community__user-info" onClick={() => handleViewProfile({
+                                id: currentUser.id,
+                                userId: currentUser.id,
+                                userName: currentUser.name,
+                                userAvatar: currentUser.avatar,
+                                content: '',
+                                timestamp: new Date(),
+                            })}>
+                                <span className="community__user-avatar">{currentUser.avatar}</span>
+                                <span className="community__user-name">{currentUser.name}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Messages */}

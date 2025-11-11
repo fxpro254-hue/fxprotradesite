@@ -169,3 +169,13 @@ export const handleToggleReaction = async (
         return { success: false, error: String(error) };
     }
 };
+
+export const handleGetOnlineUsersCount = async (): Promise<ApiResponse<{ count: number }>> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/online/count`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching online users count:', error);
+        return { success: false, error: String(error) };
+    }
+};
