@@ -19,6 +19,21 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Root route for testing
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        message: 'Community API is running',
+        endpoints: {
+            health: '/api/health',
+            categories: '/api/categories',
+            messages: '/api/messages/:categoryId',
+            register: '/api/users/register',
+            reactions: '/api/reactions'
+        }
+    });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Community API is running' });
@@ -245,5 +260,6 @@ app.get('/api/users/:loginId/stats', async (req, res) => {
     }
 });
 
+// Remove the root route we added earlier since we already have it
 // Export for Vercel serverless
 module.exports = app;
