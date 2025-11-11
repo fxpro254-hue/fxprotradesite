@@ -392,7 +392,19 @@ const Community: React.FC = observer(() => {
         return (
             <div className="community">
                 <div className="community__loading">
-                    <Localize i18n_default_text="Loading community..." />
+                    <div className="community__loading-content">
+                        <div className="community__loading-spinner">
+                            <div className="community__loading-dot"></div>
+                            <div className="community__loading-dot"></div>
+                            <div className="community__loading-dot"></div>
+                        </div>
+                        <h3 className="community__loading-title">
+                            <Localize i18n_default_text="Loading Community" />
+                        </h3>
+                        <p className="community__loading-subtitle">
+                            <Localize i18n_default_text="Connecting you with traders worldwide..." />
+                        </p>
+                    </div>
                 </div>
             </div>
         );
