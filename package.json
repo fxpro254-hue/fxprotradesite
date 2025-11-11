@@ -18,7 +18,8 @@
         "coverage": "jest --coverage",
         "prepare": "husky install",
         "build:analyze": "BUNDLE_ANALYZE=true rsbuild build",
-        "telegram-server": "node telegram-file-server.js"
+        "telegram-server": "node telegram-file-server.js",
+        "community-api": "node server/index.js"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
@@ -33,6 +34,8 @@
         "@deriv/deriv-charts": "^2.5.1",
         "@deriv/js-interpreter": "^3.0.0",
         "@deriv/quill-icons": "^2.2.0",
+        "@prisma/client": "^6.19.0",
+        "@prisma/extension-accelerate": "^2.0.2",
         "@svgr/core": "^8.1.0",
         "@tanstack/react-query": "^5.29.2",
         "@vercel/analytics": "^1.5.0",
@@ -144,6 +147,7 @@
         "mini-css-extract-plugin": "^2.9.0",
         "postcss": "^8.4.38",
         "prettier": "^3.1.0",
+        "prisma": "^6.19.0",
         "raw-loader": "^4.0.2",
         "rimraf": "^6.0.1",
         "sass": "^1.80.4",
