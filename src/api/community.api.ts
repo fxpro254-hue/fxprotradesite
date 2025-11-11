@@ -10,6 +10,10 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+console.log('🔧 Community API Base URL:', API_BASE_URL);
+console.log('🌐 Current hostname:', window.location.hostname);
+console.log('🌐 Current origin:', window.location.origin);
+
 interface ApiResponse<T> {
     success: boolean;
     data?: T;
@@ -18,8 +22,19 @@ interface ApiResponse<T> {
 
 export const handleGetCategories = async (): Promise<ApiResponse<any[]>> => {
     try {
+        console.log('Fetching categories from:', `${API_BASE_URL}/categories`);
         const response = await fetch(`${API_BASE_URL}/categories`);
-        return await response.json();
+        console.log('Categories response status:', response.status);
+        
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('Categories error response:', text);
+            throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        
+        const data = await response.json();
+        console.log('Categories data:', data);
+        return data;
     } catch (error) {
         console.error('Error fetching categories:', error);
         return { success: false, error: String(error) };
@@ -70,6 +85,9 @@ export const handleRegisterUser = async (
     avatar?: string
 ): Promise<ApiResponse<any>> => {
     try {
+        console.log('Registering user:', { loginId, fullName, avatar });
+        console.log('API URL:', `${API_BASE_URL}/users/register`);
+        
         const response = await fetch(`${API_BASE_URL}/users/register`, {
             method: 'POST',
             headers: {
@@ -81,7 +99,18 @@ export const handleRegisterUser = async (
                 avatar,
             }),
         });
-        return await response.json();
+        
+        console.log('Register response status:', response.status);
+        
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('Register error response:', text);
+            throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        
+        const data = await response.json();
+        console.log('Register response data:', data);
+        return data;
     } catch (error) {
         console.error('Error registering user:', error);
         return { success: false, error: String(error) };
