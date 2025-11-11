@@ -292,13 +292,13 @@ function updateTables() {
             <td><span class="signal-box ${underClass}">${underClass === 'under' ? 'Under 7' : '----'}</span></td>
         </tr>`;
 
-        // Generate combined table row for desktop
+        // Generate combined table row for desktop (Over/Under first, then Rise/Fall)
         combinedTable.innerHTML += `<tr>
             <td>${displayName}</td>
-            <td><span class="signal-box ${riseClass}">${isBuy ? 'Rise' : '----'}</span></td>
-            <td><span class="signal-box ${fallClass}">${isSell ? 'Fall' : '----'}</span></td>
             <td><span class="signal-box ${overClass}">${overClass === 'over' ? 'Over 2' : '----'}</span></td>
             <td><span class="signal-box ${underClass}">${underClass === 'under' ? 'Under 7' : '----'}</span></td>
+            <td><span class="signal-box ${riseClass}">${isBuy ? 'Rise' : '----'}</span></td>
+            <td><span class="signal-box ${fallClass}">${isSell ? 'Fall' : '----'}</span></td>
         </tr>`;
 
         // Send Telegram message for Over/Under signals
