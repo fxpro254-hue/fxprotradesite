@@ -9,8 +9,17 @@ const prismaClient = new PrismaClient();
 const prisma = prismaClient.$extends(withAccelerate());
 const PORT = process.env.PORT || 3001;
 
+// CORS configuration
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://bot.binaryfx.site', 'https://www.bot.binaryfx.site']
+        : ['http://localhost:8443', 'http://localhost:3000', 'http://127.0.0.1:8443'],
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Health check

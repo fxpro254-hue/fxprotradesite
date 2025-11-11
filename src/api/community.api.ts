@@ -1,4 +1,18 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+// Determine API base URL based on environment
+const getApiBaseUrl = () => {
+    // Check if we're on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3001/api';
+    }
+    // Production - use API subdomain or separate server
+    // Option 1: Same domain with /api path
+    // return `${window.location.origin}/api`;
+    
+    // Option 2: Separate API subdomain (update this URL to your API server)
+    return 'https://api.binaryfx.site/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface ApiResponse<T> {
     success: boolean;
