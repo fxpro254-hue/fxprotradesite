@@ -69,6 +69,7 @@ const Community: React.FC = observer(() => {
     const [usernameInput, setUsernameInput] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const isInitialLoadRef = useRef(true);
 
     // Common emojis
     const emojis = ['😀', '😊', '👍', '🎉', '💰', '📈', '📉', '🚀', '💪', '🔥', '❤️', '👏', '🤔', '😎', '🙏'];
@@ -154,6 +155,9 @@ const Community: React.FC = observer(() => {
         const loadMessages = async () => {
             if (!activeCategory) return;
 
+            // Reset initial load flag when category changes
+            isInitialLoadRef.current = true;
+
             try {
                 const result = await handleGetMessages(activeCategory.id, 50);
                 
@@ -182,6 +186,14 @@ const Community: React.FC = observer(() => {
                         })) || [],
                     }));
                     setMessages(formattedMessages);
+                    
+                    // Scroll to bottom instantly on initial load
+                    if (isInitialLoadRef.current) {
+                        setTimeout(() => {
+                            messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+                            isInitialLoadRef.current = false;
+                        }, 100);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading messages:', error);
