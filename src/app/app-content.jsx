@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import useLiveChat from '@/components/chat/useLiveChat';
 import ChunkLoader from '@/components/loader/chunk-loader';
 import LoginRequiredModal from '@/components/login-required-modal';
@@ -97,6 +97,107 @@ const AppContent = observer(() => {
         setSmartChartsPublicPath(getUrlBase('/js/smartcharts/'));
     }, []);
 
+    // Handle bot file loading from signal pages
+    React.useEffect(() => {
+        const handleBotFileLoad = async (event) => {
+            if (event.data?.action === 'load_bot_file' && event.data?.fileName) {
+                const fileName = event.data.fileName;
+                console.log('Loading bot file:', fileName);
+
+                // Show loading notification
+                const loadingToast = toast.loading('🔄 Loading bot file...', {
+                    autoClose: false,
+                });
+
+                try {
+                    // Fetch the XML file
+                    const response = await fetch(`/${fileName}`);
+                    if (!response.ok) {
+                        console.error('Failed to fetch bot file:', fileName);
+                        toast.update(loadingToast, {
+                            render: '❌ Failed to load bot file',
+                            type: 'error',
+                            isLoading: false,
+                            autoClose: 3000,
+                        });
+                        return;
+                    }
+
+                    const xmlContent = await response.text();
+                    
+                    // Parse XML
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlContent, 'application/xml');
+                    
+                    // Check for parse errors
+                    const parseError = xmlDoc.querySelector('parsererror');
+                    if (parseError) {
+                        console.error('XML parsing error:', parseError.textContent);
+                        toast.update(loadingToast, {
+                            render: '❌ Invalid bot file format',
+                            type: 'error',
+                            isLoading: false,
+                            autoClose: 3000,
+                        });
+                        return;
+                    }
+
+                    // Load into Blockly workspace
+                    if (window.Blockly?.derivWorkspace) {
+                        const workspace = window.Blockly.derivWorkspace;
+                        await workspace.asyncClear();
+                        
+                        const rootElement = xmlDoc.documentElement;
+                        window.Blockly.Xml.domToWorkspace(rootElement, workspace);
+                        
+                        // Store the loaded XML
+                        workspace.strategy_to_load = xmlContent;
+                        
+                        // Switch to bot builder tab
+                        if (store?.dashboard?.setActiveTab) {
+                            store.dashboard.setActiveTab(1); // BOT_BUILDER = 1
+                        }
+                        
+                        // Get bot name from filename
+                        const botName = fileName.replace('.xml', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        
+                        // Show success notification
+                        toast.update(loadingToast, {
+                            render: `✅ ${botName} loaded successfully!`,
+                            type: 'success',
+                            isLoading: false,
+                            autoClose: 3000,
+                        });
+                        
+                        console.log('Bot file loaded successfully:', fileName);
+                    } else {
+                        console.warn('Blockly workspace not available yet');
+                        toast.update(loadingToast, {
+                            render: '⚠️ Bot builder not ready. Please try again.',
+                            type: 'warning',
+                            isLoading: false,
+                            autoClose: 3000,
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading bot file:', error);
+                    toast.update(loadingToast, {
+                        render: '❌ Error loading bot file',
+                        type: 'error',
+                        isLoading: false,
+                        autoClose: 3000,
+                    });
+                }
+            }
+        };
+
+        window.addEventListener('message', handleBotFileLoad);
+
+        return () => {
+            window.removeEventListener('message', handleBotFileLoad);
+        };
+    }, [store]);
+
     React.useEffect(() => {
         // Check if api is initialized and then subscribe to the api messages
         // Also we should only subscribe to the messages once user is logged in
@@ -191,7 +292,18 @@ const AppContent = observer(() => {
                     <BotBuilder />
                     <BotStopped />
                     <TransactionDetailsModal />
-                    <ToastContainer limit={3} draggable={false} />
+                    <ToastContainer 
+                        limit={3} 
+                        draggable={false} 
+                        position="bottom-right"
+                        autoClose={3000}
+                        hideProgressBar={false}
+                        newestOnTop={true}
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss
+                        pauseOnHover
+                    />
                     <TncStatusUpdateModal />
                 </div>
                 <LoginRequiredModal />

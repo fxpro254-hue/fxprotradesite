@@ -74,6 +74,97 @@
                 color: rgb(0, 0, 0);
             }
 
+            /* Enhanced signal boxes */
+            .rise {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                font-weight: 700;
+                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            }
+
+            .fall {
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                color: white;
+                font-weight: 700;
+                box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+            }
+
+            .over,
+            .under {
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                color: white;
+                font-weight: 700;
+                box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);
+            }
+
+            .neutral {
+                background-color: #e9ecef;
+                color: #6c757d;
+                font-weight: 500;
+            }
+
+            /* Combined table for desktop */
+            .combined-table {
+                display: block;
+            }
+
+            .combined-table table {
+                width: 95%;
+                max-width: 1400px;
+                margin: 20px auto;
+            }
+
+            .combined-table th {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 12px 8px;
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .combined-table td {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+
+            .combined-table td:first-child {
+                text-align: left;
+                padding-left: 15px;
+                font-weight: 500;
+                color: #333;
+            }
+
+            .combined-table .signal-box {
+                width: 70px;
+                padding: 6px 8px;
+                font-size: 13px;
+            }
+
+            .combined-table tbody tr:hover {
+                background-color: #f8f9fa;
+                transition: background-color 0.2s ease;
+            }
+
+            .combined-table tbody tr {
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .mobile-tables {
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                /* Hide combined table on mobile */
+                .combined-table {
+                    display: none;
+                }
+
+                /* Show separate tables on mobile */
+                .mobile-tables {
+                    display: block;
+                }
+            }
+
             @media (max-width: 600px) {
                 table {
                     width: 100%;
@@ -106,34 +197,133 @@
                     width: 60px;
                 }
             }
+
+            /* Signal Bot Buttons */
+            .signal-buttons {
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin: 20px auto;
+                max-width: 600px;
+            }
+
+            .signal-btn {
+                flex: 1;
+                padding: 12px 24px;
+                font-family: 'Poppins', sans-serif;
+                font-size: 15px;
+                font-weight: 600;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .o-signal-btn {
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                color: white;
+            }
+
+            .u-signal-btn {
+                background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+                color: white;
+            }
+
+            .signal-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            }
+
+            .signal-btn:active {
+                transform: translateY(0);
+            }
+
+            @media (max-width: 600px) {
+                .signal-buttons {
+                    flex-direction: column;
+                    gap: 10px;
+                    padding: 0 15px;
+                }
+
+                .signal-btn {
+                    padding: 10px 20px;
+                    font-size: 14px;
+                }
+            }
         </style>
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
     </head>
     <body>
-        <h2>Rise/Fall</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>MARKET</th>
-                    <th>RISE 📈</th>
-                    <th>FALL 📉</th>
-                </tr>
-            </thead>
-            <tbody id="riseFallTable"></tbody>
-        </table>
+        <h2>Trading Signals Monitor</h2>
+        
+        <!-- Signal Bot Buttons -->
+        <div class="signal-buttons">
+            <button class="signal-btn o-signal-btn" onclick="downloadOSignalBot()">📊 O Signal Bot</button>
+            <button class="signal-btn u-signal-btn" onclick="downloadUSignalBot()">📈 U Signal Bot</button>
+        </div>
+        
+        <!-- Combined Table for Desktop -->
+        <div class="combined-table">
+            <h2>All Trading Signals</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>MARKET</th>
+                        <th>RISE 📈</th>
+                        <th>FALL 📉</th>
+                        <th>OVER 2</th>
+                        <th>UNDER 7</th>
+                    </tr>
+                </thead>
+                <tbody id="combinedTable"></tbody>
+            </table>
+        </div>
 
-        <h2>Over 2 / Under 7</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>MARKET</th>
-                    <th>Over 2</th>
-                    <th>Under 7</th>
-                </tr>
-            </thead>
-            <tbody id="overUnderTable"></tbody>
-        </table>
+        <!-- Separate Tables for Mobile -->
+        <div class="mobile-tables">
+            <h2>Rise/Fall</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>MARKET</th>
+                        <th>RISE 📈</th>
+                        <th>FALL 📉</th>
+                    </tr>
+                </thead>
+                <tbody id="riseFallTable"></tbody>
+            </table>
+
+            <h2>Over 2 / Under 7</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>MARKET</th>
+                        <th>Over 2</th>
+                        <th>Under 7</th>
+                    </tr>
+                </thead>
+                <tbody id="overUnderTable"></tbody>
+            </table>
+        </div>
 
         <script src="signals/signals.js" type="text/javascript"></script>
+        <script>
+            // Load O Signal Bot into bot builder
+            function downloadOSignalBot() {
+                window.parent.postMessage({
+                    action: 'load_bot_file',
+                    fileName: 'signals over bot.xml'
+                }, '*');
+            }
+
+            // Load U Signal Bot into bot builder
+            function downloadUSignalBot() {
+                window.parent.postMessage({
+                    action: 'load_bot_file',
+                    fileName: 'signals under bot.xml'
+                }, '*');
+            }
+        </script>
     </body>
 </html>

@@ -171,9 +171,11 @@ ws.onmessage = event => {
 function updateTables() {
     const riseFallTable = document.getElementById('riseFallTable');
     const overUnderTable = document.getElementById('overUnderTable');
+    const combinedTable = document.getElementById('combinedTable');
 
     riseFallTable.innerHTML = '';
     overUnderTable.innerHTML = '';
+    combinedTable.innerHTML = '';
 
     console.log(`🔍 Processing ${Object.keys(ticksStorage).length} symbols, signalsActive: ${signalsActive}`);
 
@@ -286,6 +288,15 @@ function updateTables() {
         // Generate over/under table row
         overUnderTable.innerHTML += `<tr>
             <td>${displayName} index</td>
+            <td><span class="signal-box ${overClass}">${overClass === 'over' ? 'Over 2' : '----'}</span></td>
+            <td><span class="signal-box ${underClass}">${underClass === 'under' ? 'Under 7' : '----'}</span></td>
+        </tr>`;
+
+        // Generate combined table row for desktop
+        combinedTable.innerHTML += `<tr>
+            <td>${displayName}</td>
+            <td><span class="signal-box ${riseClass}">${isBuy ? 'Rise' : '----'}</span></td>
+            <td><span class="signal-box ${fallClass}">${isSell ? 'Fall' : '----'}</span></td>
             <td><span class="signal-box ${overClass}">${overClass === 'over' ? 'Over 2' : '----'}</span></td>
             <td><span class="signal-box ${underClass}">${underClass === 'under' ? 'Under 7' : '----'}</span></td>
         </tr>`;
