@@ -69,6 +69,7 @@ const Community: React.FC = observer(() => {
     const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
     const [usernameInput, setUsernameInput] = useState('');
     const [onlineUsersCount, setOnlineUsersCount] = useState(0);
+    const [showMobileSidebar, setShowMobileSidebar] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const isInitialLoadRef = useRef(true);
@@ -469,12 +470,32 @@ const Community: React.FC = observer(() => {
                 </div>
             )}
 
+            {/* Mobile Sidebar Overlay */}
+            {showMobileSidebar && (
+                <div 
+                    className="community__sidebar-overlay"
+                    onClick={() => setShowMobileSidebar(false)}
+                ></div>
+            )}
+
             {/* Categories Sidebar */}
-            <div className="community__sidebar">
+            <div className={classNames('community__sidebar', {
+                'community__sidebar--mobile-open': showMobileSidebar,
+            })}>
                 <div className="community__sidebar-header">
                     <h3>
                         <Localize i18n_default_text="Channels" />
                     </h3>
+                    <button 
+                        className="community__sidebar-close"
+                        onClick={() => setShowMobileSidebar(false)}
+                        aria-label="Close menu"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
                 </div>
                 <div className="community__categories">
                     {categories.map(category => (
@@ -483,7 +504,10 @@ const Community: React.FC = observer(() => {
                             className={classNames('community__category', {
                                 'community__category--active': activeCategory?.id === category.id,
                             })}
-                            onClick={() => setActiveCategory(category)}
+                            onClick={() => {
+                                setActiveCategory(category);
+                                setShowMobileSidebar(false);
+                            }}
                         >
                             <span className="community__category-icon">{category.icon}</span>
                             <div className="community__category-info">
@@ -499,11 +523,26 @@ const Community: React.FC = observer(() => {
             <div className="community__chat">
                 {/* Chat Header */}
                 <div className="community__chat-header">
-                    <div className="community__chat-header-info">
-                        <span className="community__chat-header-icon">{activeCategory?.icon}</span>
-                        <div>
-                            <h3>{activeCategory?.name}</h3>
-                            <p>{activeCategory?.description}</p>
+                    <div className="community__chat-header-left">
+                        {/* Mobile Menu Toggle */}
+                        <button 
+                            className="community__mobile-menu-toggle"
+                            onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+                            aria-label="Toggle menu"
+                        >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="3" y1="12" x2="21" y2="12"></line>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <line x1="3" y1="18" x2="21" y2="18"></line>
+                            </svg>
+                        </button>
+                        
+                        <div className="community__chat-header-info">
+                            <span className="community__chat-header-icon">{activeCategory?.icon}</span>
+                            <div>
+                                <h3>{activeCategory?.name}</h3>
+                                <p>{activeCategory?.description}</p>
+                            </div>
                         </div>
                     </div>
                     <div className="community__header-right">

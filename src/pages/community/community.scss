@@ -11,8 +11,59 @@
     position: relative;
 
     @include mobile-or-tablet-screen {
-        height: calc(100vh - 120px);
-        max-height: calc(100vh - 120px);
+        height: calc(90vh - 120px);
+        max-height: calc(90vh - 120px);
+    }
+
+    // Mobile Menu Toggle Button
+    &__mobile-menu-toggle {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border-radius: 8px;
+        background: var(--general-section-1);
+        color: var(--text-prominent);
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-right: 1rem;
+
+        &:hover {
+            background: var(--general-section-2, var(--general-section-1));
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
+
+        @include mobile-or-tablet-screen {
+            display: flex;
+        }
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    // Mobile Sidebar Overlay
+    &__sidebar-overlay {
+        display: none;
+
+        @include mobile-or-tablet-screen {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            animation: fadeIn 0.3s ease-out;
+        }
     }
 
     // Loading State
@@ -173,14 +224,31 @@
         overflow: hidden;
 
         @include mobile-or-tablet-screen {
-            width: 90px;
-            min-width: 90px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 280px;
+            min-width: 280px;
+            z-index: 999;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-out;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+        }
+
+        &--mobile-open {
+            @include mobile-or-tablet-screen {
+                transform: translateX(0);
+            }
         }
     }
 
     &__sidebar-header {
         padding: 2rem 1.5rem;
         border-bottom: 1px solid var(--border-normal);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
 
         h3 {
             margin: 0;
@@ -189,8 +257,39 @@
             font-weight: 700;
 
             @include mobile-or-tablet-screen {
-                font-size: 1rem;
-                text-align: center;
+                font-size: 1.2rem;
+                text-align: left;
+            }
+        }
+    }
+
+    &__sidebar-close {
+        display: none;
+        
+        @include mobile-or-tablet-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-prominent);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: var(--general-section-1);
+            }
+
+            &:active {
+                transform: scale(0.9);
+            }
+
+            svg {
+                width: 20px;
+                height: 20px;
             }
         }
     }
@@ -215,9 +314,9 @@
         transition: all 0.2s;
 
         @include mobile-or-tablet-screen {
-            flex-direction: column;
-            padding: 1rem 0.5rem;
-            text-align: center;
+            flex-direction: row;
+            padding: 1rem;
+            text-align: left;
         }
 
         &:hover {
@@ -245,9 +344,9 @@
         margin-right: 1.25rem;
 
         @include mobile-or-tablet-screen {
-            margin-right: 0;
-            margin-bottom: 0.5rem;
-            font-size: 2.25rem;
+            margin-right: 1rem;
+            margin-bottom: 0;
+            font-size: 1.75rem;
         }
     }
 
@@ -255,7 +354,9 @@
         flex: 1;
 
         @include mobile-or-tablet-screen {
-            display: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
         }
     }
 
@@ -294,6 +395,14 @@
         @include mobile-or-tablet-screen {
             padding: 1rem 1.25rem;
         }
+    }
+
+    &__chat-header-left {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        flex: 1;
+        min-width: 0;
     }
 
     &__chat-header-info {
