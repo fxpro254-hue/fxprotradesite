@@ -95,7 +95,7 @@ function updateTables() {
             ? `Volatility ${symbol.replace('1HZ', '').replace('V', '')} (1s) Index`
             : `Volatility ${symbol.replace('R_', '')} Index`;
         riseFallTable.innerHTML += `<tr>
-            <td>${displayName} index</td>
+            <td>${displayName} </td>
             <td><span class="signal-box ${riseClass}">${isBuy ? 'Rise' : '----'}</span></td>
             <td><span class="signal-box ${fallClass}">${isSell ? 'Fall' : '----'}</span></td>
         </tr>`;
@@ -117,7 +117,7 @@ function updateTables() {
 
         // Generate over/under table row
         overUnderTable.innerHTML += `<tr>
-            <td>${displayName} index</td>
+            <td>${displayName} </td>
             <td><span class="signal-box ${overClass}">${overClass === 'over' ? 'Over 2' : '----'}</span></td>
             <td><span class="signal-box ${underClass}">${underClass === 'under' ? 'Under 7' : '----'}</span></td>
         </tr>`;
