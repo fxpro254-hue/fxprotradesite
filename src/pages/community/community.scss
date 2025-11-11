@@ -3,16 +3,17 @@
 
 .community {
     width: 100%;
-    height: calc(90vh - 100px);
-    max-height: calc(90vh - 100px);
+    height: var(--tab-content-height);
+    max-height: var(--tab-content-height);
     display: flex;
     background: var(--general-section-1);
     overflow: hidden;
     position: relative;
 
     @include mobile-or-tablet-screen {
-        height: calc(100vh - 120px);
-        max-height: calc(100vh - 120px);
+        height: var(--tab-content-height-mobile);
+        max-height: var(--tab-content-height-mobile);
+        position: relative;
     }
 
     // Mobile Menu Toggle Button

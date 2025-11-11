@@ -1244,9 +1244,11 @@ const AppWrapper = observer(() => {
                             }
                             id='id-community'
                         >
-                            <Suspense fallback={<ChunkLoader message={localize('Loading Community...')} />}>
-                                <Community />
-                            </Suspense>
+                            <div className='dashboard__community-wrapper'>
+                                <Suspense fallback={<ChunkLoader message={localize('Loading Community...')} />}>
+                                    <Community />
+                                </Suspense>
+                            </div>
                         </div>
                     </Tabs>
                 </div>

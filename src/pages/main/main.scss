@@ -308,6 +308,18 @@
         }
     }
 
+    &__community-wrapper {
+        position: relative;
+        height: var(--tab-content-height);
+        width: 100%;
+        overflow: hidden;
+
+        @include mobile-or-tablet-screen {
+            height: var(--tab-content-height-mobile);
+            background: var(--general-main-1);
+        }
+    }
+
     &__toolbox {
         position: absolute;
         top: 0;
