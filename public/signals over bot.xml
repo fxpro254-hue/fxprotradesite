@@ -2,20 +2,20 @@
   <variables>
     <variable id="x]b3MHpbtR?cJQDP@,eG">martingale:resultIsWin</variable>
     <variable id="[M$5RsD`g|8-P;C+mbf4">martingale:profit</variable>
+    <variable id="3^~61:59m?#VJ(:SG^^[">Maximum Stake</variable>
     <variable id="]6T=O624:eVRioXro1kh">Notification:currentStake</variable>
     <variable id="Kb@{Vb{+5IqV=d~y*dcr">martingale:totalProfit</variable>
     <variable id="6G^6o^Ic@rjF|sHv*m.6">martingale:tradeAgain</variable>
-    <variable id="3^~61:59m?#VJ(:SG^^[">Maximum Stake</variable>
     <variable id=")^P[J(*haFR.$3Jdt7hz">prediction</variable>
+    <variable id="Gh~KH=(G5Q?:C:QU{3(P">stake</variable>
     <variable id="*p5|Lkk9Q^ZuPBQ-48g2">martingale:profitThreshold</variable>
     <variable id="FRbI:RhI/`[lrO`o;=P,">martingale:multiplier</variable>
     <variable id="[$B]vBH,~wrN`PUt5m/f">martingale:initialStake</variable>
-    <variable id="Gh~KH=(G5Q?:C:QU{3(P">stake</variable>
     <variable id="a1BTYNHC?_yR4sfvNJ7N">martingale:lossThreshold</variable>
-    <variable id="p#@Pr/Y.sKueWX#oRSPl">Notification:totalProfit</variable>
     <variable id="4vh+dtelQS#?}@cNPcN!">maxStake</variable>
-    <variable id="ipD5?_dQ1Zkvf%v|[?DQ">martingale:size</variable>
+    <variable id="p#@Pr/Y.sKueWX#oRSPl">Notification:totalProfit</variable>
     <variable id="/VZkC:5@oNcl%%_S,N)K">martingale</variable>
+    <variable id="ipD5?_dQ1Zkvf%v|[?DQ">martingale:size</variable>
     <variable id="I--KAm(C+#{d?~ip*23e">Notification:profitThresholdReached</variable>
     <variable id="5SwcMzq.f)VNUzjbKfrw">Notification:lossThresholdReached</variable>
   </variables>
@@ -31,7 +31,7 @@
             <field name="TRADETYPE_LIST">overunder</field>
             <next>
               <block type="trade_definition_contracttype" id="kujUv]]-mtF@Na3q/.(g" deletable="false" movable="false">
-                <field name="TYPE_LIST">DIGITUNDER</field>
+                <field name="TYPE_LIST">DIGITOVER</field>
                 <next>
                   <block type="trade_definition_candleinterval" id="[DsSG;O7*n`fK%ed;aj5" deletable="false" movable="false">
                     <field name="CANDLEINTERVAL_LIST">60</field>
@@ -54,51 +54,45 @@
       </block>
     </statement>
     <statement name="INITIALIZATION">
-      <block type="procedures_callnoreturn" id="Y$QeQZbwG)*ot:6RpIcD" disabled="true">
-        <mutation xmlns="http://www.w3.org/1999/xhtml" name="marketwizard v1.5"></mutation>
-        <data>%q%xQt$c|fD?H.g$E`A0</data>
+      <block type="variables_set" id="qKO~.`hPZgl;YZp+5Gov">
+        <field name="VAR" id="3^~61:59m?#VJ(:SG^^[">Maximum Stake</field>
+        <value name="VALUE">
+          <block type="logic_boolean" id=")`e93#Cende8@1c+J,yq">
+            <field name="BOOL">FALSE</field>
+          </block>
+        </value>
         <next>
-          <block type="variables_set" id="qKO~.`hPZgl;YZp+5Gov">
-            <field name="VAR" id="3^~61:59m?#VJ(:SG^^[">Maximum Stake</field>
+          <block type="variables_set" id="hE!#M9ZFLlg=-ljNrBM+">
+            <field name="VAR" id="Gh~KH=(G5Q?:C:QU{3(P">stake</field>
             <value name="VALUE">
-              <block type="logic_boolean" id=")`e93#Cende8@1c+J,yq">
-                <field name="BOOL">FALSE</field>
+              <block type="math_number" id="(NIXWL3Y6P13L5BJ]dB]">
+                <field name="NUM">1</field>
               </block>
             </value>
             <next>
-              <block type="variables_set" id="hE!#M9ZFLlg=-ljNrBM+">
-                <field name="VAR" id="Gh~KH=(G5Q?:C:QU{3(P">stake</field>
+              <block type="variables_set" id="d5E;bqd%{_,/35+*1}cy">
+                <field name="VAR" id=")^P[J(*haFR.$3Jdt7hz">prediction</field>
                 <value name="VALUE">
-                  <block type="math_number" id="(NIXWL3Y6P13L5BJ]dB]">
-                    <field name="NUM">1</field>
+                  <block type="math_number" id="9]l4I8^`#pQ`X5{u8rDS">
+                    <field name="NUM">2</field>
                   </block>
                 </value>
                 <next>
-                  <block type="variables_set" id="d5E;bqd%{_,/35+*1}cy">
-                    <field name="VAR" id=")^P[J(*haFR.$3Jdt7hz">prediction</field>
+                  <block type="variables_set" id="-jDR^266z(Nid-G$WXhp">
+                    <field name="VAR" id="4vh+dtelQS#?}@cNPcN!">maxStake</field>
                     <value name="VALUE">
-                      <block type="math_number" id="9]l4I8^`#pQ`X5{u8rDS">
-                        <field name="NUM">2</field>
-                      </block>
+                      <shadow type="math_number" id="d~g4F)vzSF:}C^i1EEC|">
+                        <field name="NUM">5</field>
+                      </shadow>
                     </value>
                     <next>
-                      <block type="variables_set" id="-jDR^266z(Nid-G$WXhp">
-                        <field name="VAR" id="4vh+dtelQS#?}@cNPcN!">maxStake</field>
+                      <block type="variables_set" id="ZtW:K]?MNsNi@_7}$i6/">
+                        <field name="VAR" id="/VZkC:5@oNcl%%_S,N)K">martingale</field>
                         <value name="VALUE">
-                          <shadow type="math_number" id="d~g4F)vzSF:}C^i1EEC|">
-                            <field name="NUM">5</field>
-                          </shadow>
-                        </value>
-                        <next>
-                          <block type="variables_set" id="ZtW:K]?MNsNi@_7}$i6/">
-                            <field name="VAR" id="/VZkC:5@oNcl%%_S,N)K">martingale</field>
-                            <value name="VALUE">
-                              <block type="math_number" id="-.,+P|BvPqY7~=Uj}3|$">
-                                <field name="NUM">3</field>
-                              </block>
-                            </value>
+                          <block type="math_number" id="-.,+P|BvPqY7~=Uj}3|$">
+                            <field name="NUM">3</field>
                           </block>
-                        </next>
+                        </value>
                       </block>
                     </next>
                   </block>
@@ -111,7 +105,7 @@
     </statement>
     <statement name="SUBMARKET">
       <block type="trade_definition_tradeoptions" id="8=uN{72G(CSbw2LN=h?0">
-        <mutation xmlns="http://www.w3.org/1999/xhtml" has_first_barrier="false" has_second_barrier="false" has_prediction="true"></mutation>
+        <mutation xmlns="http://www.w3.org/1999/xhtml" has_first_barrier="false" has_second_barrier="false" has_prediction="true" has_growth_rate="false" has_take_profit="false"></mutation>
         <field name="DURATIONTYPE_LIST">t</field>
         <value name="DURATION">
           <shadow type="math_number" id="!6mSlX6Ywa*q:{y,usj/">
@@ -138,7 +132,7 @@
       </block>
     </statement>
   </block>
-  <block type="after_purchase" id="cb%w4#L|)A]1F1+)uk_u" x="848" y="60">
+  <block type="after_purchase" id="cb%w4#L|)A]1F1+)uk_u" x="1027" y="60">
     <statement name="AFTERPURCHASE_STACK">
       <block type="controls_if" id="Y7vVfZ`@dP+KBKXW6C|a">
         <value name="IF0">
@@ -166,7 +160,7 @@
       </block>
     </statement>
   </block>
-  <block type="before_purchase" id="Z])37`R^9KsrX4I7bAqP" deletable="false" x="9" y="918">
+  <block type="before_purchase" id="Z])37`R^9KsrX4I7bAqP" deletable="false" x="0" y="932">
     <statement name="BEFOREPURCHASE_STACK">
       <block type="controls_if" id="V/.PagOs]*Q~*7I9s%cs">
         <value name="IF0">
@@ -187,12 +181,12 @@
             <field name="PURCHASE_LIST">DIGITOVER</field>
             <field name="TRADE_EACH_TICK">false</field>
             <value name="BARRIER_OFFSET">
-              <shadow type="math_number" id="@AW}jfp~t:_eqa+!}3d3" inline="true">
+              <shadow type="math_number" id="E-/e`W^N:]7w_[@(q7Tl" inline="true">
                 <field name="NUM">0.1</field>
               </shadow>
             </value>
             <value name="SECONDBARRIER_OFFSET">
-              <shadow type="math_number" id="(1=6^z(0VT.it~%$)eTR" inline="true">
+              <shadow type="math_number" id="h$Z$lD98=]8VHR_mx+#W" inline="true">
                 <field name="NUM">-0.1</field>
               </shadow>
             </value>
@@ -209,7 +203,7 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_defnoreturn" id="s`u(+vlS44fI;pul:nfW" collapsed="true" x="0" y="1158">
+  <block type="procedures_defnoreturn" id="s`u(+vlS44fI;pul:nfW" collapsed="true" x="0" y="1246">
     <mutation xmlns="http://www.w3.org/1999/xhtml">
       <arg name="martingale:resultIsWin" varid="x]b3MHpbtR?cJQDP@,eG"></arg>
     </mutation>
@@ -354,7 +348,7 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_defreturn" id="x3TA)`V~gtD7?rqNj[.9" collapsed="true" x="0" y="1254">
+  <block type="procedures_defreturn" id="x3TA)`V~gtD7?rqNj[.9" collapsed="true" x="0" y="1342">
     <field name="NAME">Martingale Trade Amount</field>
     <comment pinned="false" h="80" w="160">Describe this function...</comment>
     <statement name="STACK">
@@ -547,7 +541,7 @@
       </block>
     </value>
   </block>
-  <block type="procedures_defnoreturn" id="%q%xQt$c|fD?H.g$E`A0" collapsed="true" x="0" y="1350">
+  <block type="procedures_defnoreturn" id="%q%xQt$c|fD?H.g$E`A0" collapsed="true" x="0" y="1438">
     <field name="NAME">marketwizard v1.5</field>
     <comment pinned="false" h="80" w="160">Describe this function...</comment>
     <statement name="STACK">
@@ -560,7 +554,7 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_defreturn" id="N,_%hZ47`]!eOyc7%u8]" x="0" y="1446">
+  <block type="procedures_defreturn" id="N,_%hZ47`]!eOyc7%u8]" x="0" y="1534">
     <mutation xmlns="http://www.w3.org/1999/xhtml">
       <arg name="martingale:profit" varid="[M$5RsD`g|8-P;C+mbf4"></arg>
       <arg name="martingale:resultIsWin" varid="x]b3MHpbtR?cJQDP@,eG"></arg>

@@ -102,7 +102,7 @@ const AppContent = observer(() => {
         const handleBotFileLoad = async (event) => {
             if (event.data?.action === 'load_bot_file' && event.data?.fileName) {
                 const fileName = event.data.fileName;
-                console.log('Loading bot file:', fileName);
+                console.log('🚀 Loading signal bot:', fileName);
 
                 // Show loading notification
                 const loadingToast = toast.loading('🔄 Loading bot file...', {
@@ -125,41 +125,28 @@ const AppContent = observer(() => {
 
                     const xmlContent = await response.text();
                     
-                    // Parse XML
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(xmlContent, 'application/xml');
+                    // Get bot name from filename
+                    const botName = fileName.replace('.xml', '').replace(/-/g, ' ');
                     
-                    // Check for parse errors
-                    const parseError = xmlDoc.querySelector('parsererror');
-                    if (parseError) {
-                        console.error('XML parsing error:', parseError.textContent);
-                        toast.update(loadingToast, {
-                            render: '❌ Invalid bot file format',
-                            type: 'error',
-                            isLoading: false,
-                            autoClose: 3000,
-                        });
-                        return;
+                    // Create a temporary strategy object (same as free bots)
+                    const tempStrategy = {
+                        id: `temp_signal_${Date.now()}`,
+                        xml: xmlContent,
+                        name: botName,
+                        save_type: 'local',
+                        timestamp: Date.now(),
+                    };
+
+                    // Switch to bot builder tab first
+                    if (store?.dashboard?.setActiveTab) {
+                        store.dashboard.setActiveTab(1); // BOT_BUILDER = 1
                     }
 
-                    // Load into Blockly workspace
-                    if (window.Blockly?.derivWorkspace) {
-                        const workspace = window.Blockly.derivWorkspace;
-                        await workspace.asyncClear();
-                        
-                        const rootElement = xmlDoc.documentElement;
-                        window.Blockly.Xml.domToWorkspace(rootElement, workspace);
-                        
-                        // Store the loaded XML
-                        workspace.strategy_to_load = xmlContent;
-                        
-                        // Switch to bot builder tab
-                        if (store?.dashboard?.setActiveTab) {
-                            store.dashboard.setActiveTab(1); // BOT_BUILDER = 1
-                        }
-                        
-                        // Get bot name from filename
-                        const botName = fileName.replace('.xml', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    // Use the load modal's loadStrategyToBuilder method (same as free bots)
+                    if (store?.load_modal?.loadStrategyToBuilder) {
+                        console.log('🔄 Loading strategy to builder...');
+                        await store.load_modal.loadStrategyToBuilder(tempStrategy);
+                        console.log('✅ Bot loaded successfully!');
                         
                         // Show success notification
                         toast.update(loadingToast, {
@@ -168,19 +155,17 @@ const AppContent = observer(() => {
                             isLoading: false,
                             autoClose: 3000,
                         });
-                        
-                        console.log('Bot file loaded successfully:', fileName);
                     } else {
-                        console.warn('Blockly workspace not available yet');
+                        console.error('❌ loadStrategyToBuilder method not available');
                         toast.update(loadingToast, {
-                            render: '⚠️ Bot builder not ready. Please try again.',
+                            render: '⚠️ Bot loader not ready. Please try again.',
                             type: 'warning',
                             isLoading: false,
                             autoClose: 3000,
                         });
                     }
                 } catch (error) {
-                    console.error('Error loading bot file:', error);
+                    console.error('💥 Error loading bot:', error);
                     toast.update(loadingToast, {
                         render: '❌ Error loading bot file',
                         type: 'error',
