@@ -624,7 +624,6 @@ const AppWrapper = observer(() => {
         DBOT_TABS.CHART,
         DBOT_TABS.AUTO,
         DBOT_TABS.ANALYSIS_TOOL,
-        DBOT_TABS.SIGNALS,
         DBOT_TABS.PORTFOLIO,
         DBOT_TABS.FREE_BOTS,
     ].includes(active_tab);
@@ -820,30 +819,6 @@ const AppWrapper = observer(() => {
                                     </button>
                                 </div>
                                 {renderAnalysisToolContent()}
-                            </div>
-                        </div>
-                        <div
-                            label={
-                                <>
-                                    <SignalsIcon />
-                                    <Localize i18n_default_text='Signals' />
-                                </>
-                            }
-                            id='id-signals'
-                        >
-                            <div
-                                className={classNames('dashboard__chart-wrapper', {
-                                    'dashboard__chart-wrapper--expanded': is_drawer_open && isDesktop,
-                                    'dashboard__chart-wrapper--modal': is_chart_modal_visible && isDesktop,
-                                })}
-                            >
-                                <iframe
-                                    src='signals'
-                                    width='100%'
-                                    height='600px'
-                                    style={{ border: 'none', display: 'block' }}
-                                    scrolling='yes'
-                                />
                             </div>
                         </div>
                         <div
