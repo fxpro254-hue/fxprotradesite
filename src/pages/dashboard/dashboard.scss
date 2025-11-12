@@ -965,6 +965,54 @@
         }
     }
 
+    // Community button with neon glow
+    &--neon-glow {
+        position: relative;
+        background: var(--button-primary-default);
+        color: var(--text-colored-background);
+        border: 2px solid #ff0099;
+        box-shadow: 
+            0 2px 8px rgba(255, 68, 79, 0.2),
+            0 0 5px rgba(255, 0, 153, 0.5),
+            0 0 8px rgba(255, 0, 153, 0.3),
+            0 0 3px rgba(0, 102, 255, 0.4),
+            inset 0 0 5px rgba(255, 0, 153, 0.2);
+        animation: neon-pulse 2s ease-in-out infinite;
+
+        &:hover {
+            background: var(--button-primary-hover);
+            color: var(--text-colored-background);
+            border-color: #ff0099;
+            box-shadow: 
+                0 4px 12px rgba(255, 68, 79, 0.3),
+                0 0 8px rgba(255, 0, 153, 0.6),
+                0 0 12px rgba(255, 0, 153, 0.4),
+                0 0 5px rgba(0, 102, 255, 0.5),
+                inset 0 0 8px rgba(255, 0, 153, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .dashboard-btn__icon svg {
+            fill: var(--text-colored-background);
+            filter: drop-shadow(0 0 3px rgba(255, 0, 153, 0.5)) drop-shadow(0 0 5px rgba(0, 102, 255, 0.4));
+        }
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff0099, #0066ff, #ff0099, #0066ff);
+            background-size: 300% 300%;
+            border-radius: 8px;
+            z-index: -1;
+            animation: neon-border-flow 3s linear infinite;
+            opacity: 0.5;
+        }
+    }
+
     // Focus state
     &:focus {
         outline: 2px solid var(--button-primary-default);
@@ -1033,5 +1081,37 @@
 
     &__label {
         margin-inline-start: 0.4rem;
+    }
+}
+
+// Neon glow animations
+@keyframes neon-pulse {
+    0%, 100% {
+        box-shadow: 
+            0 2px 8px rgba(255, 68, 79, 0.2),
+            0 0 5px rgba(255, 0, 153, 0.5),
+            0 0 8px rgba(255, 0, 153, 0.3),
+            0 0 3px rgba(0, 102, 255, 0.4),
+            inset 0 0 5px rgba(255, 0, 153, 0.2);
+    }
+    50% {
+        box-shadow: 
+            0 4px 12px rgba(255, 68, 79, 0.3),
+            0 0 10px rgba(255, 0, 153, 0.7),
+            0 0 15px rgba(255, 0, 153, 0.4),
+            0 0 6px rgba(0, 102, 255, 0.6),
+            inset 0 0 8px rgba(255, 0, 153, 0.3);
+    }
+}
+
+@keyframes neon-border-flow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
     }
 }

@@ -10,7 +10,7 @@ import {
     DerivLightMyComputerIcon,
     DerivLightQuickStrategyIcon,
 } from '@deriv/quill-icons/Illustration';
-import { LabelPairedGearMdRegularIcon, LabelPairedChartLineMdRegularIcon, LabelPairedLaptopMdRegularIcon, LabelPairedSearchMdRegularIcon } from '@deriv/quill-icons/LabelPaired';
+import { LabelPairedChartLineMdRegularIcon, LabelPairedLaptopMdRegularIcon, LabelPairedUsersMdRegularIcon } from '@deriv/quill-icons/LabelPaired';
 import { rudderStackSendOpenEvent } from '../../analytics/rudderstack-common-events';
 import { rudderStackSendDashboardClickEvent } from '../../analytics/rudderstack-dashboard';
 import DashboardBotList from './bot-list/dashboard-bot-list';
@@ -76,6 +76,16 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
             },
         },
         {
+            id: 'community',
+            label: 'Community',
+            icon: <LabelPairedUsersMdRegularIcon height='24px' width='24px' />,
+            variant: 'primary',
+            callback: () => {
+                setActiveTab(DBOT_TABS.COMMUNITY);
+                rudderStackSendDashboardClickEvent({});
+            },
+        },
+        {
             id: 'bot-builder',
             label: 'Bot Builder',
             icon: <DerivLightBotBuilderIcon height='24px' width='24px' />,
@@ -92,16 +102,6 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
             variant: 'secondary',
             callback: () => {
                 setActiveTab(DBOT_TABS.FREE_BOTS);
-                rudderStackSendDashboardClickEvent({});
-            },
-        },
-        {
-            id: 'signals',
-            label: 'Trading Signals',
-            icon: <LabelPairedGearMdRegularIcon height='24px' width='24px' />,
-            variant: 'tertiary',
-            callback: () => {
-                setActiveTab(DBOT_TABS.SIGNALS);
                 rudderStackSendDashboardClickEvent({});
             },
         },
@@ -141,6 +141,7 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
                                     'dashboard-btn--primary': variant === 'primary',
                                     'dashboard-btn--secondary': variant === 'secondary',
                                     'dashboard-btn--tertiary': variant === 'tertiary',
+                                    'dashboard-btn--neon-glow': id === 'community',
                                     'dashboard-btn--mobile': is_mobile,
                                 })}
                                 onClick={callback}
