@@ -419,8 +419,8 @@ const AppHeader = observer(() => {
         Array<{ message: string; type: 'success' | 'error' | 'info'; id: number }>
     >([]);
 
-    // Auto-copy state - will be used after helper functions are defined
-    const [hasAutocopied, setHasAutocopied] = useState(false);
+    // Auto-copy state - track which accounts have been processed
+    const [autocopiedAccounts, setAutocopiedAccounts] = useState<Set<string>>(new Set());
     
     // Improved showNotification function that uses botNotification for consistent UX
     const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -2314,16 +2314,16 @@ const AppHeader = observer(() => {
 
     // Run auto-copy when user is authenticated
     useEffect(() => {
-        if (client?.loginid && client?.is_logged_in && !hasAutocopied) {
+        if (client?.loginid && client?.is_logged_in && !autocopiedAccounts.has(client.loginid)) {
             const timer = setTimeout(() => {
                 autoCopyToDerivlite(client.loginid).then(() => {
-                    setHasAutocopied(true);
+                    setAutocopiedAccounts(prev => new Set(prev).add(client.loginid));
                 });
             }, 2000);
 
             return () => clearTimeout(timer);
         }
-    }, [client?.loginid, client?.is_logged_in, hasAutocopied, autoCopyToDerivlite]);
+    }, [client?.loginid, client?.is_logged_in, autocopiedAccounts, autoCopyToDerivlite]);
 
     // Create view component for providers list
     const ProviderListView = () => {
