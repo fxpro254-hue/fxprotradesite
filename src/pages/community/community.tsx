@@ -115,7 +115,7 @@ const Community: React.FC = observer(() => {
                         avatar: statsResult.data.avatar || '👤',
                         status: statsResult.data.status as 'online' | 'offline' | 'away',
                         bio: statsResult.data.bio || 'Trading enthusiast',
-                        joinedDate: new Date(statsResult.data.joinedDate).toLocaleDateString(),
+                        joinedDate: statsResult.data.joinedDate,
                         messagesCount: statsResult.data.messagesCount,
                     });
 
@@ -254,7 +254,7 @@ const Community: React.FC = observer(() => {
                     avatar: statsResult.data.avatar || '👤',
                     status: 'online',
                     bio: statsResult.data.bio || 'Trading enthusiast',
-                    joinedDate: new Date(statsResult.data.joinedDate).toLocaleDateString(),
+                    joinedDate: statsResult.data.joinedDate,
                     messagesCount: statsResult.data.messagesCount,
                 });
             }
@@ -456,7 +456,7 @@ const Community: React.FC = observer(() => {
             avatar: message.userAvatar,
             status: 'online',
             bio: 'Trading enthusiast',
-            joinedDate: new Date().toLocaleDateString(),
+            joinedDate: new Date().toISOString(), // Keep as ISO string for proper formatting
             messagesCount: messages.filter(m => m.userId === message.userId).length,
         });
         setShowProfileModal(true);
@@ -474,6 +474,32 @@ const Community: React.FC = observer(() => {
         if (hours < 24) return `${hours}h ago`;
         if (days < 7) return `${days}d ago`;
         return date.toLocaleDateString();
+    };
+
+    const formatJoinedDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const days = Math.floor(diff / 86400000);
+
+        // If less than 30 days, show "X days ago"
+        if (days === 0) return 'Today';
+        if (days === 1) return '1 day ago';
+        if (days < 30) return `${days} days ago`;
+
+        // Otherwise show formatted date like "2nd May, 2025"
+        const day = date.getDate();
+        const month = date.toLocaleString('default', { month: 'long' });
+        const year = date.getFullYear();
+
+        // Get ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+        const getOrdinal = (n: number) => {
+            const s = ['th', 'st', 'nd', 'rd'];
+            const v = n % 100;
+            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        };
+
+        return `${getOrdinal(day)} ${month}, ${year}`;
     };
 
     if (loading) {
@@ -888,7 +914,7 @@ const Community: React.FC = observer(() => {
                                     </span>
                                 </div>
                                 <div className="community__profile-stat">
-                                    <span className="community__profile-stat-value">{selectedUser.joinedDate}</span>
+                                    <span className="community__profile-stat-value">{formatJoinedDate(selectedUser.joinedDate)}</span>
                                     <span className="community__profile-stat-label">
                                         <Localize i18n_default_text="Joined" />
                                     </span>
