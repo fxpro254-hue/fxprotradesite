@@ -503,6 +503,42 @@ const Community: React.FC = observer(() => {
         return `${getOrdinal(day)} ${month}, ${year}`;
     };
 
+    // Parse message content and detect links
+    const parseMessageContent = (content: string) => {
+        // URL regex pattern
+        const urlPattern = /(https?:\/\/[^\s]+)/g;
+        const parts = content.split(urlPattern);
+        const currentDomain = window.location.hostname;
+
+        return parts.map((part, index) => {
+            // Check if part is a URL
+            if (part.match(urlPattern)) {
+                try {
+                    const url = new URL(part);
+                    const domain = url.hostname;
+                    const isSameDomain = domain === currentDomain;
+                    
+                    return (
+                        <a
+                            key={index}
+                            href={part}
+                            target={isSameDomain ? '_self' : '_blank'}
+                            rel={isSameDomain ? undefined : 'noopener noreferrer'}
+                            className="community__message-link"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {domain}
+                        </a>
+                    );
+                } catch (e) {
+                    // If URL parsing fails, return as text
+                    return part;
+                }
+            }
+            return part;
+        });
+    };
+
     if (loading) {
         return (
             <div className="community">
@@ -721,7 +757,7 @@ const Community: React.FC = observer(() => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <p className="community__message-text">{message.content}</p>
+                                            <p className="community__message-text">{parseMessageContent(message.content)}</p>
                                         )}
                                         
                                         {message.attachments && message.attachments.length > 0 && (
