@@ -76,6 +76,7 @@ const Community: React.FC = observer(() => {
     const [editInput, setEditInput] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const isInitialLoadRef = useRef(true);
 
     // Common emojis
@@ -233,6 +234,14 @@ const Community: React.FC = observer(() => {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [messageInput]);
 
     // Handle username submission
     const handleUsernameSubmit = async () => {
@@ -874,14 +883,20 @@ const Community: React.FC = observer(() => {
                         >
                             📎
                         </button>
-                        <input
-                            type="text"
+                        <textarea
+                            ref={textareaRef}
                             className="community__input"
                             placeholder="Type a message..."
                             value={messageInput}
                             onChange={(e) => setMessageInput(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }
+                            }}
                             disabled={!currentUser}
+                            rows={1}
                         />
                         <button
                             className="community__input-btn"

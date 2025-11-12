@@ -1100,6 +1100,12 @@
         color: var(--text-prominent);
         font-size: 1.05rem;
         transition: all 0.2s;
+        resize: none;
+        min-height: 50px;
+        max-height: 150px;
+        overflow-y: auto;
+        font-family: inherit;
+        line-height: 1.5;
 
         &:focus {
             outline: none;
@@ -1119,6 +1125,8 @@
         @include mobile-or-tablet-screen {
             font-size: 1rem;
             padding: 0.85rem 1rem;
+            min-height: 44px;
+            max-height: 120px;
         }
     }
 
