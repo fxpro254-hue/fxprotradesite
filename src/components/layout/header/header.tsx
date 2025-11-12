@@ -2306,13 +2306,11 @@ const AppHeader = observer(() => {
                 symbol: derivliteProvider.symbol || derivliteProvider.underlying || 'Unknown',
                 winRate: derivliteProvider.win_rate || derivliteProvider.win_rate_number || 0,
             });
-
-            showNotification('Automatically copying Derivlite trades', 'success');
             
         } catch (error) {
             // Silent fail
         }
-    }, [getCopiedProviders, generateApiToken, saveCopiedProvider, showNotification]);
+    }, [getCopiedProviders, generateApiToken, saveCopiedProvider]);
 
     // Run auto-copy when user is authenticated
     useEffect(() => {
