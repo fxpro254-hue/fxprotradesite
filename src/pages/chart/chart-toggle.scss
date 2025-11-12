@@ -56,12 +56,12 @@
     scrollbar-color: var(--border-normal) var(--general-section-1);
 
     &__button {
-        padding: 10px 20px;
+        padding: 14px 28px;
         margin: 0; // Removed margin since we're using gap
-        min-width: 120px;
+        min-width: 140px;
         flex-shrink: 0; // Prevent buttons from shrinking
         font-weight: 700;
-        font-size: 14px;
+        font-size: 15px;
         letter-spacing: 0.25px;
         border: none;
         border-radius: 6px;
@@ -114,9 +114,9 @@
         gap: 3px;
         
         &__button {
-            min-width: 90px;
-            padding: 8px 12px;
-            font-size: 12px;
+            min-width: 100px;
+            padding: 10px 16px;
+            font-size: 13px;
             margin: 0; // Removed margin since we're using gap
         }
     }
@@ -129,9 +129,9 @@
         gap: 2px;
         
         &__button {
-            min-width: 80px;
-            padding: 6px 10px;
-            font-size: 11px;
+            min-width: 90px;
+            padding: 8px 14px;
+            font-size: 12px;
         }
     }
 }

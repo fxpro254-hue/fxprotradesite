@@ -52,10 +52,10 @@
     
     &__button {
         flex-shrink: 0;
-        padding: 8px 16px;
+        padding: 12px 20px;
         border: none;
         border-radius: 4px;
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -63,7 +63,7 @@
         color: var(--text-less-prominent);
         white-space: nowrap;
         position: relative;
-        min-width: 120px;
+        min-width: 140px;
         
         &:hover:not(.active) {
             background: var(--general-hover);
@@ -91,9 +91,9 @@
 @media (max-width: 768px) {
     .portfolio-toggle {
         &__button {
-            min-width: 90px;
-            font-size: 13px;
-            padding: 8px 12px;
+            min-width: 100px;
+            font-size: 14px;
+            padding: 10px 16px;
         }
     }
 }
@@ -101,9 +101,9 @@
 @media (max-width: 480px) {
     .portfolio-toggle {
         &__button {
-            min-width: 80px;
-            font-size: 12px;
-            padding: 6px 10px;
+            min-width: 90px;
+            font-size: 13px;
+            padding: 8px 14px;
         }
     }
 }
