@@ -54,6 +54,37 @@ app.post('/api/test-email', async (req, res) => {
     }
 });
 
+// Resend welcome email endpoint (for testing with existing users)
+app.post('/api/resend-welcome', async (req, res) => {
+    try {
+        const { email, loginId } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Email is required' });
+        }
+        
+        // Get user info
+        const user = await prisma.user.findUnique({
+            where: { loginId }
+        });
+        
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        
+        console.log('📧 [RESEND] Resending welcome email to:', email, 'for user:', user.fullName);
+        
+        const result = await sendWelcomeEmail(email, user.fullName, loginId);
+        
+        console.log('📬 [RESEND] Result:', result);
+        
+        res.json(result);
+    } catch (error) {
+        console.error('❌ [RESEND] Error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Get all categories
 app.get('/api/categories', async (req, res) => {
     try {
@@ -170,26 +201,28 @@ app.post('/api/users/register', async (req, res) => {
             });
             
             console.log('✅ New user created:', { id: user.id, loginId: user.loginId });
-            
-            // Send welcome email for new users (email not stored in database)
-            if (email && isNewUser) {
-                console.log('📧 Sending welcome email to:', email);
-                try {
-                    const emailResult = await sendWelcomeEmail(email, fullName, loginId);
-                    if (emailResult.success) {
-                        console.log('✅ Welcome email sent successfully to:', email);
-                    } else {
-                        console.error('❌ Failed to send welcome email:', emailResult.error);
-                    }
-                } catch (emailError) {
-                    // Don't fail registration if email fails
-                    console.error('❌ Email sending error:', emailError);
-                }
-            } else if (!email) {
-                console.log('ℹ️ No email provided, skipping welcome email');
-            }
         } else {
             console.log('ℹ️ Existing user found:', { id: user.id, loginId: user.loginId });
+        }
+        
+        // Send welcome email for new users (email not stored in database)
+        if (email && isNewUser) {
+            console.log('📧 Sending welcome email to:', email);
+            try {
+                const emailResult = await sendWelcomeEmail(email, fullName, loginId);
+                if (emailResult.success) {
+                    console.log('✅ Welcome email sent successfully to:', email);
+                } else {
+                    console.error('❌ Failed to send welcome email:', emailResult.error);
+                }
+            } catch (emailError) {
+                // Don't fail registration if email fails
+                console.error('❌ Email sending error:', emailError);
+            }
+        } else if (!email && isNewUser) {
+            console.log('ℹ️ No email provided, skipping welcome email');
+        } else if (email && !isNewUser) {
+            console.log('ℹ️ Existing user - welcome email already sent previously');
         }
         
         res.json({ success: true, data: user, isNewUser });
