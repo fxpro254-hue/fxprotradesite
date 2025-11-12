@@ -133,7 +133,7 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
         </div>
         
         <div style="text-align: center;">
-            <a href="${process.env.APP_URL || 'https://bot.binaryfx.site'}/community" class="cta-button">
+            <a href="${process.env.APP_URL || 'https://bot.binaryfx.site'}/?tab=id-community" class="cta-button">
                 Start Exploring →
             </a>
         </div>
