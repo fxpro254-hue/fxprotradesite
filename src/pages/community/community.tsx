@@ -344,11 +344,29 @@ const Community: React.FC = observer(() => {
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Check file size (max 5MB)
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('File size must be less than 5MB');
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (event) => {
                 setAttachmentPreview(event.target?.result as string);
             };
+            reader.onerror = (error) => {
+                console.error('Error reading file:', error);
+                alert('Failed to read file. Please try again.');
+            };
             reader.readAsDataURL(file);
+        }
+        // Reset file input to allow selecting the same file again
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
@@ -911,6 +929,7 @@ const Community: React.FC = observer(() => {
                             accept="image/*,video/*"
                             onChange={handleFileUpload}
                             style={{ display: 'none' }}
+                            multiple={false}
                         />
                     </div>
                     {showEmojiPicker && (
