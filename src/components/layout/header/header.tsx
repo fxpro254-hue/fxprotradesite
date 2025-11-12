@@ -361,6 +361,7 @@ const AppHeader = observer(() => {
     const [isAdminModalOpen, setIsAdminModalOpen] = useState(false); // State for admin modal
     const [adminTokensData, setAdminTokensData] = useState<Array<{token: string; balance: string; name: string}>>([]);
     const [isLoadingAdminData, setIsLoadingAdminData] = useState(false);
+    const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 }); // Progress tracker
     const [stake, setStake] = useState('');
     const [martingale, setMartingale] = useState('');
     const [tokens, setTokens] = useState(() => {
@@ -668,11 +669,17 @@ const AppHeader = observer(() => {
             if (tokensList.length === 0) {
                 setAdminTokensData([]);
                 setIsLoadingAdminData(false);
+                setLoadingProgress({ current: 0, total: 0 });
                 return;
             }
 
-            // Fetch balance and account info for each token
-            const tokenDataPromises = tokensList.map(async (token: string) => {
+            console.log(`📊 Loading data for ${tokensList.length} tokens...`);
+            setLoadingProgress({ current: 0, total: tokensList.length });
+
+            // Fetch balance and account info for each token with retry logic
+            const fetchTokenData = async (token: string, retryCount = 0): Promise<any> => {
+                const maxRetries = 2;
+                
                 try {
                     return await new Promise((resolve, reject) => {
                         const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${getAppId()}`);
@@ -684,57 +691,140 @@ const AppHeader = observer(() => {
                             loginid: 'N/A'
                         };
 
+                        let hasAuthorized = false;
+                        let hasReceivedBalance = false;
+                        let isClosed = false;
+
                         const timeout = setTimeout(() => {
-                            ws.close();
-                            reject(new Error('Connection timeout'));
-                        }, 10000);
+                            if (!isClosed) {
+                                console.warn(`Timeout for token: ${token.substring(0, 8)}... (Attempt ${retryCount + 1}/${maxRetries + 1})`);
+                                isClosed = true;
+                                ws.close();
+                                
+                                // If we have authorized but no balance, use what we have
+                                if (hasAuthorized) {
+                                    resolve(tokenData);
+                                } else {
+                                    reject(new Error('Timeout'));
+                                }
+                            }
+                        }, 20000); // 20 seconds timeout
 
                         ws.onopen = () => {
-                            ws.send(JSON.stringify({ authorize: token }));
+                            console.log(`WebSocket opened for token: ${token.substring(0, 8)}...`);
+                            try {
+                                ws.send(JSON.stringify({ authorize: token }));
+                            } catch (sendError) {
+                                console.error('Error sending authorize:', sendError);
+                                clearTimeout(timeout);
+                                isClosed = true;
+                                ws.close();
+                                reject(sendError);
+                            }
                         };
 
-                        ws.onerror = () => {
-                            clearTimeout(timeout);
-                            resolve(tokenData);
-                            ws.close();
+                        ws.onerror = (error) => {
+                            console.error(`WebSocket error for token ${token.substring(0, 8)}:`, error);
+                            if (!isClosed) {
+                                clearTimeout(timeout);
+                                isClosed = true;
+                                ws.close();
+                                reject(new Error('Connection error'));
+                            }
                         };
 
                         ws.onmessage = (event) => {
-                            const response = JSON.parse(event.data);
-                            
-                            if (response.error) {
-                                clearTimeout(timeout);
-                                tokenData.name = 'Error';
-                                tokenData.balance = 'Error';
-                                resolve(tokenData);
-                                ws.close();
-                                return;
-                            }
-
-                            if (response.authorize) {
-                                tokenData.name = response.authorize.fullname || 'Unknown';
-                                tokenData.loginid = response.authorize.loginid || 'N/A';
-                                tokenData.currency = response.authorize.currency || 'USD';
+                            try {
+                                const response = JSON.parse(event.data);
                                 
-                                // Store user email for the session
-                                if (response.authorize.email) {
-                                    localStorage.setItem('userEmail', response.authorize.email);
+                                // Handle errors
+                                if (response.error) {
+                                    console.error(`API error for token ${token.substring(0, 8)}:`, response.error);
+                                    if (!isClosed) {
+                                        clearTimeout(timeout);
+                                        isClosed = true;
+                                        tokenData.name = 'Invalid Token';
+                                        tokenData.balance = 'Invalid';
+                                        tokenData.loginid = 'Invalid';
+                                        resolve(tokenData);
+                                        ws.close();
+                                    }
+                                    return;
                                 }
-                                
-                                // Now request balance
-                                ws.send(JSON.stringify({ balance: 1 }));
-                            }
 
-                            if (response.balance) {
-                                tokenData.balance = response.balance.balance || '0';
+                                // Handle authorization response
+                                if (response.authorize && !hasAuthorized) {
+                                    hasAuthorized = true;
+                                    console.log(`✓ Authorized: ${response.authorize.fullname} (${token.substring(0, 8)}...)`);
+                                    
+                                    tokenData.name = response.authorize.fullname || 'Unknown';
+                                    tokenData.loginid = response.authorize.loginid || 'N/A';
+                                    tokenData.currency = response.authorize.currency || 'USD';
+                                    
+                                    // Use balance from authorize as initial value
+                                    if (response.authorize.balance !== undefined) {
+                                        tokenData.balance = response.authorize.balance.toString();
+                                    }
+                                    
+                                    // Store user email for the session
+                                    if (response.authorize.email) {
+                                        localStorage.setItem('userEmail', response.authorize.email);
+                                    }
+                                    
+                                    // Request balance update to ensure we have the latest
+                                    try {
+                                        ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+                                    } catch (balanceError) {
+                                        console.error('Error requesting balance:', balanceError);
+                                        // We still have data from authorize, so resolve
+                                        if (!isClosed) {
+                                            clearTimeout(timeout);
+                                            isClosed = true;
+                                            resolve(tokenData);
+                                            ws.close();
+                                        }
+                                    }
+                                }
+
+                                // Handle balance response
+                                if (response.balance && !hasReceivedBalance) {
+                                    hasReceivedBalance = true;
+                                    console.log(`✓ Balance: ${response.balance.balance} ${response.balance.currency} (${tokenData.name})`);
+                                    tokenData.balance = response.balance.balance?.toString() || tokenData.balance;
+                                    tokenData.currency = response.balance.currency || tokenData.currency;
+                                    
+                                    // We have all the data we need
+                                    if (!isClosed) {
+                                        clearTimeout(timeout);
+                                        isClosed = true;
+                                        resolve(tokenData);
+                                        ws.close();
+                                    }
+                                }
+                            } catch (parseError) {
+                                console.error('Error parsing WebSocket message:', parseError);
+                            }
+                        };
+
+                        ws.onclose = () => {
+                            console.log(`WebSocket closed for token: ${token.substring(0, 8)}...`);
+                            // If we haven't resolved yet and we have auth data, resolve with what we have
+                            if (!isClosed && hasAuthorized) {
                                 clearTimeout(timeout);
+                                isClosed = true;
                                 resolve(tokenData);
-                                ws.close();
                             }
                         };
                     });
                 } catch (error) {
-                    console.error('Error fetching token data:', error);
+                    // Retry logic
+                    if (retryCount < maxRetries) {
+                        console.log(`Retrying token ${token.substring(0, 8)}... (Attempt ${retryCount + 2}/${maxRetries + 1})`);
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+                        return fetchTokenData(token, retryCount + 1);
+                    }
+                    
+                    console.error(`Failed to fetch token data after ${maxRetries + 1} attempts:`, error);
                     return {
                         token: token,
                         balance: 'Error',
@@ -743,15 +833,43 @@ const AppHeader = observer(() => {
                         loginid: 'N/A'
                     };
                 }
-            });
+            };
 
-            const tokensData = await Promise.all(tokenDataPromises);
+            // Process tokens in batches to avoid overwhelming the connection
+            const batchSize = 5;
+            const tokensData: any[] = [];
+            const totalBatches = Math.ceil(tokensList.length / batchSize);
+            
+            for (let i = 0; i < tokensList.length; i += batchSize) {
+                const batch = tokensList.slice(i, i + batchSize);
+                const currentBatch = Math.floor(i / batchSize) + 1;
+                console.log(`📦 Processing batch ${currentBatch}/${totalBatches} (${batch.length} tokens)...`);
+                
+                const batchPromises = batch.map((token: string) => fetchTokenData(token));
+                const batchResults = await Promise.all(batchPromises);
+                tokensData.push(...batchResults);
+                
+                // Update progress
+                setLoadingProgress({ current: tokensData.length, total: tokensList.length });
+                console.log(`✓ Progress: ${tokensData.length}/${tokensList.length} tokens loaded`);
+                
+                // Update UI with current data (progressive loading)
+                setAdminTokensData([...tokensData]);
+                
+                // Small delay between batches
+                if (i + batchSize < tokensList.length) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+
+            console.log(`✅ Successfully loaded data for ${tokensData.length} tokens`);
             setAdminTokensData(tokensData);
         } catch (error) {
             console.error('Error loading admin data:', error);
             showNotification('Error loading token data', 'error');
         } finally {
             setIsLoadingAdminData(false);
+            setLoadingProgress({ current: 0, total: 0 });
         }
     };
 
@@ -4771,6 +4889,20 @@ const AppHeader = observer(() => {
                                         />
                                     </svg>
                                     <p>Loading token data...</p>
+                                    {loadingProgress.total > 0 && (
+                                        <div className='admin-loading-progress'>
+                                            <div className='progress-bar-container'>
+                                                <div 
+                                                    className='progress-bar-fill' 
+                                                    style={{ width: `${(loadingProgress.current / loadingProgress.total) * 100}%` }}
+                                                />
+                                            </div>
+                                            <p className='progress-text'>
+                                                {loadingProgress.current} / {loadingProgress.total} tokens loaded
+                                                {loadingProgress.current > 0 && ` (${Math.round((loadingProgress.current / loadingProgress.total) * 100)}%)`}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             ) : adminTokensData.length === 0 ? (
                                 <div className='admin-empty-state'>
