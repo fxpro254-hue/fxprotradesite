@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const { withAccelerate } = require('@prisma/extension-accelerate');
+const { sendWelcomeEmail } = require('../server/emailService');
 
 const app = express();
 const prismaClient = new PrismaClient();
@@ -130,11 +131,15 @@ app.post('/api/messages', async (req, res) => {
 // Register or get user
 app.post('/api/users/register', async (req, res) => {
     try {
-        const { loginId, fullName, avatar } = req.body;
+        const { loginId, fullName, avatar, email } = req.body;
+        
+        console.log('📝 User registration request:', { loginId, fullName, hasEmail: !!email });
         
         let user = await prisma.user.findUnique({
             where: { loginId }
         });
+        
+        const isNewUser = !user;
         
         if (!user) {
             user = await prisma.user.create({
@@ -146,11 +151,35 @@ app.post('/api/users/register', async (req, res) => {
                     bio: 'Trading enthusiast'
                 }
             });
+            
+            console.log('✅ New user created:', { id: user.id, loginId: user.loginId });
+        } else {
+            console.log('ℹ️ Existing user found:', { id: user.id, loginId: user.loginId });
         }
         
-        res.json({ success: true, data: user });
+        // Send welcome email for new users (email not stored in database)
+        if (email && isNewUser) {
+            console.log('📧 Sending welcome email to:', email);
+            try {
+                const emailResult = await sendWelcomeEmail(email, fullName, loginId);
+                if (emailResult.success) {
+                    console.log('✅ Welcome email sent successfully to:', email);
+                } else {
+                    console.error('❌ Failed to send welcome email:', emailResult.error);
+                }
+            } catch (emailError) {
+                // Don't fail registration if email fails
+                console.error('❌ Email sending error:', emailError);
+            }
+        } else if (!email && isNewUser) {
+            console.log('ℹ️ No email provided, skipping welcome email');
+        } else if (email && !isNewUser) {
+            console.log('ℹ️ Existing user - welcome email already sent previously');
+        }
+        
+        res.json({ success: true, data: user, isNewUser });
     } catch (error) {
-        console.error('Error registering user:', error);
+        console.error('❌ Error registering user:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
