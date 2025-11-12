@@ -82,10 +82,11 @@ export const handleCreateMessage = async (
 export const handleRegisterUser = async (
     loginId: string,
     fullName: string,
-    avatar?: string
+    avatar?: string,
+    email?: string
 ): Promise<ApiResponse<any>> => {
     try {
-        console.log('Registering user:', { loginId, fullName, avatar });
+        console.log('Registering user:', { loginId, fullName, avatar, email });
         console.log('API URL:', `${API_BASE_URL}/users/register`);
         
         const response = await fetch(`${API_BASE_URL}/users/register`, {
@@ -97,6 +98,7 @@ export const handleRegisterUser = async (
                 loginId,
                 fullName,
                 avatar,
+                email,
             }),
         });
         

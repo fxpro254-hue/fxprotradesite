@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import classNames from 'classnames';
 import { Localize } from '@deriv-com/translations';
+import { useDerivAuth } from '@/hooks/useDerivAuth';
 import {
     handleGetCategories,
     handleGetMessages,
@@ -57,6 +58,9 @@ interface Category {
 }
 
 const Community: React.FC = observer(() => {
+    // Get Deriv user info (includes email from auth response)
+    const { user: derivUser } = useDerivAuth();
+    
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategory, setActiveCategory] = useState<Category | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -70,6 +74,7 @@ const Community: React.FC = observer(() => {
     const [loading, setLoading] = useState(true);
     const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
     const [usernameInput, setUsernameInput] = useState('');
+    const [emailInput, setEmailInput] = useState('');
     const [onlineUsersCount, setOnlineUsersCount] = useState(0);
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
     const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -81,6 +86,14 @@ const Community: React.FC = observer(() => {
 
     // Common emojis
     const emojis = ['😀', '😊', '👍', '🎉', '💰', '📈', '📉', '🚀', '💪', '🔥', '❤️', '👏', '🤔', '😎', '🙏'];
+    
+    // Auto-populate email from Deriv auth when showing username prompt
+    useEffect(() => {
+        if (showUsernamePrompt && derivUser?.email && !emailInput) {
+            setEmailInput(derivUser.email);
+            console.log('Auto-populated email from Deriv auth:', derivUser.email);
+        }
+    }, [showUsernamePrompt, derivUser?.email]);
 
     // Get loginId helper
     const getLoginId = (): string => {
@@ -250,8 +263,13 @@ const Community: React.FC = observer(() => {
         const loginId = getLoginId();
         localStorage.setItem(`community_username_${loginId}`, usernameInput.trim());
 
-        // Register user in database
-        const userResult = await handleRegisterUser(loginId, usernameInput.trim());
+        // Register user in database with optional email
+        const userResult = await handleRegisterUser(
+            loginId, 
+            usernameInput.trim(),
+            undefined, // avatar
+            emailInput.trim() || undefined // email
+        );
         
         if (userResult.success && userResult.data) {
             const statsResult = await handleGetUserStats(loginId);
@@ -273,6 +291,7 @@ const Community: React.FC = observer(() => {
 
         setShowUsernamePrompt(false);
         setUsernameInput('');
+        setEmailInput('');
 
         // Load categories after user is registered
         const categoriesResult = await handleGetCategories();
@@ -605,9 +624,25 @@ const Community: React.FC = observer(() => {
                             placeholder="Enter your username"
                             value={usernameInput}
                             onChange={(e) => setUsernameInput(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleUsernameSubmit()}
+                            onKeyPress={(e) => e.key === 'Enter' && emailInput && handleUsernameSubmit()}
                             autoFocus
                         />
+                        <input
+                            type="email"
+                            placeholder={derivUser?.email ? derivUser.email : "Enter your email (optional)"}
+                            value={emailInput}
+                            onChange={(e) => setEmailInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && usernameInput.trim() && handleUsernameSubmit()}
+                            style={{ marginTop: '10px' }}
+                            title={derivUser?.email ? "Email from your Deriv account" : "Enter your email"}
+                        />
+                        <p style={{ fontSize: '12px', color: '#999', marginTop: '8px', marginBottom: '0' }}>
+                            {derivUser?.email ? (
+                                <Localize i18n_default_text="✓ Email auto-filled from your Deriv account. We'll send you a welcome email!" />
+                            ) : (
+                                <Localize i18n_default_text="Email is optional. We'll send you a welcome email and important updates." />
+                            )}
+                        </p>
                         <button onClick={handleUsernameSubmit} disabled={!usernameInput.trim()}>
                             <Localize i18n_default_text="Continue" />
                         </button>

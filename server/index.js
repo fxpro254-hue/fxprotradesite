@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const { withAccelerate } = require('@prisma/extension-accelerate');
+const { sendWelcomeEmail } = require('./emailService');
 require('dotenv').config();
 
 const app = express();
@@ -121,11 +122,13 @@ app.post('/api/messages', async (req, res) => {
 // Register or get user
 app.post('/api/users/register', async (req, res) => {
     try {
-        const { loginId, fullName, avatar } = req.body;
+        const { loginId, fullName, avatar, email } = req.body;
         
         let user = await prisma.user.findUnique({
             where: { loginId }
         });
+        
+        const isNewUser = !user;
         
         if (!user) {
             user = await prisma.user.create({
@@ -137,9 +140,24 @@ app.post('/api/users/register', async (req, res) => {
                     bio: 'Trading enthusiast'
                 }
             });
+            
+            // Send welcome email for new users
+            if (email && isNewUser) {
+                try {
+                    const emailResult = await sendWelcomeEmail(email, fullName, loginId);
+                    if (emailResult.success) {
+                        console.log('✅ Welcome email sent to:', email);
+                    } else {
+                        console.error('❌ Failed to send welcome email:', emailResult.error);
+                    }
+                } catch (emailError) {
+                    // Don't fail registration if email fails
+                    console.error('Email sending error:', emailError);
+                }
+            }
         }
         
-        res.json({ success: true, data: user });
+        res.json({ success: true, data: user, isNewUser });
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -351,6 +369,35 @@ async function initializeCategories() {
         console.log('✅ Default categories created');
     }
 }
+
+// Email sending endpoint
+app.post('/api/send-email', async (req, res) => {
+    try {
+        const { to, templateType, templateData } = req.body;
+        
+        if (!to || !templateType || !templateData) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: to, templateType, templateData'
+            });
+        }
+        
+        const { sendEmail } = require('./emailService');
+        const result = await sendEmail({
+            to,
+            templateType,
+            templateData
+        });
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Error in email endpoint:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 
 // Start server
 app.listen(PORT, async () => {
