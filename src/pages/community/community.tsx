@@ -264,6 +264,14 @@ const Community: React.FC = observer(() => {
         if (!usernameInput.trim()) return;
 
         const loginId = getLoginId();
+        const email = emailInput.trim() || undefined;
+        
+        console.log('📝 [COMMUNITY] Submitting username:', {
+            loginId,
+            username: usernameInput.trim(),
+            email: email || 'No email provided',
+        });
+        
         localStorage.setItem(`community_username_${loginId}`, usernameInput.trim());
 
         // Register user in database with optional email
@@ -271,8 +279,10 @@ const Community: React.FC = observer(() => {
             loginId, 
             usernameInput.trim(),
             undefined, // avatar
-            emailInput.trim() || undefined // email
+            email // email
         );
+        
+        console.log('📬 [COMMUNITY] Registration result:', userResult);
         
         if (userResult.success && userResult.data) {
             const statsResult = await handleGetUserStats(loginId);

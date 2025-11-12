@@ -28,6 +28,32 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Community API is running' });
 });
 
+// Email test endpoint
+app.post('/api/test-email', async (req, res) => {
+    try {
+        const { email, userName } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Email is required' });
+        }
+        
+        console.log('🧪 [TEST] Testing email send to:', email);
+        
+        const result = await sendWelcomeEmail(
+            email, 
+            userName || 'Test User', 
+            'TEST_' + Date.now()
+        );
+        
+        console.log('🧪 [TEST] Email test result:', result);
+        
+        res.json(result);
+    } catch (error) {
+        console.error('🧪 [TEST] Email test error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Get all categories
 app.get('/api/categories', async (req, res) => {
     try {

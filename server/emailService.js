@@ -13,6 +13,13 @@ const emailConfig = {
     enabled: process.env.ENABLE_EMAILS !== 'false',
 };
 
+// Log configuration on startup (hide API key)
+console.log('📧 Email Service Configuration:');
+console.log('  - API Key:', emailConfig.apiKey ? `${emailConfig.apiKey.substring(0, 10)}...` : '❌ NOT SET');
+console.log('  - From:', emailConfig.defaultFrom);
+console.log('  - Enabled:', emailConfig.enabled);
+console.log('  - Environment:', process.env.NODE_ENV || 'development');
+
 // Initialize Resend client
 const resend = new Resend(emailConfig.apiKey);
 
@@ -248,19 +255,27 @@ const getEmailTemplate = (type, data) => {
  */
 const sendEmail = async (options) => {
     try {
+        console.log('📧 [EMAIL] Attempting to send email:', {
+            to: options.to,
+            templateType: options.templateType,
+            from: options.from || emailConfig.defaultFrom,
+        });
+
         // Validate configuration
         const configValidation = validateEmailConfig();
         if (!configValidation.valid) {
-            console.error('Email configuration is invalid:', configValidation.errors);
+            console.error('❌ [EMAIL] Configuration is invalid:', configValidation.errors);
             return {
                 success: false,
                 error: `Email configuration error: ${configValidation.errors.join(', ')}`,
             };
         }
 
+        console.log('✅ [EMAIL] Configuration valid');
+
         // Check if emails are enabled
         if (!emailConfig.enabled) {
-            console.log('Email sending is disabled. Email would have been sent:', {
+            console.log('⚠️ [EMAIL] Email sending is disabled. Email would have been sent:', {
                 to: options.to,
                 templateType: options.templateType,
             });
@@ -270,11 +285,18 @@ const sendEmail = async (options) => {
             };
         }
 
+        console.log('✅ [EMAIL] Emails are enabled');
+
         // Get the email template
         const template = getEmailTemplate(options.templateType, options.templateData);
+        console.log('✅ [EMAIL] Template generated:', {
+            subject: template.subject,
+            hasHtml: !!template.html,
+            hasText: !!template.text,
+        });
 
-        // Send the email
-        const result = await resend.emails.send({
+        // Prepare email payload
+        const emailPayload = {
             from: options.from || emailConfig.defaultFrom,
             to: Array.isArray(options.to) ? options.to : [options.to],
             subject: template.subject,
@@ -283,18 +305,29 @@ const sendEmail = async (options) => {
             replyTo: options.replyTo,
             cc: options.cc,
             bcc: options.bcc,
+        };
+
+        console.log('📤 [EMAIL] Sending via Resend API...');
+
+        // Send the email
+        const result = await resend.emails.send(emailPayload);
+
+        console.log('📬 [EMAIL] Resend API response:', {
+            hasError: !!result.error,
+            hasData: !!result.data,
+            result: result,
         });
 
         // Check if the result contains an error
         if (result.error) {
-            console.error('Error sending email via Resend:', result.error);
+            console.error('❌ [EMAIL] Error from Resend API:', result.error);
             return {
                 success: false,
                 error: result.error.message || 'Failed to send email',
             };
         }
 
-        console.log('Email sent successfully:', {
+        console.log('✅ [EMAIL] Email sent successfully:', {
             messageId: result.data?.id,
             to: options.to,
             templateType: options.templateType,
