@@ -122,6 +122,11 @@ const PortfolioDisplay: React.FC = observer(() => {
     const [previousMonthData, setPreviousMonthData] = useState<any>(null);
     const [todayData, setTodayData] = useState<any>(null);
     const [last6MonthsData, setLast6MonthsData] = useState<any[]>([]);
+    
+    // Unique user counts for each period
+    const [currentMonthUsers, setCurrentMonthUsers] = useState<number>(0);
+    const [previousMonthUsers, setPreviousMonthUsers] = useState<number>(0);
+    const [todayUsers, setTodayUsers] = useState<number>(0);
 
     // Risk Management Calculator State
     const [riskCalc, setRiskCalc] = useState<RiskCalculationState>({
@@ -350,6 +355,39 @@ const PortfolioDisplay: React.FC = observer(() => {
         }
     };
 
+    // Helper function to get unique user count for a specific date range and app
+    const fetchUniqueUsersForPeriod = async (dateFrom: string, dateTo: string, appId: string) => {
+        if (!api_base?.api || !appId) return 0;
+
+        try {
+            const request = {
+                app_markup_details: 1,
+                date_from: `${dateFrom} 00:00:00`,
+                date_to: `${dateTo} 23:59:59`,
+                app_id: parseInt(appId),
+                limit: 1000 // Maximum allowed
+            };
+
+            const response: any = await api_base.api.send(request);
+
+            if (response.error || !response.app_markup_details?.transactions) {
+                return 0;
+            }
+
+            const transactions = response.app_markup_details.transactions;
+            
+            // Get unique client_loginid values
+            const uniqueUsers = new Set(
+                transactions.map((txn: any) => txn.client_loginid).filter(Boolean)
+            );
+
+            return uniqueUsers.size;
+        } catch (err) {
+            console.error('Error fetching unique users for period:', err);
+            return 0;
+        }
+    };
+
     // Helper to get UTC/GMT date string in YYYY-MM-DD format (3 hours behind EAT)
     const getUTCDate = (date: Date) => {
         return date.toISOString().split('T')[0];
@@ -384,8 +422,8 @@ const PortfolioDisplay: React.FC = observer(() => {
             today: `${getUTCDate(todayStart)} to ${getUTCDate(todayEnd)}`
         });
 
-        // Fetch data for each period
-        const [currentMonth, previousMonth, today] = await Promise.all([
+        // Fetch data for each period (statistics and unique users)
+        const [currentMonth, previousMonth, today, currentUsers, previousUsers, todayUsersCount] = await Promise.all([
             fetchMarkupForPeriod(
                 getUTCDate(currentMonthStart),
                 getUTCDate(currentMonthEnd),
@@ -400,14 +438,32 @@ const PortfolioDisplay: React.FC = observer(() => {
                 getUTCDate(todayStart),
                 getUTCDate(todayEnd),
                 appId
+            ),
+            fetchUniqueUsersForPeriod(
+                getUTCDate(currentMonthStart),
+                getUTCDate(currentMonthEnd),
+                appId
+            ),
+            fetchUniqueUsersForPeriod(
+                getUTCDate(prevMonthStart),
+                getUTCDate(prevMonthEnd),
+                appId
+            ),
+            fetchUniqueUsersForPeriod(
+                getUTCDate(todayStart),
+                getUTCDate(todayEnd),
+                appId
             )
         ]);
 
-        console.log('Fetched period data:', { currentMonth, previousMonth, today });
+        console.log('Fetched period data:', { currentMonth, previousMonth, today, currentUsers, previousUsers, todayUsersCount });
 
         setCurrentMonthData(currentMonth);
         setPreviousMonthData(previousMonth);
         setTodayData(today);
+        setCurrentMonthUsers(currentUsers);
+        setPreviousMonthUsers(previousUsers);
+        setTodayUsers(todayUsersCount);
 
         // Fetch last 6 months data in UTC
         const monthsData = [];
@@ -2850,6 +2906,12 @@ const PortfolioDisplay: React.FC = observer(() => {
                                             </div>
                                         </div>
                                         <div className="metric">
+                                            <div className="metric-label">{localize('Traders')}</div>
+                                            <div className="metric-value traders">
+                                                {currentMonthUsers.toLocaleString()}
+                                            </div>
+                                        </div>
+                                        <div className="metric">
                                             <div className="metric-label">{localize('Trades')}</div>
                                             <div className="metric-value trades">
                                                 {getCurrentMonthData().trades.toLocaleString()}
@@ -2898,6 +2960,12 @@ const PortfolioDisplay: React.FC = observer(() => {
                                             <div className="metric-label">{localize('Commission')}</div>
                                             <div className="metric-value commission">
                                                 {formatCurrency(getTodayData().commission, client?.currency || 'USD')}
+                                            </div>
+                                        </div>
+                                        <div className="metric">
+                                            <div className="metric-label">{localize('Traders')}</div>
+                                            <div className="metric-value traders">
+                                                {todayUsers.toLocaleString()}
                                             </div>
                                         </div>
                                         <div className="metric">
