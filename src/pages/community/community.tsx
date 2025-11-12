@@ -71,7 +71,6 @@ const Community: React.FC = observer(() => {
     const [loading, setLoading] = useState(true);
     const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
     const [usernameInput, setUsernameInput] = useState('');
-    const [emailInput, setEmailInput] = useState('');
     const [onlineUsersCount, setOnlineUsersCount] = useState(0);
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
     const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -129,13 +128,6 @@ const Community: React.FC = observer(() => {
                     localStorage.setItem(`community_username_${loginId}`, statsResult.data.fullName);
                 } else {
                     // User doesn't exist in database, prompt for username
-                    // Auto-populate email from stored user session
-                    const storedEmail = getUserEmail();
-                    if (storedEmail) {
-                        setEmailInput(storedEmail);
-                        console.log('✅ Auto-populated email from session:', storedEmail);
-                    }
-                    
                     setShowUsernamePrompt(true);
                     setLoading(false);
                     return;
@@ -152,13 +144,6 @@ const Community: React.FC = observer(() => {
             } catch (error) {
                 console.error('Error initializing community:', error);
                 // If error checking database, prompt for username
-                // Auto-populate email even on error
-                const storedEmail = getUserEmail();
-                if (storedEmail) {
-                    setEmailInput(storedEmail);
-                    console.log('✅ Auto-populated email from session (fallback):', storedEmail);
-                }
-                
                 setShowUsernamePrompt(true);
             } finally {
                 setLoading(false);
@@ -264,22 +249,22 @@ const Community: React.FC = observer(() => {
         if (!usernameInput.trim()) return;
 
         const loginId = getLoginId();
-        const email = emailInput.trim() || undefined;
+        const email = getUserEmail(); // Get email from session storage
         
         console.log('📝 [COMMUNITY] Submitting username:', {
             loginId,
             username: usernameInput.trim(),
-            email: email || 'No email provided',
+            email: email || 'No email available',
         });
         
         localStorage.setItem(`community_username_${loginId}`, usernameInput.trim());
 
-        // Register user in database with optional email
+        // Register user in database with email from session
         const userResult = await handleRegisterUser(
             loginId, 
             usernameInput.trim(),
             undefined, // avatar
-            email // email
+            email // email from session
         );
         
         console.log('📬 [COMMUNITY] Registration result:', userResult);
@@ -304,7 +289,6 @@ const Community: React.FC = observer(() => {
 
         setShowUsernamePrompt(false);
         setUsernameInput('');
-        setEmailInput('');
 
         // Load categories after user is registered
         const categoriesResult = await handleGetCategories();
@@ -637,27 +621,9 @@ const Community: React.FC = observer(() => {
                             placeholder="Enter your username"
                             value={usernameInput}
                             onChange={(e) => setUsernameInput(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && emailInput && handleUsernameSubmit()}
+                            onKeyPress={(e) => e.key === 'Enter' && usernameInput.trim() && handleUsernameSubmit()}
                             autoFocus
                         />
-                        <input
-                            type="email"
-                            placeholder={emailInput ? emailInput : "Enter your email (optional)"}
-                            value={emailInput}
-                            onChange={(e) => setEmailInput(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && usernameInput.trim() && handleUsernameSubmit()}
-                            style={{ marginTop: '10px' }}
-                        />
-                        {emailInput && (
-                            <p style={{ fontSize: '12px', color: '#4CAF50', marginTop: '8px', marginBottom: '0' }}>
-                                <Localize i18n_default_text="✓ Email auto-filled from your account" />
-                            </p>
-                        )}
-                        {!emailInput && (
-                            <p style={{ fontSize: '12px', color: '#999', marginTop: '8px', marginBottom: '0' }}>
-                                <Localize i18n_default_text="Email is optional. We'll send you a welcome email and important updates." />
-                            </p>
-                        )}
                         <button onClick={handleUsernameSubmit} disabled={!usernameInput.trim()}>
                             <Localize i18n_default_text="Continue" />
                         </button>
