@@ -889,12 +889,6 @@ const Community: React.FC = observer(() => {
                             placeholder="Type a message..."
                             value={messageInput}
                             onChange={(e) => setMessageInput(e.target.value)}
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSendMessage();
-                                }
-                            }}
                             disabled={!currentUser}
                             rows={1}
                         />
