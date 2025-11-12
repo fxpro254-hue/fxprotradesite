@@ -277,7 +277,8 @@ const Community: React.FC = observer(() => {
 
     // Handle send message
     const handleSendMessage = async () => {
-        if (!messageInput.trim() || !currentUser || !activeCategory) return;
+        // Allow sending if there's either text or an attachment
+        if ((!messageInput.trim() && !attachmentPreview) || !currentUser || !activeCategory) return;
 
         try {
             const attachments = attachmentPreview ? [{
@@ -288,7 +289,7 @@ const Community: React.FC = observer(() => {
             const result = await handleCreateMessage(
                 currentUser.id,
                 activeCategory.id,
-                messageInput.trim(),
+                messageInput.trim() || ' ', // Use space if no text but has attachment
                 replyingTo?.id,
                 attachments
             );
@@ -855,7 +856,7 @@ const Community: React.FC = observer(() => {
                         <button
                             className="community__input-btn community__input-btn--send"
                             onClick={handleSendMessage}
-                            disabled={!messageInput.trim() || !currentUser}
+                            disabled={(!messageInput.trim() && !attachmentPreview) || !currentUser}
                         >
                             ➤
                         </button>
