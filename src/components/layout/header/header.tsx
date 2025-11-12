@@ -4849,6 +4849,145 @@ const AppHeader = observer(() => {
                                                                     />
                                                                 </svg>
                                                             </button>
+                                                            <button
+                                                                className='admin-delete-btn'
+                                                                onClick={async () => {
+                                                                    if (!window.confirm(`Are you sure you want to delete the token for ${tokenData.name} (${tokenData.loginid})?\n\nThis action cannot be undone.`)) {
+                                                                        return;
+                                                                    }
+
+                                                                    try {
+                                                                        showNotification('Deleting token...', 'info');
+                                                                        
+                                                                        let deletedFromDeriv = false;
+                                                                        
+                                                                        // Try to delete from Deriv API first
+                                                                        try {
+                                                                            const appId = getAppId();
+                                                                            const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
+
+                                                                            const deleteResult = await new Promise((resolve, reject) => {
+                                                                                const timeoutId = setTimeout(() => {
+                                                                                    ws.close();
+                                                                                    reject(new Error('Token deletion request timed out'));
+                                                                                }, 15000);
+
+                                                                                ws.onopen = () => {
+                                                                                    console.log('WebSocket connected, authenticating with token to delete...');
+                                                                                    // Authorize with the token that we want to delete
+                                                                                    ws.send(JSON.stringify({ authorize: tokenData.token }));
+                                                                                };
+
+                                                                                ws.onerror = error => {
+                                                                                    console.error('WebSocket error:', error);
+                                                                                    clearTimeout(timeoutId);
+                                                                                    reject(new Error('Connection error'));
+                                                                                    ws.close();
+                                                                                };
+
+                                                                                ws.onmessage = event => {
+                                                                                    const response = JSON.parse(event.data);
+
+                                                                                    if (response.error) {
+                                                                                        console.error('API error (token may be invalid):', response.error);
+                                                                                        clearTimeout(timeoutId);
+                                                                                        // Don't reject - token is invalid, we'll just clean up locally
+                                                                                        reject(new Error(response.error.message || 'Invalid token'));
+                                                                                        ws.close();
+                                                                                        return;
+                                                                                    }
+
+                                                                                    // Handle authorization response
+                                                                                    if (response.authorize) {
+                                                                                        console.log('Successfully authorized with token, now deleting it...');
+                                                                                        
+                                                                                        // Delete this token (self-delete)
+                                                                                        const deleteRequest = {
+                                                                                            api_token: 1,
+                                                                                            delete_token: tokenData.token
+                                                                                        };
+
+                                                                                        console.log('Requesting self-deletion of token:', tokenData.token.substring(0, 8) + '...');
+                                                                                        ws.send(JSON.stringify(deleteRequest));
+                                                                                    }
+
+                                                                                    // Handle token deletion response
+                                                                                    if (response.api_token && response.api_token.delete_token) {
+                                                                                        console.log('Token successfully deleted from Deriv');
+                                                                                        clearTimeout(timeoutId);
+                                                                                        resolve(true);
+                                                                                        ws.close();
+                                                                                    }
+                                                                                };
+                                                                            });
+
+                                                                            deletedFromDeriv = !!deleteResult;
+                                                                        } catch (derivError) {
+                                                                            console.warn('Could not delete from Deriv API (token may be invalid):', derivError);
+                                                                            console.log('Proceeding with local and database cleanup only...');
+                                                                            deletedFromDeriv = false;
+                                                                        }
+
+                                                                        // Always clean up from local storage
+                                                                        const tokenToDelete = generatedTokens.find(t => t.token === tokenData.token);
+                                                                        if (tokenToDelete) {
+                                                                            const updatedTokens = generatedTokens.filter(token => token.id !== tokenToDelete.id);
+                                                                            setGeneratedTokens(updatedTokens);
+                                                                            saveGeneratedTokens(updatedTokens);
+                                                                            console.log('Token removed from local storage');
+                                                                        }
+
+                                                                        // Try to clean up from provider database
+                                                                        try {
+                                                                            const blueprintEndpoint = 'https://database.binaryfx.site/api/1.1/wf/token delete';
+                                                                            
+                                                                            const blueprintResponse = await fetch(blueprintEndpoint, {
+                                                                                method: 'POST',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    Accept: 'application/json',
+                                                                                },
+                                                                                body: JSON.stringify({
+                                                                                    provider_account_id: tokenData.loginid,
+                                                                                    token: tokenData.token,
+                                                                                }),
+                                                                            });
+
+                                                                            if (blueprintResponse.ok) {
+                                                                                console.log('Token removed from provider database');
+                                                                            }
+                                                                        } catch (dbError) {
+                                                                            console.warn('Could not delete from provider database:', dbError);
+                                                                            // Continue anyway
+                                                                        }
+                                                                        
+                                                                        const message = deletedFromDeriv 
+                                                                            ? `Token for ${tokenData.name} deleted successfully` 
+                                                                            : `Token for ${tokenData.name} removed from local storage and database (token was invalid on Deriv)`;
+                                                                        
+                                                                        showNotification(message, 'success');
+                                                                        
+                                                                        // Refresh admin panel after a short delay
+                                                                        setTimeout(() => {
+                                                                            openAdminPanel();
+                                                                        }, 1000);
+                                                                    } catch (error) {
+                                                                        console.error('Error deleting token:', error);
+                                                                        showNotification(
+                                                                            `Failed to delete token: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                                                                            'error'
+                                                                        );
+                                                                    }
+                                                                }}
+                                                                title='Delete token'
+                                                            >
+                                                                <svg width='14' height='14' viewBox='0 0 24 24' fill='none'>
+                                                                    <path
+                                                                        d='M6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19ZM19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4Z'
+                                                                        fill='currentColor'
+                                                                    />
+                                                                </svg>
+                                                            </button>
                                                         </span>
                                                     </div>
                                                 </div>
