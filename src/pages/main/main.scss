@@ -12,11 +12,11 @@
     display: flex;
     overflow: hidden;
     width: 100%;
-    height: calc(100vh - 9rem);
+    height: calc(100vh - 9rem - 28px); /* Subtract header (9rem) + notification banner (28px) */
     padding: 1px;
 
     @include mobile-or-tablet-screen {
-        height: calc(100vh - 6rem);
+        height: calc(100vh - 6rem - 25px); /* Subtract header (6rem) + notification banner (25px on mobile) */
         padding: 0;
     }
 
@@ -25,6 +25,7 @@
         border: none;
         max-width: 100%;
         width: 100%;
+        z-index: 1; /* Create stacking context */
 
         &--active {
             // css for onboard tour overlay
@@ -54,6 +55,8 @@
             &__list {
                 background: var(--general-section-1);
                 justify-content: start;
+                position: relative;
+                z-index: 5; /* Above notification banner (z-index: 4) */
 
                 @include mobile-or-tablet-screen {
                     overflow-x: auto;
@@ -86,6 +89,9 @@
             }
 
             &__content {
+                height: 100%;
+                overflow: hidden;
+
                 @include mobile-or-tablet-screen {
                     width: 100%;
                     overflow-x: auto;
@@ -251,6 +257,8 @@
 .dashboard {
     &__chart-wrapper {
         position: relative;
+        display: flex;
+        flex-direction: column;
         height: var(--tab-content-height);
         width: 100%;
         transition: all 0.4s;
@@ -282,6 +290,7 @@
         iframe {
             display: block;
             width: 100%;
+            height: 100%;
             border: none;
             background: var(--general-main-1);
             transition: width 0.4s ease;
@@ -298,6 +307,8 @@
 
     &__portfolio-wrapper {
         position: relative;
+        display: flex;
+        flex-direction: column;
         height: var(--tab-content-height);
         width: 100%;
         overflow: hidden;
@@ -310,14 +321,18 @@
 
     &__community-wrapper {
         position: relative;
+        display: flex;
+        flex-direction: column;
         height: var(--tab-content-height);
         width: 100%;
         overflow: hidden;
 
         @include mobile-or-tablet-screen {
             height: var(--tab-content-height-mobile);
-            background: var(--general-main-1);
         }
+
+        // Let the Community component manage its own background
+        // Remove wrapper background to prevent conflicts
     }
 
     &__toolbox {

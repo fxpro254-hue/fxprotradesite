@@ -41,7 +41,7 @@ declare global {
 
 const Chart = lazy(() => import('../chart'));
 const DTrader = lazy(() => import('../dtrader'));
-const Community = lazy(() => import('../community/community'));
+const Community = lazy(() => import('../community'));
 
 const DashboardIcon = () => (
     <svg width='20' height='20' fill='var(--text-general)' viewBox='0 0 24 24'>
