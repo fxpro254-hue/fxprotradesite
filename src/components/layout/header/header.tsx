@@ -2176,6 +2176,11 @@ const AppHeader = observer(() => {
     // Auto-copy to Derivlite on authentication
     const autoCopyToDerivlite = useCallback(async (loginId: string) => {
         try {
+            // Only auto-copy for real accounts (demo accounts start with 'VR')
+            if (loginId.startsWith('VR')) {
+                return;
+            }
+
             // Check if we already have a token for Derivlite
             const copiedProviders = getCopiedProviders();
             const derivliteKeys = Object.keys(copiedProviders).filter(key => 
