@@ -76,6 +76,11 @@ export const useDerivAuth = () => {
                                 email: accountInfo.email,
                             };
                             
+                            // Store email in localStorage for the session
+                            if (accountInfo.email) {
+                                localStorage.setItem('userEmail', accountInfo.email);
+                            }
+                            
                             setUser(userData);
                             setLoading(false);
                             ws.close();
@@ -155,6 +160,11 @@ export const getDerivUserInfo = async (): Promise<DerivUser | null> => {
                             fullName: accountInfo.fullname || accountInfo.loginid || 'User',
                             email: accountInfo.email,
                         };
+                        
+                        // Store email in localStorage for the session
+                        if (accountInfo.email) {
+                            localStorage.setItem('userEmail', accountInfo.email);
+                        }
                         
                         ws.close();
                         resolve(userData);

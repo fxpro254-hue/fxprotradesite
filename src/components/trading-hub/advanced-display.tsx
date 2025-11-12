@@ -102,7 +102,22 @@ const STORAGE_KEYS = {
     TRADING_SETTINGS: 'trading_settings',
     TOTAL_PROFIT: 'total_profit',
     AUTH_TOKEN: 'authToken',
+    USER_EMAIL: 'userEmail',
 };
+
+// Debug helper - accessible from browser console
+if (typeof window !== 'undefined') {
+    (window as any).checkUserEmail = () => {
+        const email = localStorage.getItem(STORAGE_KEYS.USER_EMAIL);
+        const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+        console.log('=== User Session Debug ===');
+        console.log('Auth Token:', token ? '✅ Present' : '❌ Missing');
+        console.log('User Email:', email || '❌ Not stored');
+        console.log('All localStorage keys:', Object.keys(localStorage));
+        console.log('localStorage.userEmail:', localStorage.getItem('userEmail'));
+        return { email, token, hasEmail: !!email, hasToken: !!token };
+    };
+}
 
 // Add trade result tracking constants
 const MAX_CONSECUTIVE_LOSSES = 3; // Stop after 3 consecutive losses
@@ -1901,17 +1916,36 @@ const AdvancedDisplay = observer(() => {
                     setAuthError(data.error.message || 'Authentication failed');
                     setIsAuthenticated(false);
                     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+                    localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
                     setShowAuthModal(true);
                 } else if (data.authorize) {
-                    console.log('Token verified, user authenticated');
+                    console.log('✅ Authorization successful! Full response:', data.authorize);
+                    console.log('📧 Email from response:', data.authorize.email);
+                    console.log('👤 User info:', {
+                        email: data.authorize.email,
+                        loginid: data.authorize.loginid,
+                        fullname: data.authorize.fullname
+                    });
+                    
                     setIsAuthenticated(true);
                     localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+                    
+                    // Store user email for the session
+                    const userEmail = data.authorize.email;
+                    if (userEmail) {
+                        localStorage.setItem(STORAGE_KEYS.USER_EMAIL, userEmail);
+                        console.log('✅ User email stored successfully:', userEmail);
+                        console.log('🔍 Verify storage - Reading back:', localStorage.getItem(STORAGE_KEYS.USER_EMAIL));
+                    } else {
+                        console.warn('⚠️ No email found in authorize response!');
+                    }
+                    
                     initTradeWebSocket(token);
                     setShowAuthModal(false);
 
                     // Show welcome notification
                     showNotification(
-                        `Welcome, ${data.authorize.email || 'Trader'}!`,
+                        `Welcome, ${userEmail || 'Trader'}!`,
                         'success',
                         'You are now authenticated and ready to trade.'
                     );
@@ -1942,6 +1976,7 @@ const AdvancedDisplay = observer(() => {
     // Handle logout
     const handleLogout = useCallback(() => {
         localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
         setIsAuthenticated(false);
         setShowAuthModal(true);
         if (tradeWs) {

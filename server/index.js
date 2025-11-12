@@ -124,6 +124,8 @@ app.post('/api/users/register', async (req, res) => {
     try {
         const { loginId, fullName, avatar, email } = req.body;
         
+        console.log('📝 User registration request:', { loginId, fullName, hasEmail: !!email });
+        
         let user = await prisma.user.findUnique({
             where: { loginId }
         });
@@ -141,25 +143,32 @@ app.post('/api/users/register', async (req, res) => {
                 }
             });
             
-            // Send welcome email for new users
+            console.log('✅ New user created:', { id: user.id, loginId: user.loginId });
+            
+            // Send welcome email for new users (email not stored in database)
             if (email && isNewUser) {
+                console.log('📧 Sending welcome email to:', email);
                 try {
                     const emailResult = await sendWelcomeEmail(email, fullName, loginId);
                     if (emailResult.success) {
-                        console.log('✅ Welcome email sent to:', email);
+                        console.log('✅ Welcome email sent successfully to:', email);
                     } else {
                         console.error('❌ Failed to send welcome email:', emailResult.error);
                     }
                 } catch (emailError) {
                     // Don't fail registration if email fails
-                    console.error('Email sending error:', emailError);
+                    console.error('❌ Email sending error:', emailError);
                 }
+            } else if (!email) {
+                console.log('ℹ️ No email provided, skipping welcome email');
             }
+        } else {
+            console.log('ℹ️ Existing user found:', { id: user.id, loginId: user.loginId });
         }
         
         res.json({ success: true, data: user, isNewUser });
     } catch (error) {
-        console.error('Error registering user:', error);
+        console.error('❌ Error registering user:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

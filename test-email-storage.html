@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test User Email Storage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.check {
+            background: #2196F3;
+        }
+        button.check:hover {
+            background: #0b7dda;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        .success {
+            border-left-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        pre {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .storage-info {
+            margin-top: 20px;
+        }
+        .storage-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #e3f2fd;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test User Email Storage</h1>
+        <p>This page tests the Deriv authorization and email storage functionality.</p>
+
+        <div class="input-group">
+            <label for="apiToken">API Token:</label>
+            <input type="text" id="apiToken" placeholder="Enter your Deriv API token (e.g., a1-xxxxx)">
+        </div>
+
+        <div>
+            <button onclick="testAuthorization()">Test Authorization</button>
+            <button class="check" onclick="checkLocalStorage()">Check LocalStorage</button>
+        </div>
+
+        <div id="output"></div>
+
+        <div class="storage-info" id="storageInfo"></div>
+    </div>
+
+    <script>
+        const APP_ID = '36300'; // Development app ID
+        const WS_URL = `wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`;
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            output.innerHTML = `<div class="output ${className}">${message}</div>`;
+        }
+
+        function testAuthorization() {
+            const token = document.getElementById('apiToken').value.trim();
+            
+            if (!token) {
+                log('Please enter an API token', 'error');
+                return;
+            }
+
+            log('Connecting to Deriv API...');
+
+            const ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                log('Connected! Authorizing...');
+                console.log('Sending authorization request');
+                ws.send(JSON.stringify({ authorize: token }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('Received response:', data);
+
+                if (data.error) {
+                    log(`❌ Authorization failed: ${data.error.message}`, 'error');
+                    console.error('Error details:', data.error);
+                    ws.close();
+                    return;
+                }
+
+                if (data.authorize) {
+                    const auth = data.authorize;
+                    console.log('✅ Authorization successful!', auth);
+                    
+                    // Store email
+                    const email = auth.email;
+                    if (email) {
+                        localStorage.setItem('userEmail', email);
+                        localStorage.setItem('authToken', token);
+                        
+                        log(`
+                            <strong>✅ Authorization Successful!</strong><br><br>
+                            <strong>Email:</strong> ${email}<br>
+                            <strong>Login ID:</strong> ${auth.loginid}<br>
+                            <strong>Full Name:</strong> ${auth.fullname || 'N/A'}<br>
+                            <strong>Currency:</strong> ${auth.currency}<br>
+                            <strong>Balance:</strong> ${auth.balance}<br><br>
+                            <strong>Email stored in localStorage!</strong><br>
+                            Check the "LocalStorage" section below.
+                        `, 'success');
+                        
+                        // Show full response
+                        console.log('Full authorize response:', JSON.stringify(auth, null, 2));
+                        
+                        // Update storage display
+                        checkLocalStorage();
+                    } else {
+                        log('⚠️ Authorization successful but no email found in response!', 'error');
+                        console.warn('No email in response:', auth);
+                    }
+                    
+                    ws.close();
+                }
+            };
+
+            ws.onerror = (error) => {
+                log('❌ Connection error. Check your internet connection.', 'error');
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket connection closed');
+            };
+        }
+
+        function checkLocalStorage() {
+            const email = localStorage.getItem('userEmail');
+            const token = localStorage.getItem('authToken');
+            const storageInfo = document.getElementById('storageInfo');
+            
+            const allKeys = Object.keys(localStorage);
+            
+            storageInfo.innerHTML = `
+                <h3>📦 LocalStorage Contents:</h3>
+                <div class="storage-item">
+                    <strong>userEmail:</strong> ${email || '❌ Not set'}
+                </div>
+                <div class="storage-item">
+                    <strong>authToken:</strong> ${token ? '✅ Present' : '❌ Not set'}
+                </div>
+                <div class="storage-item">
+                    <strong>All keys (${allKeys.length}):</strong> ${allKeys.join(', ') || 'None'}
+                </div>
+            `;
+            
+            console.log('=== LocalStorage Debug ===');
+            console.log('userEmail:', email);
+            console.log('authToken:', token ? 'present' : 'missing');
+            console.log('All localStorage:', localStorage);
+        }
+
+        // Check on page load
+        window.onload = () => {
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html>

@@ -174,6 +174,13 @@ class APIBase {
                 setAccountList(authorize.account_list);
                 setAuthData(authorize);
                 setIsAuthorized(true);
+                
+                // Store user email for the session
+                if (authorize?.email) {
+                    localStorage.setItem('userEmail', authorize.email);
+                    console.log('✅ User email stored from main authorization:', authorize.email);
+                }
+                
                 this.is_authorized = true;
                 this.subscribe();
                 this.getSelfExclusion();

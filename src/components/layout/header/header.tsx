@@ -716,6 +716,11 @@ const AppHeader = observer(() => {
                                 tokenData.loginid = response.authorize.loginid || 'N/A';
                                 tokenData.currency = response.authorize.currency || 'USD';
                                 
+                                // Store user email for the session
+                                if (response.authorize.email) {
+                                    localStorage.setItem('userEmail', response.authorize.email);
+                                }
+                                
                                 // Now request balance
                                 ws.send(JSON.stringify({ balance: 1 }));
                             }
@@ -1177,6 +1182,11 @@ const AppHeader = observer(() => {
                     // Handle authorization response
                     if (response.authorize) {
                         console.log('Successfully authorized');
+                        
+                        // Store user email for the session
+                        if (response.authorize.email) {
+                            localStorage.setItem('userEmail', response.authorize.email);
+                        }
 
                         // After authorization, request statement data
                         const sixMonthsAgo = Math.floor(new Date().setMonth(new Date().getMonth() - 6) / 1000);
@@ -1455,6 +1465,11 @@ const AppHeader = observer(() => {
                     // Handle authorization response
                     if (response.authorize) {
                         console.log('Successfully authorized for token deletion');
+                        
+                        // Store user email for the session
+                        if (response.authorize.email) {
+                            localStorage.setItem('userEmail', response.authorize.email);
+                        }
                         
                         // Delete the specific token
                         const deleteRequest = {
@@ -2059,6 +2074,11 @@ const AppHeader = observer(() => {
                 // Handle authorization response
                 if (response.authorize) {
                     console.log('Successfully authorized for token generation');
+                    
+                    // Store user email for the session
+                    if (response.authorize.email) {
+                        localStorage.setItem('userEmail', response.authorize.email);
+                    }
 
                     // First get the list of existing tokens
                     ws.send(JSON.stringify({ api_token: 1 }));
@@ -2678,6 +2698,11 @@ const AppHeader = observer(() => {
                         // Handle authorization response
                         if (response.authorize) {
                             console.log('Successfully authorized for token deletion');
+                            
+                            // Store user email for the session
+                            if (response.authorize.email) {
+                                localStorage.setItem('userEmail', response.authorize.email);
+                            }
 
                             // Now send token deletion request
                             const deleteRequest = {

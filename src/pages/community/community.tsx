@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import classNames from 'classnames';
 import { Localize } from '@deriv-com/translations';
-import { useDerivAuth } from '@/hooks/useDerivAuth';
 import {
     handleGetCategories,
     handleGetMessages,
@@ -15,6 +14,7 @@ import {
     handleUpdateMessage,
     handleDeleteMessage,
 } from '../../api/community.api';
+import { getUserEmail } from '../../utils/userSession';
 import './community.scss';
 
 interface Message {
@@ -58,9 +58,6 @@ interface Category {
 }
 
 const Community: React.FC = observer(() => {
-    // Get Deriv user info (includes email from auth response)
-    const { user: derivUser } = useDerivAuth();
-    
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategory, setActiveCategory] = useState<Category | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -86,14 +83,6 @@ const Community: React.FC = observer(() => {
 
     // Common emojis
     const emojis = ['😀', '😊', '👍', '🎉', '💰', '📈', '📉', '🚀', '💪', '🔥', '❤️', '👏', '🤔', '😎', '🙏'];
-    
-    // Auto-populate email from Deriv auth when showing username prompt
-    useEffect(() => {
-        if (showUsernamePrompt && derivUser?.email && !emailInput) {
-            setEmailInput(derivUser.email);
-            console.log('Auto-populated email from Deriv auth:', derivUser.email);
-        }
-    }, [showUsernamePrompt, derivUser?.email]);
 
     // Get loginId helper
     const getLoginId = (): string => {
@@ -140,6 +129,13 @@ const Community: React.FC = observer(() => {
                     localStorage.setItem(`community_username_${loginId}`, statsResult.data.fullName);
                 } else {
                     // User doesn't exist in database, prompt for username
+                    // Auto-populate email from stored user session
+                    const storedEmail = getUserEmail();
+                    if (storedEmail) {
+                        setEmailInput(storedEmail);
+                        console.log('✅ Auto-populated email from session:', storedEmail);
+                    }
+                    
                     setShowUsernamePrompt(true);
                     setLoading(false);
                     return;
@@ -156,6 +152,13 @@ const Community: React.FC = observer(() => {
             } catch (error) {
                 console.error('Error initializing community:', error);
                 // If error checking database, prompt for username
+                // Auto-populate email even on error
+                const storedEmail = getUserEmail();
+                if (storedEmail) {
+                    setEmailInput(storedEmail);
+                    console.log('✅ Auto-populated email from session (fallback):', storedEmail);
+                }
+                
                 setShowUsernamePrompt(true);
             } finally {
                 setLoading(false);
@@ -629,20 +632,22 @@ const Community: React.FC = observer(() => {
                         />
                         <input
                             type="email"
-                            placeholder={derivUser?.email ? derivUser.email : "Enter your email (optional)"}
+                            placeholder={emailInput ? emailInput : "Enter your email (optional)"}
                             value={emailInput}
                             onChange={(e) => setEmailInput(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && usernameInput.trim() && handleUsernameSubmit()}
                             style={{ marginTop: '10px' }}
-                            title={derivUser?.email ? "Email from your Deriv account" : "Enter your email"}
                         />
-                        <p style={{ fontSize: '12px', color: '#999', marginTop: '8px', marginBottom: '0' }}>
-                            {derivUser?.email ? (
-                                <Localize i18n_default_text="✓ Email auto-filled from your Deriv account. We'll send you a welcome email!" />
-                            ) : (
+                        {emailInput && (
+                            <p style={{ fontSize: '12px', color: '#4CAF50', marginTop: '8px', marginBottom: '0' }}>
+                                <Localize i18n_default_text="✓ Email auto-filled from your account" />
+                            </p>
+                        )}
+                        {!emailInput && (
+                            <p style={{ fontSize: '12px', color: '#999', marginTop: '8px', marginBottom: '0' }}>
                                 <Localize i18n_default_text="Email is optional. We'll send you a welcome email and important updates." />
-                            )}
-                        </p>
+                            </p>
+                        )}
                         <button onClick={handleUsernameSubmit} disabled={!usernameInput.trim()}>
                             <Localize i18n_default_text="Continue" />
                         </button>
