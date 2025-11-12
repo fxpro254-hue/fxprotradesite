@@ -13,8 +13,8 @@ import Dialog from '@/components/shared_ui/dialog';
 import MobileWrapper from '@/components/shared_ui/mobile-wrapper';
 import Tabs from '@/components/shared_ui/tabs/tabs';
 import SignalsModal from '@/components/signals/signals-modal';
-import DisplayToggle from '@/components/trading-hub/display-toggle';
 import InstancesAnalysis from '@/components/trading-hub/instances-analysis';
+import AdvancedDisplay from '@/components/trading-hub/advanced-display';
 import TradingViewModal from '@/components/trading-view-chart/trading-view-modal';
 import { DBOT_TABS, TAB_IDS } from '@/constants/bot-contents';
 import { api_base } from '@/external/bot-skeleton';
@@ -263,7 +263,7 @@ const AppWrapper = observer(() => {
     }
 
     const [bots, setBots] = useState<Bot[]>([]);
-    const [analysisToolUrl, setAnalysisToolUrl] = useState('ai');
+    const [analysisToolUrl, setAnalysisToolUrl] = useState('advanced'); // Changed default to 'advanced'
     const [botsCategory, setBotsCategory] = useState('automated');
     const [searchQuery, setSearchQuery] = useState('');
     const [showScrollTop, setShowScrollTop] = useState(false);
@@ -665,6 +665,16 @@ const AppWrapper = observer(() => {
             );
         }
         
+        if (analysisToolUrl === 'advanced') {
+            return (
+                <div style={{ height: '600px', overflow: 'auto', paddingBottom: '36px' }}>
+                    <Suspense fallback={<ChunkLoader message={localize('Loading Advanced Display...')} />}>
+                        <AdvancedDisplay />
+                    </Suspense>
+                </div>
+            );
+        }
+        
         return (
             <iframe
                 src={analysisToolUrl}
@@ -679,9 +689,7 @@ const AppWrapper = observer(() => {
     const showRunPanel = [
         DBOT_TABS.BOT_BUILDER,
         DBOT_TABS.CHART,
-        DBOT_TABS.AUTO,
         DBOT_TABS.ANALYSIS_TOOL,
-        DBOT_TABS.PORTFOLIO,
         DBOT_TABS.FREE_BOTS,
     ].includes(active_tab) && active_tab !== DBOT_TABS.COMMUNITY;
 
@@ -772,24 +780,6 @@ const AppWrapper = observer(() => {
                         <div
                             label={
                                 <>
-                                    <AutoTraderIcon />
-                                    <Localize i18n_default_text='Auto' />
-                                </>
-                            }
-                            id='id-auto'
-                        >
-                            <div
-                                className={classNames('dashboard__chart-wrapper', {
-                                    'dashboard__chart-wrapper--expanded': is_drawer_open && isDesktop,
-                                    'dashboard__chart-wrapper--modal': is_chart_modal_visible && isDesktop,
-                                })}
-                            >
-                                <DisplayToggle />
-                            </div>
-                        </div>
-                        <div
-                            label={
-                                <>
                                     <AnalysisToolIcon />
                                     <Localize i18n_default_text='Analysis Tool' />
                                 </>
@@ -802,77 +792,46 @@ const AppWrapper = observer(() => {
                                     'dashboard__chart-wrapper--modal': is_chart_modal_visible && isDesktop,
                                 })}
                             >
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        gap: '3px',
-                                        padding: '8px',
-                                        borderBottom: '1px solid var(--border-normal)',
-                                    }}
-                                >
+                                <div className='analysis-tool-toggle'>
+                                    <button
+                                        onClick={() => toggleAnalysisTool('advanced')}
+                                        className={`analysis-tool-toggle__button ${
+                                            analysisToolUrl === 'advanced' ? 'active' : ''
+                                        }`}
+                                    >
+                                        Advanced
+                                    </button>
+                                    <button
+                                        onClick={() => toggleAnalysisTool('instances')}
+                                        className={`analysis-tool-toggle__button ${
+                                            analysisToolUrl === 'instances' ? 'active' : ''
+                                        }`}
+                                    >
+                                        Instances
+                                    </button>
                                     <button
                                         onClick={() => toggleAnalysisTool('ai')}
-                                        style={{
-                                            backgroundColor:
-                                                analysisToolUrl === 'ai'
-                                                    ? 'var(--button-primary-default)'
-                                                    : 'transparent',
-                                            color: analysisToolUrl === 'ai' ? 'white' : 'var(--text-general)',
-                                            padding: '8px 16px',
-                                            border: '1px solid var(--border-normal)',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                        }}
+                                        className={`analysis-tool-toggle__button ${
+                                            analysisToolUrl === 'ai' ? 'active' : ''
+                                        }`}
                                     >
                                         A Tool
                                     </button>
                                     <button
-                                        onClick={() => toggleAnalysisTool('ldpanalyzer')}
-                                        style={{
-                                            backgroundColor:
-                                                analysisToolUrl === 'ldpanalyzer'
-                                                    ? 'var(--button-primary-default)'
-                                                    : 'transparent',
-                                            color: analysisToolUrl === 'ldpanalyzer' ? 'white' : 'var(--text-general)',
-                                            padding: '8px 16px',
-                                            border: '1px solid var(--border-normal)',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                        }}
-                                    >
-                                        LDP Tool
-                                    </button>
-                                    <button
                                         onClick={() => toggleAnalysisTool('arbitrage')}
-                                        style={{
-                                            backgroundColor:
-                                                analysisToolUrl === 'arbitrage'
-                                                    ? 'var(--button-primary-default)'
-                                                    : 'transparent',
-                                            color: analysisToolUrl === 'arbitrage' ? 'white' : 'var(--text-general)',
-                                            padding: '8px 16px',
-                                            border: '1px solid var(--border-normal)',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                        }}
+                                        className={`analysis-tool-toggle__button ${
+                                            analysisToolUrl === 'arbitrage' ? 'active' : ''
+                                        }`}
                                     >
                                         Arbitrage
                                     </button>
                                     <button
-                                        onClick={() => toggleAnalysisTool('instances')}
-                                        style={{
-                                            backgroundColor:
-                                                analysisToolUrl === 'instances'
-                                                    ? 'var(--button-primary-default)'
-                                                    : 'transparent',
-                                            color: analysisToolUrl === 'instances' ? 'white' : 'var(--text-general)',
-                                            padding: '8px 16px',
-                                            border: '1px solid var(--border-normal)',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                        }}
+                                        onClick={() => toggleAnalysisTool('ldpanalyzer')}
+                                        className={`analysis-tool-toggle__button ${
+                                            analysisToolUrl === 'ldpanalyzer' ? 'active' : ''
+                                        }`}
                                     >
-                                        Instances
+                                        LDP Tool
                                     </button>
                                 </div>
                                 {renderAnalysisToolContent()}
@@ -1255,7 +1214,7 @@ const AppWrapper = observer(() => {
             </div>
             <DesktopWrapper>
                 <div className='main__run-strategy-wrapper'>
-                    {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.COMMUNITY && <RunStrategy />}
+                    {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.PORTFOLIO && <RunStrategy />}
                     {showRunPanel && <RunPanel />}
                 </div>
                 <ChartModal />
@@ -1266,7 +1225,7 @@ const AppWrapper = observer(() => {
                 <StandaloneChartModal />
             </DesktopWrapper>
             <MobileWrapper>
-                {active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.DTRADER && <RunPanel />}
+                {active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && <RunPanel />}
             </MobileWrapper>
             <Dialog
                 cancel_button_text={cancel_button_text || localize('Cancel')}

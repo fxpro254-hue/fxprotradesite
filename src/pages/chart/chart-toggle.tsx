@@ -4,10 +4,11 @@ import { useStore } from '@/hooks/useStore';
 import { observer as globalObserver } from '../../external/bot-skeleton/utils/observer';
 import SmartTradingDisplay from './smart-trading-display';
 import SpeedBotDisplay from './speed-bot-display';
+import TradingHubDisplay from '@/components/trading-hub/trading-hub-display';
 import './chart-toggle.scss';
 
 const ChartToggle = observer(({ children }: { children: React.ReactNode }) => {
-    const [activeDisplay, setActiveDisplay] = useState('smart-trading'); // Changed default to 'smart-trading'
+    const [activeDisplay, setActiveDisplay] = useState('trading-hub'); // Trading Hub as default
     const { run_panel } = useStore();
 
     // Use run_panel store to check if drawer is open
@@ -25,7 +26,13 @@ const ChartToggle = observer(({ children }: { children: React.ReactNode }) => {
     return (
         <div className={`chart-display-container ${is_drawer_open ? 'run-panel-active' : ''}`}>
             <div className='chart-display-toggle'>
-                {/* Reordered buttons - Smart Trading first */}
+                {/* Multiple display options - Trading Hub first (default) */}
+                <button
+                    className={`chart-display-toggle__button ${activeDisplay === 'trading-hub' ? 'active' : ''}`}
+                    onClick={() => handleDisplayChange('trading-hub')}
+                >
+                    Trading Hub
+                </button>
                 <button
                     className={`chart-display-toggle__button ${activeDisplay === 'smart-trading' ? 'active' : ''}`}
                     onClick={() => handleDisplayChange('smart-trading')}
@@ -50,6 +57,8 @@ const ChartToggle = observer(({ children }: { children: React.ReactNode }) => {
                     children
                 ) : activeDisplay === 'speed-bot' ? (
                     <SpeedBotDisplay />
+                ) : activeDisplay === 'trading-hub' ? (
+                    <TradingHubDisplay />
                 ) : (
                     <SmartTradingDisplay />
                 )}

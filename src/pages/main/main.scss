@@ -781,3 +781,119 @@
     align-items: center;
     justify-content: center;
 }
+
+// Analysis Tool toggle - matches chart-toggle styling
+.analysis-tool-toggle {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: var(--general-section-1, rgba(0, 0, 0, 0.1));
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 5px;
+    
+    // Custom scrollbar styling
+    &::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: var(--general-section-1);
+        border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--border-normal);
+        border-radius: 3px;
+        
+        &:hover {
+            background-color: var(--brand-red-coral);
+        }
+    }
+    
+    // For Firefox
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-normal) var(--general-section-1);
+
+    &__button {
+        padding: 10px 20px;
+        margin: 0;
+        min-width: 120px;
+        flex-shrink: 0;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 0.25px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: var(--general-section-1);
+        color: var(--text-general);
+        position: relative;
+        overflow: hidden;
+        white-space: nowrap;
+
+        &:hover {
+            background-color: var(--general-section-2);
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: translateY(1px);
+        }
+
+        &.active {
+            background-color: var(--brand-red-coral);
+            color: white;
+            box-shadow: 0 4px 12px rgba(var(--brand-red-coral-rgb), 0.3);
+
+            &:after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 3px;
+                background-color: white;
+                border-radius: 3px 3px 0 0;
+            }
+        }
+
+        &:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(var(--brand-red-coral-rgb), 0.5);
+        }
+    }
+}
+
+// Responsive adjustments
+@media screen and (max-width: 768px) {
+    .analysis-tool-toggle {
+        padding: 6px;
+        gap: 3px;
+        
+        &__button {
+            min-width: 90px;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+    }
+}
+
+// Extra small screens
+@media screen and (max-width: 480px) {
+    .analysis-tool-toggle {
+        padding: 4px;
+        gap: 2px;
+        
+        &__button {
+            min-width: 80px;
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+    }
+}

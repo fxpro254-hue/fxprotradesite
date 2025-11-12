@@ -90,7 +90,7 @@ interface MartingaleCalculation {
 
 const PortfolioDisplay: React.FC = observer(() => {
     const { client } = useStore();
-    const [activeSection, setActiveSection] = useState<'portfolio' | 'risk-management' | 'strategies'>('portfolio');
+    const [activeSection, setActiveSection] = useState<'portfolio' | 'risk-management' | 'strategies' | 'markup'>('portfolio');
     const [statements, setStatements] = useState<StatementTransaction[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -102,6 +102,26 @@ const PortfolioDisplay: React.FC = observer(() => {
         action_type: '',
         time_period: '7d'
     });
+
+    // Markup Statistics State
+    const [markupData, setMarkupData] = useState<any[]>([]);
+    const [markupLoading, setMarkupLoading] = useState(false);
+    const [markupDataLoading, setMarkupDataLoading] = useState(false);
+    const [markupError, setMarkupError] = useState<string | null>(null);
+    const [markupPeriod, setMarkupPeriod] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
+    const [markupDateRange, setMarkupDateRange] = useState({
+        from: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0],
+        to: new Date().toISOString().split('T')[0]
+    });
+    const [selectedAppId, setSelectedAppId] = useState<string>('all');
+    const [availableApps, setAvailableApps] = useState<Array<{app_id: number, name: string}>>([]);
+    const [isAppDropdownOpen, setIsAppDropdownOpen] = useState(false);
+    
+    // Period-specific markup data
+    const [currentMonthData, setCurrentMonthData] = useState<any>(null);
+    const [previousMonthData, setPreviousMonthData] = useState<any>(null);
+    const [todayData, setTodayData] = useState<any>(null);
+    const [last6MonthsData, setLast6MonthsData] = useState<any[]>([]);
 
     // Risk Management Calculator State
     const [riskCalc, setRiskCalc] = useState<RiskCalculationState>({
@@ -258,6 +278,175 @@ const PortfolioDisplay: React.FC = observer(() => {
         }
     };
 
+    // Fetch Markup Statistics
+    const fetchMarkupStatistics = async () => {
+        if (!api_base?.api) {
+            setMarkupError(localize('API connection not available'));
+            return;
+        }
+
+        setMarkupLoading(true);
+        setMarkupError(null);
+
+        try {
+            // Fetch app list to get app IDs and names
+            const appListRequest = {
+                app_list: 1
+            };
+
+            const appListResponse: any = await api_base.api.send(appListRequest);
+
+            if (appListResponse.error) {
+                throw new Error(appListResponse.error.message || 'Failed to fetch app list');
+            }
+
+            if (appListResponse.app_list && Array.isArray(appListResponse.app_list)) {
+                // Map to app objects with id and name
+                const apps = appListResponse.app_list.map((app: any) => ({
+                    app_id: app.app_id,
+                    name: app.name
+                }));
+                setAvailableApps(apps);
+            } else {
+                setAvailableApps([]);
+            }
+        } catch (err: any) {
+            setMarkupError(err.message || localize('Failed to fetch app list'));
+            console.error('App list fetch error:', err);
+        } finally {
+            setMarkupLoading(false);
+        }
+    };
+
+    // Helper function to fetch markup for a specific date range and app
+    const fetchMarkupForPeriod = async (dateFrom: string, dateTo: string, appId?: string) => {
+        if (!api_base?.api) return null;
+
+        try {
+            const request = {
+                app_markup_statistics: 1,
+                date_from: `${dateFrom} 00:00:00`,
+                date_to: `${dateTo} 23:59:59`
+            };
+
+            const response: any = await api_base.api.send(request);
+
+            if (response.error || !response.app_markup_statistics?.breakdown) {
+                return null;
+            }
+
+            const breakdown = response.app_markup_statistics.breakdown;
+            
+            // If app ID specified, find that specific app's data
+            if (appId) {
+                const appData = breakdown.find((item: any) => item.app_id === parseInt(appId));
+                return appData || { app_markup_value: 0, transactions_count: 0, app_id: parseInt(appId) };
+            }
+
+            return breakdown;
+        } catch (err) {
+            console.error('Error fetching markup for period:', err);
+            return null;
+        }
+    };
+
+    // Helper to get UTC/GMT date string in YYYY-MM-DD format (3 hours behind EAT)
+    const getUTCDate = (date: Date) => {
+        return date.toISOString().split('T')[0];
+    };
+
+    // Fetch all period data for selected app
+    const fetchAllPeriodData = async (appId: string) => {
+        if (appId === 'all' || !api_base?.api) return;
+
+        setMarkupDataLoading(true);
+        console.log('Fetching data for app ID:', appId);
+
+        // Get current time in UTC (3 hours behind your EAT timezone)
+        const now = new Date();
+        const utcNow = new Date(now.toISOString());
+        
+        // Current month (from 1st to today) in UTC
+        const currentMonthStart = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), 1));
+        const currentMonthEnd = utcNow;
+        
+        // Previous month (full month) in UTC
+        const prevMonthStart = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth() - 1, 1));
+        const prevMonthEnd = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), 0));
+        
+        // Today in UTC
+        const todayStart = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), utcNow.getUTCDate()));
+        const todayEnd = utcNow;
+
+        console.log('Date ranges:', {
+            currentMonth: `${getUTCDate(currentMonthStart)} to ${getUTCDate(currentMonthEnd)}`,
+            previousMonth: `${getUTCDate(prevMonthStart)} to ${getUTCDate(prevMonthEnd)}`,
+            today: `${getUTCDate(todayStart)} to ${getUTCDate(todayEnd)}`
+        });
+
+        // Fetch data for each period
+        const [currentMonth, previousMonth, today] = await Promise.all([
+            fetchMarkupForPeriod(
+                getUTCDate(currentMonthStart),
+                getUTCDate(currentMonthEnd),
+                appId
+            ),
+            fetchMarkupForPeriod(
+                getUTCDate(prevMonthStart),
+                getUTCDate(prevMonthEnd),
+                appId
+            ),
+            fetchMarkupForPeriod(
+                getUTCDate(todayStart),
+                getUTCDate(todayEnd),
+                appId
+            )
+        ]);
+
+        console.log('Fetched period data:', { currentMonth, previousMonth, today });
+
+        setCurrentMonthData(currentMonth);
+        setPreviousMonthData(previousMonth);
+        setTodayData(today);
+
+        // Fetch last 6 months data in UTC
+        const monthsData = [];
+        for (let i = 5; i >= 0; i--) {
+            const monthStart = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth() - i, 1));
+            const monthEnd = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth() - i + 1, 0));
+            
+            const monthData = await fetchMarkupForPeriod(
+                getUTCDate(monthStart),
+                getUTCDate(monthEnd),
+                appId
+            );
+
+            monthsData.push({
+                month: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                commission: monthData?.app_markup_value || 0,
+                trades: monthData?.transactions_count || 0
+            });
+        }
+
+        console.log('Last 6 months data:', monthsData);
+        setLast6MonthsData(monthsData);
+        setMarkupDataLoading(false);
+    };
+
+    // Fetch markup data when section is active
+    useEffect(() => {
+        if (activeSection === 'markup') {
+            fetchMarkupStatistics();
+        }
+    }, [activeSection]);
+
+    // Fetch period data when app is selected
+    useEffect(() => {
+        if (activeSection === 'markup' && selectedAppId !== 'all') {
+            fetchAllPeriodData(selectedAppId);
+        }
+    }, [selectedAppId, activeSection]);
+
     const loadMoreTransactions = () => {
         if (!loadingMore && hasMoreData) {
             fetchStatements(true);
@@ -288,6 +477,21 @@ const PortfolioDisplay: React.FC = observer(() => {
             return () => scrollContainer.removeEventListener('scroll', handleScroll);
         }
     }, [isMobile, handleScroll]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (isAppDropdownOpen && !target.closest('.custom-dropdown')) {
+                setIsAppDropdownOpen(false);
+            }
+        };
+
+        if (isAppDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [isAppDropdownOpen]);
 
     // Reset loading ref when loadingMore changes
     useEffect(() => {
@@ -1321,30 +1525,86 @@ const PortfolioDisplay: React.FC = observer(() => {
         return statements.filter(t => t.action_type === 'buy').length;
     };
 
+    // Filter markup data based on selected app ID
+    const getFilteredMarkupData = () => {
+        if (selectedAppId === 'all') {
+            return markupData;
+        }
+        return markupData.filter(item => item.app_id === parseInt(selectedAppId));
+    };
+
+    // Get selected app data - check if we have any period data loaded
+    const getSelectedAppData = () => {
+        if (selectedAppId === 'all') return null;
+        // Return true if we have any data for the selected app
+        return currentMonthData || previousMonthData || todayData || last6MonthsData.length > 0;
+    };
+
+    // Calculate current month's commission and trades - using real data
+    const getCurrentMonthData = () => {
+        if (!currentMonthData) return { commission: 0, trades: 0 };
+        
+        return {
+            commission: currentMonthData.app_markup_value || 0,
+            trades: currentMonthData.transactions_count || 0
+        };
+    };
+
+    // Calculate previous month's commission - using real data
+    const getPreviousMonthData = () => {
+        if (!previousMonthData) return { commission: 0, trades: 0 };
+        
+        return {
+            commission: previousMonthData.app_markup_value || 0,
+            trades: previousMonthData.transactions_count || 0
+        };
+    };
+
+    // Calculate today's commission - using real data
+    const getTodayData = () => {
+        if (!todayData) return { commission: 0, trades: 0 };
+        
+        return {
+            commission: todayData.app_markup_value || 0,
+            trades: todayData.transactions_count || 0
+        };
+    };
+
+    // Get last 6 months data for chart - using real data
+    const getLast6MonthsData = () => {
+        return last6MonthsData;
+    };
+
     return (
         <div className="portfolio-display" ref={scrollContainerRef}>
             <div className="portfolio-header">
                 <h1 className="portfolio-title">{localize('Portfolio & Account Statement')}</h1>
                 
-                {/* Section Toggle */}
-                <div className="section-toggle">
+                {/* Section Toggle - matching chart-toggle style */}
+                <div className="portfolio-toggle">
                     <button 
-                        className={`toggle-btn ${activeSection === 'portfolio' ? 'active' : ''}`}
+                        className={`portfolio-toggle__button ${activeSection === 'portfolio' ? 'active' : ''}`}
                         onClick={() => setActiveSection('portfolio')}
                     >
                         {localize('Portfolio')}
                     </button>
                     <button 
-                        className={`toggle-btn ${activeSection === 'risk-management' ? 'active' : ''}`}
+                        className={`portfolio-toggle__button ${activeSection === 'risk-management' ? 'active' : ''}`}
                         onClick={() => setActiveSection('risk-management')}
                     >
                         {localize('Risk Management')}
                     </button>
                     <button 
-                        className={`toggle-btn ${activeSection === 'strategies' ? 'active' : ''}`}
+                        className={`portfolio-toggle__button ${activeSection === 'strategies' ? 'active' : ''}`}
                         onClick={() => setActiveSection('strategies')}
                     >
                         {localize('Strategies')}
+                    </button>
+                    <button 
+                        className={`portfolio-toggle__button ${activeSection === 'markup' ? 'active' : ''}`}
+                        onClick={() => setActiveSection('markup')}
+                    >
+                        {localize('Markup')}
                     </button>
                 </div>
 
@@ -2470,6 +2730,253 @@ const PortfolioDisplay: React.FC = observer(() => {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Markup Statistics Section */}
+            {activeSection === 'markup' && (
+                <div className="markup-section">
+                    <div className="markup-header">
+                        <h2 className="section-title">{localize('App Markup Statistics')}</h2>
+                        <p className="section-description">
+                            {localize('View detailed commission and trading data for each app')}
+                        </p>
+                    </div>
+
+                    {/* Custom App Selector */}
+                    <div className="app-selector">
+                        <label className="selector-label">
+                            <span className="label-icon">📱</span>
+                            <span className="label-text">{localize('Select App')}</span>
+                        </label>
+                        <div className={`custom-dropdown ${isAppDropdownOpen ? 'open' : ''}`}>
+                            <div 
+                                className={`dropdown-trigger ${markupLoading || availableApps.length === 0 ? 'disabled' : ''}`}
+                                onClick={() => {
+                                    if (!markupLoading && availableApps.length > 0) {
+                                        setIsAppDropdownOpen(!isAppDropdownOpen);
+                                    }
+                                }}
+                            >
+                                <span className="selected-value">
+                                    {selectedAppId === 'all' 
+                                        ? (availableApps.length === 0 
+                                            ? localize('No apps available') 
+                                            : localize('Choose an app...'))
+                                        : availableApps.find(app => app.app_id.toString() === selectedAppId)?.name || `App ${selectedAppId}`
+                                    }
+                                </span>
+                                <div className="dropdown-arrow">
+                                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                        <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            {isAppDropdownOpen && availableApps.length > 0 && (
+                                <div className="dropdown-list">
+                                    {availableApps.map(app => (
+                                        <div
+                                            key={app.app_id}
+                                            className={`dropdown-item ${selectedAppId === app.app_id.toString() ? 'selected' : ''}`}
+                                            onClick={() => {
+                                                setSelectedAppId(app.app_id.toString());
+                                                setIsAppDropdownOpen(false);
+                                            }}
+                                        >
+                                            <span className="item-icon">📱</span>
+                                            <div className="item-content">
+                                                <span className="item-name">{app.name}</span>
+                                                <span className="item-id">ID: {app.app_id}</span>
+                                            </div>
+                                            {selectedAppId === app.app_id.toString() && (
+                                                <span className="check-icon">✓</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Error Display */}
+                    {markupError && (
+                        <div className="error-message">
+                            <span className="error-icon">⚠️</span>
+                            {markupError}
+                        </div>
+                    )}
+
+                    {/* Loading State - Initial app list fetch */}
+                    {markupLoading && !markupDataLoading && (
+                        <div className="loading-state">
+                            <div className="spinner"></div>
+                            <p>{localize('Fetching app list...')}</p>
+                        </div>
+                    )}
+
+                    {/* Loading State - Data fetch for selected app */}
+                    {markupDataLoading && (
+                        <div className="loading-state">
+                            <div className="spinner"></div>
+                            <p>{localize('Loading commission data...')}</p>
+                        </div>
+                    )}
+
+                    {/* Empty State - No App Selected */}
+                    {!markupLoading && !markupDataLoading && !markupError && selectedAppId === 'all' && (
+                        <div className="empty-state">
+                            <div className="empty-icon">📱</div>
+                            <h3>{localize('Select an App')}</h3>
+                            <p>{localize('Choose an app from the dropdown above to view its commission statistics.')}</p>
+                        </div>
+                    )}
+
+                    {/* App Data Display */}
+                    {!markupLoading && !markupDataLoading && !markupError && selectedAppId !== 'all' && (
+                        <>
+                            {/* Commission Cards Grid */}
+                            <div className="commission-grid">
+                                {/* Current Month Card */}
+                                <div className="commission-card current-month">
+                                    <div className="card-header">
+                                        <div className="card-icon">📅</div>
+                                        <div className="card-title">{localize('Current Month')}</div>
+                                    </div>
+                                    <div className="card-content">
+                                        <div className="metric">
+                                            <div className="metric-label">{localize('Commission')}</div>
+                                            <div className="metric-value commission">
+                                                {formatCurrency(getCurrentMonthData().commission, client?.currency || 'USD')}
+                                            </div>
+                                        </div>
+                                        <div className="metric">
+                                            <div className="metric-label">{localize('Trades')}</div>
+                                            <div className="metric-value trades">
+                                                {getCurrentMonthData().trades.toLocaleString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Previous Month Card */}
+                                <div className="commission-card previous-month">
+                                    <div className="card-header">
+                                        <div className="card-icon">📆</div>
+                                        <div className="card-title">{localize('Previous Month')}</div>
+                                    </div>
+                                    <div className="card-content">
+                                        <div className="metric">
+                                            <div className="metric-label">{localize('Commission')}</div>
+                                            <div className="metric-value commission">
+                                                {formatCurrency(getPreviousMonthData().commission, client?.currency || 'USD')}
+                                            </div>
+                                        </div>
+                                        <div className="metric-comparison">
+                                            {(() => {
+                                                const current = getCurrentMonthData().commission;
+                                                const previous = getPreviousMonthData().commission;
+                                                const change = previous > 0 ? ((current - previous) / previous * 100).toFixed(1) : 0;
+                                                const isPositive = Number(change) >= 0;
+                                                return (
+                                                    <span className={`change ${isPositive ? 'positive' : 'negative'}`}>
+                                                        {isPositive ? '↗' : '↘'} {Math.abs(Number(change))}% vs current
+                                                    </span>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Today's Commission Card */}
+                                <div className="commission-card today">
+                                    <div className="card-header">
+                                        <div className="card-icon">🌟</div>
+                                        <div className="card-title">{localize('Today')}</div>
+                                    </div>
+                                    <div className="card-content">
+                                        <div className="metric">
+                                            <div className="metric-label">{localize('Commission')}</div>
+                                            <div className="metric-value commission">
+                                                {formatCurrency(getTodayData().commission, client?.currency || 'USD')}
+                                            </div>
+                                        </div>
+                                        <div className="metric">
+                                            <div className="metric-label">{localize('Trades')}</div>
+                                            <div className="metric-value trades">
+                                                {getTodayData().trades.toLocaleString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 6 Months Chart Card */}
+                            <div className="chart-card">
+                                <h3 className="chart-title">{localize('Last 6 Months')}</h3>
+                                <div className="bar-chart-simple">
+                                    {getLast6MonthsData().map((monthData, index) => {
+                                        const maxCommission = Math.max(...getLast6MonthsData().map(d => d.commission));
+                                        const heightPercent = maxCommission > 0 ? (monthData.commission / maxCommission * 100) : 0;
+                                        
+                                        return (
+                                            <div key={index} className="chart-bar">
+                                                <div className="bar-wrapper">
+                                                    <div 
+                                                        className="bar" 
+                                                        style={{ height: `${heightPercent}%` }}
+                                                        title={formatCurrency(monthData.commission, client?.currency || 'USD')}
+                                                    >
+                                                        <span className="bar-tooltip">
+                                                            {formatCurrency(monthData.commission, client?.currency || 'USD')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="bar-label">{monthData.month}</div>
+                                                <div className="bar-value">{formatCurrency(monthData.commission, client?.currency || 'USD')}</div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* App Info Summary */}
+                            <div className="app-info-card">
+                                <div className="info-header">
+                                    <span className="app-badge-large">App {selectedAppId}</span>
+                                    <button 
+                                        className="refresh-data-btn"
+                                        onClick={fetchMarkupStatistics}
+                                    >
+                                        🔄 {localize('Refresh Data')}
+                                    </button>
+                                </div>
+                                <div className="info-stats">
+                                    <div className="stat-item">
+                                        <span className="stat-label">{localize('Total Commission')}:</span>
+                                        <span className="stat-value">
+                                            {formatCurrency(getSelectedAppData()?.app_markup_value || 0, client?.currency || 'USD')}
+                                        </span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">{localize('Total Transactions')}:</span>
+                                        <span className="stat-value">
+                                            {(getSelectedAppData()?.transactions_count || 0).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">{localize('Average per Trade')}:</span>
+                                        <span className="stat-value">
+                                            {formatCurrency(
+                                                (getSelectedAppData()?.app_markup_value || 0) / 
+                                                (getSelectedAppData()?.transactions_count || 1),
+                                                client?.currency || 'USD'
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>
