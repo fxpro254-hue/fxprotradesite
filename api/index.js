@@ -274,6 +274,68 @@ app.get('/api/users/online/count', async (req, res) => {
     }
 });
 
+// Update message
+app.patch('/api/messages/:messageId', async (req, res) => {
+    try {
+        const { messageId } = req.params;
+        const { content } = req.body;
+        
+        if (!content || !content.trim()) {
+            return res.status(400).json({ success: false, error: 'Content is required' });
+        }
+        
+        const updatedMessage = await prisma.message.update({
+            where: { id: messageId },
+            data: { 
+                content: content.trim(),
+                updatedAt: new Date()
+            },
+            include: {
+                user: true,
+                replyTo: {
+                    include: {
+                        user: true
+                    }
+                },
+                attachments: true,
+                reactions: true
+            }
+        });
+        
+        res.json({ success: true, data: updatedMessage });
+    } catch (error) {
+        console.error('Error updating message:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Delete message
+app.delete('/api/messages/:messageId', async (req, res) => {
+    try {
+        const { messageId } = req.params;
+        
+        // Delete associated reactions first
+        await prisma.reaction.deleteMany({
+            where: { messageId }
+        });
+        
+        // Delete associated attachments
+        await prisma.attachment.deleteMany({
+            where: { messageId }
+        });
+        
+        // Delete the message
+        await prisma.message.delete({
+            where: { id: messageId }
+        });
+        
+        res.json({ success: true, message: 'Message deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting message:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Remove the root route we added earlier since we already have it
 // Export for Vercel serverless
 module.exports = app;

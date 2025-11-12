@@ -830,6 +830,129 @@
         font-size: 0.8rem;
     }
 
+    &__message-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: 0.5rem;
+    }
+
+    &__message-action-btn {
+        background: transparent;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        padding: 0;
+        border-radius: 8px;
+        color: var(--text-less-prominent);
+        transition: all 0.2s;
+
+        svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-prominent);
+        }
+
+        .community__message--own & {
+            color: rgba(255, 255, 255, 0.7);
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+        }
+    }
+
+    &__message-edit-btn:hover {
+        color: var(--status-info);
+        
+        .community__message--own & {
+            color: var(--status-info);
+        }
+    }
+
+    &__message-delete-btn:hover {
+        color: var(--status-danger);
+        
+        .community__message--own & {
+            color: var(--status-danger);
+        }
+    }
+
+    &__message-edit {
+        margin-top: 0.5rem;
+    }
+
+    &__message-edit-input {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid var(--border-normal);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-family: inherit;
+        color: var(--text-prominent);
+        background: var(--general-section-1);
+        transition: border-color 0.2s;
+
+        &:focus {
+            outline: none;
+            border-color: var(--brand-red-coral);
+        }
+
+        .community__message--own & {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: white;
+
+            &:focus {
+                border-color: rgba(255, 255, 255, 0.4);
+            }
+        }
+    }
+
+    &__message-edit-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    &__message-edit-save,
+    &__message-edit-cancel {
+        padding: 0.4rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    &__message-edit-save {
+        background: var(--brand-red-coral);
+        color: white;
+
+        &:hover {
+            background: var(--brand-red-coral-hover, #d94848);
+        }
+    }
+
+    &__message-edit-cancel {
+        background: var(--general-section-2);
+        color: var(--text-prominent);
+
+        &:hover {
+            background: var(--general-section-3, var(--general-section-2));
+        }
+    }
+
     &__message-attachments {
         margin-top: 0.6rem;
 

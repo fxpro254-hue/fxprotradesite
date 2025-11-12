@@ -179,3 +179,34 @@ export const handleGetOnlineUsersCount = async (): Promise<ApiResponse<{ count: 
         return { success: false, error: String(error) };
     }
 };
+
+export const handleUpdateMessage = async (
+    messageId: string,
+    content: string
+): Promise<ApiResponse<any>> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/messages/${messageId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content }),
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating message:', error);
+        return { success: false, error: String(error) };
+    }
+};
+
+export const handleDeleteMessage = async (messageId: string): Promise<ApiResponse<any>> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/messages/${messageId}`, {
+            method: 'DELETE',
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error deleting message:', error);
+        return { success: false, error: String(error) };
+    }
+};

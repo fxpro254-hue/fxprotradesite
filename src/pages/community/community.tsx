@@ -11,6 +11,8 @@ import {
     handleGetUserStats,
     handleToggleReaction,
     handleGetOnlineUsersCount,
+    handleUpdateMessage,
+    handleDeleteMessage,
 } from '../../api/community.api';
 import './community.scss';
 
@@ -70,6 +72,8 @@ const Community: React.FC = observer(() => {
     const [usernameInput, setUsernameInput] = useState('');
     const [onlineUsersCount, setOnlineUsersCount] = useState(0);
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+    const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+    const [editInput, setEditInput] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const isInitialLoadRef = useRef(true);
@@ -394,6 +398,57 @@ const Community: React.FC = observer(() => {
         }
     };
 
+    const handleStartEdit = (message: Message) => {
+        setEditingMessage(message);
+        setEditInput(message.content);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingMessage(null);
+        setEditInput('');
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingMessage || !editInput.trim()) return;
+
+        try {
+            const result = await handleUpdateMessage(editingMessage.id, editInput.trim());
+            
+            if (result.success) {
+                // Update local state
+                setMessages(prevMessages =>
+                    prevMessages.map(msg =>
+                        msg.id === editingMessage.id
+                            ? { ...msg, content: editInput.trim() }
+                            : msg
+                    )
+                );
+                handleCancelEdit();
+            } else {
+                console.error('Failed to update message:', result.error);
+            }
+        } catch (error) {
+            console.error('Error updating message:', error);
+        }
+    };
+
+    const handleDeleteMessageClick = async (messageId: string) => {
+        if (!confirm('Are you sure you want to delete this message?')) return;
+
+        try {
+            const result = await handleDeleteMessage(messageId);
+            
+            if (result.success) {
+                // Remove from local state
+                setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId));
+            } else {
+                console.error('Failed to delete message:', result.error);
+            }
+        } catch (error) {
+            console.error('Error deleting message:', error);
+        }
+    };
+
     const handleViewProfile = (message: Message) => {
         setSelectedUser({
             id: message.userId,
@@ -611,7 +666,37 @@ const Community: React.FC = observer(() => {
                                                 </div>
                                             </div>
                                         )}
-                                        <p className="community__message-text">{message.content}</p>
+                                        
+                                        {/* Message Text or Edit Input */}
+                                        {editingMessage?.id === message.id ? (
+                                            <div className="community__message-edit">
+                                                <input
+                                                    type="text"
+                                                    value={editInput}
+                                                    onChange={(e) => setEditInput(e.target.value)}
+                                                    className="community__message-edit-input"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                                            e.preventDefault();
+                                                            handleSaveEdit();
+                                                        } else if (e.key === 'Escape') {
+                                                            handleCancelEdit();
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="community__message-edit-actions">
+                                                    <button onClick={handleSaveEdit} className="community__message-edit-save">
+                                                        Save
+                                                    </button>
+                                                    <button onClick={handleCancelEdit} className="community__message-edit-cancel">
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="community__message-text">{message.content}</p>
+                                        )}
+                                        
                                         {message.attachments && message.attachments.length > 0 && (
                                             <div className="community__message-attachments">
                                                 {message.attachments.map((att, idx) => (
@@ -669,6 +754,31 @@ const Community: React.FC = observer(() => {
                                                     </span>
                                                 )}
                                             </button>
+
+                                            {/* Edit and Delete Buttons - Only for message author */}
+                                            {isOwnMessage && (
+                                                <div className="community__message-actions">
+                                                    <button 
+                                                        className="community__message-action-btn community__message-edit-btn" 
+                                                        onClick={() => handleStartEdit(message)}
+                                                        title="Edit message"
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M11.3333 2.00004C11.5084 1.82494 11.7163 1.68605 11.9451 1.59129C12.1738 1.49653 12.4191 1.44775 12.6666 1.44775C12.9142 1.44775 13.1595 1.49653 13.3882 1.59129C13.617 1.68605 13.8249 1.82494 14 2.00004C14.1751 2.17513 14.314 2.383 14.4088 2.61178C14.5035 2.84055 14.5523 3.08588 14.5523 3.33337C14.5523 3.58087 14.5035 3.8262 14.4088 4.05497C14.314 4.28375 14.1751 4.49162 14 4.66671L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button 
+                                                        className="community__message-action-btn community__message-delete-btn" 
+                                                        onClick={() => handleDeleteMessageClick(message.id)}
+                                                        title="Delete message"
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M2 4H3.33333H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            <path d="M5.33333 4.00004V2.66671C5.33333 2.31309 5.47381 1.97395 5.72386 1.7239C5.97391 1.47385 6.31304 1.33337 6.66666 1.33337H9.33333C9.68695 1.33337 10.0261 1.47385 10.2761 1.7239C10.5262 1.97395 10.6667 2.31309 10.6667 2.66671V4.00004M12.6667 4.00004V13.3334C12.6667 13.687 12.5262 14.0261 12.2761 14.2762C12.0261 14.5262 11.687 14.6667 11.3333 14.6667H4.66666C4.31304 14.6667 3.97391 14.5262 3.72386 14.2762C3.47381 14.0261 3.33333 13.687 3.33333 13.3334V4.00004H12.6667Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
