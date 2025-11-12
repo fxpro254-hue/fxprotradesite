@@ -840,19 +840,6 @@ const AppWrapper = observer(() => {
                         <div
                             label={
                                 <>
-                                    <PortfolioIcon />
-                                    <Localize i18n_default_text='Portfolio' />
-                                </>
-                            }
-                            id='id-portfolio'
-                        >
-                            <div className='dashboard__portfolio-wrapper'>
-                                <PortfolioDisplay />
-                            </div>
-                        </div>
-                        <div
-                            label={
-                                <>
                                     <FreeBotsIcon />
                                     <Localize i18n_default_text='Free Bots' />
                                 </>
@@ -1207,6 +1194,19 @@ const AppWrapper = observer(() => {
                                 <Suspense fallback={<ChunkLoader message={localize('Loading Community...')} />}>
                                     <Community />
                                 </Suspense>
+                            </div>
+                        </div>
+                        <div
+                            label={
+                                <>
+                                    <PortfolioIcon />
+                                    <Localize i18n_default_text='Portfolio' />
+                                </>
+                            }
+                            id='id-portfolio'
+                        >
+                            <div className='dashboard__portfolio-wrapper'>
+                                <PortfolioDisplay />
                             </div>
                         </div>
                     </Tabs>
