@@ -335,6 +335,20 @@
         // Remove wrapper background to prevent conflicts
     }
 
+    &__forex-wrapper {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: var(--tab-content-height);
+        width: 100%;
+        overflow: hidden;
+
+        @include mobile-or-tablet-screen {
+            height: var(--tab-content-height-mobile);
+            background: var(--general-main-1);
+        }
+    }
+
     &__toolbox {
         position: absolute;
         top: 0;

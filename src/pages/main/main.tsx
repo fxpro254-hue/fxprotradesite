@@ -42,6 +42,7 @@ declare global {
 const Chart = lazy(() => import('../chart'));
 const DTrader = lazy(() => import('../dtrader'));
 const Community = lazy(() => import('../community'));
+const Forex = lazy(() => import('../forex'));
 
 const DashboardIcon = () => (
     <svg width='20' height='20' fill='var(--text-general)' viewBox='0 0 24 24'>
@@ -210,6 +211,39 @@ const CommunityIcon = () => (
         />
         <path
             d='M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        />
+    </svg>
+);
+
+const ForexIcon = () => (
+    <svg width='20px' height='20px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+        <path
+            d='M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        />
+        <path
+            d='M12 6V12L16 14'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        />
+        <path
+            d='M8 16H16'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        />
+        <path
+            d='M10 18H14'
             stroke='var(--text-general)'
             strokeWidth='2'
             strokeLinecap='round'
@@ -1209,12 +1243,27 @@ const AppWrapper = observer(() => {
                                 <PortfolioDisplay />
                             </div>
                         </div>
+                        <div
+                            label={
+                                <>
+                                    <ForexIcon />
+                                    <Localize i18n_default_text='Forex' />
+                                </>
+                            }
+                            id='id-forex'
+                        >
+                            <div className='dashboard__forex-wrapper'>
+                                <Suspense fallback={<ChunkLoader message={localize('Loading Forex...')} />}>
+                                    <Forex />
+                                </Suspense>
+                            </div>
+                        </div>
                     </Tabs>
                 </div>
             </div>
             <DesktopWrapper>
                 <div className='main__run-strategy-wrapper'>
-                    {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.PORTFOLIO && <RunStrategy />}
+                    {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunStrategy />}
                     {showRunPanel && <RunPanel />}
                 </div>
                 <ChartModal />
@@ -1225,7 +1274,7 @@ const AppWrapper = observer(() => {
                 <StandaloneChartModal />
             </DesktopWrapper>
             <MobileWrapper>
-                {active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && <RunPanel />}
+                {active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunPanel />}
             </MobileWrapper>
             <Dialog
                 cancel_button_text={cancel_button_text || localize('Cancel')}
