@@ -7,6 +7,32 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     padding: 20px;
     box-sizing: border-box;
+    position: relative;
+
+    .dropdown-backdrop {
+        display: none;
+        
+        @media (max-width: 480px) {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            animation: fadeIn 0.2s ease;
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+        }
+    }
 
     .forex-signals-header {
         display: flex;
@@ -85,6 +111,39 @@
                             transform: rotate(180deg);
                         }
                     }
+
+                    @media (max-width: 768px) {
+                        min-width: 160px;
+                        padding: 8px 12px;
+                        gap: 8px;
+                        font-size: 13px;
+                        
+                        .dropdown-label {
+                            gap: 6px;
+                            
+                            .dropdown-icon {
+                                font-size: 14px;
+                            }
+                        }
+                    }
+
+                    @media (max-width: 480px) {
+                        min-width: 140px;
+                        padding: 8px 10px;
+                        font-size: 12px;
+                        
+                        .dropdown-label {
+                            gap: 6px;
+                            
+                            .dropdown-icon {
+                                font-size: 14px;
+                            }
+                        }
+                        
+                        .dropdown-arrow {
+                            font-size: 8px;
+                        }
+                    }
                 }
 
                 .dropdown-menu {
@@ -92,6 +151,7 @@
                     top: calc(100% + 8px);
                     left: 0;
                     right: 0;
+                    min-width: 200px;
                     background-color: var(--general-main-1);
                     border: 1px solid var(--general-section-2);
                     border-radius: 8px;
@@ -108,6 +168,34 @@
                         to {
                             opacity: 1;
                             transform: translateY(0);
+                        }
+                    }
+
+                    @media (max-width: 768px) {
+                        left: auto;
+                        right: 0;
+                        min-width: 180px;
+                    }
+
+                    @media (max-width: 480px) {
+                        position: fixed;
+                        left: 50%;
+                        right: auto;
+                        top: 50%;
+                        transform: translate(-50%, -50%);
+                        min-width: 280px;
+                        max-width: 90vw;
+                        animation: dropdownScaleIn 0.2s ease;
+
+                        @keyframes dropdownScaleIn {
+                            from {
+                                opacity: 0;
+                                transform: translate(-50%, -50%) scale(0.9);
+                            }
+                            to {
+                                opacity: 1;
+                                transform: translate(-50%, -50%) scale(1);
+                            }
                         }
                     }
 
@@ -157,6 +245,19 @@
                                 font-weight: 600;
                             }
                         }
+
+                        @media (max-width: 480px) {
+                            padding: 14px 16px;
+                            
+                            .dropdown-icon {
+                                font-size: 18px;
+                                min-width: 24px;
+                            }
+                            
+                            .dropdown-text {
+                                font-size: 15px;
+                            }
+                        }
                     }
                 }
             }
@@ -195,6 +296,9 @@
             }
 
             .toggle-cards-btn {
+                display: flex;
+                align-items: center;
+                gap: 8px;
                 padding: 8px 16px;
                 background-color: var(--general-section-1);
                 color: var(--text-general);
@@ -204,6 +308,18 @@
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.2s ease;
+
+                .toggle-icon {
+                    transition: transform 0.3s ease;
+                    
+                    &.rotate-down {
+                        transform: rotate(0deg);
+                    }
+                    
+                    &.rotate-up {
+                        transform: rotate(180deg);
+                    }
+                }
 
                 &:hover {
                     background-color: var(--general-section-2);
