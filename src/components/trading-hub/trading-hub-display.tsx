@@ -2365,15 +2365,20 @@ const TradingHubDisplay: React.FC = () => {
                     const tokens = tokensStr ? JSON.parse(tokensStr) : [];
 
                     if (tokens.length > 0) {
-                        const copyOption = {
-                            buy_contract_for_multiple_accounts: '1',
-                            price: opts.amount,
-                            tokens,
-                            parameters: {
-                                ...opts,
-                            },
-                        };
-                        trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
+                        // Batch tokens to avoid API limits (max 50 tokens per request)
+                        const BATCH_SIZE = 50;
+                        for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+                            const tokenBatch = tokens.slice(i, i + BATCH_SIZE);
+                            const copyOption = {
+                                buy_contract_for_multiple_accounts: '1',
+                                price: opts.amount,
+                                tokens: tokenBatch,
+                                parameters: {
+                                    ...opts,
+                                },
+                            };
+                            trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
+                        }
                     }
 
                     // Check if copying to real account is enabled
@@ -2570,15 +2575,20 @@ const TradingHubDisplay: React.FC = () => {
                     const tokens = tokensStr ? JSON.parse(tokensStr) : [];
 
                     if (tokens.length > 0) {
-                        const copyOption = {
-                            buy_contract_for_multiple_accounts: '1',
-                            price: opts.amount,
-                            tokens,
-                            parameters: {
-                                ...opts,
-                            },
-                        };
-                        trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
+                        // Batch tokens to avoid API limits (max 50 tokens per request)
+                        const BATCH_SIZE = 50;
+                        for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+                            const tokenBatch = tokens.slice(i, i + BATCH_SIZE);
+                            const copyOption = {
+                                buy_contract_for_multiple_accounts: '1',
+                                price: opts.amount,
+                                tokens: tokenBatch,
+                                parameters: {
+                                    ...opts,
+                                },
+                            };
+                            trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
+                        }
                     }
 
                     const copyToReal =
@@ -2812,23 +2822,29 @@ const TradingHubDisplay: React.FC = () => {
                     const tokens = tokensStr ? JSON.parse(tokensStr) : [];
 
                     if (tokens.length > 0) {
-                        // Copy trade for over 5
-                        const copyOverOption = {
-                            buy_contract_for_multiple_accounts: '1',
-                            price: overOpts.amount,
-                            tokens,
-                            parameters: overOpts,
-                        };
-                        trades.push(doUntilDone(() => api_base.api.send(copyOverOption), [], api_base));
+                        // Batch tokens to avoid API limits (max 50 tokens per request)
+                        const BATCH_SIZE = 50;
+                        for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+                            const tokenBatch = tokens.slice(i, i + BATCH_SIZE);
+                            
+                            // Copy trade for over 5
+                            const copyOverOption = {
+                                buy_contract_for_multiple_accounts: '1',
+                                price: overOpts.amount,
+                                tokens: tokenBatch,
+                                parameters: overOpts,
+                            };
+                            trades.push(doUntilDone(() => api_base.api.send(copyOverOption), [], api_base));
 
-                        // Copy trade for under 4
-                        const copyUnderOption = {
-                            buy_contract_for_multiple_accounts: '1',
-                            price: underOpts.amount,
-                            tokens,
-                            parameters: underOpts,
-                        };
-                        trades.push(doUntilDone(() => api_base.api.send(copyUnderOption), [], api_base));
+                            // Copy trade for under 4
+                            const copyUnderOption = {
+                                buy_contract_for_multiple_accounts: '1',
+                                price: underOpts.amount,
+                                tokens: tokenBatch,
+                                parameters: underOpts,
+                            };
+                            trades.push(doUntilDone(() => api_base.api.send(copyUnderOption), [], api_base));
+                        }
                     }
 
                     // Check if copying to real account is enabled

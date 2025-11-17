@@ -433,49 +433,54 @@ export default Engine =>
 
             // Copy trading logic for multiple accounts
             if (copyTradeEnabled && tokens.length > 0) {
-                const copy_option = {
-                    buy_contract_for_multiple_accounts: '1',
-                    price: enhancedTradeOptions.amount,
-                    tokens,
-                    parameters: {
-                        amount: enhancedTradeOptions.amount,
-                        basis: enhancedTradeOptions.basis,
-                        contract_type,
-                        currency: enhancedTradeOptions.currency,
-                        duration: enhancedTradeOptions.duration,
-                        duration_unit: enhancedTradeOptions.duration_unit,
-                        symbol: enhancedTradeOptions.symbol,
-                    },
-                };
+                // Batch tokens to avoid API limits (max 50 tokens per request)
+                const BATCH_SIZE = 50;
+                for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+                    const tokenBatch = tokens.slice(i, i + BATCH_SIZE);
+                    const copy_option = {
+                        buy_contract_for_multiple_accounts: '1',
+                        price: enhancedTradeOptions.amount,
+                        tokens: tokenBatch,
+                        parameters: {
+                            amount: enhancedTradeOptions.amount,
+                            basis: enhancedTradeOptions.basis,
+                            contract_type,
+                            currency: enhancedTradeOptions.currency,
+                            duration: enhancedTradeOptions.duration,
+                            duration_unit: enhancedTradeOptions.duration_unit,
+                            symbol: enhancedTradeOptions.symbol,
+                        },
+                    };
 
-                // Only add barriers for contracts that support them (NOT DIGITEVEN/DIGITODD)
-                if (!['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
-                    if (enhancedTradeOptions.prediction !== undefined) {
-                        copy_option.parameters.barrier = enhancedTradeOptions.prediction;
+                    // Only add barriers for contracts that support them (NOT DIGITEVEN/DIGITODD)
+                    if (!['DIGITEVEN', 'DIGITODD'].includes(contract_type)) {
+                        if (enhancedTradeOptions.prediction !== undefined) {
+                            copy_option.parameters.barrier = enhancedTradeOptions.prediction;
+                        }
+                        if (enhancedTradeOptions.barrierOffset !== undefined) {
+                            copy_option.parameters.barrier = enhancedTradeOptions.barrierOffset;
+                        }
+                        if (enhancedTradeOptions.secondBarrierOffset !== undefined) {
+                            copy_option.parameters.barrier2 = enhancedTradeOptions.secondBarrierOffset;
+                        }
+                    } else {
+                        console.log(`Copy trade batch: No barriers added for ${contract_type}`);
                     }
-                    if (enhancedTradeOptions.barrierOffset !== undefined) {
-                        copy_option.parameters.barrier = enhancedTradeOptions.barrierOffset;
+
+                    // Add growth rate for accumulator contracts
+                    if (contract_type === 'ACCU' && enhancedTradeOptions.growth_rate !== undefined) {
+                        copy_option.parameters.growth_rate = enhancedTradeOptions.growth_rate;
+                        console.log(`Copy trade batch: Growth rate added for ACCU: ${enhancedTradeOptions.growth_rate}`);
                     }
-                    if (enhancedTradeOptions.secondBarrierOffset !== undefined) {
-                        copy_option.parameters.barrier2 = enhancedTradeOptions.secondBarrierOffset;
+
+                    // Add take profit for accumulator contracts
+                    if (contract_type === 'ACCU' && enhancedTradeOptions.limit_order !== undefined) {
+                        copy_option.parameters.limit_order = enhancedTradeOptions.limit_order;
+                        console.log(`Copy trade batch: Take profit added for ACCU: ${enhancedTradeOptions.limit_order.take_profit}`);
                     }
-                } else {
-                    console.log(`Copy trade: No barriers added for ${contract_type}`);
-                }
 
-                // Add growth rate for accumulator contracts
-                if (contract_type === 'ACCU' && enhancedTradeOptions.growth_rate !== undefined) {
-                    copy_option.parameters.growth_rate = enhancedTradeOptions.growth_rate;
-                    console.log(`Copy trade: Growth rate added for ACCU: ${enhancedTradeOptions.growth_rate}`);
+                    trades.push(doUntilDone(() => api_base.api.send(copy_option)));
                 }
-
-                // Add take profit for accumulator contracts
-                if (contract_type === 'ACCU' && enhancedTradeOptions.limit_order !== undefined) {
-                    copy_option.parameters.limit_order = enhancedTradeOptions.limit_order;
-                    console.log(`Copy trade: Take profit added for ACCU: ${enhancedTradeOptions.limit_order.take_profit}`);
-                }
-
-                trades.push(doUntilDone(() => api_base.api.send(copy_option)));
             }
 
             // Copy trading logic for real accounts

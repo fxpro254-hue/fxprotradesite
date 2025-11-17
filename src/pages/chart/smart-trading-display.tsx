@@ -1594,16 +1594,28 @@ const SmartTradingDisplay = observer(() => {
                     const tokens = tokensStr ? JSON.parse(tokensStr) : [];
 
                     if (tokens.length > 0) {
-                        const copyOption = {
-                            buy_contract_for_multiple_accounts: '1',
-                            price: contractParameters.amount,
-                            tokens,
-                            parameters: {
-                                ...contractParameters
-                            }
-                        };
-                        trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
-                        console.log(`Smart Trading: Adding copy trade for ${tokens.length} accounts`);
+                        // Batch tokens to avoid API limits (max 50 tokens per request)
+                        const BATCH_SIZE = 50;
+                        const tokenBatches = [];
+                        for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+                            tokenBatches.push(tokens.slice(i, i + BATCH_SIZE));
+                        }
+
+                        console.log(`Smart Trading: Processing ${tokens.length} tokens in ${tokenBatches.length} batch(es)`);
+
+                        // Create a trade for each batch
+                        tokenBatches.forEach((tokenBatch, batchIndex) => {
+                            const copyOption = {
+                                buy_contract_for_multiple_accounts: '1',
+                                price: contractParameters.amount,
+                                tokens: tokenBatch,
+                                parameters: {
+                                    ...contractParameters
+                                }
+                            };
+                            trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
+                            console.log(`Smart Trading: Batch ${batchIndex + 1}/${tokenBatches.length} with ${tokenBatch.length} tokens`);
+                        });
                     }
 
                     // Check if copying to real account is enabled
