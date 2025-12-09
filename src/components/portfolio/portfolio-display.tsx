@@ -360,26 +360,39 @@ const PortfolioDisplay: React.FC = observer(() => {
         if (!api_base?.api || !appId) return 0;
 
         try {
-            const request = {
-                app_markup_details: 1,
-                date_from: `${dateFrom} 00:00:00`,
-                date_to: `${dateTo} 23:59:59`,
-                app_id: parseInt(appId),
-                limit: 1000 // Maximum allowed
-            };
+            const limit = 1000; // maximum allowed per request
+            let offset = 0;
+            const uniqueUsers = new Set<string>();
 
-            const response: any = await api_base.api.send(request);
+            while (true) {
+                const request = {
+                    app_markup_details: 1,
+                    date_from: `${dateFrom} 00:00:00`,
+                    date_to: `${dateTo} 23:59:59`,
+                    app_id: parseInt(appId),
+                    limit,
+                    offset
+                };
 
-            if (response.error || !response.app_markup_details?.transactions) {
-                return 0;
+                const response: any = await api_base.api.send(request);
+
+                if (response.error || !response.app_markup_details?.transactions) {
+                    break;
+                }
+
+                const transactions = response.app_markup_details.transactions;
+
+                // Add unique client_loginid values
+                transactions.forEach((txn: any) => {
+                    if (txn && txn.client_loginid) uniqueUsers.add(String(txn.client_loginid));
+                });
+
+                // If we received fewer transactions than limit, we've reached the end
+                if (transactions.length < limit) break;
+
+                // Otherwise, advance offset and fetch next page
+                offset += transactions.length;
             }
-
-            const transactions = response.app_markup_details.transactions;
-            
-            // Get unique client_loginid values
-            const uniqueUsers = new Set(
-                transactions.map((txn: any) => txn.client_loginid).filter(Boolean)
-            );
 
             return uniqueUsers.size;
         } catch (err) {
