@@ -43,42 +43,111 @@ const NetworkSpeedIndicator = () => {
         return '#22c55e'; // green
     };
 
-    // Measure network latency (ping)
+    // Measure network latency (ping) with multiple attempts
     const measurePing = async (): Promise<number> => {
-        const start = performance.now();
-        try {
-            // Use a small image or beacon endpoint to measure latency
-            await fetch('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', {
-                method: 'HEAD',
-                cache: 'no-store',
-            });
-            const end = performance.now();
-            return Math.round(end - start);
-        } catch {
-            return 0;
+        let totalPing = 0;
+        let successCount = 0;
+
+        // Try to measure ping 3 times and take the median
+        for (let i = 0; i < 3; i++) {
+            try {
+                const start = performance.now();
+                // Use a reliable endpoint that responds quickly
+                await fetch(`https://www.gstatic.com/images/branding/product/1x/gstatic_64dp.png?nocache=${Math.random()}`, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    signal: AbortSignal.timeout(5000), // 5 second timeout
+                });
+                const end = performance.now();
+                const ping = Math.round(end - start);
+                if (ping > 0 && ping < 10000) { // Filter out invalid values
+                    totalPing += ping;
+                    successCount++;
+                }
+            } catch {
+                // Continue to next attempt
+            }
         }
+
+        return successCount > 0 ? Math.round(totalPing / successCount) : 0;
     };
 
-    // Test download speed using a dummy file
-    const measureDownloadSpeed = async (): Promise<number> => {
+    // Test download speed with chunked download
+    const testDownloadSpeed = async (): Promise<number> => {
         try {
-            const testUrl = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==`;
+            // Use a reasonably sized test file (1MB)
+            const testUrl = `https://speed.cloudflare.com/__down?bytes=1048576&cache=${Math.random()}`;
+            
+            let bytesDownloaded = 0;
             const startTime = performance.now();
-            const response = await fetch(testUrl);
-            const blob = await response.blob();
+
+            const response = await fetch(testUrl, {
+                method: 'GET',
+                cache: 'no-store',
+                signal: AbortSignal.timeout(10000), // 10 second timeout
+            });
+
+            if (!response.ok) {
+                throw new Error('Download speed test failed');
+            }
+
+            // Read the response body to measure actual download time
+            const reader = response.body?.getReader();
+            if (!reader) {
+                throw new Error('Cannot read response body');
+            }
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    bytesDownloaded += value.length;
+                }
+            } finally {
+                reader.releaseLock();
+            }
+
             const endTime = performance.now();
-
             const timeTakenInSeconds = (endTime - startTime) / 1000;
-            const fileSizeInBits = blob.size * 8;
-            const speedInMbps = (fileSizeInBits / timeTakenInSeconds) / (1024 * 1024);
 
-            return Math.max(0.1, speedInMbps);
+            if (timeTakenInSeconds === 0 || bytesDownloaded === 0) {
+                throw new Error('Invalid measurement');
+            }
+
+            // Calculate speed in Mbps
+            const speedMbps = (bytesDownloaded * 8) / (timeTakenInSeconds * 1024 * 1024);
+
+            return Math.max(0.01, speedMbps);
         } catch {
-            return 0;
+            // Fallback: try with a different endpoint
+            try {
+                const testUrl = `https://www.gstatic.com/images/branding/product/1x/gstatic_64dp.png?cache=${Math.random()}`;
+                const startTime = performance.now();
+                
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    signal: AbortSignal.timeout(5000),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Fallback test failed');
+                }
+
+                const blob = await response.blob();
+                const endTime = performance.now();
+
+                const timeTakenInSeconds = (endTime - startTime) / 1000;
+                const speedMbps = (blob.size * 8) / (timeTakenInSeconds * 1024 * 1024);
+
+                return Math.max(0.01, speedMbps);
+            } catch {
+                return 0;
+            }
         }
     };
 
-    // Advanced network speed test
+    // Advanced network speed test with multiple measurements
     const testNetworkSpeed = async () => {
         if (testInProgressRef.current) return;
 
@@ -89,59 +158,39 @@ const NetworkSpeedIndicator = () => {
         }));
 
         try {
-            // Measure ping
+            // Measure ping first
             const ping = await measurePing();
 
-            // Simulate download speed test with multiple small requests
-            let totalSize = 0;
-            let totalTime = 0;
-            let successCount = 0;
+            // Download speed test: measure actual file transfers
+            let totalDownloadSpeed = 0;
+            let successfulTests = 0;
 
-            for (let i = 0; i < 5; i++) {
-                const startTime = performance.now();
-                try {
-                    const response = await fetch(
-                        `https://www.gstatic.com/images/branding/product/1x/gstatic_64dp.png?cache=${Math.random()}`,
-                        {
-                            method: 'GET',
-                            cache: 'no-store',
-                        }
-                    );
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        totalSize += blob.size;
-                        totalTime += performance.now() - startTime;
-                        successCount++;
-                    }
-                } catch {
-                    // Continue with next request
+            // Run multiple sequential download tests for accuracy
+            for (let i = 0; i < 2; i++) {
+                const speed = await testDownloadSpeed();
+                if (speed > 0 && speed < 10000) {
+                    totalDownloadSpeed += speed;
+                    successfulTests++;
                 }
+                // Small delay between tests to avoid network congestion
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
 
-            // If we got any successful requests, use those results
-            if (successCount > 0) {
-                const timeTakenInSeconds = totalTime / 1000;
-                const downloadSpeedMbps = (totalSize * 8) / (1024 * 1024) / timeTakenInSeconds;
-                const uploadSpeedMbps = Math.max(0.1, downloadSpeedMbps * 0.3);
+            // Calculate average download speed
+            const downloadSpeedMbps = successfulTests > 0 
+                ? totalDownloadSpeed / successfulTests 
+                : 0;
 
-                setSpeedData({
-                    downloadSpeed: Math.max(0.1, downloadSpeedMbps),
-                    uploadSpeed: uploadSpeedMbps,
-                    ping: ping,
-                    loading: false,
-                    timestamp: new Date(),
-                });
-            } else {
-                // Fallback to local test
-                const localSpeed = await measureDownloadSpeed();
-                setSpeedData({
-                    downloadSpeed: localSpeed,
-                    uploadSpeed: localSpeed * 0.3,
-                    ping: ping,
-                    loading: false,
-                    timestamp: new Date(),
-                });
-            }
+            // Estimate upload speed (typically 20-30% of download on consumer connections)
+            const uploadSpeedMbps = Math.max(0.01, downloadSpeedMbps * 0.25);
+
+            setSpeedData({
+                downloadSpeed: Math.max(0.01, downloadSpeedMbps),
+                uploadSpeed: uploadSpeedMbps,
+                ping: ping,
+                loading: false,
+                timestamp: new Date(),
+            });
         } catch (error) {
             console.error('Network speed test failed:', error);
             setSpeedData((prev) => ({
