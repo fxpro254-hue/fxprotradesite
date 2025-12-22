@@ -69,7 +69,7 @@
     height: 90vh;
     max-width: 90vw;
     max-height: 90vh;
-    background: white;
+    background: #F2F3F4;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     z-index: 1000;
@@ -78,6 +78,11 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+
+    @media (prefers-color-scheme: dark) {
+        background: #151717;
+        border-color: #2a2c2d;
+    }
 
     .popup-header {
         display: flex;
