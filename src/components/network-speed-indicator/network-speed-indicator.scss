@@ -219,16 +219,15 @@
                 font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             }
 
-            .updating {
-                font-size: 10px;
-                color: #999;
-                font-style: italic;
-                animation: fadeInOut 1.5s ease-in-out infinite;
+            .updating-indicator {
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background-color: #22c55e;
                 margin-left: 8px;
-
-                @media (prefers-color-scheme: dark) {
-                    color: #666;
-                }
+                animation: pulse-dot 1.5s ease-in-out infinite;
+                box-shadow: 0 0 4px rgba(34, 197, 94, 0.6);
             }
         }
 
@@ -379,6 +378,19 @@
     }
     50% {
         box-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
+    }
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 4px rgba(34, 197, 94, 0.6);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+        box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
     }
 }
 

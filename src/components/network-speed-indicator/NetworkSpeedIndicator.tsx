@@ -346,7 +346,7 @@ const NetworkSpeedIndicator = () => {
                                 >
                                     {speedData.downloadSpeed?.toFixed(2) || 'N/A'} Mbps
                                 </span>
-                                {speedData.loading && <span className='updating'>updating...</span>}
+                                {speedData.loading && <span className='updating-indicator'></span>}
                             </div>
                             <div className='speed-item'>
                                 <span className='label'>Upload:</span>
@@ -356,14 +356,14 @@ const NetworkSpeedIndicator = () => {
                                 >
                                     {speedData.uploadSpeed?.toFixed(2) || 'N/A'} Mbps
                                 </span>
-                                {speedData.loading && <span className='updating'>updating...</span>}
+                                {speedData.loading && <span className='updating-indicator'></span>}
                             </div>
                             <div className='speed-item'>
                                 <span className='label'>Ping:</span>
                                 <span className='value' style={{ color: speedColor }}>
                                     {speedData.ping ?? 'N/A'} ms
                                 </span>
-                                {speedData.loading && <span className='updating'>updating...</span>}
+                                {speedData.loading && <span className='updating-indicator'></span>}
                             </div>
                             <div className='speed-status'>
                                 <div
