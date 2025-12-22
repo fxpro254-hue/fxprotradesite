@@ -12,6 +12,7 @@ import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
 import NotificationBanner from '../notification-banner';
+import CommunityFloatingIcon from '../community-floating-icon';
 import NetworkSpeedIndicator from '../network-speed-indicator';
 import './layout.scss';
 
@@ -100,6 +101,7 @@ const Layout = () => {
             </Body>
             {!isCallbackPage && <DisclaimerButton />}
             {!isCallbackPage && isDesktop && <Footer />}
+            {!isCallbackPage && <CommunityFloatingIcon />}
             {!isCallbackPage && <NetworkSpeedIndicator />}
         </div>
     );
