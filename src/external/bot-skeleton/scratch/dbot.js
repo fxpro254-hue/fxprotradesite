@@ -58,33 +58,8 @@ class DBot {
                     if (!is_trade_type_accumulator) forgetAccumulatorsProposalRequest(that);
 
                     if (is_symbol_list_change) {
-                        // Notify user if 'SPECIFY' or 'ALL_MARKETS' is selected
-                        if (symbol === 'SPECIFY' || symbol === 'ALL_MARKETS') {
-                            const message = symbol === 'SPECIFY' 
-                                ? 'You selected "Specify". If no Symbol Switcher block is used, the default market will be Volatility 100 Index.'
-                                : 'You selected "All Markets". Trades will be done on random volatilities.';
-
-                            // Try to use botNotification if available, else fallback to globalObserver
-                            if (window.botNotification && window.notification_message) {
-                                window.botNotification(message, {
-                                    label: 'OK',
-                                    onClick: closeToast => closeToast?.(),
-                                });
-                            } else {
-                                globalObserver.emit('ui.log.info', message);
-                            }
-                        }
-                        // Handle ALL_MARKETS and SPECIFY: use R_100 for trade type category fetching
-                        let symbolForTradeTypes = symbol;
-                        if (symbol === 'ALL_MARKETS') {
-                            symbolForTradeTypes = 'R_100';
-                            console.log('🎯 ALL_MARKETS detected: Using R_100 to fetch trade type categories');
-                        } else if (symbol === 'SPECIFY') {
-                            symbolForTradeTypes = 'R_100';
-                            console.log('🎯 SPECIFY detected: Using R_100 to fetch trade type categories');
-                        }
-
-                        contracts_for?.getTradeTypeCategories?.(market, submarket, symbolForTradeTypes).then(categories => {
+                        // Always use the selected symbol for trade type category fetching
+                        contracts_for?.getTradeTypeCategories?.(market, submarket, symbol).then(categories => {
                             const category_field = this.getField('TRADETYPECAT_LIST');
                             if (category_field) {
                                 category_field.updateOptions(categories, {

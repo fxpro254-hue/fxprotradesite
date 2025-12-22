@@ -182,8 +182,7 @@ export default Engine =>
                 
                 // Determine symbol for tick monitoring
                 let symbolForTicks = this.tradeOptions.symbol;
-                if (symbolForTicks === 'ALL_MARKETS' || 
-                    (this.tradeOptions.originalSymbol && this.tradeOptions.originalSymbol === 'ALL_MARKETS')) {
+                if (this.tradeOptions.tradeAllMarkets) {
                     symbolForTicks = this.getRandomAvailableSymbol();
                     console.log('Using symbol for tick monitoring:', symbolForTicks);
                 }
@@ -206,7 +205,7 @@ export default Engine =>
                 
                 // Determine symbol for tick stopping
                 let symbolForTicks = this.tradeOptions.symbol;
-                if (symbolForTicks === 'ALL_MARKETS') {
+                if (this.tradeOptions.tradeAllMarkets) {
                     // For stopping, we can use any symbol since we're just stopping the monitor
                     symbolForTicks = 'R_100';
                 }
@@ -265,30 +264,33 @@ export default Engine =>
             // Create enhanced trade options with barrier values
             const enhancedTradeOptions = { ...this.tradeOptions };
             console.log('Base trade options:', enhancedTradeOptions);
-            console.log('🔍 ALL_MARKETS Detection Check:');
-            console.log(`   enhancedTradeOptions.symbol: "${enhancedTradeOptions.symbol}"`);
-            console.log(`   this.tradeOptions.originalSymbol: "${this.tradeOptions.originalSymbol}"`);
+            console.log('🔍 Trade All Markets Check:');
+            console.log(`   tradeAllMarkets flag: "${this.tradeOptions.tradeAllMarkets}"`);
+            console.log(`   everyXRuns value: "${this.tradeOptions.everyXRuns}"`);
+            console.log(`   current run count: ${this.$scope?.tradeAllMarketsRunCount || 0}`);
+            console.log(`   current symbol: "${enhancedTradeOptions.symbol}"`);
             
-            // Handle symbol selection based on mode
-            if (enhancedTradeOptions.symbol === 'ALL_MARKETS' || 
-                (this.tradeOptions.originalSymbol && this.tradeOptions.originalSymbol === 'ALL_MARKETS')) {
-                const randomSymbol = this.getRandomAvailableSymbol();
-                const previousSymbol = enhancedTradeOptions.symbol;
-                console.log(`🎲 ALL_MARKETS: Trading on ${randomSymbol} (previous: ${previousSymbol})`);
-                enhancedTradeOptions.symbol = randomSymbol;
-            } else if (enhancedTradeOptions.symbol === 'SPECIFY' || 
-                      (this.tradeOptions.originalSymbol && this.tradeOptions.originalSymbol === 'SPECIFY')) {
-                // Check if a Symbol Switcher block has set a specific symbol
-                const nextSymbol = this.getAndConsumeNextSymbol ? this.getAndConsumeNextSymbol() : null;
-                if (nextSymbol) {
+            // Handle symbol selection based on checkbox and every X runs interval
+            if (this.tradeOptions.tradeAllMarkets) {
+                const everyXRuns = this.tradeOptions.everyXRuns || 1;
+                const runCount = this.$scope?.tradeAllMarketsRunCount || 0;
+                
+                // Check if we need to pick a new random symbol (at start or after interval completes)
+                if (runCount % everyXRuns === 0) {
+                    // Pick a new random symbol and stick with it for the next X runs
+                    const randomSymbol = this.getRandomAvailableSymbol();
+                    this.currentRandomSymbol = randomSymbol;
                     const previousSymbol = enhancedTradeOptions.symbol;
-                    console.log(`🔧 SPECIFY: Trading on ${nextSymbol} (from Symbol Switcher, previous: ${previousSymbol})`);
-                    enhancedTradeOptions.symbol = nextSymbol;
-                } else {
-                    // No symbol specified by Symbol Switcher, use default
-                    const defaultSymbol = 'R_100';
-                    console.log(`⚠️ SPECIFY: No Symbol Switcher found, using default ${defaultSymbol}`);
-                    enhancedTradeOptions.symbol = defaultSymbol;
+                    console.log(`🎲 Trade All Markets: Switching to new volatility ${randomSymbol} for next ${everyXRuns} run(s) (previous: ${previousSymbol})`);
+                }
+                
+                // Use the current random symbol
+                enhancedTradeOptions.symbol = this.currentRandomSymbol || this.getRandomAvailableSymbol();
+                console.log(`📊 Trading on volatility "${enhancedTradeOptions.symbol}" (Run ${(runCount % everyXRuns) + 1}/${everyXRuns})`);
+                
+                // Increment the run counter
+                if (this.$scope) {
+                    this.$scope.tradeAllMarketsRunCount = (runCount + 1) % (everyXRuns * 100); // Reset after a large number
                 }
             } else {
                 console.log(`📌 Regular trading: Using symbol ${enhancedTradeOptions.symbol} (no randomization)`);

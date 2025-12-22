@@ -176,18 +176,13 @@ window.Blockly.JavaScript.javascriptGenerator.forBlock.trade_definition = block 
     const restart_on_buy_sell_block = block.getChildByType('trade_definition_restartbuysell');
 
     const symbol = market_block.getFieldValue('SYMBOL_LIST');
+    const trade_all_markets = market_block.getFieldValue('TRADE_ALL_MARKETS') === true || 
+                              market_block.getFieldValue('TRADE_ALL_MARKETS') === 'TRUE';
+    const every_x_runs = parseInt(market_block.getFieldValue('EVERY_X_RUNS'), 10) || 1;
     
-    // Handle different symbol selection modes
-    let initSymbol = symbol;
-    if (symbol === 'ALL_MARKETS') {
-        // Use R_100 as a stable initialization symbol - actual trading will randomize per trade
-        initSymbol = 'R_100';
-        console.log('Trade Definition: ALL_MARKETS selected, using R_100 for initialization (trades will randomize per execution)');
-    } else if (symbol === 'SPECIFY') {
-        // Use R_100 as initialization - actual symbol will come from Symbol Switcher blocks
-        initSymbol = 'R_100';
-        console.log('Trade Definition: SPECIFY selected, using R_100 for initialization (symbol will be determined by Symbol Switcher blocks)');
-    }
+    // Use selected symbol directly for initialization
+    const initSymbol = symbol;
+    console.log(`Trade Definition: Symbol "${symbol}" selected, Trade All Markets: ${trade_all_markets}, Every X Runs: ${every_x_runs}`);
     
     const trade_type = trade_type_block.getFieldValue('TRADETYPE_LIST');
     const contract_type = contract_type_block.getFieldValue('TYPE_LIST');
@@ -208,7 +203,8 @@ window.Blockly.JavaScript.javascriptGenerator.forBlock.trade_definition = block 
     BinaryBotPrivateInit = function BinaryBotPrivateInit() {
         Bot.init('${account}', {
           symbol              : '${initSymbol}',
-          originalSymbol      : '${symbol}',
+          tradeAllMarkets     : ${trade_all_markets},
+          everyXRuns          : ${every_x_runs},
           contractTypes       : ${JSON.stringify(contract_type_list)},
           candleInterval      : '${candle_interval || 'FALSE'}',
           shouldRestartOnError: ${should_restart_on_error},

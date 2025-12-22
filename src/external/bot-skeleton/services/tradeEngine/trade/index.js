@@ -76,6 +76,8 @@ export default class TradeEngine extends Balance(Purchase(Sell(OpenContract(Prop
         this.is_proposal_requested_for_accumulators = false;
         this.store = createStore(rootReducer, applyMiddleware(thunk));
         this.nextSymbol = null; // For SPECIFY mode symbol switching
+        this.$scope.tradeAllMarketsRunCount = 0; // Initialize run counter for every X runs feature
+        this.currentRandomSymbol = null; // Store current random symbol for sticky volatility
     }
 
     // Method to set the symbol for the next trade (used by Symbol Switcher blocks)
@@ -114,8 +116,13 @@ export default class TradeEngine extends Balance(Purchase(Sell(OpenContract(Prop
         this.tradeOptions = { 
             ...validated_trade_options, 
             symbol: this.options.symbol,
-            originalSymbol: this.options.originalSymbol 
+            tradeAllMarkets: this.options.tradeAllMarkets,
+            everyXRuns: this.options.everyXRuns || 1
         };
+        
+        // Initialize run counter for tracking when to use random symbols
+        this.tradeAllMarketsRunCount = 0;
+        
         this.store.dispatch(start());
         this.checkLimits(validated_trade_options);
 

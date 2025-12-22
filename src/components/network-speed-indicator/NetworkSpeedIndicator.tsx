@@ -176,14 +176,26 @@ const NetworkSpeedIndicator = () => {
     // Close popup when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
-                setShowPopup(false);
+            const target = event.target as Node;
+            // Don't close if clicking on the floating icon itself
+            if (popupRef.current && !popupRef.current.contains(target)) {
+                const floatingIcon = document.querySelector('.network-speed-floating-icon');
+                if (floatingIcon && !floatingIcon.contains(target)) {
+                    setShowPopup(false);
+                }
             }
         };
 
         if (showPopup) {
-            document.addEventListener('mousedown', handleClickOutside);
-            return () => document.removeEventListener('mousedown', handleClickOutside);
+            // Add small delay to prevent immediate closing
+            const timer = setTimeout(() => {
+                document.addEventListener('mousedown', handleClickOutside);
+            }, 100);
+            
+            return () => {
+                clearTimeout(timer);
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
         }
     }, [showPopup]);
 
@@ -215,6 +227,11 @@ const NetworkSpeedIndicator = () => {
         }
     }, [showPopup]);
 
+    // Toggle popup function
+    const togglePopup = () => {
+        setShowPopup((prev) => !prev);
+    };
+
     const signalStrength = getSignalStrength(speedData.downloadSpeed);
     const speedColor = getSpeedColor(speedData.downloadSpeed);
 
@@ -222,12 +239,22 @@ const NetworkSpeedIndicator = () => {
         <>
             <div
                 className='network-speed-floating-icon'
-                onClick={() => setShowPopup(!showPopup)}
+                onClick={togglePopup}
+                role='button'
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        togglePopup();
+                    }
+                }}
                 style={{
                     borderColor: speedColor,
                     boxShadow: `0 0 12px ${speedColor}66`,
                 }}
                 title='Network Speed'
+                aria-label='Network speed indicator'
+                aria-expanded={showPopup}
             >
                 <div className='network-icon'>
                     {[1, 2, 3, 4].map((bar) => (

@@ -2,56 +2,58 @@
     position: fixed;
     bottom: 80px;
     right: 20px;
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 240, 240, 0.95) 100%);
-    border: 2px solid #667eea;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(240, 240, 240, 0.6) 100%);
+    border: 1.5px solid rgba(102, 126, 234, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 999;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    opacity: 0.7;
 
     &:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        transform: scale(1.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        opacity: 1;
     }
 
     &:active {
-        transform: scale(0.95);
+        transform: scale(0.9);
     }
 
     .network-icon {
         display: flex;
-        gap: 3px;
+        gap: 2px;
         align-items: flex-end;
         justify-content: center;
-        width: 30px;
-        height: 30px;
+        width: 22px;
+        height: 22px;
 
         .signal-bar {
-            width: 4px;
+            width: 3px;
             background-color: #ccc;
-            border-radius: 2px;
+            border-radius: 1px;
             transition: all 0.3s ease;
 
             &.bar-1 {
-                height: 8px;
+                height: 6px;
             }
 
             &.bar-2 {
-                height: 12px;
+                height: 9px;
             }
 
             &.bar-3 {
-                height: 16px;
+                height: 12px;
             }
 
             &.bar-4 {
-                height: 20px;
+                height: 15px;
             }
 
             &.active {
@@ -344,12 +346,12 @@
     .network-speed-floating-icon {
         bottom: 60px;
         right: 12px;
-        width: 45px;
-        height: 45px;
+        width: 36px;
+        height: 36px;
     }
 
     .network-speed-popup {
-        bottom: 110px;
+        bottom: 100px;
         right: 12px;
         width: 280px;
     }

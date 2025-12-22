@@ -11,6 +11,10 @@ window.Blockly.Blocks.trade_definition_market = {
                 input_submarket: '%2',
                 input_symbol: '%3',
             }),
+            message1: localize('Trade all markets simultaneously {{ trade_all_markets }} every {{ every_x_runs }} runs', {
+                trade_all_markets: '%1',
+                every_x_runs: '%2',
+            }),
             args0: [
                 {
                     type: 'field_dropdown',
@@ -26,6 +30,21 @@ window.Blockly.Blocks.trade_definition_market = {
                     type: 'field_dropdown',
                     name: 'SYMBOL_LIST',
                     options: [['', '']],
+                },
+            ],
+            args1: [
+                {
+                    type: 'field_checkbox',
+                    name: 'TRADE_ALL_MARKETS',
+                    checked: false,
+                },
+                {
+                    type: 'field_number',
+                    name: 'EVERY_X_RUNS',
+                    value: 1,
+                    min: 1,
+                    max: 1000,
+                    precision: 1,
                 },
             ],
             colour: window.Blockly.Colours.Special1.colour,

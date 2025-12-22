@@ -242,10 +242,8 @@ export default class ActiveSymbols {
             return config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
         }
 
-        // Add "All Markets" and "Specify" options at the beginning of the dropdown
+        // Sort options without adding special options - use checkbox instead
         const sorted_options = this.sortDropdownOptions(symbol_options, this.isSymbolClosed);
-        sorted_options.unshift([localize('All Markets'), 'ALL_MARKETS']);
-        sorted_options.unshift([localize('Specify'), 'SPECIFY']);
 
         return sorted_options;
     }
