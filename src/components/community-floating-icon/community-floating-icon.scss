@@ -69,20 +69,15 @@
     height: 90vh;
     max-width: 90vw;
     max-height: 90vh;
-    background: #F2F3F4;
+    background: var(--general-section-1, #F2F3F4);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     z-index: 1000;
     animation: slideUp 0.3s ease-out;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-normal, #e5e7eb);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-
-    @media (prefers-color-scheme: dark) {
-        background: #151717;
-        border-color: #2a2c2d;
-    }
 
     .popup-header {
         display: flex;
@@ -91,12 +86,12 @@
         padding: 16px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-normal, #e5e7eb);
         flex-shrink: 0;
         gap: 8px;
 
         @media (prefers-color-scheme: dark) {
-            border-bottom-color: #2a2c2d;
+            background: linear-gradient(135deg, #4d5a99 0%, #5a3f6b 100%);
         }
 
         h3 {
@@ -158,54 +153,33 @@
         overflow-y: auto;
         overflow-x: hidden;
         flex: 1;
-        color: #333;
-        background: #F2F3F4;
-
-        @media (prefers-color-scheme: dark) {
-            background: #151717;
-            color: #e0e0e0;
-        }
+        color: var(--text-prominent, #333);
+        background: var(--general-section-1, #F2F3F4);
 
         &::-webkit-scrollbar {
             width: 6px;
         }
 
         &::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: var(--general-section-2, #f1f5f9);
             border-radius: 3px;
-
-            @media (prefers-color-scheme: dark) {
-                background: #1f2121;
-            }
         }
 
         &::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: var(--border-normal, #cbd5e1);
             border-radius: 3px;
 
-            @media (prefers-color-scheme: dark) {
-                background: #3a3c3d;
-            }
-
             &:hover {
-                background: #94a3b8;
-
-                @media (prefers-color-scheme: dark) {
-                    background: #4a4c4d;
-                }
+                background: var(--border-hover, #94a3b8);
             }
         }
 
         .popup-description {
             font-size: 13px;
-            color: #666;
+            color: var(--text-less-prominent, #666);
             line-height: 1.5;
             margin: 0 0 16px 0;
             text-align: center;
-
-            @media (prefers-color-scheme: dark) {
-                color: #b0b0b0;
-            }
         }
 
         .popup-features {
@@ -221,21 +195,13 @@
                 gap: 6px;
                 padding: 12px;
                 border-radius: 8px;
-                background: linear-gradient(135deg, #f0f4ff 0%, #f8f9ff 100%);
+                background: linear-gradient(135deg, var(--general-section-2, #f0f4ff) 0%, var(--general-section-3, #f8f9ff) 100%);
                 transition: all 0.3s ease;
                 cursor: default;
 
-                @media (prefers-color-scheme: dark) {
-                    background: linear-gradient(135deg, #1f2121 0%, #252728 100%);
-                }
-
                 &:hover {
-                    background: linear-gradient(135deg, #e8edff 0%, #f0f1ff 100%);
+                    background: linear-gradient(135deg, var(--general-hover, #e8edff) 0%, var(--general-active, #f0f1ff) 100%);
                     transform: translateY(-2px);
-
-                    @media (prefers-color-scheme: dark) {
-                        background: linear-gradient(135deg, #2a2d2e 0%, #303234 100%);
-                    }
                 }
 
                 .feature-icon {
@@ -245,12 +211,8 @@
                 .feature-text {
                     font-size: 11px;
                     font-weight: 600;
-                    color: #333;
+                    color: var(--text-prominent, #333);
                     text-align: center;
-
-                    @media (prefers-color-scheme: dark) {
-                        color: #d0d0d0;
-                    }
                 }
             }
         }
@@ -313,16 +275,7 @@
             background: inherit;
             border-radius: 0;
 
-            // Ensure community component respects popup background
-            @media (prefers-color-scheme: dark) {
-                --general-main-1: #1f2121;
-                --general-section-1: #151717;
-                --border-normal: #2a2c2d;
-                --text-prominent: #e0e0e0;
-                --text-general: #d0d0d0;
-                --text-less-prominent: #b0b0b0;
-            }
-
+            // Community component inherits CSS variables from global theme
             // Responsive sidebar
             @media (max-width: 768px) {
                 flex-direction: column;
@@ -417,25 +370,16 @@
             .spinner {
                 width: 32px;
                 height: 32px;
-                border: 3px solid #e5e7eb;
+                border: 3px solid var(--border-normal, #e5e7eb);
                 border-top-color: #667eea;
                 border-radius: 50%;
                 animation: spin 0.8s linear infinite;
-
-                @media (prefers-color-scheme: dark) {
-                    border-color: #2a2c2d;
-                    border-top-color: #667eea;
-                }
             }
 
             p {
                 font-size: 13px;
-                color: #666;
+                color: var(--text-less-prominent, #666);
                 margin: 0;
-
-                @media (prefers-color-scheme: dark) {
-                    color: #b0b0b0;
-                }
             }
         }
     }
