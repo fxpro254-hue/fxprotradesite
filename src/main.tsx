@@ -1,7 +1,12 @@
 import ReactDOM from 'react-dom/client';
 import { AuthWrapper } from './app/AuthWrapper';
 import { AnalyticsInitializer } from './utils/analytics';
+import { initChunkErrorHandler, checkAndRecoverFromChunkError } from './utils/chunk-error-handler';
 import './styles/index.scss';
+
+// Initialize chunk error handling before rendering
+initChunkErrorHandler();
+checkAndRecoverFromChunkError();
 
 AnalyticsInitializer();
 

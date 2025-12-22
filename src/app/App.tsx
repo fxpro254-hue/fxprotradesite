@@ -1,13 +1,14 @@
 import { initSurvicate } from '../public-path';
-import { lazy, Suspense, useEffect, useState } from 'react'; // Added useState
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import ErrorBoundary from '@/components/error-boundary/ErrorBoundary';
 import ChunkLoader from '@/components/loader/chunk-loader';
 import RoutePromptDialog from '@/components/route-prompt-dialog';
 import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
-import PWAInstallModal from '@/components/pwa-install-modal/PWAInstallModal'; // Import the new modal
+import PWAInstallModal from '@/components/pwa-install-modal/PWAInstallModal';
 import { TAuthData } from '@/types/api-types';
 import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
 import CoreStoreProvider from './CoreStoreProvider';
@@ -15,6 +16,26 @@ import './app-root.scss';
 
 const Layout = lazy(() => import('../components/layout'));
 const AppRoot = lazy(() => import('./app-root'));
+
+// Error fallback component for routes
+const RouteErrorFallback = () => (
+    <div style={{ padding: '40px', textAlign: 'center' }}>
+        <h2>⚠️ Failed to load this page</h2>
+        <p>Please try refreshing or going back to the home page.</p>
+        <button onClick={() => window.location.href = '/'} style={{
+            padding: '10px 20px',
+            marginTop: '20px',
+            background: '#667eea',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px',
+        }}>
+            Go Home
+        </button>
+    </div>
+);
 
 // Define an interface for the BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -35,6 +56,7 @@ const router = createBrowserRouter(
     createRoutesFromElements(
         <Route
             path='/'
+            errorElement={<RouteErrorFallback />}
             element={
                 <Suspense
                     fallback={<ChunkLoader message={localize('Please wait while we connect to the server...')} />}
@@ -50,9 +72,9 @@ const router = createBrowserRouter(
                 </Suspense>
             }
         >
-            <Route index element={<AppRoot />} />
-            <Route path='endpoint' element={<Endpoint />} />
-            <Route path='callback' element={<CallbackPage />} />
+            <Route index element={<AppRoot />} errorElement={<RouteErrorFallback />} />
+            <Route path='endpoint' element={<Endpoint />} errorElement={<RouteErrorFallback />} />
+            <Route path='callback' element={<CallbackPage />} errorElement={<RouteErrorFallback />} />
         </Route>
     )
 );
@@ -117,7 +139,6 @@ function App() {
     useEffect(() => {
         const accountsList = localStorage.getItem('accountsList');
         const clientAccounts = localStorage.getItem('clientAccounts');
-        const activeLoginid = localStorage.getItem('active_loginid');
         const urlParams = new URLSearchParams(window.location.search);
         const accountCurrency = urlParams.get('account');
 
@@ -185,15 +206,17 @@ function App() {
     }, []);
 
     return (
-        <>
-            <RouterProvider router={router} />
-            <PWAInstallModal
-                show={showInstallModal && !!deferredInstallPrompt}
-                onInstall={handlePWAInstall}
-                onClose={handlePWAModalClose}
-            />
-            <Analytics />
-        </>
+        <ErrorBoundary>
+            <>
+                <RouterProvider router={router} />
+                <PWAInstallModal
+                    show={showInstallModal && !!deferredInstallPrompt}
+                    onInstall={handlePWAInstall}
+                    onClose={handlePWAModalClose}
+                />
+                <Analytics />
+            </>
+        </ErrorBoundary>
     );
 }
 

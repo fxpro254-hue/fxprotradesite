@@ -12,6 +12,7 @@ import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
 import NotificationBanner from '../notification-banner';
+import NetworkSpeedIndicator from '../network-speed-indicator';
 import './layout.scss';
 
 const Layout = () => {
@@ -99,6 +100,7 @@ const Layout = () => {
             </Body>
             {!isCallbackPage && <DisclaimerButton />}
             {!isCallbackPage && isDesktop && <Footer />}
+            {!isCallbackPage && <NetworkSpeedIndicator />}
         </div>
     );
 };

@@ -77,9 +77,26 @@ export default defineConfig({
         port: 8443,
         compress: true,
         historyApiFallback: true,
+        headers: {
+            // Prevent caching of chunk files that might be corrupted
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+        },
     },
     dev: {
         hmr: true,
+    },
+    performance: {
+        // Optimize chunk splitting to avoid large chunks
+        chunkSplit: {
+            strategy: 'split-by-module',
+            override: {
+                chunks: 'all',
+                minSize: 20000,
+                maxSize: 200000,
+            },
+        },
     },
     tools: {
         rspack: {
@@ -93,6 +110,11 @@ export default defineConfig({
                         use: 'raw-loader',
                     },
                 ],
+            },
+            optimization: {
+                runtimeChunk: {
+                    name: 'runtime',
+                },
             },
         },
     },
