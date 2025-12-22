@@ -76,16 +76,6 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
             },
         },
         {
-            id: 'community',
-            label: 'Community',
-            icon: <LabelPairedUsersMdRegularIcon height='24px' width='24px' />,
-            variant: 'primary',
-            callback: () => {
-                setActiveTab(DBOT_TABS.COMMUNITY);
-                rudderStackSendDashboardClickEvent({});
-            },
-        },
-        {
             id: 'bot-builder',
             label: 'Bot Builder',
             icon: <DerivLightBotBuilderIcon height='24px' width='24px' />,

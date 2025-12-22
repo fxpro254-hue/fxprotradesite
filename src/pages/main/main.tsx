@@ -41,7 +41,6 @@ declare global {
 
 const Chart = lazy(() => import('../chart'));
 const DTrader = lazy(() => import('../dtrader'));
-const Community = lazy(() => import('../community'));
 const Forex = lazy(() => import('../forex'));
 
 const DashboardIcon = () => (
@@ -181,41 +180,6 @@ const DTraderIcon = () => (
         />
         <path d='M6 19H6.01' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
         <path d='M10 19H10.01' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
-    </svg>
-);
-
-const CommunityIcon = () => (
-    <svg width='20px' height='20px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-        <path
-            d='M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21'
-            stroke='var(--text-general)'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-        />
-        <circle
-            cx='9'
-            cy='7'
-            r='4'
-            stroke='var(--text-general)'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-        />
-        <path
-            d='M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13'
-            stroke='var(--text-general)'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-        />
-        <path
-            d='M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88'
-            stroke='var(--text-general)'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-        />
     </svg>
 );
 
@@ -725,7 +689,7 @@ const AppWrapper = observer(() => {
         DBOT_TABS.CHART,
         DBOT_TABS.ANALYSIS_TOOL,
         DBOT_TABS.FREE_BOTS,
-    ].includes(active_tab) && active_tab !== DBOT_TABS.COMMUNITY;
+    ].includes(active_tab);
 
     // Scroll to top functionality
     useEffect(() => {
@@ -1218,21 +1182,6 @@ const AppWrapper = observer(() => {
                         <div
                             label={
                                 <>
-                                    <CommunityIcon />
-                                    <Localize i18n_default_text='Community' />
-                                </>
-                            }
-                            id='id-community'
-                        >
-                            <div className='dashboard__community-wrapper'>
-                                <Suspense fallback={<ChunkLoader message={localize('Loading Community...')} />}>
-                                    <Community />
-                                </Suspense>
-                            </div>
-                        </div>
-                        <div
-                            label={
-                                <>
                                     <PortfolioIcon />
                                     <Localize i18n_default_text='Portfolio' />
                                 </>
@@ -1263,7 +1212,7 @@ const AppWrapper = observer(() => {
             </div>
             <DesktopWrapper>
                 <div className='main__run-strategy-wrapper'>
-                    {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunStrategy />}
+                    {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunStrategy />}
                     {showRunPanel && <RunPanel />}
                 </div>
                 <ChartModal />
@@ -1274,7 +1223,7 @@ const AppWrapper = observer(() => {
                 <StandaloneChartModal />
             </DesktopWrapper>
             <MobileWrapper>
-                {active_tab !== DBOT_TABS.COMMUNITY && active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunPanel />}
+                {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunPanel />}
             </MobileWrapper>
             <Dialog
                 cancel_button_text={cancel_button_text || localize('Cancel')}
