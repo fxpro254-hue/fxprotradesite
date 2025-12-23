@@ -52,8 +52,8 @@ const NetworkSpeedIndicator = () => {
         for (let i = 0; i < 3; i++) {
             try {
                 const start = performance.now();
-                // Use a reliable endpoint that responds quickly
-                await fetch(`https://www.gstatic.com/images/branding/product/1x/gstatic_64dp.png?nocache=${Math.random()}`, {
+                // Use a CORS-friendly endpoint that responds quickly
+                await fetch(`https://httpbin.org/status/200?nocache=${Math.random()}`, {
                     method: 'GET',
                     cache: 'no-store',
                     signal: AbortSignal.timeout(5000), // 5 second timeout
@@ -119,9 +119,9 @@ const NetworkSpeedIndicator = () => {
 
             return Math.max(0.01, speedMbps);
         } catch {
-            // Fallback: try with a different endpoint
+            // Fallback: use smaller test with CORS-friendly endpoint
             try {
-                const testUrl = `https://www.gstatic.com/images/branding/product/1x/gstatic_64dp.png?cache=${Math.random()}`;
+                const testUrl = `https://httpbin.org/image/png?cache=${Math.random()}`;
                 const startTime = performance.now();
                 
                 const response = await fetch(testUrl, {

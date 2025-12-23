@@ -12,26 +12,28 @@ const STORAGE_KEY = 'disclaimer_hidden';
 const DisclaimerButton: React.FC = observer(() => {
     const { isMobile } = useDevice();
     
+    // Initialize hooks BEFORE any conditional logic
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const [shouldShow, setShouldShow] = useState(true);
+    const [position, setPosition] = useState({ 
+        x: typeof window !== 'undefined' ? window.innerWidth - (isMobile ? 130 : 160) : 0, 
+        y: typeof window !== 'undefined' ? window.innerHeight - (isMobile ? 60 : 80) : 0
+    });
+    const [isDragging, setIsDragging] = useState(false);
+    const dragRef = useRef<HTMLDivElement>(null);
+    // Reference for tracking starting points of drag
+    const startPosRef = useRef({ x: 0, y: 0, left: 0, top: 0 });
+    
     try {
         const store = useStore();
         
-        // Early return if store is not initialized yet
+        // Check if store is initialized - but after hooks
         if (!store || !store.dashboard || typeof store.dashboard.active_tab === 'undefined') {
             return null;
         }
         
         const { dashboard } = store;
         const { active_tab } = dashboard;
-    const [isPopupOpen, setIsPopupOpen] = useState(false);
-    const [shouldShow, setShouldShow] = useState(true);
-    const [position, setPosition] = useState({ 
-        x: window.innerWidth - (isMobile ? 130 : 160), 
-        y: window.innerHeight - (isMobile ? 60 : 80) 
-    });
-    const [isDragging, setIsDragging] = useState(false);
-    const dragRef = useRef<HTMLDivElement>(null);
-    // Reference for tracking starting points of drag
-    const startPosRef = useRef({ x: 0, y: 0, left: 0, top: 0 });
 
     // Only show disclaimer when active tab is dashboard
     const shouldShowDisclaimer = typeof active_tab === 'number' && active_tab === DBOT_TABS.DASHBOARD;

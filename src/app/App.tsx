@@ -9,6 +9,7 @@ import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
 import PWAInstallModal from '@/components/pwa-install-modal/PWAInstallModal';
+import LearnMorePopup from '@/components/learn-more-popup/LearnMorePopup';
 import { TAuthData } from '@/types/api-types';
 import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
 import CoreStoreProvider from './CoreStoreProvider';
@@ -66,6 +67,7 @@ const router = createBrowserRouter(
                             <RoutePromptDialog />
                             <CoreStoreProvider>
                                 <Layout />
+                                <LearnMorePopup />
                             </CoreStoreProvider>
                         </StoreProvider>
                     </TranslationProvider>
@@ -97,16 +99,17 @@ function App() {
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (event: Event) => {
-            event.preventDefault(); // Prevent the mini-infobar from appearing on mobile
+            // Don't prevent immediately - only prevent if we won't show the prompt
             const typedEvent = event as BeforeInstallPromptEvent;
-            setDeferredInstallPrompt(typedEvent);
-
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
             const alreadyInstalled = localStorage.getItem('dbot_pwa_already_installed') === 'true';
 
             if (!isStandalone && !alreadyInstalled) {
+                event.preventDefault(); // Only prevent if we'll show our custom prompt
+                setDeferredInstallPrompt(typedEvent);
                 setShowInstallModal(true);
             }
+            // If already installed or standalone, let the browser handle it naturally
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

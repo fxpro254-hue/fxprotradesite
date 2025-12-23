@@ -15,12 +15,14 @@ const availableBots = [
         title: 'Super Recovery',
         category: 'automated',
         description: 'Advanced recovery system with smart frequency analysis, dual prediction targeting, and dynamic risk management for consistent profitability.',
+        premium: true,
     },
     {
         file: 'Elite Starship.xml',
         title: 'Elite Starship',
         category: 'automated',
         description: 'High-performance trading bot with frequency analysis, dynamic predictions, and advanced risk management system.',
+        premium: true,
     },
     {
         file: 'O_U oracle.xml',
@@ -77,6 +79,7 @@ const availableBots = [
         category: 'popular',
         description:
             'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.',
+        premium: true,
     },
     {
         file: 'H_L auto vault.xml',
@@ -90,6 +93,7 @@ const availableBots = [
         category: 'automated',
         description:
             'Community favorite with proven track record in various market conditions and excellent risk management.',
+        premium: true,
     },
     {
         file: 'Mavic-Air-RF Vix Bot.xml',
@@ -142,6 +146,7 @@ const availableBots = [
         category: 'automated',
         description:
             'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.',
+        premium: true,
     },
     {
         file: 'Upgraded Candlemine.xml',
@@ -182,6 +187,13 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
     const [searchResults, setSearchResults] = useState(availableBots);
     const [showResults, setShowResults] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
+    const [isCurrentUserPremium] = useState(() => {
+        // Check if current user is premium
+        const userEmail = localStorage.getItem('userEmail');
+        // This will be synced with the main component's premium emails
+        // For now, return false - will be checked when user clicks
+        return false;
+    });
 
     // Filter bots based on search query
     const filterBots = useCallback((query: string) => {
@@ -224,8 +236,16 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
 
     // Handle bot selection
     const handleBotSelect = useCallback(
-        async (botFile: string, botTitle: string) => {
+        async (botFile: string, botTitle: string, isPremium?: boolean) => {
             console.log(`Selected bot: ${botTitle} (${botFile})`);
+
+            // Check if bot is premium and user doesn't have access
+            if (isPremium && !isCurrentUserPremium) {
+                console.log('🔒 Premium bot - user doesn\'t have access');
+                // Show notification that this is a premium bot
+                alert('This is a premium bot. Please purchase access to use it.');
+                return;
+            }
 
             try {
                 // Navigate to Bot Builder tab first
@@ -344,10 +364,17 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
                                         data-testid={`search-result-${index}`}
                                     >
                                         <button
-                                            onClick={() => handleBotSelect(bot.file, bot.title)}
+                                            onClick={() => handleBotSelect(bot.file, bot.title, bot.premium)}
                                             className='free-bot-search-bar__result-content'
                                         >
-                                            <div className='free-bot-search-bar__result-title'>{bot.title}</div>
+                                            <div className='free-bot-search-bar__result-title'>
+                                                {bot.title}
+                                                {bot.premium && (
+                                                    <span className={`free-bot-search-bar__premium-badge ${isCurrentUserPremium ? 'free-bot-search-bar__premium-badge--unlocked' : ''}`}>
+                                                        {isCurrentUserPremium ? 'UNLOCKED ✓' : 'PREMIUM ★'}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className='free-bot-search-bar__result-description'>
                                                 {bot.description.length > 80
                                                     ? `${bot.description.substring(0, 80)}...`
