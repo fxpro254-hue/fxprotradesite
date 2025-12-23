@@ -187,13 +187,58 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
     const [searchResults, setSearchResults] = useState(availableBots);
     const [showResults, setShowResults] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-    const [isCurrentUserPremium] = useState(() => {
-        // Check if current user is premium
-        const userEmail = localStorage.getItem('userEmail');
-        // This will be synced with the main component's premium emails
-        // For now, return false - will be checked when user clicks
-        return false;
-    });
+    const [premiumEmails, setPremiumEmails] = useState<string[]>([]);
+    const [isCurrentUserPremium, setIsCurrentUserPremium] = useState(false);
+    const [selectedPremiumBot, setSelectedPremiumBot] = useState<{ title: string; file: string } | null>(null);
+    const [showPremiumPopup, setShowPremiumPopup] = useState(false);
+
+    // Fetch premium emails from API
+    useEffect(() => {
+        const fetchPremiumEmails = async () => {
+            try {
+                const response = await fetch('https://database.binaryfx.site/api/1.1/obj/premium', {
+                    method: 'GET',
+                });
+
+                if (!response.ok) {
+                    console.error('Failed to fetch premium emails');
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Extract emails from API response
+                let emails: string[] = [];
+                if (data.response?.results && Array.isArray(data.response.results)) {
+                    data.response.results.forEach((item: any) => {
+                        if (item.emails && Array.isArray(item.emails)) {
+                            emails = emails.concat(item.emails);
+                        }
+                    });
+                }
+
+                // Remove duplicates using Set
+                const uniqueEmails = [...new Set(emails)];
+                setPremiumEmails(uniqueEmails);
+                console.log('✅ Premium emails loaded:', uniqueEmails);
+
+                // Check if current user is premium
+                const userEmail = localStorage.getItem('userEmail')?.toLowerCase();
+                const isPremium = userEmail ? uniqueEmails.some(email => email.toLowerCase() === userEmail) : false;
+                setIsCurrentUserPremium(isPremium);
+
+                if (isPremium) {
+                    console.log('✅ User is PREMIUM');
+                } else {
+                    console.log('❌ User is NOT PREMIUM');
+                }
+            } catch (error) {
+                console.error('Error fetching premium emails:', error);
+            }
+        };
+
+        fetchPremiumEmails();
+    }, []);
 
     // Filter bots based on search query
     const filterBots = useCallback((query: string) => {
@@ -234,6 +279,15 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
         [filterBots]
     );
 
+    // Handle purchase via WhatsApp
+    const handlePurchaseClick = useCallback(() => {
+        const whatsappNumber = '254740009453';
+        const message = `Hi, I'm interested in purchasing access to all premium bots for $19 (one-time payment). Please provide more details.`;
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+        window.open(whatsappUrl, '_blank');
+    }, []);
+
     // Handle bot selection
     const handleBotSelect = useCallback(
         async (botFile: string, botTitle: string, isPremium?: boolean) => {
@@ -241,9 +295,9 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
 
             // Check if bot is premium and user doesn't have access
             if (isPremium && !isCurrentUserPremium) {
-                console.log('🔒 Premium bot - user doesn\'t have access');
-                // Show notification that this is a premium bot
-                alert('This is a premium bot. Please purchase access to use it.');
+                console.log('🔒 User is not premium - showing premium popup');
+                setSelectedPremiumBot({ title: botTitle, file: botFile });
+                setShowPremiumPopup(true);
                 return;
             }
 
@@ -421,6 +475,59 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Premium Access Popup */}
+                {showPremiumPopup && (
+                    <div className='premium-popup-overlay'>
+                        <div className='premium-popup'>
+                            <button
+                                className='premium-popup__close'
+                                onClick={() => setShowPremiumPopup(false)}
+                                aria-label='Close'
+                            >
+                                ✕
+                            </button>
+                            <div className='premium-popup__header'>
+                                <span className='premium-popup__star'>⭐</span>
+                                <h2 className='premium-popup__title'>Premium Bot Access</h2>
+                                <span className='premium-popup__star'>⭐</span>
+                            </div>
+                            <div className='premium-popup__content'>
+                                <p className='premium-popup__description'>
+                                    Get access to all premium bots including <strong>{selectedPremiumBot?.title}</strong> and unlock exclusive trading strategies designed for maximum profitability.
+                                </p>
+                                <div className='premium-popup__pricing'>
+                                    <span className='premium-popup__price'>$19</span>
+                                    <span className='premium-popup__period'>one-time</span>
+                                </div>
+                                <ul className='premium-popup__features'>
+                                    <li>✓ Lifetime access to all 5 premium bots</li>
+                                    <li>✓ Advanced trading strategies</li>
+                                    <li>✓ Regular updates & improvements</li>
+                                    <li>✓ Priority support</li>
+                                    <li>✓ One-time payment</li>
+                                </ul>
+                            </div>
+                            <div className='premium-popup__actions'>
+                                <button
+                                    className='premium-popup__purchase-btn'
+                                    onClick={handlePurchaseClick}
+                                >
+                                    <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
+                                        <path d='M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z' />
+                                    </svg>
+                                    Contact via WhatsApp
+                                </button>
+                                <button
+                                    className='premium-popup__cancel-btn'
+                                    onClick={() => setShowPremiumPopup(false)}
+                                >
+                                    Maybe Later
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
