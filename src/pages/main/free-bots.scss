@@ -331,6 +331,34 @@
                 opacity: 0.5;
             }
         }
+
+        // Remove blur for unlocked premium bots
+        &.bot-card--unlocked {
+            .bot-card__content {
+                filter: none;
+                pointer-events: auto;
+            }
+
+            .bot-card__description {
+                filter: none;
+            }
+
+            .bot-card__features {
+                filter: none;
+            }
+
+            .bot-card__action {
+                filter: none;
+                opacity: 1;
+                cursor: pointer;
+
+                &:hover {
+                    background: var(--brand-red-coral);
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(255, 68, 68, 0.3);
+                }
+            }
+        }
     }
 
     &:hover {

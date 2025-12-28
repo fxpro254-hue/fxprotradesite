@@ -1087,7 +1087,7 @@ const AppWrapper = observer(() => {
                                                 .map((bot, index) => (
                                                     <div
                                                         key={index}
-                                                        className={`bot-card ${bot.premium ? 'bot-card--premium' : ''}`}
+                                                        className={`bot-card ${bot.premium ? 'bot-card--premium' : ''} ${bot.premium && isCurrentUserPremium ? 'bot-card--unlocked' : ''}`}
                                                         onClick={e => {
                                                             e.stopPropagation();
                                                             handleBotClick(bot);
