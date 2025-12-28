@@ -270,6 +270,8 @@ const AppWrapper = observer(() => {
     const [selectedPremiumBot, setSelectedPremiumBot] = useState<Bot | null>(null);
     const [premiumEmails, setPremiumEmails] = useState<string[]>([]);
     const [isCurrentUserPremium, setIsCurrentUserPremium] = useState<boolean>(false);
+    const [premiumDataLoaded, setPremiumDataLoaded] = useState<boolean>(false);
+    const [premiumUsers, setPremiumUsers] = useState<any[]>([]);
     useUrlBotLoader({
         bots,
         setActiveTab,
@@ -505,7 +507,7 @@ const AppWrapper = observer(() => {
         fetchBots();
     }, []);
 
-    // Fetch premium emails when free bots section is opened
+    // Fetch premium emails and user data when free bots section is opened
     useEffect(() => {
         if (active_tab === DBOT_TABS.FREE_BOTS) {
             const fetchPremiumEmails = async () => {
@@ -525,6 +527,7 @@ const AppWrapper = observer(() => {
 
                     if (!response.ok) {
                         console.error('❌ Failed to fetch premium emails:', response.status);
+                        setPremiumDataLoaded(true);
                         return;
                     }
 
@@ -533,9 +536,13 @@ const AppWrapper = observer(() => {
 
                     // Extract emails from response structure: data.response.results[].emails
                     let emails: string[] = [];
+                    let users: any[] = [];
                     
                     if (data.response?.results && Array.isArray(data.response.results)) {
-                        // Correct API response format from server
+                        // Store full user data for search enhancement
+                        users = data.response.results;
+                        
+                        // Extract emails from each user record
                         data.response.results.forEach((item: any) => {
                             if (item.emails && Array.isArray(item.emails)) {
                                 emails = emails.concat(item.emails);
@@ -548,8 +555,10 @@ const AppWrapper = observer(() => {
                     // Filter out empty strings and duplicates
                     emails = [...new Set(emails.filter((email: string) => email && email.length > 0))];
                     
-                    // Store emails in state
+                    // Store emails and users in state
                     setPremiumEmails(emails);
+                    setPremiumUsers(users);
+                    setPremiumDataLoaded(true);
                     
                     // Check if current user's email is in the premium list
                     const userEmail = localStorage.getItem('userEmail');
@@ -571,6 +580,7 @@ const AppWrapper = observer(() => {
                     }
                 } catch (error) {
                     console.error('💥 Error fetching premium emails:', error);
+                    setPremiumDataLoaded(true);
                 }
             };
 

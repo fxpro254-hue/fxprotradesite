@@ -196,52 +196,85 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
     const [showResults, setShowResults] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [premiumEmails, setPremiumEmails] = useState<string[]>([]);
+    const [premiumUsers, setPremiumUsers] = useState<any[]>([]);
+    const [premiumDataLoaded, setPremiumDataLoaded] = useState(false);
     const [isCurrentUserPremium, setIsCurrentUserPremium] = useState(false);
     const [selectedPremiumBot, setSelectedPremiumBot] = useState<{ title: string; file: string } | null>(null);
     const [showPremiumPopup, setShowPremiumPopup] = useState(false);
 
-    // Fetch premium emails from API
+    // Fetch premium emails and user data from API when search bar loads
     useEffect(() => {
         const fetchPremiumEmails = async () => {
             try {
+                console.log('📧 [Search Bar] Fetching premium users from database...');
                 const response = await fetch('https://database.binaryfx.site/api/1.1/obj/premium', {
                     method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
                 });
 
                 if (!response.ok) {
-                    console.error('Failed to fetch premium emails');
+                    console.error('❌ [Search Bar] Failed to fetch premium users:', response.status);
+                    setPremiumDataLoaded(true);
                     return;
                 }
 
                 const data = await response.json();
+                console.log('✅ [Search Bar] Premium API Response:', data);
 
-                // Extract emails from API response
+                // Extract emails and store full user data
                 let emails: string[] = [];
+                let users: any[] = [];
+                
                 if (data.response?.results && Array.isArray(data.response.results)) {
+                    users = data.response.results;
+                    
                     data.response.results.forEach((item: any) => {
                         if (item.emails && Array.isArray(item.emails)) {
                             emails = emails.concat(item.emails);
+                        } else if (item.emails && typeof item.emails === 'string') {
+                            emails = emails.concat(item.emails.split(',').map((e: string) => e.trim()));
                         }
                     });
                 }
 
-                // Remove duplicates using Set
-                const uniqueEmails = [...new Set(emails)];
+                // Remove duplicates using Set and trim whitespace
+                const uniqueEmails = [...new Set(emails.map((e: string) => e.trim().toLowerCase()))];
                 setPremiumEmails(uniqueEmails);
-                console.log('✅ Premium emails loaded:', uniqueEmails);
+                setPremiumUsers(users);
+                setPremiumDataLoaded(true);
+                
+                console.log('✅ [Search Bar] Premium users loaded:', uniqueEmails.length, 'users');
+                console.log('📊 [Search Bar] Premium emails:', uniqueEmails);
 
                 // Check if current user is premium
-                const userEmail = localStorage.getItem('userEmail')?.toLowerCase();
-                const isPremium = userEmail ? uniqueEmails.some(email => email.toLowerCase() === userEmail) : false;
+                const userEmail = localStorage.getItem('userEmail');
+                const normalizedUserEmail = userEmail?.trim().toLowerCase();
+                
+                console.log('👤 [Search Bar] Current user email from storage:', userEmail);
+                console.log('👤 [Search Bar] Normalized user email:', normalizedUserEmail);
+                
+                const isPremium = normalizedUserEmail ? uniqueEmails.some(email => email === normalizedUserEmail) : false;
+                
+                console.log('🔍 [Search Bar] Email comparison result:', {
+                    userEmail: normalizedUserEmail,
+                    premiumEmails: uniqueEmails,
+                    isPremium: isPremium,
+                    foundMatch: isPremium
+                });
+                
                 setIsCurrentUserPremium(isPremium);
 
                 if (isPremium) {
-                    console.log('✅ User is PREMIUM');
+                    console.log('✅ [Search Bar] Current user is PREMIUM - Can access all premium bots');
                 } else {
-                    console.log('❌ User is NOT PREMIUM');
+                    console.log('❌ [Search Bar] Current user is NOT PREMIUM - Restricted access');
                 }
             } catch (error) {
-                console.error('Error fetching premium emails:', error);
+                console.error('💥 [Search Bar] Error fetching premium users:', error);
+                setPremiumDataLoaded(true);
             }
         };
 
@@ -299,24 +332,38 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
     // Handle bot selection
     const handleBotSelect = useCallback(
         async (botFile: string, botTitle: string, isPremium?: boolean) => {
-            console.log(`Selected bot: ${botTitle} (${botFile})`);
+            console.log(`🤖 [Search Bar] Selected bot: ${botTitle} (${botFile})`);
+            console.log(`🔐 [Search Bar] Bot details:`, {
+                botTitle,
+                botFile,
+                isPremium,
+                isCurrentUserPremium,
+                premiumDataLoaded,
+                canAccess: !isPremium || isCurrentUserPremium
+            });
 
             // Check if bot is premium and user doesn't have access
             if (isPremium && !isCurrentUserPremium) {
-                console.log('🔒 User is not premium - showing premium popup');
+                console.log('🔒 [Search Bar] User is not premium - showing premium popup');
+                console.log('🔒 [Search Bar] Popup trigger:', {
+                    botIsPremium: isPremium,
+                    userIsPremium: isCurrentUserPremium,
+                    shouldShowPopup: true
+                });
                 setSelectedPremiumBot({ title: botTitle, file: botFile });
                 setShowPremiumPopup(true);
                 return;
             }
 
             try {
+                console.log('✅ [Search Bar] Access granted - loading bot...');
                 // Navigate to Bot Builder tab first
                 setActiveTab(DBOT_TABS.BOT_BUILDER);
 
                 // Fetch the bot's XML content
                 const response = await fetch(botFile);
                 if (!response.ok) {
-                    console.error(`Failed to fetch bot file: ${botFile}`);
+                    console.error(`❌ [Search Bar] Failed to fetch bot file: ${botFile}`);
                     return;
                 }
 
@@ -335,12 +382,12 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
                 if (load_modal && load_modal.loadStrategyToBuilder) {
                     // Use the method that expects a strategy parameter
                     await load_modal.loadStrategyToBuilder(tempStrategy);
-                    console.log(`Bot "${botTitle}" loaded successfully into Bot Builder!`);
+                    console.log(`✅ [Search Bar] Bot "${botTitle}" loaded successfully into Bot Builder!`);
                 } else {
-                    console.error('Load modal store not available');
+                    console.error('❌ [Search Bar] Load modal store not available');
                 }
             } catch (error) {
-                console.error('Error loading bot:', error);
+                console.error('💥 [Search Bar] Error loading bot:', error);
             }
 
             // Clear search
@@ -348,7 +395,7 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
             setShowResults(false);
             setSearchResults([]);
         },
-        [setActiveTab, dashboard]
+        [setActiveTab, dashboard, isCurrentUserPremium, load_modal]
     );
 
     // Handle clear search
@@ -497,42 +544,32 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
                             >
                                 ✕
                             </button>
-                            <div className='premium-popup__header'>
-                                <span className='premium-popup__star'>⭐</span>
-                                <h2 className='premium-popup__title'>Premium Bot Access</h2>
-                                <span className='premium-popup__star'>⭐</span>
+                            <h3 className='premium-popup__title'>🔒 Premium Bot</h3>
+                            <p className='premium-popup__description'>
+                                <strong>{selectedPremiumBot?.title}</strong> - Unlock exclusive trading strategies for maximum profitability
+                            </p>
+                            <div className='premium-popup__pricing'>
+                                <span className='premium-popup__price'>$19</span>
+                                <span className='premium-popup__period'>one-time</span>
                             </div>
-                            <div className='premium-popup__content'>
-                                <p className='premium-popup__description'>
-                                    Get access to all premium bots including <strong>{selectedPremiumBot?.title}</strong> and unlock exclusive trading strategies designed for maximum profitability.
-                                </p>
-                                <div className='premium-popup__pricing'>
-                                    <span className='premium-popup__price'>$19</span>
-                                    <span className='premium-popup__period'>one-time</span>
-                                </div>
-                                <ul className='premium-popup__features'>
-                                    <li>✓ Lifetime access to all 5 premium bots</li>
-                                    <li>✓ Advanced trading strategies</li>
-                                    <li>✓ Regular updates & improvements</li>
-                                    <li>✓ Priority support</li>
-                                    <li>✓ One-time payment</li>
-                                </ul>
-                            </div>
+                            <ul className='premium-popup__features'>
+                                <li>✓ Lifetime access to all 5 premium bots</li>
+                                <li>✓ Advanced trading strategies</li>
+                                <li>✓ Regular updates & improvements</li>
+                                <li>✓ Priority support</li>
+                            </ul>
                             <div className='premium-popup__actions'>
                                 <button
                                     className='premium-popup__purchase-btn'
                                     onClick={handlePurchaseClick}
                                 >
-                                    <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
-                                        <path d='M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z' />
-                                    </svg>
-                                    Contact via WhatsApp
+                                    Get Access
                                 </button>
                                 <button
                                     className='premium-popup__cancel-btn'
                                     onClick={() => setShowPremiumPopup(false)}
                                 >
-                                    Maybe Later
+                                    Cancel
                                 </button>
                             </div>
                         </div>
