@@ -11,6 +11,14 @@ import { TStrategy } from 'Types';
 // Comprehensive bot files available for search - includes all bots from public directory
 const availableBots = [
     {
+        file: '2026 over turbo.xml',
+        title: '2026 over turbo',
+        category: 'automated',
+        description:
+            'Trades digit over, after a loss, it increases prediction to maintain same stake. Best for accounts with $50+ balance.',
+        premium: true,
+    },
+    {
         file: 'Super recovery.xml',
         title: 'Super Recovery',
         category: 'automated',
