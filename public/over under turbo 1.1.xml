@@ -14,6 +14,8 @@
         <field name="MARKET_LIST">synthetic_index</field>
         <field name="SUBMARKET_LIST">random_index</field>
         <field name="SYMBOL_LIST">1HZ10V</field>
+        <field name="TRADE_ALL_MARKETS">TRUE</field>
+        <field name="EVERY_X_RUNS">1</field>
         <next>
           <block type="trade_definition_tradetype" id="=kFD|Y8,]Y#[E(E97k6S" deletable="false" movable="false">
             <field name="TRADETYPECAT_LIST">digits</field>
@@ -114,7 +116,7 @@
     </statement>
     <statement name="SUBMARKET">
       <block type="trade_definition_tradeoptions" id="|xN_vJ%xMIocn]+(G)Rg">
-        <mutation xmlns="http://www.w3.org/1999/xhtml" has_first_barrier="false" has_second_barrier="false" has_prediction="true"></mutation>
+        <mutation xmlns="http://www.w3.org/1999/xhtml" has_first_barrier="false" has_second_barrier="false" has_prediction="true" has_growth_rate="false" has_take_profit="false"></mutation>
         <field name="DURATIONTYPE_LIST">t</field>
         <value name="DURATION">
           <shadow type="math_number_positive" id="8b!4/[HXNqTzBIJ^G=xQ">
@@ -140,7 +142,7 @@
       </block>
     </statement>
   </block>
-  <block type="during_purchase" id="#7rZ9iGV*cb|UVLk;Ec#" x="1374" y="60">
+  <block type="during_purchase" id="#7rZ9iGV*cb|UVLk;Ec#" x="892" y="60">
     <statement name="DURING_PURCHASE_STACK">
       <block type="controls_if" id="?4y1h:n=o3noT^II.71@">
         <value name="IF0">
@@ -149,7 +151,7 @@
       </block>
     </statement>
   </block>
-  <block type="after_purchase" id="K5|8n-Z/YQ`~-c#s%*wF" x="1374" y="292">
+  <block type="after_purchase" id="K5|8n-Z/YQ`~-c#s%*wF" x="892" y="292">
     <statement name="AFTERPURCHASE_STACK">
       <block type="controls_if" id="DQ}Z4_d8Mt$@Vf|L:0ST">
         <mutation xmlns="http://www.w3.org/1999/xhtml" else="1"></mutation>
@@ -262,7 +264,7 @@
       </block>
     </statement>
   </block>
-  <block type="before_purchase" id="*fo,Z?s_/0bhYe%g,w/G" deletable="false" x="0" y="976">
+  <block type="before_purchase" id="*fo,Z?s_/0bhYe%g,w/G" deletable="false" x="0" y="1018">
     <statement name="BEFOREPURCHASE_STACK">
       <block type="controls_if" id="ayWzExFM.Qh#gn0oIN^X">
         <mutation xmlns="http://www.w3.org/1999/xhtml" elseif="1"></mutation>
@@ -323,6 +325,16 @@
           <block type="purchase" id="z5G@:,Z?(n-t~91]kuGz" inline="false">
             <field name="PURCHASE_LIST">DIGITOVER</field>
             <field name="TRADE_EACH_TICK">false</field>
+            <value name="BARRIER_OFFSET">
+              <shadow type="math_number" id="d}ZiP=W%Vpf#@nww3]Ra" inline="true">
+                <field name="NUM">0.1</field>
+              </shadow>
+            </value>
+            <value name="SECONDBARRIER_OFFSET">
+              <shadow type="math_number" id="o^Ac~,:#6l9J!T~DzKVE" inline="true">
+                <field name="NUM">-0.1</field>
+              </shadow>
+            </value>
             <value name="PREDICTION">
               <block type="variables_get" id="I]5q~%|jvMDu9q8S|3~m">
                 <field name="VAR" id="KhH.u8QT6|rKZKl@t9wO">prediction</field>
@@ -387,6 +399,16 @@
           <block type="purchase" id="/G3Bl5(:Cup{M@c#uVy!" inline="false">
             <field name="PURCHASE_LIST">DIGITUNDER</field>
             <field name="TRADE_EACH_TICK">false</field>
+            <value name="BARRIER_OFFSET">
+              <shadow type="math_number" id="WRQ}-f~OeQ}YF/(RRT$i" inline="true">
+                <field name="NUM">0.1</field>
+              </shadow>
+            </value>
+            <value name="SECONDBARRIER_OFFSET">
+              <shadow type="math_number" id="aNr7~Qq+e7h{Ic27Wx8@" inline="true">
+                <field name="NUM">-0.1</field>
+              </shadow>
+            </value>
             <value name="PREDICTION">
               <block type="variables_get" id="9o!oeM6pctKfv_7Sg+9%">
                 <field name="VAR" id="*i~O0{Fg3IV7v5N9fN%H">prediction 2</field>
@@ -397,7 +419,7 @@
       </block>
     </statement>
   </block>
-  <block type="math_number" id="@SeaBcG#ZS0*6AY3K/tw" disabled="true" x="0" y="1464">
+  <block type="math_number" id="@SeaBcG#ZS0*6AY3K/tw" disabled="true" x="0" y="1470">
     <field name="NUM">0</field>
   </block>
 </xml>

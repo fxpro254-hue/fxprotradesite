@@ -16,6 +16,8 @@
         <field name="MARKET_LIST">synthetic_index</field>
         <field name="SUBMARKET_LIST">random_index</field>
         <field name="SYMBOL_LIST">1HZ10V</field>
+        <field name="TRADE_ALL_MARKETS">TRUE</field>
+        <field name="EVERY_X_RUNS">1</field>
         <next>
           <block type="trade_definition_tradetype" id="4BIa?F@i2*Mlrd:{G,SF" deletable="false" movable="false">
             <field name="TRADETYPECAT_LIST">digits</field>
@@ -89,7 +91,7 @@
                             <field name="VAR" id="Nxp2HTQiWFekk(WpsRn$">recovery prediction</field>
                             <value name="VALUE">
                               <block type="math_number" id=";),~+=;!UGmLEC/jN8;v">
-                                <field name="NUM">4</field>
+                                <field name="NUM">2</field>
                               </block>
                             </value>
                             <next>
@@ -145,7 +147,7 @@
     </statement>
     <statement name="SUBMARKET">
       <block type="trade_definition_tradeoptions" id="8=uN{72G(CSbw2LN=h?0">
-        <mutation xmlns="http://www.w3.org/1999/xhtml" has_first_barrier="false" has_second_barrier="false" has_prediction="true"></mutation>
+        <mutation xmlns="http://www.w3.org/1999/xhtml" has_first_barrier="false" has_second_barrier="false" has_prediction="true" has_growth_rate="false" has_take_profit="false"></mutation>
         <field name="DURATIONTYPE_LIST">t</field>
         <value name="DURATION">
           <shadow type="math_number" id="!6mSlX6Ywa*q:{y,usj/">
@@ -171,7 +173,7 @@
       </block>
     </statement>
   </block>
-  <block type="after_purchase" id="cb%w4#L|)A]1F1+)uk_u" x="714" y="60">
+  <block type="after_purchase" id="cb%w4#L|)A]1F1+)uk_u" x="892" y="60">
     <statement name="AFTERPURCHASE_STACK">
       <block type="controls_if" id="[=s{/TdSy]ZB81-C0{u0">
         <mutation xmlns="http://www.w3.org/1999/xhtml" else="1"></mutation>
@@ -240,8 +242,8 @@
                   <block type="variables_set" id="}`?QK]tw]8hHX/2z[U4V">
                     <field name="VAR" id="#yD3|)8x4cv^5(GM%$0l">prediction</field>
                     <value name="VALUE">
-                      <block type="math_number" id="~=`y%O:}X*50.Ss^UST|">
-                        <field name="NUM">5</field>
+                      <block type="variables_get" id="Bx+4!tQgAE#CU{#KnQt2">
+                        <field name="VAR" id="Nxp2HTQiWFekk(WpsRn$">recovery prediction</field>
                       </block>
                     </value>
                   </block>
@@ -371,7 +373,10 @@
       </block>
     </statement>
   </block>
-  <block type="before_purchase" id="Z])37`R^9KsrX4I7bAqP" deletable="false" x="0" y="1120">
+  <block type="math_number" id="~=`y%O:}X*50.Ss^UST|" x="1211" y="542">
+    <field name="NUM">5</field>
+  </block>
+  <block type="before_purchase" id="Z])37`R^9KsrX4I7bAqP" deletable="false" x="0" y="1162">
     <statement name="BEFOREPURCHASE_STACK">
       <block type="controls_if" id="!klj]F4VGr6BWIIFrtW5">
         <value name="IF0">
@@ -414,7 +419,7 @@
       </block>
     </statement>
   </block>
-  <block type="tick_analysis" id="0d];3OeEqJVb[2r_chZM" x="0" y="1426">
+  <block type="tick_analysis" id="0d];3OeEqJVb[2r_chZM" x="0" y="1476">
     <statement name="TICKANALYSIS_STACK">
       <block type="procedures_callnoreturn" id="#!kN%JjjXz~/eKG8{u+5">
         <mutation xmlns="http://www.w3.org/1999/xhtml" name="Last digit"></mutation>
@@ -422,7 +427,7 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_defnoreturn" id="h;3(Ef/qy@_?=nJKcJou" collapsed="true" x="0" y="1602">
+  <block type="procedures_defnoreturn" id="h;3(Ef/qy@_?=nJKcJou" collapsed="true" x="0" y="1652">
     <field name="NAME">Last digit</field>
     <comment pinned="false" h="80" w="160">Describe this function...</comment>
     <statement name="STACK">
