@@ -24,6 +24,19 @@ const TradingHubDisplay: React.FC = () => {
     const [martingale, setMartingale] = useState('2');
     const [isTrading, setIsTrading] = useState(false);
     const [isContinuousTrading, setIsContinuousTrading] = useState(false);
+
+    // Per-card trading state for decentralized run buttons
+    const [cardsTradingState, setCardsTradingState] = useState<{
+        o5u4: boolean;
+        matches: boolean;
+        overUnder: boolean;
+        differ: boolean;
+    }>({
+        o5u4: false,
+        matches: false,
+        overUnder: false,
+        differ: false
+    });
     const [currentBarrier, setCurrentBarrier] = useState<number | null>(null);
     const [currentSymbol, setCurrentSymbol] = useState<string>('R_100');
     const [currentStrategy, setCurrentStrategy] = useState<string>('over');
@@ -72,6 +85,20 @@ const TradingHubDisplay: React.FC = () => {
     const stopLossCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const isContinuousTradingRef = useRef(false); // Ref to track trading state in interval
     const slTpTriggeredRef = useRef(false); // Prevent multiple triggers
+
+    // Per-card interval refs for independent trading loops
+    const o5u4IntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const matchesIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const overUnderIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const differIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Per-card trading refs (for closures to have current values)
+    const cardsTradingRefs = useRef({
+        o5u4: false,
+        matches: false,
+        overUnder: false,
+        differ: false
+    });
 
     // Function to extract the last digit from a price based on its actual decimal places
     const getLastDigitFromPrice = (price: number): number => {
@@ -1876,6 +1903,20 @@ const TradingHubDisplay: React.FC = () => {
     };
     
     const executeMatchesTrades = async () => {
+        // Critical check: Is API available?
+        if (!api_base || !api_base.api) {
+            console.error('❌ CRITICAL: api_base.api is not available for Matches! Cannot execute trades.');
+            return;
+        }
+        
+        // Check API connection state
+        if (api_base.api.connection?.readyState !== 1) {
+            console.warn('⚠️ API connection not ready for Matches. State:', api_base.api.connection?.readyState);
+            return;
+        }
+        
+        console.log('✅ Matches: API is available and connected');
+        
         // Check if stop loss/take profit triggered - abort immediately
         if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
             console.log('🚫 Matches trade execution aborted - SL/TP triggered or trading stopped');
@@ -2303,6 +2344,20 @@ const TradingHubDisplay: React.FC = () => {
         console.log('🎯 DIFFER TRADE EXECUTION FUNCTION CALLED - Active cards: ' + 
             `O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
         
+        // Critical check: Is API available?
+        if (!api_base || !api_base.api) {
+            console.error('❌ CRITICAL: api_base.api is not available for Differ! Cannot execute trades.');
+            return;
+        }
+        
+        // Check API connection state
+        if (api_base.api.connection?.readyState !== 1) {
+            console.warn('⚠️ API connection not ready for Differ. State:', api_base.api.connection?.readyState);
+            return;
+        }
+        
+        console.log('✅ Differ: API is available and connected');
+        
         // Check if stop loss/take profit triggered - abort immediately
         if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
             console.log('🚫 Trade execution aborted - SL/TP triggered or trading stopped');
@@ -2502,6 +2557,20 @@ const TradingHubDisplay: React.FC = () => {
     };
 
     const executeDigitOverTrade = async () => {
+        // Critical check: Is API available?
+        if (!api_base || !api_base.api) {
+            console.error('❌ CRITICAL: api_base.api is not available for Over/Under! Cannot execute trades.');
+            return;
+        }
+        
+        // Check API connection state
+        if (api_base.api.connection?.readyState !== 1) {
+            console.warn('⚠️ API connection not ready for Over/Under. State:', api_base.api.connection?.readyState);
+            return;
+        }
+        
+        console.log('✅ Over/Under: API is available and connected');
+        
         // Check if stop loss/take profit triggered - abort immediately
         if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
             console.log('🚫 Trade execution aborted - SL/TP triggered or trading stopped');
@@ -2712,6 +2781,24 @@ const TradingHubDisplay: React.FC = () => {
     const executeO5U4Trade = async () => {
         console.log('🎯 O5U4 TRADE EXECUTION FUNCTION CALLED - Active cards: ' + 
             `O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
+        
+        // Critical check: Is API available?
+        if (!api_base || !api_base.api) {
+            console.error('❌ CRITICAL: api_base.api is not available! Cannot execute trades.');
+            console.error('   api_base:', api_base);
+            console.error('   api_base.api:', api_base?.api);
+            setIsTradeInProgress(false);
+            return;
+        }
+        
+        // Check API connection state
+        if (api_base.api.connection?.readyState !== 1) {
+            console.warn('⚠️ API connection not ready. State:', api_base.api.connection?.readyState);
+            setIsTradeInProgress(false);
+            return;
+        }
+        
+        console.log('✅ API is available and connected');
         
         // Check if stop loss/take profit triggered - abort immediately
         if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
@@ -3195,6 +3282,184 @@ const TradingHubDisplay: React.FC = () => {
         return true;
     };
 
+    // Individual card run/stop handlers for O5U4
+    const handleCardRunO5U4 = () => {
+        console.log('🎯 O5U4 Card: RUN button clicked');
+        if (cardsTradingState.o5u4) {
+            handleCardStopO5U4();
+        } else {
+            startCardTrading('o5u4');
+        }
+    };
+
+    const handleCardStopO5U4 = () => {
+        console.log('⛔ O5U4 Card: STOP button clicked');
+        cardsTradingRefs.current.o5u4 = false;
+        setCardsTradingState(prev => ({ ...prev, o5u4: false }));
+        if (o5u4IntervalRef.current) {
+            clearInterval(o5u4IntervalRef.current);
+            o5u4IntervalRef.current = null;
+        }
+    };
+
+    // Individual card run/stop handlers for Matches
+    const handleCardRunMatches = () => {
+        console.log('🎯 Matches Card: RUN button clicked');
+        if (cardsTradingState.matches) {
+            handleCardStopMatches();
+        } else {
+            startCardTrading('matches');
+        }
+    };
+
+    const handleCardStopMatches = () => {
+        console.log('⛔ Matches Card: STOP button clicked');
+        cardsTradingRefs.current.matches = false;
+        setCardsTradingState(prev => ({ ...prev, matches: false }));
+        if (matchesIntervalRef.current) {
+            clearInterval(matchesIntervalRef.current);
+            matchesIntervalRef.current = null;
+        }
+    };
+
+    // Individual card run/stop handlers for Over/Under
+    const handleCardRunOverUnder = () => {
+        console.log('🎯 Over/Under Card: RUN button clicked');
+        if (cardsTradingState.overUnder) {
+            handleCardStopOverUnder();
+        } else {
+            startCardTrading('overUnder');
+        }
+    };
+
+    const handleCardStopOverUnder = () => {
+        console.log('⛔ Over/Under Card: STOP button clicked');
+        cardsTradingRefs.current.overUnder = false;
+        setCardsTradingState(prev => ({ ...prev, overUnder: false }));
+        if (overUnderIntervalRef.current) {
+            clearInterval(overUnderIntervalRef.current);
+            overUnderIntervalRef.current = null;
+        }
+    };
+
+    // Individual card run/stop handlers for Differ
+    const handleCardRunDiffer = () => {
+        console.log('🎯 Differ Card: RUN button clicked');
+        if (cardsTradingState.differ) {
+            handleCardStopDiffer();
+        } else {
+            startCardTrading('differ');
+        }
+    };
+
+    const handleCardStopDiffer = () => {
+        console.log('⛔ Differ Card: STOP button clicked');
+        cardsTradingRefs.current.differ = false;
+        setCardsTradingState(prev => ({ ...prev, differ: false }));
+        if (differIntervalRef.current) {
+            clearInterval(differIntervalRef.current);
+            differIntervalRef.current = null;
+        }
+    };
+
+    // Core function to start individual card trading
+    const startCardTrading = (cardType: 'o5u4' | 'matches' | 'overUnder' | 'differ') => {
+        console.log(`🚀 Starting ${cardType} card trading`);
+        
+        prepareRunPanelForTradingHub();
+        cardsTradingRefs.current[cardType] = true;
+        setCardsTradingState(prev => ({ ...prev, [cardType]: true }));
+        slTpTriggeredRef.current = false;
+        
+        // CRITICAL: Set the continuous trading flag so trades can execute
+        isContinuousTradingRef.current = true;
+        console.log(`✅ Set isContinuousTradingRef.current = true for ${cardType} card trading`);
+
+        const persistedStake = localStorage.getItem('tradingHub_initialStake') || initialStake;
+        console.log(`Trading with stake: ${persistedStake}`);
+
+        setAppliedStake(persistedStake);
+        currentStakeRef.current = persistedStake;
+        setConsecutiveLosses(0);
+        currentConsecutiveLossesRef.current = 0;
+
+        // Create independent interval for this card
+        const intervalDelay = cardType === 'o5u4' ? 100 : cardType === 'matches' ? 200 : 3000;
+        
+        // Track if a trade is currently executing for this card
+        let isExecuting = false;
+        
+        const executeCardTrade = async () => {
+            // Check if SL/TP triggered or card stopped (using ref for current value)
+            if (slTpTriggeredRef.current || !cardsTradingRefs.current[cardType]) {
+                return;
+            }
+
+            // Prevent overlapping trade executions
+            if (isExecuting) {
+                console.log(`⏳ ${cardType}: Trade already executing, skipping`);
+                return;
+            }
+
+            try {
+                isExecuting = true;
+                console.log(`📍 ${cardType}: Starting trade execution`);
+                
+                switch (cardType) {
+                    case 'o5u4':
+                        if (isAutoO5U4Active && checkO5U4Conditions()) {
+                            console.log(`🎯 O5U4: Conditions met, executing trade`);
+                            await executeO5U4Trade();
+                        } else {
+                            console.log(`🔍 O5U4: Conditions not met or strategy inactive`);
+                        }
+                        break;
+                    case 'matches':
+                        if (isAutoMatchesActive && matchesAnalysis.readySymbols.length > 0) {
+                            console.log(`🎯 Matches: Analysis ready, executing trades`);
+                            await executeMatchesTrades();
+                        } else {
+                            console.log(`🔍 Matches: Not ready or strategy inactive`);
+                        }
+                        break;
+                    case 'overUnder':
+                        if (isAutoOverUnderActive) {
+                            console.log(`🎯 Over/Under: Executing trade`);
+                            await executeDigitOverTrade();
+                        } else {
+                            console.log(`🔍 Over/Under: Strategy inactive`);
+                        }
+                        break;
+                    case 'differ':
+                        if (isAutoDifferActive) {
+                            console.log(`🎯 Differ: Executing trade`);
+                            await executeDigitDifferTrade();
+                        } else {
+                            console.log(`🔍 Differ: Strategy inactive`);
+                        }
+                        break;
+                }
+            } catch (error) {
+                console.error(`❌ Error in ${cardType} trading:`, error);
+            } finally {
+                isExecuting = false;
+                console.log(`✅ ${cardType}: Trade execution completed`);
+            }
+        };
+
+        // Execute first trade immediately
+        console.log(`⏱️ ${cardType}: Executing initial trade`);
+        executeCardTrade();
+
+        const intervalRef = cardType === 'o5u4' ? o5u4IntervalRef : 
+                           cardType === 'matches' ? matchesIntervalRef :
+                           cardType === 'overUnder' ? overUnderIntervalRef :
+                           differIntervalRef;
+
+        intervalRef.current = setInterval(executeCardTrade, intervalDelay);
+        console.log(`⏲️ ${cardType}: Interval set with ${intervalDelay}ms delay`);
+    };
+
     const startTrading = () => {
         console.log('🚀 START TRADING clicked!');
         console.log(`Current strategy states - O5U4: ${isAutoO5U4Active}, Matches: ${isAutoMatchesActive}, OverUnder: ${isAutoOverUnderActive}, Differ: ${isAutoDifferActive}`);
@@ -3338,8 +3603,11 @@ const TradingHubDisplay: React.FC = () => {
         }
     };
 
+    // Tabbed interface state
+    const [activeTab, setActiveTab] = useState<'o5u4' | 'matches' | 'over-under' | 'differ'>('o5u4');
+
     return (
-        <div className={`trading-hub-modern ${is_dark_mode_on ? 'theme--dark' : 'theme--light'}`}>
+        <div className={`trading-hub-tabbed ${is_dark_mode_on ? 'theme--dark' : 'theme--light'}`}>
             {/* Show emoji animation when stopping trading and profit/loss is available */}
             {showEmojiAnimation && (
                 <EmojiAnimation isPositive={isProfitPositive} />
@@ -3479,7 +3747,373 @@ const TradingHubDisplay: React.FC = () => {
                 </div>
 
                 {/* Strategy Cards */}
-                <div className='strategy-grid'>
+                {/* Tab Navigation */}
+                <div className='tabs-container'>
+                    <div className='tabs-header'>
+                        <button
+                            className={`tab-button ${activeTab === 'o5u4' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('o5u4')}
+                        >
+                            <span className='tab-icon'>🎯</span>
+                            <span className='tab-label'>O5U4</span>
+                            {isAutoO5U4Active && <div className='tab-indicator'></div>}
+                        </button>
+                        <button
+                            className={`tab-button ${activeTab === 'matches' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('matches')}
+                        >
+                            <span className='tab-icon'>🔢</span>
+                            <span className='tab-label'>Matches</span>
+                            {isAutoMatchesActive && <div className='tab-indicator'></div>}
+                        </button>
+                        <button
+                            className={`tab-button ${activeTab === 'over-under' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('over-under')}
+                        >
+                            <span className='tab-icon'>📊</span>
+                            <span className='tab-label'>Over/Under</span>
+                            {isAutoOverUnderActive && <div className='tab-indicator'></div>}
+                        </button>
+                        <button
+                            className={`tab-button ${activeTab === 'differ' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('differ')}
+                        >
+                            <span className='tab-icon'>⚖️</span>
+                            <span className='tab-label'>Differ</span>
+                            {isAutoDifferActive && <div className='tab-indicator'></div>}
+                        </button>
+                    </div>
+
+                    {/* Tab Content Area */}
+                    <div className='tabs-content'>
+                        {/* O5U4 Tab */}
+                        {activeTab === 'o5u4' && (
+                            <div className='tab-panel o5u4-panel'>
+                                <div className='panel-header'>
+                                    <div className='header-left'>
+                                        <h2>Over 5 / Under 4 Strategy</h2>
+                                        <p>Dual digit prediction on consecutive ticks</p>
+                                    </div>
+                                    <div className='header-right'>
+                                        <span className={`strategy-badge ${isAutoO5U4Active ? 'active' : 'inactive'}`}>
+                                            {isAutoO5U4Active ? '● ACTIVE' : '○ INACTIVE'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className='panel-body'>
+                                    <div className='strategy-info'>
+                                        <p>
+                                            This advanced strategy trades over 5 and under 4 contracts simultaneously,
+                                            capturing digit movement patterns for quick profits on every tick.
+                                        </p>
+                                    </div>
+
+                                    {o5u4Analysis.bestSymbol && (
+                                        <div className='current-analysis'>
+                                            <h3>Current Analysis</h3>
+                                            <div className='analysis-grid'>
+                                                <div className='analysis-item'>
+                                                    <label>Best Symbol</label>
+                                                    <value>{o5u4Analysis.bestSymbol}</value>
+                                                </div>
+                                                <div className='analysis-item'>
+                                                    <label>Score</label>
+                                                    <value>{o5u4Analysis.symbolsAnalysis[o5u4Analysis.bestSymbol]?.score.toFixed(2)}</value>
+                                                </div>
+                                                <div className='analysis-item'>
+                                                    <label>Least Appearing</label>
+                                                    <value>{o5u4Analysis.symbolsAnalysis[o5u4Analysis.bestSymbol]?.leastAppearing}</value>
+                                                </div>
+                                                <div className='analysis-item'>
+                                                    <label>Most Appearing</label>
+                                                    <value>{o5u4Analysis.symbolsAnalysis[o5u4Analysis.bestSymbol]?.mostAppearing}</value>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {cardsTradingState.o5u4 && (
+                                        <div className='trading-status active'>
+                                            <div className='status-badge'>🔴 TRADING LIVE</div>
+                                            <div className='trade-stats'>
+                                                <div className='stat-row'>
+                                                    <span>Contracts Active:</span>
+                                                    <strong>
+                                                        {(o5u4ActiveContracts.current.over5ContractId ? 1 : 0) + 
+                                                         (o5u4ActiveContracts.current.under4ContractId ? 1 : 0)}
+                                                    </strong>
+                                                </div>
+                                                <div className='stat-row'>
+                                                    <span>Last Trade:</span>
+                                                    <strong>{lastO5U4Conditions.current?.symbol || 'N/A'}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className='panel-footer'>
+                                    <button
+                                        className={`toggle-btn ${isAutoO5U4Active ? 'active' : ''}`}
+                                        onClick={toggleAutoO5U4}
+                                        disabled={cardsTradingState.o5u4}
+                                    >
+                                        {isAutoO5U4Active ? '✓ Activated' : 'Activate Strategy'}
+                                    </button>
+                                    <button
+                                        className={`trade-btn ${cardsTradingState.o5u4 ? 'stop' : 'start'} ${!isAutoO5U4Active ? 'disabled' : ''}`}
+                                        onClick={handleCardRunO5U4}
+                                        disabled={!isAutoO5U4Active}
+                                    >
+                                        {cardsTradingState.o5u4 ? '⏹ STOP TRADING' : '▶ START TRADING'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Matches Tab */}
+                        {activeTab === 'matches' && (
+                            <div className='tab-panel matches-panel'>
+                                <div className='panel-header'>
+                                    <div className='header-left'>
+                                        <h2>Frequency Matches Strategy</h2>
+                                        <p>Pattern-based digit frequency analysis</p>
+                                    </div>
+                                    <div className='header-right'>
+                                        <span className={`strategy-badge ${isAutoMatchesActive ? 'active' : 'inactive'}`}>
+                                            {isAutoMatchesActive ? '● ACTIVE' : '○ INACTIVE'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className='panel-body'>
+                                    <div className='strategy-info'>
+                                        <p>
+                                            Analyzes digit frequency patterns across multiple markets to identify
+                                            the most likely next digit, then executes DIGITMATCH contracts.
+                                        </p>
+                                    </div>
+
+                                    {matchesAnalysis.readySymbols.length > 0 && (
+                                        <div className='current-analysis'>
+                                            <h3>Ready Markets ({matchesAnalysis.readySymbols.length})</h3>
+                                            <div className='symbols-list'>
+                                                {matchesAnalysis.readySymbols.map((sym, idx) => (
+                                                    <span key={idx} className='symbol-tag'>{sym}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {cardsTradingState.matches && (
+                                        <div className='trading-status active'>
+                                            <div className='status-badge'>🔴 TRADING LIVE</div>
+                                            <div className='trade-stats'>
+                                                <div className='stat-row'>
+                                                    <span>Active Contracts:</span>
+                                                    <strong>{Object.values(matchesActiveContracts.current).filter(id => id).length}</strong>
+                                                </div>
+                                                <div className='stat-row'>
+                                                    <span>Symbols Covered:</span>
+                                                    <strong>{matchesAnalysis.readySymbols.length}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className='panel-footer'>
+                                    <button
+                                        className={`toggle-btn ${isAutoMatchesActive ? 'active' : ''}`}
+                                        onClick={toggleAutoMatches}
+                                        disabled={cardsTradingState.matches}
+                                    >
+                                        {isAutoMatchesActive ? '✓ Activated' : 'Activate Strategy'}
+                                    </button>
+                                    <button
+                                        className={`trade-btn ${cardsTradingState.matches ? 'stop' : 'start'} ${!isAutoMatchesActive ? 'disabled' : ''}`}
+                                        onClick={handleCardRunMatches}
+                                        disabled={!isAutoMatchesActive}
+                                    >
+                                        {cardsTradingState.matches ? '⏹ STOP TRADING' : '▶ START TRADING'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Over/Under Tab */}
+                        {activeTab === 'over-under' && (
+                            <div className='tab-panel over-under-panel'>
+                                <div className='panel-header'>
+                                    <div className='header-left'>
+                                        <h2>Auto Over/Under Strategy</h2>
+                                        <p>AI-powered barrier position prediction</p>
+                                    </div>
+                                    <div className='header-right'>
+                                        <span className={`strategy-badge ${isAutoOverUnderActive ? 'active' : 'inactive'}`}>
+                                            {isAutoOverUnderActive ? '● ACTIVE' : '○ INACTIVE'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className='panel-body'>
+                                    <div className='strategy-info'>
+                                        <p>
+                                            Uses advanced machine learning to analyze market patterns and automatically
+                                            positions over/under contracts on detected trend changes.
+                                        </p>
+                                    </div>
+
+                                    {isAutoOverUnderActive && !isAnalysisReady && (
+                                        <div className='analyzing'>
+                                            <div className='spinner'></div>
+                                            <p>Running AI analysis...</p>
+                                        </div>
+                                    )}
+
+                                    {isAutoOverUnderActive && isAnalysisReady && recommendation && (
+                                        <div className='current-analysis'>
+                                            <h3>Current Recommendation</h3>
+                                            <div className='recommendation'>
+                                                <div className='rec-item confidence-high'>
+                                                    <label>Confidence Level</label>
+                                                    <value>HIGH</value>
+                                                </div>
+                                                <div className='rec-item'>
+                                                    <label>Most Frequent Digit</label>
+                                                    <value className='digit'>{recommendation.mostFrequentDigit}</value>
+                                                </div>
+                                                <div className='rec-item'>
+                                                    <label>Current Last Digit</label>
+                                                    <value className='digit'>{recommendation.currentLastDigit}</value>
+                                                </div>
+                                                <div className='rec-item'>
+                                                    <label>Analyses Run</label>
+                                                    <value>{analysisCount}</value>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {cardsTradingState.overUnder && (
+                                        <div className='trading-status active'>
+                                            <div className='status-badge'>🔴 TRADING LIVE</div>
+                                            <div className='trade-stats'>
+                                                <div className='stat-row'>
+                                                    <span>Current Contract:</span>
+                                                    <strong>{lastTradeId?.split('_')[0] || 'N/A'}</strong>
+                                                </div>
+                                                <div className='stat-row'>
+                                                    <span>Total Trades:</span>
+                                                    <strong>{tradeCount}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className='panel-footer'>
+                                    <button
+                                        className={`toggle-btn ${isAutoOverUnderActive ? 'active' : ''}`}
+                                        onClick={toggleAutoOverUnder}
+                                        disabled={cardsTradingState.overUnder}
+                                    >
+                                        {isAutoOverUnderActive ? '✓ Activated' : 'Activate Strategy'}
+                                    </button>
+                                    <button
+                                        className={`trade-btn ${cardsTradingState.overUnder ? 'stop' : 'start'} ${!isAutoOverUnderActive ? 'disabled' : ''}`}
+                                        onClick={handleCardRunOverUnder}
+                                        disabled={!isAutoOverUnderActive}
+                                    >
+                                        {cardsTradingState.overUnder ? '⏹ STOP TRADING' : '▶ START TRADING'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Differ Tab */}
+                        {activeTab === 'differ' && (
+                            <div className='tab-panel differ-panel'>
+                                <div className='panel-header'>
+                                    <div className='header-left'>
+                                        <h2>Auto Differ Strategy</h2>
+                                        <p>Random digit difference analysis</p>
+                                    </div>
+                                    <div className='header-right'>
+                                        <span className={`strategy-badge ${isAutoDifferActive ? 'active' : 'inactive'}`}>
+                                            {isAutoDifferActive ? '● ACTIVE' : '○ INACTIVE'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className='panel-body'>
+                                    <div className='strategy-info'>
+                                        <p>
+                                            Analyzes digit differences across randomized barriers to find optimal
+                                            DIGITDIFF positions and execute rapid-fire trades.
+                                        </p>
+                                    </div>
+
+                                    {currentBarrier !== null && (
+                                        <div className='current-analysis'>
+                                            <h3>Active Configuration</h3>
+                                            <div className='analysis-grid'>
+                                                <div className='analysis-item'>
+                                                    <label>Current Barrier</label>
+                                                    <value>{currentBarrier}</value>
+                                                </div>
+                                                <div className='analysis-item'>
+                                                    <label>Current Symbol</label>
+                                                    <value>{currentSymbol || 'N/A'}</value>
+                                                </div>
+                                                <div className='analysis-item'>
+                                                    <label>Prediction Target</label>
+                                                    <value>{currentPrediction || 'N/A'}</value>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {cardsTradingState.differ && (
+                                        <div className='trading-status active'>
+                                            <div className='status-badge'>🔴 TRADING LIVE</div>
+                                            <div className='trade-stats'>
+                                                <div className='stat-row'>
+                                                    <span>Active Contract:</span>
+                                                    <strong>{activeContractRef.current ? 'YES' : 'NONE'}</strong>
+                                                </div>
+                                                <div className='stat-row'>
+                                                    <span>Total Executed:</span>
+                                                    <strong>{tradeCount}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className='panel-footer'>
+                                    <button
+                                        className={`toggle-btn ${isAutoDifferActive ? 'active' : ''}`}
+                                        onClick={toggleAutoDiffer}
+                                        disabled={cardsTradingState.differ}
+                                    >
+                                        {isAutoDifferActive ? '✓ Activated' : 'Activate Strategy'}
+                                    </button>
+                                    <button
+                                        className={`trade-btn ${cardsTradingState.differ ? 'stop' : 'start'} ${!isAutoDifferActive ? 'disabled' : ''}`}
+                                        onClick={handleCardRunDiffer}
+                                        disabled={!isAutoDifferActive}
+                                    >
+                                        {cardsTradingState.differ ? '⏹ STOP TRADING' : '▶ START TRADING'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className='strategy-grid' style={{display: 'none'}}>
                     <div className={`strategy-card ${isAutoDifferActive ? 'active' : ''}`}>
                         <div className='card-header'>
                             <div className='strategy-icon'>
@@ -3509,13 +4143,35 @@ const TradingHubDisplay: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <button
-                            className={`strategy-toggle ${isAutoDifferActive ? 'active' : ''}`}
-                            onClick={toggleAutoDiffer}
-                            disabled={isContinuousTrading}
-                        >
-                            {isAutoDifferActive ? 'Deactivate' : 'Activate'}
-                        </button>
+                        <div className='card-footer'>
+                            <button
+                                className={`strategy-toggle ${isAutoDifferActive ? 'active' : ''}`}
+                                onClick={toggleAutoDiffer}
+                                disabled={cardsTradingState.differ}
+                            >
+                                {isAutoDifferActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                                className={`card-run-btn ${cardsTradingState.differ ? 'stop' : 'start'} ${!isAutoDifferActive ? 'disabled' : ''}`}
+                                onClick={handleCardRunDiffer}
+                                disabled={!isAutoDifferActive}
+                                title={cardsTradingState.differ ? 'Stop trading' : 'Start trading'}
+                            >
+                                <div className='run-btn-content'>
+                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                        {cardsTradingState.differ ? (
+                                            <>
+                                                <rect x='6' y='4' width='4' height='16' fill='currentColor' />
+                                                <rect x='14' y='4' width='4' height='16' fill='currentColor' />
+                                            </>
+                                        ) : (
+                                            <polygon points='5,3 19,12 5,21' fill='currentColor' />
+                                        )}
+                                    </svg>
+                                    <span>{cardsTradingState.differ ? 'STOP' : 'RUN'}</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
 
                     <div className={`strategy-card ${isAutoOverUnderActive ? 'active' : ''}`}>
@@ -3575,13 +4231,35 @@ const TradingHubDisplay: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <button
-                            className={`strategy-toggle ${isAutoOverUnderActive ? 'active' : ''}`}
-                            onClick={toggleAutoOverUnder}
-                            disabled={isContinuousTrading}
-                        >
-                            {isAutoOverUnderActive ? 'Deactivate' : 'Activate'}
-                        </button>
+                        <div className='card-footer'>
+                            <button
+                                className={`strategy-toggle ${isAutoOverUnderActive ? 'active' : ''}`}
+                                onClick={toggleAutoOverUnder}
+                                disabled={cardsTradingState.overUnder}
+                            >
+                                {isAutoOverUnderActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                                className={`card-run-btn ${cardsTradingState.overUnder ? 'stop' : 'start'} ${!isAutoOverUnderActive ? 'disabled' : ''}`}
+                                onClick={handleCardRunOverUnder}
+                                disabled={!isAutoOverUnderActive}
+                                title={cardsTradingState.overUnder ? 'Stop trading' : 'Start trading'}
+                            >
+                                <div className='run-btn-content'>
+                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                        {cardsTradingState.overUnder ? (
+                                            <>
+                                                <rect x='6' y='4' width='4' height='16' fill='currentColor' />
+                                                <rect x='14' y='4' width='4' height='16' fill='currentColor' />
+                                            </>
+                                        ) : (
+                                            <polygon points='5,3 19,12 5,21' fill='currentColor' />
+                                        )}
+                                    </svg>
+                                    <span>{cardsTradingState.overUnder ? 'STOP' : 'RUN'}</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
 
                     <div className={`strategy-card ${isAutoO5U4Active ? 'active' : ''}`}>
@@ -3759,13 +4437,35 @@ const TradingHubDisplay: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <button
-                            className={`strategy-toggle ${isAutoO5U4Active ? 'active' : ''}`}
-                            onClick={toggleAutoO5U4}
-                            disabled={isContinuousTrading}
-                        >
-                            {isAutoO5U4Active ? 'Deactivate' : 'Activate'}
-                        </button>
+                        <div className='card-footer'>
+                            <button
+                                className={`strategy-toggle ${isAutoO5U4Active ? 'active' : ''}`}
+                                onClick={toggleAutoO5U4}
+                                disabled={cardsTradingState.o5u4}
+                            >
+                                {isAutoO5U4Active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                                className={`card-run-btn ${cardsTradingState.o5u4 ? 'stop' : 'start'} ${!isAutoO5U4Active ? 'disabled' : ''}`}
+                                onClick={handleCardRunO5U4}
+                                disabled={!isAutoO5U4Active}
+                                title={cardsTradingState.o5u4 ? 'Stop trading' : 'Start trading'}
+                            >
+                                <div className='run-btn-content'>
+                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                        {cardsTradingState.o5u4 ? (
+                                            <>
+                                                <rect x='6' y='4' width='4' height='16' fill='currentColor' />
+                                                <rect x='14' y='4' width='4' height='16' fill='currentColor' />
+                                            </>
+                                        ) : (
+                                            <polygon points='5,3 19,12 5,21' fill='currentColor' />
+                                        )}
+                                    </svg>
+                                    <span>{cardsTradingState.o5u4 ? 'STOP' : 'RUN'}</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
 
                     <div className={`strategy-card ${isAutoMatchesActive ? 'active' : ''}`}>
@@ -3964,42 +4664,36 @@ const TradingHubDisplay: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <button
-                            className={`strategy-toggle ${isAutoMatchesActive ? 'active' : ''}`}
-                            onClick={toggleAutoMatches}
-                            disabled={isContinuousTrading}
-                        >
-                            {isAutoMatchesActive ? 'Deactivate' : 'Activate'}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Trading Controls */}
-                <div className='trading-controls'>
-                    <button
-                        className={`main-trade-btn ${!isStrategyActive ? 'disabled' : ''} ${isContinuousTrading ? 'stop' : 'start'}`}
-                        onClick={handleTrade}
-                        disabled={!isStrategyActive || isTrading}
-                    >
-                        <div className='btn-content'>
-                            <div className='btn-icon'>
-                                {isContinuousTrading ? (
-                                    <svg viewBox='0 0 24 24' width='20' height='20'>
-                                        <rect x='6' y='4' width='4' height='16' fill='currentColor' />
-                                        <rect x='14' y='4' width='4' height='16' fill='currentColor' />
+                        <div className='card-footer'>
+                            <button
+                                className={`strategy-toggle ${isAutoMatchesActive ? 'active' : ''}`}
+                                onClick={toggleAutoMatches}
+                                disabled={cardsTradingState.matches}
+                            >
+                                {isAutoMatchesActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                                className={`card-run-btn ${cardsTradingState.matches ? 'stop' : 'start'} ${!isAutoMatchesActive ? 'disabled' : ''}`}
+                                onClick={handleCardRunMatches}
+                                disabled={!isAutoMatchesActive}
+                                title={cardsTradingState.matches ? 'Stop trading' : 'Start trading'}
+                            >
+                                <div className='run-btn-content'>
+                                    <svg viewBox='0 0 24 24' width='16' height='16'>
+                                        {cardsTradingState.matches ? (
+                                            <>
+                                                <rect x='6' y='4' width='4' height='16' fill='currentColor' />
+                                                <rect x='14' y='4' width='4' height='16' fill='currentColor' />
+                                            </>
+                                        ) : (
+                                            <polygon points='5,3 19,12 5,21' fill='currentColor' />
+                                        )}
                                     </svg>
-                                ) : (
-                                    <svg viewBox='0 0 24 24' width='20' height='20'>
-                                        <polygon points='5,3 19,12 5,21' fill='currentColor' />
-                                    </svg>
-                                )}
-                            </div>
-                            <span className='btn-text'>
-                                {isContinuousTrading ? 'STOP TRADING' : isTrading ? 'STARTING...' : 'START TRADING'}
-                            </span>
+                                    <span>{cardsTradingState.matches ? 'STOP' : 'RUN'}</span>
+                                </div>
+                            </button>
                         </div>
-                        <div className='btn-glow'></div>
-                    </button>
+                    </div>
                 </div>
 
                 {/* Stats Dashboard */}
