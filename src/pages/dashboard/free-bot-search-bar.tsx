@@ -16,21 +16,21 @@ const availableBots = [
         category: 'automated',
         description:
             'Trades digit over, after a loss, it increases prediction to maintain same stake. Best for accounts with $50+ balance.',
-        premium: true,
+        premium: false,
     },
     {
         file: 'Super recovery.xml',
         title: 'Super Recovery',
         category: 'automated',
         description: 'Advanced recovery system with smart frequency analysis, dual prediction targeting, and dynamic risk management for consistent profitability.',
-        premium: true,
+        premium: false,
     },
     {
         file: 'Elite Starship.xml',
         title: 'Elite Starship',
         category: 'automated',
         description: 'High-performance trading bot with frequency analysis, dynamic predictions, and advanced risk management system.',
-        premium: true,
+        premium: false,
     },
     {
         file: 'O_U oracle.xml',
@@ -87,7 +87,7 @@ const availableBots = [
         category: 'popular',
         description:
             'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.',
-        premium: true,
+        premium: false,
     },
     {
         file: 'H_L auto vault.xml',
@@ -101,7 +101,7 @@ const availableBots = [
         category: 'automated',
         description:
             'Community favorite with proven track record in various market conditions and excellent risk management.',
-        premium: true,
+        premium: false,
     },
     {
         file: 'Mavic-Air-RF Vix Bot.xml',
@@ -154,7 +154,7 @@ const availableBots = [
         category: 'automated',
         description:
             'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.',
-        premium: true,
+        premium: false,
     },
     {
         file: 'Upgraded Candlemine.xml',

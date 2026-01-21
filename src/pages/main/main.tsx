@@ -321,13 +321,13 @@ const AppWrapper = observer(() => {
                     category: 'automated',
                     description:
                         'Trades digit over, after a loss, it increases prediction to maintain same stake. Best for accounts with $50+ balance.',
-                    premium: true,
+                    premium: false,
     },
                 {
                     file: 'Super recovery.xml',
                     category: 'automated',
                     popularity: 100,
-                    premium: true,
+                    premium: false,
                     description:
                         'Advanced recovery system with smart frequency analysis, dual prediction targeting, and dynamic risk management for consistent profitability.',
                 },
@@ -363,7 +363,7 @@ const AppWrapper = observer(() => {
                     file: 'over under turbo 1.1.xml',
                     category: 'automated',
                     popularity: 95,
-                    premium: true,
+                    premium: false,
                     description:
                         'Advanced over/under trading strategy with turbo speed execution and intelligent market prediction.',
                 },
@@ -385,7 +385,7 @@ const AppWrapper = observer(() => {
                     file: 'Tradezilla.xml',
                     category: 'automated',
                     popularity: 88,
-                    premium: true,
+                    premium: false,
                     description:
                         'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.',
                 },
@@ -421,7 +421,7 @@ const AppWrapper = observer(() => {
                     file: 'Even_Odd Killer bot.xml',
                     category: 'popular',
                     popularity: 89,
-                    premium: true,
+                    premium: false,
                     description:
                         'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.',
                 },
