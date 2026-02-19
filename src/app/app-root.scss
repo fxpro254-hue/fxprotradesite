@@ -1,84 +1,90 @@
-/* ===========================
-   FXPRO TRADES LOGO LOADER
-=========================== */
+/* ================================
+   PREMIUM THEME-AWARE GOLD LOADER
+================================ */
 
-.fx-loader-wrapper {
+.premium-loader-wrapper {
     height: 100vh;
     width: 100%;
-    background: var(--fx-loader-bg);
+    background: var(--loader-bg);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-/* Theme adaptive background */
+/* Theme Adaptive Background */
 :root {
-    --fx-loader-bg: #ffffff;
-    --fx-text-color: #111111;
+    --loader-bg: #ffffff;
+    --loader-text: #222222;
 }
 
 [data-theme='dark'] {
-    --fx-loader-bg: #0d0d0d;
-    --fx-text-color: #ffffff;
+    --loader-bg: #0f0f0f;
+    --loader-text: #ffffff;
 }
 
-/* Logo container */
-.fx-logo-container {
+/* ORBIT CONTAINER */
+.orbit-loader {
     position: relative;
-    width: 140px;
-    height: 140px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Logo animation */
-.fx-logo {
     width: 120px;
     height: 120px;
-    border-radius: 28px;
-    animation: logoPulse 2s ease-in-out infinite;
-    z-index: 2;
 }
 
-/* Glowing gold ring */
-.fx-glow-ring {
+/* GLOWING ROTATING RING */
+.orbit-ring {
     position: absolute;
-    width: 160px;
-    height: 160px;
-    border-radius: 40px;
-    border: 3px solid #d4af37;
-    animation: rotateRing 3s linear infinite;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top: 3px solid #d4af37;
+    border-right: 3px solid #ffd700;
+    animation: rotateOrbit 1.6s linear infinite;
 
     box-shadow:
-        0 0 20px rgba(212, 175, 55, 0.7),
-        0 0 50px rgba(255, 215, 0, 0.4);
+        0 0 15px rgba(255, 215, 0, 0.6),
+        0 0 40px rgba(255, 215, 0, 0.3);
 }
 
-/* Text */
-.fx-loader-text {
-    margin-top: 32px;
-    font-size: 18px;
+/* GOLD PULSING CORE */
+.orbit-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 26px;
+    height: 26px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffd700, #b8860b);
+    animation: pulseCore 1.5s ease-in-out infinite;
+
+    box-shadow:
+        0 0 15px rgba(255, 215, 0, 0.9),
+        0 0 40px rgba(255, 215, 0, 0.5);
+}
+
+/* TEXT */
+.loader-text {
+    margin-top: 28px;
     font-weight: 600;
-    color: var(--fx-text-color);
-    letter-spacing: 0.6px;
+    font-size: 18px;
+    color: var(--loader-text);
+    letter-spacing: 0.5px;
 }
 
-/* Animations */
-
-@keyframes rotateRing {
+/* ANIMATIONS */
+@keyframes rotateOrbit {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-@keyframes logoPulse {
+@keyframes pulseCore {
     0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
     }
     50% {
-        transform: scale(1.08);
-        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+        transform: translate(-50%, -50%) scale(1.25);
+        opacity: 0.8;
     }
 }
