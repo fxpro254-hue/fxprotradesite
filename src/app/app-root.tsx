@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import ErrorBoundary from '@/components/error-component/error-boundary';
 import ErrorComponent from '@/components/error-component/error-component';
+import FuturisticLoader from '@/components/loader/futuristic-loader';
 import TradingAssesmentModal from '@/components/trading-assesment-modal';
 import { api_base } from '@/external/bot-skeleton';
 import { useStore } from '@/hooks/useStore';
@@ -29,24 +30,8 @@ const ErrorComponentWrapper = observer(() => {
     );
 });
 
-/* ---------------- UNIQUE FXPROTRADES GOLD ORBIT LOADER ---------------- */
-const GoldLoader = ({ message, theme = 'dark' }: { message?: string; theme?: 'light' | 'dark' }) => (
-    <div className={`fx-loader-overlay ${theme}`}>
-        <div className="fx-orbit-container">
-            <div className="fx-orbit-inner gold" />
-            <div className="fx-orbit-mid silver" />
-            <div className="fx-orbit-outer bronze" />
-            <div className="fx-center-glow" />
-        </div>
-        {message && <p className={`fx-loader-text ${theme}`}>{message}</p>}
-    </div>
-);
-
-const AppRoot = observer(() => {
+const AppRoot = () => {
     const store = useStore();
-    const { ui } = store;
-    const current_theme = ui.is_dark_mode_on ? 'dark' : 'light';
-    
     const api_base_initialized = useRef(false);
     const [is_api_initialized, setIsApiInitialized] = useState(false);
 
@@ -62,11 +47,10 @@ const AppRoot = observer(() => {
         initializeApi();
     }, []);
 
-    if (!store || !is_api_initialized)
-        return <GoldLoader message={localize('Initializing FxProTrades...')} theme={current_theme} />;
+    if (!store || !is_api_initialized) return <FuturisticLoader message={localize('Initializing FxProTrades...')} />;
 
     return (
-        <Suspense fallback={<GoldLoader message={localize('Loading FxProTrades...')} theme={current_theme} />}>
+        <Suspense fallback={<FuturisticLoader message={localize('Initializing  FxProTrades...')} />}>
             <ErrorBoundary root_store={store}>
                 <ErrorComponentWrapper />
                 <AppContent />
@@ -74,6 +58,6 @@ const AppRoot = observer(() => {
             </ErrorBoundary>
         </Suspense>
     );
-});
+};
 
 export default AppRoot;
