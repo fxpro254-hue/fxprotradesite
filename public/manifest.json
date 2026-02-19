@@ -1,36 +1,16 @@
 {
-    "name": "FX PRO - Where Strategy Meets Success",
-    "short_name": "FX PRO",
-    "description": "Professional automated trading platform where strategy meets success. Powered by Deriv.",
-    "start_url": "/",
+    "name": "BinaryFx",
+    "short_name": "BinaryFx",
+    "theme_color": "#414652",
+    "description": "Trade on your finger prints.",
+    "background_color": "#414652",
     "display": "standalone",
-    "background_color": "#000000",
-    "theme_color": "#FFD700",
-    "orientation": "portrait-primary",
+    "start_url": "/",
     "icons": [
         {
-            "src": "/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/icon-512.png",
+            "src": "deriv-logo.png",
             "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-        }
-    ],
-    "categories": [
-        "finance",
-        "productivity"
-    ],
-    "screenshots": [
-        {
-            "src": "/screenshot-wide.png",
-            "sizes": "1280x720",
-            "type": "image/png",
-            "form_factor": "wide"
+            "type": "image/png"
         }
     ]
 }
