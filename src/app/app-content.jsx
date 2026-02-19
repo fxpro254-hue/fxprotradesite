@@ -263,12 +263,11 @@ const AppContent = observer(() => {
         }
     }, []);
 
-    if (common?.error) return null;
+   if (common?.error) return null;
 
-    return is_loading ? (
-        <ChunkLoader message={localize('Initializing your account...')} />
-    ) : (
-        <>
+   if (is_loading) return null;
+
+   return (
             <ThemeProvider theme={is_dark_mode_on ? 'dark' : 'light'}>
                 <BlocklyLoading />
                 <div className='bot-dashboard bot' data-testid='dt_bot_dashboard'>
@@ -293,7 +292,7 @@ const AppContent = observer(() => {
                 </div>
                 <LoginRequiredModal />
             </ThemeProvider>
-        </>
+        
     );
 });
 
