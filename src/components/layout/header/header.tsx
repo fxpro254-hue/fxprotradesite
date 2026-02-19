@@ -130,7 +130,7 @@ const InfoIcon = () => {
                 <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
                     <path
                         d='M12 0C5.37 0 0 5.37 0 12C0 18.63 5.37 24 12 24C18.63 24 24 18.63 24 12C24 5.37 18.63 0 12 0ZM17.94 8.19L15.98 17.03C15.82 17.67 15.42 17.83 14.88 17.52L11.88 15.33L10.44 16.71C10.27 16.88 10.12 17.03 9.79 17.03L10.02 13.97L15.61 8.9C15.87 8.67 15.56 8.54 15.22 8.77L8.21 13.31L5.24 12.38C4.62 12.19 4.61 11.74 5.38 11.43L17.08 7.08C17.6 6.9 18.06 7.23 17.94 8.19Z'
-                        fill='#229ED9'
+                        fill='#22d9cd'
                     />
                 </svg>
             ),
@@ -188,16 +188,7 @@ const InfoIcon = () => {
                 </svg>
             ),
         },
-        {
-            name: 'YouTube',
-            url: 'https://youtube.com/@binary_fx?si=t-M-Ihq8gVZEaRBG', // update with your YouTube channel URL
-            icon: (
-                <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
-                    <rect width='24' height='24' rx='5' fill='#EF0000' />
-                    <polygon points='10,8 16,12 10,16' fill='white' />
-                </svg>
-            ),
-        },
+      
     ];
 
     return (
