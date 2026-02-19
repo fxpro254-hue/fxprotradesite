@@ -29,18 +29,15 @@ const ErrorComponentWrapper = observer(() => {
     );
 });
 
-/* ---------------- GOLD PREMIUM LOADER ---------------- */
+/* ---------- PREMIUM GOLD ORBIT LOADER ---------- */
 
-const GoldLoader = ({ message }: { message?: string }) => (
-    <div className="gold-loader-wrapper">
-        <div className="gold-loader-bars">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
+const PremiumLoader = ({ message }: { message?: string }) => (
+    <div className="premium-loader-wrapper">
+        <div className="orbit-loader">
+            <div className="orbit-ring" />
+            <div className="orbit-core" />
         </div>
-        <p className="gold-loader-text">{message}</p>
+        <p className="loader-text">{message}</p>
     </div>
 );
 
@@ -61,17 +58,18 @@ const AppRoot = () => {
         initializeApi();
     }, []);
 
+    // ONLY ONE LOADER HERE
     if (!store || !is_api_initialized)
-        return <GoldLoader message={localize('Initializing FxProTrades...')} />;
+        return <PremiumLoader message={localize('Initializing FxProTrades...')} />;
 
     return (
-        <Suspense fallback={<GoldLoader message={localize('Loading FxProTrades...')} />}>
-            <ErrorBoundary root_store={store}>
-                <ErrorComponentWrapper />
+        <ErrorBoundary root_store={store}>
+            <ErrorComponentWrapper />
+            <Suspense fallback={<PremiumLoader message={localize('Loading FxProTrades...')} />}>
                 <AppContent />
-                <TradingAssesmentModal />
-            </ErrorBoundary>
-        </Suspense>
+            </Suspense>
+            <TradingAssesmentModal />
+        </ErrorBoundary>
     );
 };
 
