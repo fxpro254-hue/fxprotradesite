@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import ErrorBoundary from '@/components/error-component/error-boundary';
 import ErrorComponent from '@/components/error-component/error-component';
-import FuturisticLoader from '@/components/loader/futuristic-loader';
 import TradingAssesmentModal from '@/components/trading-assesment-modal';
 import { api_base } from '@/external/bot-skeleton';
 import { useStore } from '@/hooks/useStore';
@@ -30,6 +29,21 @@ const ErrorComponentWrapper = observer(() => {
     );
 });
 
+/* ---------------- GOLD PREMIUM LOADER ---------------- */
+
+const GoldLoader = ({ message }: { message?: string }) => (
+    <div className="gold-loader-wrapper">
+        <div className="gold-loader-bars">
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+        </div>
+        <p className="gold-loader-text">{message}</p>
+    </div>
+);
+
 const AppRoot = () => {
     const store = useStore();
     const api_base_initialized = useRef(false);
@@ -47,10 +61,11 @@ const AppRoot = () => {
         initializeApi();
     }, []);
 
-    if (!store || !is_api_initialized) return <FuturisticLoader message={localize('Initializing Binaryfx...')} />;
+    if (!store || !is_api_initialized)
+        return <GoldLoader message={localize('Initializing FxProTrades...')} />;
 
     return (
-        <Suspense fallback={<FuturisticLoader message={localize('Initializing Binaryfx...')} />}>
+        <Suspense fallback={<GoldLoader message={localize('Loading FxProTrades...')} />}>
             <ErrorBoundary root_store={store}>
                 <ErrorComponentWrapper />
                 <AppContent />
