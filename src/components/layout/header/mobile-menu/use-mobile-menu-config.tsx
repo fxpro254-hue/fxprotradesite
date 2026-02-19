@@ -55,8 +55,8 @@ const useMobileMenuConfig = (client?: RootStore['client']) => {
         [
             {
                 as: 'a',
-                href: 'https://binaryfx.site',
-                label: localize('Binaryfx.site'),
+                href: 'https://fxprotrades.site',
+                label: localize('FxProTrades.site'),
                 LeftComponent: BrandDerivLogoCoralIcon,
             },
             {
@@ -71,7 +71,7 @@ const useMobileMenuConfig = (client?: RootStore['client']) => {
                 cs_chat_whatsapp
                     ? {
                           as: 'a',
-                          href: 'https://wa.link/ugr27w',
+                          href: 'https://wa.me/254735525483',
                           label: localize('WhatsApp'),
                           LeftComponent: LegacyWhatsappIcon,
                           target: '_blank',
