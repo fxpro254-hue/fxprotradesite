@@ -1,10 +1,10 @@
-# Deploy DTrader to fxprotrades.site
+# Deploy DTrader to bot.binaryfx.site
 
 ## Quick Setup Guide
 
-Your bot is already deployed on Vercel at `fxprotrades.site`. Here's how to add dtrader to the same domain.
+Your bot is already deployed on Vercel at `bot.binaryfx.site`. Here's how to add dtrader to the same domain.
 
-## Option A: Deploy as Path (fxprotrades.site/dtrader)
+## Option A: Deploy as Path (bot.binaryfx.site/dtrader)
 
 ### Step 1: Build DTrader for Production
 
@@ -41,9 +41,9 @@ git push origin main
 ```
 
 Vercel will automatically deploy. Access at:
-- **DTrader Core**: https://fxprotrades.site/dtrader/core
-- **DTrader Trader**: https://fxprotrades.site/dtrader/trader
-- **DTrader Reports**: https://fxprotrades.site/dtrader/reports
+- **DTrader Core**: https://bot.binaryfx.site/dtrader/core
+- **DTrader Trader**: https://bot.binaryfx.site/dtrader/trader
+- **DTrader Reports**: https://bot.binaryfx.site/dtrader/reports
 
 ---
 
@@ -142,7 +142,7 @@ git commit -m "Integrate dtrader into bot build"
 git push origin main
 ```
 
-Access at: **https://fxprotrades.site/dtrader**
+Access at: **https://bot.binaryfx.site/dtrader**
 
 ---
 

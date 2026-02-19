@@ -19,7 +19,7 @@ Add to your `.env` file:
 RESEND_API_KEY=re_your_api_key_here
 EMAIL_FROM=BinaryFX Bot <noreply@binaryfx.site>
 ENABLE_EMAILS=true
-APP_URL=https://fxprotrades.site
+APP_URL=https://bot.binaryfx.site
 ```
 
 **Important:** For development, you can use Resend's test domain:

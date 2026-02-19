@@ -40,7 +40,7 @@ app.post('/api/send-trade-notification', async (req, res) => {
             userName: userName,
             title: 'Trade Completed Successfully',
             message: `Your bot has completed a trade: ${tradeDetails}`,
-            actionUrl: 'https://fxprotrades.site/trades',
+            actionUrl: 'https://bot.binaryfx.site/trades',
             actionText: 'View Trade Details'
         }
     });

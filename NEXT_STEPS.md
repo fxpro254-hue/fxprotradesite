@@ -48,12 +48,12 @@ If they're missing, add them and redeploy.
 ### 5. Test Your Live Site 🎉
 
 #### Test Frontend
-1. Open: `https://fxprotrades.site`
+1. Open: `https://bot.binaryfx.site`
 2. Should load your trading bot app
 3. Click "Community" tab
 
 #### Test Backend API
-1. Open: `https://fxprotrades.site/api/health`
+1. Open: `https://bot.binaryfx.site/api/health`
 2. Should see: `{"status":"ok"}`
 
 #### Test Database
@@ -88,7 +88,7 @@ If they're missing, add them and redeploy.
 ## Expected Result 🎯
 
 After successful deployment, you should see:
-- ✅ Your trading bot loads at fxprotrades.site
+- ✅ Your trading bot loads at bot.binaryfx.site
 - ✅ Community tab is accessible
 - ✅ Can send messages
 - ✅ Messages persist after refresh

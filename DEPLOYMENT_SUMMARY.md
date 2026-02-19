@@ -20,7 +20,7 @@
 
 2. **Environment Detection**: Automatic API URL switching
    - Local: `http://localhost:3001/api`
-   - Production: `https://fxprotrades.site/api`
+   - Production: `https://bot.binaryfx.site/api`
 
 ### Build Configuration
 1. **vercel.json**: Simplified configuration
@@ -83,12 +83,12 @@ Vercel will automatically:
 ## 🔍 How to Verify Deployment
 
 ### Frontend
-Visit: `https://fxprotrades.site`
+Visit: `https://bot.binaryfx.site`
 - Should load the app
 - Community tab should be visible
 
 ### Backend API
-Visit: `https://fxprotrades.site/api/health`
+Visit: `https://bot.binaryfx.site/api/health`
 - Should return: `{"status":"ok"}`
 
 ### Database Connection
@@ -169,7 +169,7 @@ npx prisma generate
    - Check build logs for errors
 
 3. **Test live site**:
-   - Visit `https://fxprotrades.site`
+   - Visit `https://bot.binaryfx.site`
    - Test Community tab
    - Send a message
    - Verify reactions work

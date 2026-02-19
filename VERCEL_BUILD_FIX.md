@@ -72,7 +72,7 @@ Your next Vercel deployment should now succeed!
 ## 📊 Architecture
 
 ```
-Bot Deployment (fxprotrades.site)
+Bot Deployment (bot.binaryfx.site)
 ├── / (Bot UI)
 ├── /js/smartcharts/ (Bot's smartcharts only)
 └── DTrader Tab

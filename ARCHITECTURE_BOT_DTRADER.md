@@ -351,7 +351,7 @@ headers: {
 ### Strategy 1: Separate Domains
 
 ```
-Bot Application:     https://fxprotrades.site
+Bot Application:     https://bot.binaryfx.site
 DTrader Application: https://dtrader.binaryfx.site
 
 Configuration:
@@ -361,8 +361,8 @@ Configuration:
 ### Strategy 2: Same Domain, Different Paths
 
 ```
-Bot Application:     https://fxprotrades.site
-DTrader Application: https://fxprotrades.site/dtrader
+Bot Application:     https://bot.binaryfx.site
+DTrader Application: https://bot.binaryfx.site/dtrader
 
 Configuration:
 <DTrader url={`${window.location.origin}/dtrader`} />

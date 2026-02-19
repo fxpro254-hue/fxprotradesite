@@ -49,7 +49,7 @@ Add to your `.env` file:
 RESEND_API_KEY=re_123abc...         # Your Resend API key
 EMAIL_FROM=BinaryFX Bot <noreply@binaryfx.site>  # Verified sender email
 ENABLE_EMAILS=true                  # Enable/disable email sending
-APP_URL=https://fxprotrades.site   # Your app URL for links in emails
+APP_URL=https://bot.binaryfx.site   # Your app URL for links in emails
 ```
 
 ### 3. Install Dependencies
@@ -148,7 +148,7 @@ await sendNotificationEmail(
     'John Doe',
     'Trade Alert',
     'Your bot has completed a successful trade!',
-    'https://fxprotrades.site/trades',
+    'https://bot.binaryfx.site/trades',
     'View Trade Details'
 );
 ```
@@ -321,7 +321,7 @@ export const emailConfig = {
 | `RESEND_API_KEY` | Yes | Your Resend API key | `re_abc123...` |
 | `EMAIL_FROM` | Yes | Verified sender email | `BinaryFX <noreply@binaryfx.site>` |
 | `ENABLE_EMAILS` | No | Enable/disable emails | `true` (default) |
-| `APP_URL` | No | App URL for email links | `https://fxprotrades.site` |
+| `APP_URL` | No | App URL for email links | `https://bot.binaryfx.site` |
 
 ## Testing
 

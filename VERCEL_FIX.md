@@ -61,7 +61,7 @@ NODE_ENV=production
 ### API Not Working
 - Check environment variables are set
 - Verify `/api` folder exists with `index.js`
-- Test API endpoint: `https://fxprotrades.site/api/health`
+- Test API endpoint: `https://bot.binaryfx.site/api/health`
 
 ## Manual Deployment (if auto-deploy fails)
 
@@ -78,10 +78,10 @@ vercel --prod
 
 ## Verify Deployment
 
-1. Visit: https://fxprotrades.site
+1. Visit: https://bot.binaryfx.site
 2. Should see your app (not empty)
 3. Open Console (F12) - check for errors
-4. Test API: https://fxprotrades.site/api/health
+4. Test API: https://bot.binaryfx.site/api/health
 
 ## If Still Empty
 

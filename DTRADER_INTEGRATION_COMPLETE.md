@@ -82,7 +82,7 @@ const port = window.location.port;
 const isLocal = /localhost/i.test(hostname);
 const baseUrl = isLocal 
     ? `${protocol}//${hostname}:${port}/dtrader`     // Local: https://localhost:8444/dtrader
-    : `${protocol}//${hostname}/dtrader`;            // Prod: https://fxprotrades.site/dtrader
+    : `${protocol}//${hostname}/dtrader`;            // Prod: https://bot.binaryfx.site/dtrader
 ```
 
 ### 4. **package.json** (Build Scripts)
@@ -138,8 +138,8 @@ const baseUrl = isLocal
 3. **Deploy**:
    - Upload entire `dist/` folder to production server
    - Nginx will serve both:
-     - `https://fxprotrades.site/` → Bot
-     - `https://fxprotrades.site/dtrader` → DTrader
+     - `https://bot.binaryfx.site/` → Bot
+     - `https://bot.binaryfx.site/dtrader` → DTrader
 
 ---
 
@@ -150,8 +150,8 @@ const baseUrl = isLocal
 - **DTrader Iframe**: `https://localhost:8444/dtrader?app_id=36300&token1=...&acct1=...`
 
 ### Production
-- **Bot UI**: `https://fxprotrades.site/`
-- **DTrader Iframe**: `https://fxprotrades.site/dtrader?app_id=68848&token1=...&acct1=...`
+- **Bot UI**: `https://bot.binaryfx.site/`
+- **DTrader Iframe**: `https://bot.binaryfx.site/dtrader?app_id=68848&token1=...&acct1=...`
 
 ---
 
@@ -211,7 +211,7 @@ Your nginx should already handle this automatically since Rsbuild serves both:
 ```nginx
 server {
     listen 443 ssl;
-    server_name fxprotrades.site;
+    server_name bot.binaryfx.site;
     
     root /var/www/bot/dist;
     index index.html;
@@ -336,7 +336,7 @@ output: { publicPath: base }
    npm run build
    ```
 3. **Deploy to production**: Upload `dist/` folder to server
-4. **Test production**: Visit `https://fxprotrades.site/` → DTrader should load
+4. **Test production**: Visit `https://bot.binaryfx.site/` → DTrader should load
 
 ---
 
@@ -346,7 +346,7 @@ output: { publicPath: base }
 - ✅ DTrader loads in iframe at `/dtrader`
 - ✅ No console errors
 - ✅ Authentication works (user logged in)
-- ✅ Production URL points to `fxprotrades.site/dtrader`
+- ✅ Production URL points to `bot.binaryfx.site/dtrader`
 - ✅ All builds successful
 - ✅ Changes committed to git
 

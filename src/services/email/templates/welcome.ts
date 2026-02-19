@@ -133,7 +133,7 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
         </div>
         
         <div style="text-align: center;">
-            <a href="${process.env.APP_URL || 'https://fxprotrades.site'}/?tab=id-community" class="cta-button">
+            <a href="${process.env.APP_URL || 'https://bot.binaryfx.site'}/?tab=id-community" class="cta-button">
                 Start Exploring →
             </a>
         </div>
@@ -174,7 +174,7 @@ What You Can Do:
 ✓ Stay Updated: Get the latest news and updates about BinaryFX Bot
 ✓ Copy Trading: Follow successful traders and copy their strategies
 
-Visit the community: ${process.env.APP_URL || 'https://fxprotrades.site'}/community
+Visit the community: ${process.env.APP_URL || 'https://bot.binaryfx.site'}/community
 
 Happy Trading! 📈
 

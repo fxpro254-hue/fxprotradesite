@@ -32,12 +32,12 @@ In Vercel Dashboard → Settings → Environment Variables:
 ## Test Deployment 🧪
 
 Frontend:
-- [ ] Visit `https://fxprotrades.site`
+- [ ] Visit `https://bot.binaryfx.site`
 - [ ] App loads successfully
 - [ ] No white screen
 
 Backend API:
-- [ ] Visit `https://fxprotrades.site/api/health`
+- [ ] Visit `https://bot.binaryfx.site/api/health`
 - [ ] Returns: `{"status":"ok"}`
 
 Community Feature:

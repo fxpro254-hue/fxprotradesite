@@ -12,9 +12,9 @@ DTrader is integrated into the bot using a simple iframe approach with URL-based
 - Iframe URL: `https://localhost:8443/dtrader?app_id=36300&token1=TOKEN&acct1=ACCOUNT`
 
 **Production:**
-- Bot: `https://fxprotrades.site/`
-- DTrader: `https://fxprotrades.site/dtrader`  
-- Iframe URL: `https://fxprotrades.site/dtrader?app_id=68848&token1=TOKEN&acct1=ACCOUNT`
+- Bot: `https://bot.binaryfx.site/`
+- DTrader: `https://bot.binaryfx.site/dtrader`  
+- Iframe URL: `https://bot.binaryfx.site/dtrader?app_id=68848&token1=TOKEN&acct1=ACCOUNT`
 
 ### How It Works
 1. Bot detects environment (localhost vs production)
@@ -175,7 +175,7 @@ Bot automatically uses port 8444 (since 8443 is taken)
 ```nginx
 server {
     listen 443 ssl;
-    server_name fxprotrades.site;
+    server_name bot.binaryfx.site;
 
     # Bot (root path)
     location / {

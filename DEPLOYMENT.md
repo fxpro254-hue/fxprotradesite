@@ -1,4 +1,4 @@
-# Deployment Guide for fxprotrades.site
+# Deployment Guide for bot.binaryfx.site
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ PORT=3001
 ## Step 2: Install Dependencies
 
 ```bash
-cd /var/www/fxprotrades.site
+cd /var/www/bot.binaryfx.site
 npm install
 npx prisma generate
 ```
@@ -41,13 +41,13 @@ npm run build
 
 ```bash
 # Copy the nginx configuration
-sudo cp nginx.conf.example /etc/nginx/sites-available/fxprotrades.site
+sudo cp nginx.conf.example /etc/nginx/sites-available/bot.binaryfx.site
 
 # Edit the configuration with your paths
-sudo nano /etc/nginx/sites-available/fxprotrades.site
+sudo nano /etc/nginx/sites-available/bot.binaryfx.site
 
 # Create symlink
-sudo ln -s /etc/nginx/sites-available/fxprotrades.site /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/bot.binaryfx.site /etc/nginx/sites-enabled/
 
 # Test nginx configuration
 sudo nginx -t
@@ -81,7 +81,7 @@ pm2 status
 
 2. Check API health:
 ```bash
-curl https://fxprotrades.site/api/health
+curl https://bot.binaryfx.site/api/health
 ```
 
 3. Check logs:

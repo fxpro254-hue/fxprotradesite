@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3001;
 // CORS configuration
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://fxprotrades.site', 'https://www.fxprotrades.site']
+        ? ['https://bot.binaryfx.site', 'https://www.bot.binaryfx.site']
         : ['http://localhost:8443', 'http://localhost:3000', 'http://127.0.0.1:8443'],
     credentials: true,
     optionsSuccessStatus: 200

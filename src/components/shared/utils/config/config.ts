@@ -23,7 +23,7 @@ export const domain_app_ids = {
     'dbot.deriv.com': APP_IDS.PRODUCTION,
     'dbot.deriv.be': APP_IDS.PRODUCTION_BE,
     'dbot.deriv.me': APP_IDS.PRODUCTION_ME,
-    'fxprotrades.site': APP_IDS.PRODUCTION_BE,
+    'bot.binaryfx.site': APP_IDS.PRODUCTION_BE,
 };
 
 export const getCurrentProductionDomain = () =>
