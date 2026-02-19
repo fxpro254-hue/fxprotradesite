@@ -42,8 +42,11 @@ const GoldLoader = ({ message, theme = 'dark' }: { message?: string; theme?: 'li
     </div>
 );
 
-const AppRoot = () => {
+const AppRoot = observer(() => {
     const store = useStore();
+    const { ui } = store;
+    const current_theme = ui.is_dark_mode_on ? 'dark' : 'light';
+    
     const api_base_initialized = useRef(false);
     const [is_api_initialized, setIsApiInitialized] = useState(false);
 
@@ -60,10 +63,10 @@ const AppRoot = () => {
     }, []);
 
     if (!store || !is_api_initialized)
-        return <GoldLoader message={localize('Initializing FxProTrades...')} theme="dark" />;
+        return <GoldLoader message={localize('Initializing FxProTrades...')} theme={current_theme} />;
 
     return (
-        <Suspense fallback={<GoldLoader message={localize('Loading FxProTrades...')} theme="dark" />}>
+        <Suspense fallback={<GoldLoader message={localize('Loading FxProTrades...')} theme={current_theme} />}>
             <ErrorBoundary root_store={store}>
                 <ErrorComponentWrapper />
                 <AppContent />
@@ -71,6 +74,6 @@ const AppRoot = () => {
             </ErrorBoundary>
         </Suspense>
     );
-};
+});
 
 export default AppRoot;

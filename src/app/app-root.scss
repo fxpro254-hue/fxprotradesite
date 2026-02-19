@@ -18,14 +18,14 @@ $bronze-dark: #8b4513;
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.5s ease;
 
     &.dark {
         background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
     }
 
     &.light {
-        background: radial-gradient(circle at center, #ffffff 0%, #f0f0f0 100%);
+        background: radial-gradient(circle at center, #ffffff 0%, #f4f4f4 100%);
     }
 }
 
@@ -44,14 +44,14 @@ $bronze-dark: #8b4513;
     height: 10px;
     background: $gold-main;
     border-radius: 50%;
-    box-shadow: 0 0 20px 10px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 20px 10px rgba(255, 215, 0, 0.4);
     animation: fxGlowPulse 2s infinite ease-in-out;
 }
 
 .fx-orbit-inner, .fx-orbit-mid, .fx-orbit-outer {
     position: absolute;
     border-radius: 50%;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
 }
 
 .fx-orbit-inner {
@@ -59,43 +59,44 @@ $bronze-dark: #8b4513;
     height: 40px;
     border-top-color: $gold-main;
     border-bottom-color: $gold-dark;
-    animation: fxRotate 1s linear infinite;
+    animation: fxRotate 1.2s linear infinite;
 }
 
 .fx-orbit-mid {
-    width: 70px;
-    height: 70px;
+    width: 75px;
+    height: 75px;
     border-left-color: $silver-main;
     border-right-color: $silver-dark;
-    animation: fxRotate 2s linear infinite reverse;
+    animation: fxRotate 2.5s linear infinite reverse;
 }
 
 .fx-orbit-outer {
-    width: 100px;
-    height: 100px;
+    width: 110px;
+    height: 110px;
     border-top-color: $bronze-main;
     border-bottom-color: $bronze-dark;
-    animation: fxRotate 4s linear infinite;
+    animation: fxRotate 4.5s linear infinite;
 }
 
 .fx-loader-text {
-    margin-top: 40px;
+    margin-top: 45px;
     font-weight: 700;
-    font-size: 16px;
-    letter-spacing: 2px;
+    font-size: 15px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
     text-align: center;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    animation: fxTextFade 2s infinite ease-in-out;
+    animation: fxTextFade 2.5s infinite ease-in-out;
+    transition: color 0.5s ease;
 
     &.dark {
         color: $gold-main;
-        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
     }
 
     &.light {
         color: $gold-dark;
-        text-shadow: 0 0 5px rgba(184, 134, 11, 0.2);
+        text-shadow: 0 0 4px rgba(184, 134, 11, 0.15);
     }
 }
 
@@ -105,11 +106,11 @@ $bronze-dark: #8b4513;
 }
 
 @keyframes fxGlowPulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.5); opacity: 1; }
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.6); opacity: 1; }
 }
 
 @keyframes fxTextFade {
     0%, 100% { opacity: 0.6; transform: translateY(0); }
-    50% { opacity: 1; transform: translateY(-2px); }
+    50% { opacity: 1; transform: translateY(-3px); }
 }
