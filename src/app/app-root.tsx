@@ -1,5 +1,5 @@
 import React from "react";
-import "./PremiumBoltLoader.css";
+import './app-root.scss';
 
 interface Props {
   message?: string;
