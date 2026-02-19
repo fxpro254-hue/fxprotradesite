@@ -1,67 +1,333 @@
 /* ===== PREMIUM GOLD LOADER ===== */
 
-.gold-loader-wrapper {
-  height: 100vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+$w-size: 200px;
+$w-margin: -$w-size/2;
+$b-size: 70%; 
+$box-wrapper-width: $b-size;
+$box-wrapper-height: $b-size;
+$box-wrapper-margin: calc((100% - #{$box-wrapper-height})/2) calc((100% - #{$box-wrapper-width})/2);
 
-  &.dark {
-    background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-  }
+.gold-loader-container {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 
-  &.light {
-    background: radial-gradient(circle at center, #ffffff 0%, #f0e6d2 100%);
-  }
+    &.dark {
+        background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+    }
+
+    &.light {
+        background: radial-gradient(circle at center, #ffffff 0%, #f0e6d2 100%);
+    }
 }
 
-.gold-loader-bars {
-  display: flex;
-  gap: 8px;
-}
+.wrapper {
+    position: relative;
+    width: $w-size;
+    height: $w-size;
+    background-color: transparent;
+    border: none;
+    -webkit-user-select: none;
 
-.gold-loader-bars span {
-  width: 6px;
-  height: 40px;
-  border-radius: 6px;
-  background: linear-gradient(180deg, #ffd700, #b8860b);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-  animation: goldPulse 1.2s infinite ease-in-out;
-}
+    .box-wrap {
+        width: $box-wrapper-width;
+        height: $box-wrapper-height;
+        margin: $box-wrapper-margin;
+        position: relative;
+        transform: rotate(-45deg);
 
-.gold-loader-bars span:nth-child(1) { animation-delay: 0s; }
-.gold-loader-bars span:nth-child(2) { animation-delay: 0.1s; }
-.gold-loader-bars span:nth-child(3) { animation-delay: 0.2s; }
-.gold-loader-bars span:nth-child(4) { animation-delay: 0.3s; }
-.gold-loader-bars span:nth-child(5) { animation-delay: 0.4s; }
+        .box {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: linear-gradient(to right, #ffd700, #b8860b, #d4af37, #f0e68c, #daa520, #b8860b);
+            background-position: 0% 50%;
+            background-size: 1000% 1000%;
+            visibility: hidden;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+
+            &.one {
+                animation:
+                    moveGradient 15s infinite,
+                    oneMove 3.5s infinite;
+            }
+
+            &.two {
+                animation:
+                    moveGradient 15s infinite,
+                    twoMove 3.5s .15s infinite;
+            }
+
+            &.three {
+                animation:
+                    moveGradient 15s infinite,
+                    threeMove 3.5s .3s infinite;
+            }
+
+            &.four {
+                animation:
+                    moveGradient 15s infinite,
+                    fourMove 3.5s .575s infinite;
+            }
+
+            &.five {
+                animation:
+                    moveGradient 15s infinite,
+                    fiveMove 3.5s .725s infinite;
+            }
+
+            &.six {
+                animation:
+                    moveGradient 15s infinite,
+                    sixMove 3.5s .875s infinite;
+            }
+        }
+    }
+}
 
 .gold-loader-text {
-  margin-top: 30px;
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: 1px;
-  text-align: center;
+    margin-top: 30px;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 1px;
+    text-align: center;
+    z-index: 10;
 
-  &.dark {
-    color: #d4af37;
-    text-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
-  }
+    &.dark {
+        color: #d4af37;
+        text-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+    }
 
-  &.light {
-    color: #b8860b;
-    text-shadow: 0 0 6px rgba(184, 134, 11, 0.6);
-  }
+    &.light {
+        color: #b8860b;
+        text-shadow: 0 0 6px rgba(184, 134, 11, 0.6);
+    }
 }
 
-@keyframes goldPulse {
-  0%, 100% {
-    transform: scaleY(0.4);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scaleY(1.2);
-    opacity: 1;
-  }
+@keyframes moveGradient {
+    to {
+        background-position: 100% 50%
+    }
+}
+
+@keyframes oneMove {
+    0% {
+        visibility: visible;
+        clip-path: inset(0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    14.2857% {
+        clip-path: inset(0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    28.5714% {
+        clip-path: inset(35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    42.8571% {
+        clip-path: inset(35% 70% 35% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    57.1428% {
+        clip-path: inset(35% 70% 35% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    71.4285% {
+        clip-path: inset(0% 70% 70% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    85.7142% {
+        clip-path: inset(0% 70% 70% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    100% {
+        clip-path: inset(0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+}
+
+@keyframes twoMove {
+    0% {
+        visibility: visible;
+        clip-path: inset(0% 70% 70% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    14.2857% {
+        clip-path: inset(0% 70% 70% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    28.5714% {
+        clip-path: inset(0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    42.8571% {
+        clip-path: inset(0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    57.1428% {
+        clip-path: inset(35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    71.4285% {
+        clip-path: inset(35% 70% 35% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    85.7142% {
+        clip-path: inset(35% 70% 35% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    100% {
+        clip-path: inset(0% 70% 70% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+}
+
+@keyframes threeMove {
+    0% {
+        visibility: visible;
+        clip-path: inset(35% 70% 35% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    14.2857% {
+        clip-path: inset(35% 70% 35% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    28.5714% {
+        clip-path: inset(0% 70% 70% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    42.8571% {
+        clip-path: inset(0% 70% 70% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    57.1428% {
+        clip-path: inset(0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    71.4285% {
+        clip-path: inset(0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    85.7142% {
+        clip-path: inset(35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    100% {
+        clip-path: inset(35% 70% 35% 0 round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+}
+
+@keyframes fourMove {
+    0% {
+        visibility: visible;
+        clip-path: inset(35% 0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    14.2857% {
+        clip-path: inset(35% 0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    28.5714% {
+        clip-path: inset(35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    42.8571% {
+        clip-path: inset(70% 35% 0% 35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    57.1428% {
+        clip-path: inset(70% 35% 0% 35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    71.4285% {
+        clip-path: inset(70% 0 0 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    85.7142% {
+        clip-path: inset(70% 0 0 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    100% {
+        clip-path: inset(35% 0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+}
+
+@keyframes fiveMove {
+    0% {
+        visibility: visible;
+        clip-path: inset(70% 0 0 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    14.2857% {
+        clip-path: inset(70% 0 0 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    28.5714% {
+        clip-path: inset(35% 0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    42.8571% {
+        clip-path: inset(35% 0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    57.1428% {
+        clip-path: inset(35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    71.4285% {
+        clip-path: inset(70% 35% 0% 35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    85.7142% {
+        clip-path: inset(70% 35% 0% 35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    100% {
+        clip-path: inset(70% 0 0 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+}
+
+@keyframes sixMove {
+    0% {
+        visibility: visible;
+        clip-path: inset(70% 35% 0% 35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    14.2857% {
+        clip-path: inset(70% 35% 0% 35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    28.5714% {
+        clip-path: inset(70% 0 0 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    42.8571% {
+        clip-path: inset(70% 0 0 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    57.1428% {
+        clip-path: inset(35% 0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    71.4285% {
+        clip-path: inset(35% 0% 35% 70% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    85.7142% {
+        clip-path: inset(35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
+    100% {
+        clip-path: inset(70% 35% 0% 35% round 5%);
+        animation-timing-function: cubic-bezier(0.86,  0,  0.07,  1);
+    }
 }

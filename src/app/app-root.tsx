@@ -31,13 +31,16 @@ const ErrorComponentWrapper = observer(() => {
 
 /* ---------------- PREMIUM GOLD LOADER ---------------- */
 const GoldLoader = ({ message, theme = 'dark' }: { message?: string; theme?: 'light' | 'dark' }) => (
-    <div className={`gold-loader-wrapper ${theme}`}>
-        <div className="gold-loader-bars">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
+    <div className={`gold-loader-container ${theme}`}>
+        <div className="wrapper">
+            <div className="box-wrap">
+                <div className="box one"></div>
+                <div className="box two"></div>
+                <div className="box three"></div>
+                <div className="box four"></div>
+                <div className="box five"></div>
+                <div className="box six"></div>
+            </div>
         </div>
         {message && <p className={`gold-loader-text ${theme}`}>{message}</p>}
     </div>
@@ -67,6 +70,7 @@ const AppRoot = () => {
         <Suspense fallback={<GoldLoader message={localize('Loading FxProTrades...')} theme="dark" />}>
             <ErrorBoundary root_store={store}>
                 <ErrorComponentWrapper />
+                <AppContent />
                 <AppContent />
                 <TradingAssesmentModal />
             </ErrorBoundary>
