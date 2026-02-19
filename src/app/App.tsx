@@ -9,7 +9,7 @@ import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
 import PWAInstallModal from '@/components/pwa-install-modal/PWAInstallModal';
-import LearnMorePopup from '@/components/learn-more-popup/LearnMorePopup';
+{/* import LearnMorePopup from '@/components/learn-more-popup/LearnMorePopup';*/}
 import { TAuthData } from '@/types/api-types';
 import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
 import CoreStoreProvider from './CoreStoreProvider';
