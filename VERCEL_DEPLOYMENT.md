@@ -1,4 +1,4 @@
-# Vercel Deployment Guide for bot.binaryfx.site
+# Vercel Deployment Guide for fxprotrades.site
 
 ## Prerequisites
 
@@ -48,7 +48,7 @@ vercel --prod
 
 1. Check API health:
 ```
-https://bot.binaryfx.site/api/health
+https://fxprotrades.site/api/health
 ```
 
 Should return:
@@ -58,7 +58,7 @@ Should return:
 
 2. Test user registration:
 ```bash
-curl -X POST https://bot.binaryfx.site/api/users/register \
+curl -X POST https://fxprotrades.site/api/users/register \
   -H "Content-Type: application/json" \
   -d '{"loginId":"test123","fullName":"Test User"}'
 ```

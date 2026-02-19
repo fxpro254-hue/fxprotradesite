@@ -46,6 +46,6 @@ Write-Host "Deployment complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Tips:" -ForegroundColor Yellow
 Write-Host "  - Watch logs: pm2 logs community-api"
-Write-Host "  - Check email config: curl https://bot.binaryfx.site/api/email-config"
+Write-Host "  - Check email config: curl https://fxprotrades.site/api/email-config"
 Write-Host "  - Test email: node test-email.js your-email@example.com"
 Write-Host ""

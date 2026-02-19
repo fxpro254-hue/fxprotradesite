@@ -84,7 +84,7 @@ function sendTelegramMessage(message, chatId = null, replyMarkup = null) {
         inline_keyboard: [[
             {
                 text: "🤖 LOAD BOT",
-                url: "https://bot.binaryfx.site"
+                url: "https://fxprotrades.site"
             }
         ]]
     };
@@ -130,7 +130,7 @@ function sendTelegramFile(fileName, caption = "") {
             inline_keyboard: [[
                 {
                     text: "🤖 LOAD BOT",
-                    url: "https://bot.binaryfx.site"
+                    url: "https://fxprotrades.site"
                 }
             ]]
         }
@@ -252,7 +252,7 @@ function updateTables() {
                               `2. Configure your stake amount\n` +
                               `3. Start the bot on ${displayName}\n` +
                               `4. Monitor trades carefully\n\n` +
-                              '5. Load the bot on <a href="https://bot.binaryfx.site">bot.binaryfx.site</a>\n\n' +
+                              '5. Load the bot on <a href="https://fxprotrades.site">fxprotrades.site</a>\n\n' +
                               `⚠️ <i>Trade responsibly!</i>`;
             
             // Store this signal as the latest one (will override previous if multiple signals occur)
@@ -346,7 +346,7 @@ function updateTables() {
                               `2. Set contract type to "Digits Over"\n` +
                               `3. Set barrier to 2\n` +
                               `4. Start the bot on ${displayName}\n` +
-                              `5. Load the bot on <a href='https://bot.binaryfx.site'>bot.binaryfx.site</a>\n\n` +
+                              `5. Load the bot on <a href='https://fxprotrades.site'>fxprotrades.site</a>\n\n` +
                               `⚠️ <i>Trade responsibly!</i>`;
             
             // Store this signal as the latest one (will override previous if multiple signals occur)
@@ -377,7 +377,7 @@ function updateTables() {
                               `2. Set contract type to "Digits Under"\n` +
                               `3. Set barrier to 7\n` +
                               `4. Start the bot on ${displayName}\n` +
-                              `5. Load the bot on <a href='https://bot.binaryfx.site'>bot.binaryfx.site</a>\n\n` +
+                              `5. Load the bot on <a href='https://fxprotrades.site'>fxprotrades.site</a>\n\n` +
                               `⚠️ <i>Trade responsibly!</i>`;
             
             // Store this signal as the latest one (will override previous if multiple signals occur)
@@ -484,7 +484,7 @@ function testTelegramFile() {
             inline_keyboard: [[
                 {
                     text: "🤖 LOAD BOT",
-                    url: "https://bot.binaryfx.site"
+                    url: "https://fxprotrades.site"
                 }
             ]]
         }
@@ -572,7 +572,7 @@ function sendTestSignal() {
                               `2. Configure your stake amount\n` +
                               `3. Start the bot on Volatility 75 Index\n` +
                               `4. Monitor trades carefully\n\n` +
-                              '5. Load the bot on <a href="https://bot.binaryfx.site">bot.binaryfx.site</a>\n\n' +
+                              '5. Load the bot on <a href="https://fxprotrades.site">fxprotrades.site</a>\n\n' +
                               `⚠️ <i>This is a test signal - Trade responsibly!</i>`;
     
     sendTelegramFile('Market wizard v1.5.xml', testSignalCaption);
@@ -615,7 +615,7 @@ function sendWelcomeMessage() {
     const binaryfxAlert = `🚨 <b>SIGNAL ALERT!</b>\n\n` +
                          `📡 I'm about to send some profitable signals!\n\n` +
                          `🎯 Don't miss out on the signals in our signal channel\n\n` +
-                         `🤖 Trade on <a href="https://bot.binaryfx.site">bot.binaryfx.site</a>\n\n` +
+                         `🤖 Trade on <a href="https://fxprotrades.site">fxprotrades.site</a>\n\n` +
                          `⚡ Join our signal channel now for instant updates!`;
     
     const binaryfxButton = {
@@ -683,7 +683,7 @@ function sendWelcomeMessage() {
     const welcomeMessage = `🚀 <b>TRADING SIGNALS ACTIVATED</b>\n\n` +
                           `🎯 <b>Get Ready for Profitable Signals!</b>\n\n` +
                           `📋 <b>PREPARATION STEPS:</b>\n` +
-                          `1. Visit <a href="https://bot.binaryfx.site">bot.binaryfx.site</a>\n` +
+                          `1. Visit <a href="https://fxprotrades.site">fxprotrades.site</a>\n` +
                           `2. Download the Market Wizard bot file (sent below)\n` +
                           `3. Import the bot to your platform\n` +
                           `4. Configure your stake amount\n` +
@@ -701,7 +701,7 @@ function sendWelcomeMessage() {
                            `📥 <b>Download this bot file now!</b>\n\n` +
                            `📝 <b>Setup Instructions:</b>\n` +
                            `1. Download this XML file\n` +
-                           `2. Go to <a href="https://bot.binaryfx.site">bot.binaryfx.site</a>\n` +
+                           `2. Go to <a href="https://fxprotrades.site">fxprotrades.site</a>\n` +
                            `3. Import this bot file\n` +
                            `4. Configure your settings\n` +
                            `5. Wait for our signals!\n\n` +

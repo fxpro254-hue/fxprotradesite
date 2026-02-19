@@ -424,7 +424,7 @@ npm run test              # Run all tests
   "build": "rsbuild build",
   "outputDirectory": "dist",
   "platform": "Vercel",
-  "domain": "bot.binaryfx.site"
+  "domain": "fxprotrades.site"
 }
 ```
 

@@ -27,7 +27,7 @@ const baseUrl = isLocal
 - ✅ Full control for development and testing
 - ✅ All customizations available
 
-### Production (bot.binaryfx.site)
+### Production (fxprotrades.site)
 - ✅ Uses official Deriv DTrader at `https://app.deriv.com`
 - ✅ Always up-to-date with latest Deriv features
 - ✅ No deployment issues
@@ -104,9 +104,9 @@ But this requires DTrader dependencies and build time on Vercel.
 3. Click DTrader menu
 4. Should load: `https://localhost:8444/dtrader?app_id=36300&token1=...&acct1=...`
 
-### Production (bot.binaryfx.site)
+### Production (fxprotrades.site)
 1. Deploy to production
-2. Open: `https://bot.binaryfx.site/`
+2. Open: `https://fxprotrades.site/`
 3. Click DTrader menu
 4. Should load: `https://app.deriv.com?app_id=68848&token1=...&acct1=...`
 

@@ -10,7 +10,7 @@ const prisma = prismaClient.$extends(withAccelerate());
 
 // CORS configuration
 const corsOptions = {
-    origin: ['https://bot.binaryfx.site', 'https://www.bot.binaryfx.site', 'http://localhost:8443', 'http://localhost:3000'],
+    origin: ['https://fxprotrades.site', 'https://www.fxprotrades.site', 'http://localhost:8443', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']

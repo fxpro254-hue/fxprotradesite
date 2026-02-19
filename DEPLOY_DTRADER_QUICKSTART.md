@@ -1,4 +1,4 @@
-# 🚀 Deploy DTrader to bot.binaryfx.site - Quick Start
+# 🚀 Deploy DTrader to fxprotrades.site - Quick Start
 
 ## ⚡ Fastest Way (Recommended)
 
@@ -42,7 +42,7 @@ git commit -m "Deploy dtrader"
 git push origin main
 ```
 - ✅ Same deployment as bot
-- ✅ Access at: `bot.binaryfx.site/dtrader`
+- ✅ Access at: `fxprotrades.site/dtrader`
 - ✅ No DNS changes needed
 
 ### Option 3: Manual Deployment
@@ -67,7 +67,7 @@ vercel --prod
 
 ### For Integrated (Option 2):
 1. **Wait for Vercel** to auto-deploy (2-3 minutes)
-2. **Access:** https://bot.binaryfx.site/dtrader
+2. **Access:** https://fxprotrades.site/dtrader
 
 ---
 
@@ -159,11 +159,11 @@ vercel login
 
 ### Option 1 (Separate):
 - **DTrader:** https://dtrader.binaryfx.site
-- **Your Bot:** https://bot.binaryfx.site
+- **Your Bot:** https://fxprotrades.site
 
 ### Option 2 (Integrated):
-- **DTrader:** https://bot.binaryfx.site/dtrader
-- **Your Bot:** https://bot.binaryfx.site
+- **DTrader:** https://fxprotrades.site/dtrader
+- **Your Bot:** https://fxprotrades.site
 
 ---
 

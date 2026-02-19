@@ -20,7 +20,7 @@ Updated `api/index.js` to include:
 RESEND_API_KEY=re_6R6Z8q4E_9JEnaMQjeGRgpZHB9YKi36oe
 EMAIL_FROM=BinaryFX <noreply@binaryfx.site>
 ENABLE_EMAILS=true
-APP_URL=https://bot.binaryfx.site
+APP_URL=https://fxprotrades.site
 NODE_ENV=production
 ```
 
@@ -57,7 +57,7 @@ Once deployed:
 node delete-user.js CR6360772
 
 # 2. Go to production site
-# Open: https://bot.binaryfx.site
+# Open: https://fxprotrades.site
 
 # 3. Navigate to Community and register
 
