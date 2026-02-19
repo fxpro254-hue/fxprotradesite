@@ -322,7 +322,7 @@ const FreeBotSearchBar = observer(({ className }: TFreeBotSearchBar) => {
 
     // Handle purchase via WhatsApp
     const handlePurchaseClick = useCallback(() => {
-        const whatsappNumber = '254740009453';
+        const whatsappNumber = '254735525483';
         const message = `Hi, I'm interested in purchasing access to all premium bots for $19 (one-time payment). Please provide more details.`;
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;

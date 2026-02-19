@@ -589,7 +589,7 @@ const AppWrapper = observer(() => {
     }, [active_tab]);
 
     const handlePurchaseClick = useCallback(() => {
-        const whatsappNumber = '254740009453'; // Replace with your WhatsApp number (country code + number, no + sign)
+        const whatsappNumber = '254735525483'; // Replace with your WhatsApp number (country code + number, no + sign)
         const message = `Hi, I'm interested in purchasing access to all premium bots for $19 (one-time payment). Please provide more details.`;
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
