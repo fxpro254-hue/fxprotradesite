@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+{ /** comment this learn more popup          import React, { useEffect, useState } from 'react';
 import { localize } from '@deriv-com/translations';
 import { useApiBase } from '@/hooks/useApiBase';
 import './LearnMorePopup.scss';
@@ -105,3 +105,4 @@ const LearnMorePopup: React.FC = () => {
 };
 
 export default LearnMorePopup;
+*/ }
