@@ -125,7 +125,7 @@ const InfoIcon = () => {
     const socialLinks = [
         {
             name: 'Telegram',
-            url: 'https://t.me/binaryfx_site',
+            url: 'https://t.me/fxprotradesite',
             icon: (
                 <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
                     <path
@@ -137,24 +137,24 @@ const InfoIcon = () => {
         },
         {
             name: 'Email',
-            url: 'mailto:peterwallacekaranja@gmail.com',
+            url: 'mailto:fxpro254@gmail.com',
             icon: (
                 <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
                     <path
                         d='M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM19.6 8.25L12.53 12.67C12.21 12.87 11.79 12.87 11.47 12.67L4.4 8.25C4.15 8.09 4 7.82 4 7.53C4 6.86 4.73 6.46 5.3 6.81L12 11L18.7 6.81C19.27 6.46 20 6.86 20 7.53C20 7.82 19.85 8.09 19.6 8.25Z'
-                        fill='#EA4335'
+                        fill='#dba70d'
                     />
                 </svg>
             ),
         },
         {
             name: 'Website',
-            url: 'https://app.binaryfx.site',
+            url: 'https://fxprotrades.site',
             icon: (
                 <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
                     <path
                         d='M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 6.48 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM11 14.45L16.95 8.5L15.53 7.08L11 11.61L8.71 9.32L7.29 10.74L11 14.45Z'
-                        fill='#4285F4'
+                        fill='#f6e934'
                     />
                     <path
                         d='M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z'
@@ -166,7 +166,7 @@ const InfoIcon = () => {
         },
         {
             name: 'TikTok',
-            url: 'https://tiktok.com/@binary_fx_academy',
+            url: 'https://tiktok.com/@fxprotrades',
             icon: (
                 <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
                     <path
@@ -178,7 +178,7 @@ const InfoIcon = () => {
         },
         {
             name: 'WhatsApp',
-            url: 'https://wa.me/2547400094538',
+            url: 'https://wa.me/254735525483',
             icon: (
                 <svg width='24' height='24' viewBox='0 0 24 24' fill='none'>
                     <path
@@ -216,8 +216,8 @@ const InfoIcon = () => {
                     {/* Gradient definition */}
                     <defs>
                         <linearGradient id='chatGradient' x1='0' y1='0' x2='32' y2='32'>
-                            <stop offset='0%' stopColor='#6b48ff' />
-                            <stop offset='100%' stopColor='#3311bb' />
+                            <stop offset='0%' stopColor='#dba70d' />
+                            <stop offset='100%' stopColor='#ceb159' />
                         </linearGradient>
                     </defs>
                 </svg>
