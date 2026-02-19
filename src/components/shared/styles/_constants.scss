@@ -110,7 +110,7 @@ $contract-gradient-color-red-1: linear-gradient(to top, $color-white 85%, color.
 $contract-gradient-color-red-2: linear-gradient(to top, $color-black 85%, color.scale($color-red, $alpha: -84%));
 $gradient-color-white: linear-gradient(to right, color.scale($color-white, $alpha: -100%) -5%, $color-white 71%);
 $gradient-color-black: linear-gradient(to right, color.scale($color-black, $alpha: -100%) -5%, $color-black 71%);
-$gradient-color-purple: linear-gradient(274.73deg, #5a205d 3.82%, #7f3883 88.49%);
+$gradient-color-purple: linear-gradient(274.73deg, #dba80db2 3.82%, #dba70d 88.49%);
 $gradient-color-blue: linear-gradient(274.73deg, #1a205e 3.82%, #122d96 88.49%);
 $gradient-color-orange: linear-gradient(90deg, #eb001b 0%, #f79e1b 100%);
 $gradient-color-black-2: linear-gradient(274.73deg, #464750 3.82%, #0e0f11 88.49%);
