@@ -11,7 +11,7 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to BinaryFX Bot Community</title>
+    <title>Welcome to FxProTrades Bot Community</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -35,11 +35,11 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
         .logo {
             font-size: 32px;
             font-weight: bold;
-            color: #ff444f;
+            color: #ffcd44;
             margin-bottom: 10px;
         }
         h1 {
-            color: #2c3e50;
+            color: #4c502c;
             font-size: 24px;
             margin-bottom: 20px;
         }
@@ -50,7 +50,7 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
         }
         .user-info {
             background-color: #f8f9fa;
-            border-left: 4px solid #ff444f;
+            border-left: 4px solid #ffcd44;
             padding: 15px;
             margin: 20px 0;
             border-radius: 4px;
@@ -70,13 +70,13 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
             content: "✓";
             position: absolute;
             left: 0;
-            color: #ff444f;
+            color: #ffc144;
             font-weight: bold;
             font-size: 20px;
         }
         .cta-button {
             display: inline-block;
-            background-color: #ff444f;
+            background-color: #dcad20;
             color: #ffffff;
             padding: 12px 30px;
             text-decoration: none;
@@ -97,10 +97,10 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
 <body>
     <div class="email-container">
         <div class="header">
-            <div class="logo">🤖 BinaryFX Bot</div>
+            <div class="logo">🤖 FxProTrades Bot</div>
         </div>
         
-        <h1>Welcome to the BinaryFX Bot Community, ${data.userName}! 🎉</h1>
+        <h1>Welcome to the FxProTrades Bot Community, ${data.userName}! 🎉</h1>
         
         <div class="welcome-message">
             <p>We're thrilled to have you join our community of traders and bot enthusiasts!</p>
@@ -125,7 +125,7 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
                 <strong>Get Support:</strong> Ask questions and get help from the community
             </div>
             <div class="feature-item">
-                <strong>Stay Updated:</strong> Get the latest news and updates about BinaryFX Bot
+                <strong>Stay Updated:</strong> Get the latest news and updates about FxProTrades Bot
             </div>
             <div class="feature-item">
                 <strong>Copy Trading:</strong> Follow successful traders and copy their strategies
@@ -133,7 +133,7 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
         </div>
         
         <div style="text-align: center;">
-            <a href="${process.env.APP_URL || 'https://bot.binaryfx.site'}/?tab=id-community" class="cta-button">
+            <a href="${process.env.APP_URL || 'https://fxprotrades.site'}/?tab=id-community" class="cta-button">
                 Start Exploring →
             </a>
         </div>
@@ -144,8 +144,8 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
                 If you have any questions, feel free to reach out to our community moderators.
             </p>
             <p style="margin-top: 20px; font-size: 12px;">
-                This email was sent to you because you created an account on BinaryFX Bot.<br>
-                © ${new Date().getFullYear()} BinaryFX Bot. All rights reserved.
+                This email was sent to you because you created an account on FxProTrades Bot.<br>
+                © ${new Date().getFullYear()} FxProTrades Bot. All rights reserved.
             </p>
         </div>
     </div>
@@ -159,7 +159,7 @@ export const welcomeEmailTemplate = (data: EmailTemplateData['welcome']): string
  */
 export const welcomeEmailTextTemplate = (data: EmailTemplateData['welcome']): string => {
     return `
-Welcome to BinaryFX Bot Community, ${data.userName}!
+Welcome to FxProTrades Bot Community, ${data.userName}!
 
 We're thrilled to have you join our community of traders and bot enthusiasts!
 
@@ -171,15 +171,15 @@ What You Can Do:
 ✓ Join Discussions: Connect with other traders and share strategies
 ✓ Share Insights: Post your trading experiences and learn from others
 ✓ Get Support: Ask questions and get help from the community
-✓ Stay Updated: Get the latest news and updates about BinaryFX Bot
+✓ Stay Updated: Get the latest news and updates about FxProTrades Bot
 ✓ Copy Trading: Follow successful traders and copy their strategies
 
-Visit the community: ${process.env.APP_URL || 'https://bot.binaryfx.site'}/community
+Visit the community: ${process.env.APP_URL || 'https://fxprotrades.site'}/community
 
 Happy Trading! 📈
 
 If you have any questions, feel free to reach out to our community moderators.
 
-© ${new Date().getFullYear()} BinaryFX Bot. All rights reserved.
+© ${new Date().getFullYear()} FxProTrades Bot. All rights reserved.
     `.trim();
 };

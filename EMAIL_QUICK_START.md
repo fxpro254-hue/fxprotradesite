@@ -17,7 +17,7 @@ Add to your `.env` file:
 
 ```env
 RESEND_API_KEY=re_your_api_key_here
-EMAIL_FROM=BinaryFX Bot <noreply@binaryfx.site>
+EMAIL_FROM=FxProTrades Bot <noreply@binaryfx.site>
 ENABLE_EMAILS=true
 APP_URL=https://bot.binaryfx.site
 ```

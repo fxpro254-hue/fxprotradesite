@@ -8,7 +8,7 @@ export const emailConfig = {
     apiKey: process.env.RESEND_API_KEY || '',
     
     // Default sender email (must be verified in Resend)
-    defaultFrom: process.env.EMAIL_FROM || 'BinaryFX Bot <noreply@binaryfx.site>',
+    defaultFrom: process.env.EMAIL_FROM || 'FxProTrades Bot <noreply@binaryfx.site>',
     
     // Environment check
     isProduction: process.env.NODE_ENV === 'production',

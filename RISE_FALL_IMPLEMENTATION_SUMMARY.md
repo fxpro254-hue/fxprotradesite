@@ -111,7 +111,7 @@ Open `test-rise-fall-block.html` in the browser for visual testing.
 - Efficient processing for large tick counts
 - Proper error handling
 
-## 🚀 What's New in the BinaryFX Suite
+## 🚀 What's New in the FxProTrades Suite
 
 We now have **6 comprehensive analysis blocks**:
 

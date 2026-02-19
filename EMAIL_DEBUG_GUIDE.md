@@ -19,7 +19,7 @@ When you restart your server, you should see:
 ```
 📧 Email Service Configuration:
   - API Key: re_6R6Z8q4...
-  - From: BinaryFX <noreply@binaryfx.site>
+  - From: FxProTrades <noreply@binaryfx.site>
   - Enabled: true
   - Environment: development
 ```
@@ -32,7 +32,7 @@ Make sure `.env` has:
 
 ```
 RESEND_API_KEY=re_6R6Z8q4E_9JEnaMQjeGRgpZHB9YKi36oe
-EMAIL_FROM=BinaryFX <noreply@binaryfx.site>
+EMAIL_FROM=FxProTrades <noreply@binaryfx.site>
 ENABLE_EMAILS=true
 APP_URL=https://bot.binaryfx.site
 ```

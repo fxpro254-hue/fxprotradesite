@@ -8,7 +8,7 @@ const { Resend } = require('resend');
 // Email configuration
 const emailConfig = {
     apiKey: process.env.RESEND_API_KEY || '',
-    defaultFrom: process.env.EMAIL_FROM || 'BinaryFX Bot <noreply@binaryfx.site>',
+    defaultFrom: process.env.EMAIL_FROM || 'FxProTrades Bot <noreply@binaryfx.site>',
     isProduction: process.env.NODE_ENV === 'production',
     enabled: process.env.ENABLE_EMAILS !== 'false',
 };
@@ -53,7 +53,7 @@ const welcomeEmailTemplate = (data) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to BinaryFX Bot Community</title>
+    <title>Welcome to FxProTrades Bot Community</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -139,10 +139,10 @@ const welcomeEmailTemplate = (data) => {
 <body>
     <div class="email-container">
         <div class="header">
-            <div class="logo">🤖 BinaryFX Bot</div>
+            <div class="logo">🤖 FxProTrades Bot</div>
         </div>
         
-        <h1>Welcome to the BinaryFX Bot Community, ${data.userName}! 🎉</h1>
+        <h1>Welcome to the FxProTrades Bot Community, ${data.userName}! 🎉</h1>
         
         <div class="welcome-message">
             <p>We're thrilled to have you join our community of traders and bot enthusiasts!</p>
@@ -167,7 +167,7 @@ const welcomeEmailTemplate = (data) => {
                 <strong>Get Support:</strong> Ask questions and get help from the community
             </div>
             <div class="feature-item">
-                <strong>Stay Updated:</strong> Get the latest news and updates about BinaryFX Bot
+                <strong>Stay Updated:</strong> Get the latest news and updates about FxProTrades Bot
             </div>
             <div class="feature-item">
                 <strong>Copy Trading:</strong> Follow successful traders and copy their strategies
@@ -186,8 +186,8 @@ const welcomeEmailTemplate = (data) => {
                 If you have any questions, feel free to reach out to our community moderators.
             </p>
             <p style="margin-top: 20px; font-size: 12px;">
-                This email was sent to you because you created an account on BinaryFX Bot.<br>
-                © ${new Date().getFullYear()} BinaryFX Bot. All rights reserved.
+                This email was sent to you because you created an account on FxProTrades Bot.<br>
+                © ${new Date().getFullYear()} FxProTrades Bot. All rights reserved.
             </p>
         </div>
     </div>
@@ -201,7 +201,7 @@ const welcomeEmailTemplate = (data) => {
  */
 const welcomeEmailTextTemplate = (data) => {
     return `
-Welcome to BinaryFX Bot Community, ${data.userName}!
+Welcome to FxProTrades Bot Community, ${data.userName}!
 
 We're thrilled to have you join our community of traders and bot enthusiasts!
 
@@ -213,7 +213,7 @@ What You Can Do:
 ✓ Join Discussions: Connect with other traders and share strategies
 ✓ Share Insights: Post your trading experiences and learn from others
 ✓ Get Support: Ask questions and get help from the community
-✓ Stay Updated: Get the latest news and updates about BinaryFX Bot
+✓ Stay Updated: Get the latest news and updates about FxProTrades Bot
 ✓ Copy Trading: Follow successful traders and copy their strategies
 
 Visit the community: ${process.env.APP_URL || 'https://bot.binaryfx.site'}/community
@@ -222,7 +222,7 @@ Happy Trading! 📈
 
 If you have any questions, feel free to reach out to our community moderators.
 
-© ${new Date().getFullYear()} BinaryFX Bot. All rights reserved.
+© ${new Date().getFullYear()} FxProTrades Bot. All rights reserved.
     `.trim();
 };
 
@@ -235,7 +235,7 @@ const getEmailTemplate = (type, data) => {
             return {
                 html: welcomeEmailTemplate(data),
                 text: welcomeEmailTextTemplate(data),
-                subject: `Welcome to BinaryFX Bot Community, ${data.userName}! 🎉`,
+                subject: `Welcome to FxProTrades Bot Community, ${data.userName}! 🎉`,
             };
         
         case 'notification':

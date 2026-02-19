@@ -112,7 +112,7 @@ IF [last 3 ticks are fall] AND [current position profit] > 20
 - **Large Counts**: Efficiently processes up to 1000 ticks
 - **Performance**: Early exit optimization for speed
 
-## 🚀 What's New in the BinaryFX Suite
+## 🚀 What's New in the FxProTrades Suite
 
 We now have **7 comprehensive analysis blocks**:
 
@@ -204,7 +204,7 @@ The Last Ticks Direction block is now live and ready to provide precise momentum
 
 ---
 
-## 📈 Complete BinaryFX Block Suite Summary
+## 📈 Complete FxProTrades Block Suite Summary
 
 With the addition of the Last Ticks Direction block, the binaryfx suite now offers:
 

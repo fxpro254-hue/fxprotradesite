@@ -18,7 +18,7 @@ Updated `api/index.js` to include:
 
 ```
 RESEND_API_KEY=re_6R6Z8q4E_9JEnaMQjeGRgpZHB9YKi36oe
-EMAIL_FROM=BinaryFX <noreply@binaryfx.site>
+EMAIL_FROM=FxProTrades <noreply@binaryfx.site>
 ENABLE_EMAILS=true
 APP_URL=https://bot.binaryfx.site
 NODE_ENV=production

@@ -121,9 +121,9 @@
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌────────────────────────────────────────────────────────────────┐         │
-│  │  📧 Welcome to BinaryFX Bot Community!                         │         │
+│  │  📧 Welcome to FxProTrades Bot Community!                         │         │
 │  │  ───────────────────────────────────────────────────────────   │         │
-│  │  From: BinaryFX Bot <noreply@binaryfx.site>                    │         │
+│  │  From: FxProTrades Bot <noreply@binaryfx.site>                    │         │
 │  │                                                                 │         │
 │  │  [Beautiful HTML email with branding, features, and CTA]       │         │
 │  │                                                                 │         │

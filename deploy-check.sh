@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Bot.BinaryFX Deployment Checker"
+echo "🚀 Bot.FxProTrades Deployment Checker"
 echo "=================================="
 echo ""
 

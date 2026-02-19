@@ -24,7 +24,7 @@ export const getEmailTemplate = (
             return {
                 html: welcomeEmailTemplate(data),
                 text: welcomeEmailTextTemplate(data),
-                subject: `Welcome to BinaryFX Bot Community, ${data.userName}! 🎉`,
+                subject: `Welcome to FxProTrades Bot Community, ${data.userName}! 🎉`,
             };
         
         // Add more templates here as they are created

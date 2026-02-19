@@ -2,7 +2,7 @@
 
 ## Overview
 
-A universal email system built with Resend API that can be used across the entire BinaryFX Bot application. The system is designed to be flexible, reusable, and easy to integrate into any feature.
+A universal email system built with Resend API that can be used across the entire FxProTrades Bot application. The system is designed to be flexible, reusable, and easy to integrate into any feature.
 
 ## Features
 
@@ -47,7 +47,7 @@ Add to your `.env` file:
 ```env
 # Email Configuration (Resend API)
 RESEND_API_KEY=re_123abc...         # Your Resend API key
-EMAIL_FROM=BinaryFX Bot <noreply@binaryfx.site>  # Verified sender email
+EMAIL_FROM=FxProTrades Bot <noreply@binaryfx.site>  # Verified sender email
 ENABLE_EMAILS=true                  # Enable/disable email sending
 APP_URL=https://bot.binaryfx.site   # Your app URL for links in emails
 ```
@@ -319,7 +319,7 @@ export const emailConfig = {
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `RESEND_API_KEY` | Yes | Your Resend API key | `re_abc123...` |
-| `EMAIL_FROM` | Yes | Verified sender email | `BinaryFX <noreply@binaryfx.site>` |
+| `EMAIL_FROM` | Yes | Verified sender email | `FxProTrades <noreply@binaryfx.site>` |
 | `ENABLE_EMAILS` | No | Enable/disable emails | `true` (default) |
 | `APP_URL` | No | App URL for email links | `https://bot.binaryfx.site` |
 
@@ -415,4 +415,4 @@ For issues or questions:
 
 ## License
 
-This email system is part of BinaryFX Bot and follows the same license.
+This email system is part of FxProTrades Bot and follows the same license.

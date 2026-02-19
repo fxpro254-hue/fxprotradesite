@@ -36,7 +36,7 @@ window.Blockly.Blocks.stat_comparison = {
             colourSecondary: window.Blockly.Colours.Base.colourSecondary,
             colourTertiary: window.Blockly.Colours.Base.colourTertiary,
             tooltip: localize('Returns true if the previous accumulator stat satisfies the comparison condition against the specified value, false otherwise'),
-            category: window.Blockly.Categories.BinaryFX,
+            category: window.Blockly.Categories.FxProTrades,
         };
     },
     meta() {
