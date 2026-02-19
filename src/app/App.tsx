@@ -67,7 +67,7 @@ const router = createBrowserRouter(
                             <RoutePromptDialog />
                             <CoreStoreProvider>
                                 <Layout />
-                                <LearnMorePopup />
+                                {/*<LearnMorePopup />*/}
                             </CoreStoreProvider>
                         </StoreProvider>
                     </TranslationProvider>

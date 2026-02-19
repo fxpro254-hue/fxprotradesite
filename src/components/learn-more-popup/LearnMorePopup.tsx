@@ -1,8 +1,8 @@
-  import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { localize } from '@deriv-com/translations';
 import { useApiBase } from '@/hooks/useApiBase';
 import './LearnMorePopup.scss';
-{ /** comment this learn more popup        
+
 const LearnMorePopup: React.FC = () => {
     const { isAuthorized } = useApiBase();
     const [showPopup, setShowPopup] = useState(false);
@@ -105,4 +105,3 @@ const LearnMorePopup: React.FC = () => {
 };
 
 export default LearnMorePopup;
-*/ }
