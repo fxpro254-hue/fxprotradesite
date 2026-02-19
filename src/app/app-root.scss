@@ -1,90 +1,73 @@
-/* ================================
-   PREMIUM THEME-AWARE GOLD LOADER
-================================ */
+/* ===============================
+   PREMIUM GOLD BOLT LOADER
+================================= */
 
-.premium-loader-wrapper {
-    height: 100vh;
-    width: 100%;
-    background: var(--loader-bg);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+.bolt-loader-wrapper {
+  height: 100vh;
+  width: 100%;
+  background: #0f0f0f; /* dark background */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Theme Adaptive Background */
-:root {
-    --loader-bg: #ffffff;
-    --loader-text: #222222;
+.bolt-loader-container {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-[data-theme='dark'] {
-    --loader-bg: #0f0f0f;
-    --loader-text: #ffffff;
+.bolt-logo {
+  width: 110px;
+  z-index: 2;
+  animation: boltPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
 }
 
-/* ORBIT CONTAINER */
-.orbit-loader {
-    position: relative;
-    width: 120px;
-    height: 120px;
+.bolt-glow {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.4), transparent 70%);
+  animation: glowExpand 2s ease-in-out infinite;
+  z-index: 1;
 }
 
-/* GLOWING ROTATING RING */
-.orbit-ring {
-    position: absolute;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    border-top: 3px solid #d4af37;
-    border-right: 3px solid #ffd700;
-    animation: rotateOrbit 1.6s linear infinite;
-
-    box-shadow:
-        0 0 15px rgba(255, 215, 0, 0.6),
-        0 0 40px rgba(255, 215, 0, 0.3);
+.bolt-loader-text {
+  margin-top: 28px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
-/* GOLD PULSING CORE */
-.orbit-core {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 26px;
-    height: 26px;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: radial-gradient(circle, #ffd700, #b8860b);
-    animation: pulseCore 1.5s ease-in-out infinite;
+/* Animations */
 
-    box-shadow:
-        0 0 15px rgba(255, 215, 0, 0.9),
-        0 0 40px rgba(255, 215, 0, 0.5);
+@keyframes boltPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
 }
 
-/* TEXT */
-.loader-text {
-    margin-top: 28px;
-    font-weight: 600;
-    font-size: 18px;
-    color: var(--loader-text);
-    letter-spacing: 0.5px;
-}
-
-/* ANIMATIONS */
-@keyframes rotateOrbit {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes pulseCore {
-    0%, 100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.25);
-        opacity: 0.8;
-    }
+@keyframes glowExpand {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
 }

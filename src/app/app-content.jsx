@@ -263,9 +263,13 @@ const AppContent = observer(() => {
         }
     }, []);
 
-   if (common?.error) return null;
+ import PremiumBoltLoader from "./PremiumBoltLoader";
 
-   if (is_loading) return null;
+if (common?.error) return null;
+
+if (is_loading) {
+    return <PremiumBoltLoader message="Initializing FxProTrades..." />;
+}
 
    return (
             <ThemeProvider theme={is_dark_mode_on ? 'dark' : 'light'}>

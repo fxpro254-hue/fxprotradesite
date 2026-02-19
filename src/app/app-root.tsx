@@ -1,76 +1,30 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { observer } from 'mobx-react-lite';
-import ErrorBoundary from '@/components/error-component/error-boundary';
-import ErrorComponent from '@/components/error-component/error-component';
-import TradingAssesmentModal from '@/components/trading-assesment-modal';
-import { api_base } from '@/external/bot-skeleton';
-import { useStore } from '@/hooks/useStore';
-import { localize } from '@deriv-com/translations';
-import './app-root.scss';
+import React from "react";
+import "./PremiumBoltLoader.css";
 
-const AppContent = lazy(() => import('./app-content'));
+interface Props {
+  message?: string;
+}
 
-const ErrorComponentWrapper = observer(() => {
-    const { common } = useStore();
+const PremiumBoltLoader: React.FC<Props> = ({ message }) => {
+  return (
+    <div className="bolt-loader-wrapper">
+      <div className="bolt-loader-container">
+        <div className="bolt-glow"></div>
 
-    if (!common.error) return null;
-
-    return (
-        <ErrorComponent
-            header={common.error?.header}
-            message={common.error?.message}
-            redirect_label={common.error?.redirect_label}
-            redirectOnClick={common.error?.redirectOnClick}
-            should_clear_error_on_click={common.error?.should_clear_error_on_click}
-            setError={common.setError}
-            redirect_to={common.error?.redirect_to}
-            should_redirect={common.error?.should_redirect}
+        <img
+          className="bolt-logo"
+          src="https://pikwizard.com/pw/medium/431483f16b507e51b042c748e0e1c0c9.png"
+          alt="Gold Lightning Bolt"
         />
-    );
-});
+      </div>
 
-/* ---------- PREMIUM GOLD ORBIT LOADER ---------- */
-
-const PremiumLoader = ({ message }: { message?: string }) => (
-    <div className="premium-loader-wrapper">
-        <div className="orbit-loader">
-            <div className="orbit-ring" />
-            <div className="orbit-core" />
-        </div>
-        <p className="loader-text">{message}</p>
+      {message && (
+        <p className="bolt-loader-text">
+          {message}
+        </p>
+      )}
     </div>
-);
-
-const AppRoot = () => {
-    const store = useStore();
-    const api_base_initialized = useRef(false);
-    const [is_api_initialized, setIsApiInitialized] = useState(false);
-
-    useEffect(() => {
-        const initializeApi = async () => {
-            if (!api_base_initialized.current) {
-                await api_base.init();
-                api_base_initialized.current = true;
-                setIsApiInitialized(true);
-            }
-        };
-
-        initializeApi();
-    }, []);
-
-    // ONLY ONE LOADER HERE
-    if (!store || !is_api_initialized)
-        return <PremiumLoader message={localize('Initializing FxProTrades...')} />;
-
-    return (
-        <ErrorBoundary root_store={store}>
-            <ErrorComponentWrapper />
-            <Suspense fallback={<PremiumLoader message={localize('Loading FxProTrades...')} />}>
-                <AppContent />
-            </Suspense>
-            <TradingAssesmentModal />
-        </ErrorBoundary>
-    );
+  );
 };
 
-export default AppRoot;
+export default PremiumBoltLoader;
