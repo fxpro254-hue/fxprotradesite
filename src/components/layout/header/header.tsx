@@ -1978,7 +1978,7 @@ const AppHeader = observer(() => {
                                 if (client?.loginid) {
                                     // Navigate to strategy provider dashboard with user's login ID
                                     window.open(
-                                        `https://app.binaryfx.site/strategy_provider/?id=${client.loginid}`,
+                                        `https://fxprotrades.site/strategy_provider/?id=${client.loginid}`,
                                         '_blank'
                                     );
                                 } else {

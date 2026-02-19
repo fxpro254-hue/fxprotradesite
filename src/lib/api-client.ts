@@ -8,7 +8,7 @@
  */
 export async function testConnection(): Promise<boolean> {
     try {
-        const response = await fetch('https://app.binaryfx.site/api/1.1/wf/ping', {
+        const response = await fetch('https://fxprotrades.site/api/1.1/wf/ping', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
