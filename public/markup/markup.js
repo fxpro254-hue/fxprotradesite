@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wallet = document.querySelector('.wallet');
 
     // Configuration
-    const TARGET_APP_ID = 68848; // App ID to filter markup statistics
+    const TARGET_APP_ID = 111827; // App ID to filter markup statistics
 
     if (!wallet) {
         console.error("⚠ Wallet element not found. Ensure the element with class 'wallet' exists in the HTML.");
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (response.msg_type === 'app_markup_statistics') {
             console.log('📊 Processing app_markup_statistics response...');
             
-            // Filter markup data for app_id 68848 only
+            // Filter markup data for app_id 111827 only
             let filteredMarkup = 0;
             let filteredRuns = 0;
             

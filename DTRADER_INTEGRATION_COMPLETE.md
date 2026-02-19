@@ -151,7 +151,7 @@ const baseUrl = isLocal
 
 ### Production
 - **Bot UI**: `https://bot.binaryfx.site/`
-- **DTrader Iframe**: `https://bot.binaryfx.site/dtrader?app_id=68848&token1=...&acct1=...`
+- **DTrader Iframe**: `https://bot.binaryfx.site/dtrader?app_id=111827&token1=...&acct1=...`
 
 ---
 
@@ -162,7 +162,7 @@ const baseUrl = isLocal
    - `active_loginid`: Active account ID
 
 2. Bot builds DTrader URL with parameters:
-   - `app_id`: App ID (36300 local, 68848 production)
+   - `app_id`: App ID (36300 local, 111827 production)
    - `token1`: User's token
    - `acct1`: Account login ID
 

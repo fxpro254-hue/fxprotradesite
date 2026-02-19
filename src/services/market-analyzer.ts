@@ -224,7 +224,7 @@ class MarketAnalyzer {
             }
         }
 
-        const ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=68848');
+        const ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=111827');
         this.websockets[symbol] = ws;
 
         ws.onopen = () => {

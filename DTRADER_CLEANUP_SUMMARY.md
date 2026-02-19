@@ -41,7 +41,7 @@ dtrader/
 ### Active Files
 - ✅ `src/pages/dtrader.tsx` - DTrader tab component (uses iframe)
 - ✅ `src/pages/dtrader.scss` - DTrader styles
-- ✅ `.env` - Contains `DERIV_APP_ID=68848`
+- ✅ `.env` - Contains `DERIV_APP_ID=111827`
 
 ### Local Folder
 - `dtrader/` folder still exists locally (added to .gitignore)

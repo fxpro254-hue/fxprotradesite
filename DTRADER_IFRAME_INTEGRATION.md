@@ -14,7 +14,7 @@ DTrader is integrated into the bot using a simple iframe approach with URL-based
 **Production:**
 - Bot: `https://bot.binaryfx.site/`
 - DTrader: `https://bot.binaryfx.site/dtrader`  
-- Iframe URL: `https://bot.binaryfx.site/dtrader?app_id=68848&token1=TOKEN&acct1=ACCOUNT`
+- Iframe URL: `https://bot.binaryfx.site/dtrader?app_id=111827&token1=TOKEN&acct1=ACCOUNT`
 
 ### How It Works
 1. Bot detects environment (localhost vs production)

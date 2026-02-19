@@ -53,9 +53,9 @@ const DTrader: React.FC = observer(() => {
                 const baseUrl = 'https://deriv-dtrader.vercel.app/dtrader';
 
                 // Get App ID based on environment
-                // localhost/test links use 36300, production uses 68848, Vercel DTrader uses 98586
+                // localhost/test links use 36300, production uses 111827, Vercel DTrader uses 98586
                 const isLocalhost = /localhost(:\d+)?$/i.test(window.location.hostname);
-                const appId = isLocalhost ? 36300 : 68848;
+                const appId = isLocalhost ? 36300 : 111827;
                 
                 console.log('🔍 Environment - Hostname:', window.location.hostname);
                 console.log('🔍 Environment - Is Localhost:', isLocalhost);

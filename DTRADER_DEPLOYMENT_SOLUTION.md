@@ -108,7 +108,7 @@ But this requires DTrader dependencies and build time on Vercel.
 1. Deploy to production
 2. Open: `https://bot.binaryfx.site/`
 3. Click DTrader menu
-4. Should load: `https://app.deriv.com?app_id=68848&token1=...&acct1=...`
+4. Should load: `https://app.deriv.com?app_id=111827&token1=...&acct1=...`
 
 ## 🔧 Troubleshooting
 
@@ -123,7 +123,7 @@ But this requires DTrader dependencies and build time on Vercel.
 ### Issue: "Authentication not working with official DTrader"
 
 **Check**: 
-1. App ID is correct (68848 for production)
+1. App ID is correct (111827 for production)
 2. Token is valid
 3. Account ID matches token
 

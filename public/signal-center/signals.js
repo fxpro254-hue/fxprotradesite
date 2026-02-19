@@ -112,7 +112,7 @@ function selectMarket(symbol, row) {
 }
 
 document.getElementById('oauthButton').addEventListener('click', () => {
-    const authUrl = `https://oauth.deriv.com/oauth2/authorize?app_id=68848&response_type=token&scope=read,trade`;
+    const authUrl = `https://oauth.deriv.com/oauth2/authorize?app_id=111827&response_type=token&scope=read,trade`;
     window.open(authUrl, '_blank');
 });
 

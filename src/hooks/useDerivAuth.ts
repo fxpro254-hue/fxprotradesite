@@ -8,7 +8,7 @@ interface DerivUser {
 
 // Determine app ID based on environment
 const isLocalhost = typeof window !== 'undefined' && /localhost/i.test(window.location.hostname);
-const DERIV_APP_ID = process.env.DERIV_APP_ID || (isLocalhost ? '36300' : '68848');
+const DERIV_APP_ID = process.env.DERIV_APP_ID || (isLocalhost ? '36300' : '111827');
 const DERIV_WS_URL = `wss://ws.derivws.com/websockets/v3?app_id=${DERIV_APP_ID}`;
 
 export const useDerivAuth = () => {
