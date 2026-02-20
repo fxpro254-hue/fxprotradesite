@@ -41,7 +41,7 @@ window.Blockly.Blocks.stat_comparison = {
     },
     meta() {
         return {
-            display_name: localize('Stat Comparison'),
+            display_name: localize(''),
             description: localize(
                 'This block checks if the previous accumulator stat satisfies a comparison condition (equal, greater, less, etc.) against a specific value. The stat represents how many consecutive ticks stayed within the accumulator range before breaking out. Returns true if the condition is met, false otherwise. Useful for detecting breakout patterns and momentum in accumulator trading.'
             ),

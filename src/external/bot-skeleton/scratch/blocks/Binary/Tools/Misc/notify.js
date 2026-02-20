@@ -9,7 +9,7 @@ window.Blockly.Blocks.notify = {
     definition() {
         return {
             message0: localize(
-                'Binaryfx {{ notification_type }} with sound: {{ notification_sound }} {{ input_message }}',
+                'fxprotrades{{ notification_type }} with sound: {{ notification_sound }} {{ input_message }}',
                 {
                     notification_type: '%1',
                     notification_sound: '%2',
@@ -47,7 +47,7 @@ window.Blockly.Blocks.notify = {
     },
     meta() {
         return {
-            display_name: localize('Binaryfx'),
+            display_name: localize('fxprotrades'),
             description: localize(
                 'This block displays a message. You can specify the color of the message and choose from 6 different sound options.'
             ),
