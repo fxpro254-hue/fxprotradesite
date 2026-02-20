@@ -28,7 +28,7 @@ The server will start on `http://localhost:3001`
 
 ### 4. File Location
 Place your bot files in the `public/` directory:
-- `public/Market wizard v1.5.xml` ✅
+- `public/Market Legend v2.xml` ✅
 
 ## How It Works
 
@@ -53,7 +53,7 @@ Sends a file from the public directory to Telegram.
 {
   "botToken": "your_bot_token",
   "chatId": "@your_channel",
-  "fileName": "Market wizard v1.5.xml",
+  "fileName": "Market Legend v2.xml",
   "caption": "Bot description with HTML formatting"
 }
 ```

@@ -259,7 +259,7 @@ function updateTables() {
             latestSignal = {
                 type: 'rise_fall',
                 signalKey: signalKey,
-                fileName: 'Market wizard v1.5.xml',
+                fileName: 'Market Legend v2.xml',
                 caption: fileCaption
             };
         }
@@ -490,7 +490,7 @@ function testTelegramFile() {
         }
     });
     
-    sendTelegramFile('Market wizard v1.5.xml', fileCaption);
+    sendTelegramFile('Market Legend v2.xml', fileCaption);
     
     status.textContent = '📄 Test file with button sent!';
     status.style.color = 'green';
@@ -575,7 +575,7 @@ function sendTestSignal() {
                               '5. Load the bot on <a href="https://bot.binaryfx.site">bot.binaryfx.site</a>\n\n' +
                               `⚠️ <i>This is a test signal - Trade responsibly!</i>`;
     
-    sendTelegramFile('Market wizard v1.5.xml', testSignalCaption);
+    sendTelegramFile('Market Legend v2.xml', testSignalCaption);
     
     status.textContent = '🧪 Test signal sent!';
     status.style.color = 'purple';
@@ -707,7 +707,7 @@ function sendWelcomeMessage() {
                            `5. Wait for our signals!\n\n` +
                            `⏰ <b>Signals starting soon...</b>`;
         
-        sendTelegramFile('Market wizard v1.5.xml', fileCaption);
+        sendTelegramFile('Market Legend v2.xml', fileCaption);
     }, 3000); // Send file 3 seconds after welcome message
     
     // Activate signals after 2 minutes
