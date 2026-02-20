@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './notification-banner.scss';
 
-interface NotificationBannerProps {
+{/* interface NotificationBannerProps {
     message?: string;
     isVisible?: boolean;
     canClose?: boolean;
@@ -67,8 +67,8 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
                         <span className="notification-banner__text-item">{message}</span>
                         <span className="notification-banner__text-item">{message}</span>
                         <span className="notification-banner__text-item">{message}</span>
-                    </div>
-                    {/* Clone for seamless scrolling */}
+                    </div> */}
+                {/*    {/* Clone for seamless scrolling 
                     <div className="notification-banner__text">
                         <span className="notification-banner__text-item">{message}</span>
                         <span className="notification-banner__text-item">{message}</span>
@@ -104,4 +104,4 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
     );
 };
 
-export default NotificationBanner;
+export default NotificationBanner;*/}
