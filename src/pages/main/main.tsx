@@ -316,15 +316,15 @@ const AppWrapper = observer(() => {
         const fetchBots = async () => {
             const botFiles = [
                 {
-                    file: '2026 over turbo.xml',
-                    title: '2026 over turbo',
+                    file: 'Legacy 2026 Over.xml',
+                    title: 'Legacy 2026 Over',
                     category: 'automated',
                     description:
                         'Trades digit over, after a loss, it increases prediction to maintain same stake. Best for accounts with $50+ balance.',
                     premium: false,
     },
                 {
-                    file: 'Super recovery.xml',
+                    file: 'Ultra Recovery.xml',
                     category: 'automated',
                     popularity: 100,
                     premium: false,
@@ -332,35 +332,35 @@ const AppWrapper = observer(() => {
                         'Advanced recovery system with smart frequency analysis, dual prediction targeting, and dynamic risk management for consistent profitability.',
                 },
                 {
-                    file: 'Elite Starship.xml',
+                    file: 'Elite Startrader.xml',
                     category: 'automated',
                     popularity: 99,
                     description:
                         'High-performance trading bot with frequency analysis, dynamic predictions, and advanced risk management system.',
                 },
                 {
-                    file: 'O_U oracle.xml',
+                    file: 'Oracle OverUnder Pro.xml',
                     category: 'automated',
                     popularity: 98,
                     description:
                         'Advanced Over/Under Oracle with smart martingale, dual prediction system, and configurable take profit/stop loss management.',
                 },
                 {
-                    file: '2025 BOT - 0008 - Over Under.xml',
+                    file: '2025 Bot  Over Under.xml',
                     category: 'automated',
                     popularity: 97,
                     description:
                         'Advanced 2025 Over/Under bot with digit analysis, frequency tracking, and intelligent prediction system for optimal market timing.',
                 },
                 {
-                    file: '2025 $Orginal  2025 Version .xml',
+                    file: '2025 Original Version.xml',
                     category: 'popular',
                     popularity: 96,
                     description:
                         'Advanced 2025 Even/Odd digit bot with smart profit targeting, loss management, and adaptive stake adjustment for maximum profitability.',
                 },
                 {
-                    file: 'over under turbo 1.1.xml',
+                    file: 'Turbo O_U Accelerator.xml',
                     category: 'automated',
                     popularity: 95,
                     premium: false,
@@ -368,21 +368,21 @@ const AppWrapper = observer(() => {
                         'Advanced over/under trading strategy with turbo speed execution and intelligent market prediction.',
                 },
                 {
-                    file: 'Market wizard v1.5.xml',
+                    file: 'Market Legend v2.xml',
                     category: 'automated',
                     popularity: 92,
                     description:
                         'Community favorite with proven track record in various market conditions and excellent risk management.',
                 },
                 {
-                    file: 'Auto differ recovery over under.xml',
+                    file: 'Auto Differ Recovery O_U.xml',
                     category: 'automated',
                     popularity: 90,
                     description:
                         'Automated difference recovery strategy for over/under markets with adaptive risk management.',
                 },
                 {
-                    file: 'Tradezilla.xml',
+                    file: 'Godzilla.xml',
                     category: 'automated',
                     popularity: 88,
                     premium: false,
@@ -390,14 +390,14 @@ const AppWrapper = observer(() => {
                         'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.',
                 },
                 {
-                    file: 'Envy-differ.xml',
+                    file: 'Envy Pro Differ.xml',
                     category: 'popular',
                     popularity: 85,
                     description:
                         'Reliable difference-based trading strategy perfect for beginners and steady profit seekers.',
                 },
                 {
-                    file: 'H_L auto vault.xml',
+                    file: 'H_L Auto Fortress.xml',
                     category: 'automated',
                     popularity: 90,
                     description:
@@ -411,14 +411,14 @@ const AppWrapper = observer(() => {
                         'Top-rated strategy loved by professional traders for its consistency and impressive performance metrics.',
                 },
                 {
-                    file: 'BOT V3.xml',
+                    file: 'Core Bot V3.xml',
                     category: 'popular',
                     popularity: 82,
                     description:
                         'Stable and dependable trading bot with conservative approach and long-term profitability focus.',
                 },
                 {
-                    file: 'Even_Odd Killer bot.xml',
+                    file: '	EvenOdd Dominator.xml',
                     category: 'popular',
                     popularity: 89,
                     premium: false,
@@ -426,7 +426,7 @@ const AppWrapper = observer(() => {
                         'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.',
                 },
                 {
-                    file: '🤑 Unstoppable Differ Bot 🤑.xml',
+                    file: ' 🫰Pro  Differ Bot .xml',
                     category: 'automated',
                     popularity: 91,
                     description:
@@ -440,7 +440,7 @@ const AppWrapper = observer(() => {
                         'Sequential digit under strategy targeting digits under 9 with smart prediction rotation and adaptive stake management.',
                 },
                 {
-                    file: "Accumulator Reverse D'Alembert.xml",
+                    file: '	Accumulator Anti-D Alembert.xml',
                     category: 'advanced',
                     popularity: 87,
                     description:

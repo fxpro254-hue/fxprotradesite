@@ -11,36 +11,36 @@ import { TStrategy } from 'Types';
 // Comprehensive bot files available for search - includes all bots from public directory
 const availableBots = [
     {
-        file: '2026 over turbo.xml',
-        title: '2026 over turbo',
+        file: 'Legacy 2026 Over.xml',
+        title: 'Legacy 2026 Over',
         category: 'automated',
         description:
             'Trades digit over, after a loss, it increases prediction to maintain same stake. Best for accounts with $50+ balance.',
         premium: false,
     },
     {
-        file: 'Super recovery.xml',
-        title: 'Super Recovery',
+        file: 'Ultra Recovery.xml',
+        title: 'Ultra Recovery',
         category: 'automated',
         description: 'Advanced recovery system with smart frequency analysis, dual prediction targeting, and dynamic risk management for consistent profitability.',
         premium: false,
     },
     {
-        file: 'Elite Starship.xml',
-        title: 'Elite Starship',
+        file: 'Elite Startrader.xml',
+        title: 'Elite Startrader',
         category: 'automated',
         description: 'High-performance trading bot with frequency analysis, dynamic predictions, and advanced risk management system.',
         premium: false,
     },
     {
-        file: 'O_U oracle.xml',
-        title: 'O/U Oracle',
+        file: 'Oracle OverUnder Pro.xml',
+        title: 'Oracle OverUnder Pro',
         category: 'automated',
         description: 'Advanced Over/Under Oracle with smart martingale, dual prediction system, and configurable take profit/stop loss management.',
     },
     {
-        file: '2025 BOT - 0008 - Over Under.xml',
-        title: '2025 BOT - 0008 - Over Under',
+        file: '	2025 Bot  Over Under.xml',
+        title: '2025 Bot Over Under',
         category: 'automated',
         description: 'Advanced 2025 Over/Under bot with digit analysis, frequency tracking, and intelligent prediction system for optimal market timing.',
     },
@@ -51,21 +51,21 @@ const availableBots = [
         description: 'Single tick digit over strategy with precise timing and statistical edge.',
     },
     {
-        file: '2025 $Orginal  2025 Version .xml',
+        file: '2025 Original Version.xml',
         title: '2025 Original Version',
         category: 'popular',
         description:
             'Advanced 2025 Even/Odd digit bot with smart profit targeting, loss management, and adaptive stake adjustment for maximum profitability.',
     },
     {
-        file: 'Auto differ recovery over under.xml',
-        title: 'Auto Differ Recovery Over Under',
+        file: 'Auto Differ Recovery O_U.xml',
+        title: 'Auto Differ Recovery O_U',
         category: 'automated',
         description: 'Automated difference recovery strategy for over/under markets with adaptive risk management.',
     },
     {
-        file: 'BOT V3.xml',
-        title: 'BOT V3',
+        file: 'Core Bot V3.xml',
+        title: 'Core Bot V3.xml',
         category: 'popular',
         description: 'Stable and dependable trading bot with conservative approach and long-term profitability focus.',
     },
@@ -76,28 +76,28 @@ const availableBots = [
         description: 'Specialized digit over strategy targeting number 3 with high accuracy pattern recognition.',
     },
     {
-        file: 'Envy-differ.xml',
-        title: 'Envy Differ',
+        file: 'Envy Pro Differ.xml',
+        title: 'Envy Pro Differ',
         category: 'popular',
         description: 'Reliable difference-based trading strategy perfect for beginners and steady profit seekers.',
     },
     {
-        file: 'Even_Odd Killer bot.xml',
-        title: 'Even Odd Killer Bot',
+        file: '	EvenOdd Dominator.xml',
+        title: 'Even Odd Dominator',
         category: 'popular',
         description:
             'Highly effective even/odd prediction bot with advanced pattern recognition and statistical analysis.',
         premium: false,
     },
     {
-        file: 'H_L auto vault.xml',
-        title: 'H_L Auto Vault',
+        file: 'H_L Auto Fortress.xml',
+        title: 'H_L Auto Fortress',
         category: 'automated',
         description: 'High-Low automated vault system with built-in profit protection and loss prevention mechanisms.',
     },
     {
-        file: 'Market wizard v1.5.xml',
-        title: 'Market Wizard v1.5',
+        file: 'Market Legend v2.xml',
+        title: 'Market Legend v2',
         category: 'automated',
         description:
             'Community favorite with proven track record in various market conditions and excellent risk management.',
@@ -123,8 +123,8 @@ const availableBots = [
         description: 'Aggressive profit-seeking robot designed for maximum returns with calculated risk management.',
     },
     {
-        file: 'over under turbo 1.1.xml',
-        title: 'Over Under Turbo 1.1',
+        file: 'Turbo O_U Accelerator.xml',
+        title: 'Turbo O_U Accelerator',
         category: 'automated',
         description:
             'Advanced over/under trading strategy with turbo speed execution and intelligent market prediction.',
@@ -149,8 +149,8 @@ const availableBots = [
             'Top-rated strategy loved by professional traders for its consistency and impressive performance metrics.',
     },
     {
-        file: 'Tradezilla.xml',
-        title: 'Tradezilla',
+        file: 'Godzilla.xml',
+        title: 'Godzilla',
         category: 'automated',
         description:
             'Powerful automated trading beast that adapts to market volatility with machine learning algorithms.',
@@ -163,8 +163,8 @@ const availableBots = [
         description: 'Enhanced candlestick mining strategy with upgraded pattern recognition and market analysis.',
     },
     {
-        file: '🤑 Unstoppable Differ Bot 🤑.xml',
-        title: 'Unstoppable Differ Bot',
+        file: '🫰Pro  Differ Bot .xml',
+        title: '🫰Pro Differ Bot',
         category: 'automated',
         description: 'Unstoppable difference-based trading strategy with advanced digit tracking and smart recovery system for consistent wins.',
     },
@@ -175,10 +175,10 @@ const availableBots = [
         description: 'Sequential digit under strategy targeting digits under 9 with smart prediction rotation and adaptive stake management.',
     },
     {
-        file: "Accumulator Reverse D'Alembert.xml",
-        title: "Accumulator Reverse D'Alembert",
+        file: "Accumulator Anti-D Alembert.xml",
+        title: "Accumulator Anti-D Alembert",
         category: 'advanced',
-        description: "Advanced accumulator bot with Reverse D'Alembert strategy, featuring profit/loss thresholds, adaptive stake management, and tick-based sell controls.",
+        description: "Advanced accumulator bot with Anti-D'Alembert strategy, featuring profit/loss thresholds, adaptive stake management, and tick-based sell controls.",
     },
 ];
 

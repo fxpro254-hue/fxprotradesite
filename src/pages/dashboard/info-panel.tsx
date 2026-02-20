@@ -10,7 +10,7 @@ import { SIDEBAR_INTRO } from './constants';
 
 const InfoPanel = observer(() => {
     const { isDesktop } = useDevice();
-    const { dashboard } = useStore();
+    const { dashboard, client } = useStore();
     const {
         active_tour,
         is_info_panel_visible,
@@ -69,7 +69,7 @@ const InfoPanel = observer(() => {
     );
 
     return isDesktop ? (
-        !active_tour && (
+        !active_tour && client?.is_logged_in && (
             <div
                 className={classNames('tab__dashboard__info-panel', {
                     'tab__dashboard__info-panel--active': is_info_panel_visible,
@@ -79,15 +79,14 @@ const InfoPanel = observer(() => {
             </div>
         )
     ) : (
-        <Modal
-            className='statistics__modal statistics__modal--mobile'
-            is_open={is_info_panel_visible}
-            toggleModal={handleClose}
-            width={'440px'}
-        >
-            <Modal.Body>{renderInfo()}</Modal.Body>
-        </Modal>
-    );
+        client?.is_logged_in && (
+            <Modal
+                is_open={is_info_panel_visible}
+                className='statistics__modal--mobile'
+                toggleModal={handleClose}
+                width={'440px'}
+                ><Modal.Body>{renderInfo()}</Modal.Body></Modal>)
+    )
 });
 
 export default InfoPanel;

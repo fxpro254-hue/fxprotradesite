@@ -66,7 +66,7 @@ ws.onmessage = event => {
 };
 
 function updateTables() {
-    
+    const riseFallTable = document.getElementById('riseFallTable');
     const overUnderTable = document.getElementById('overUnderTable');
     const combinedTable = document.getElementById('combinedTable');
 
@@ -78,7 +78,23 @@ function updateTables() {
         const ticks = ticksStorage[symbol];
         if (ticks.length < 255) return;
 
-       
+        // Calculate rise/fall percentages for 255 and 55 ticks
+        const { risePercentage: rise255, fallPercentage: fall255 } = calculateTrendPercentage(symbol, 255);
+        const { risePercentage: rise55, fallPercentage: fall55 } = calculateTrendPercentage(symbol, 55);
+
+        // Check if both conditions are met for a buy/sell signal
+        const isBuy = rise255 > 57 && rise55 > 55;
+        const isSell = fall255 > 57 && fall55 > 55;
+
+        // Define status classes for signals
+        const riseClass = isBuy ? 'rise' : 'neutral';
+        const fallClass = isSell ? 'fall' : 'neutral';
+
+        // Generate rise/fall table row
+        const displayName = symbol.startsWith('1HZ')
+            ? `Volatility ${symbol.replace('1HZ', '').replace('V', '')} (1s) Index`
+            : `Volatility ${symbol.replace('R_', '')} Index`;
+        
 
         // Last digit analysis
         const digitCounts = new Array(10).fill(0);
@@ -107,8 +123,6 @@ function updateTables() {
             <td>${displayName}</td>
             <td><span class="signal-box ${overClass}">${overClass === 'over' ? 'Over 2' : '----'}</span></td>
             <td><span class="signal-box ${underClass}">${underClass === 'under' ? 'Under 7' : '----'}</span></td>
-            <td><span class="signal-box ${riseClass}">${isBuy ? 'Rise' : '----'}</span></td>
-            <td><span class="signal-box ${fallClass}">${isSell ? 'Fall' : '----'}</span></td>
         </tr>`;
     });
 }

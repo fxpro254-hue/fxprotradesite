@@ -1,18 +1,13 @@
 ﻿@use 'components/shared/styles/mixins' as *;
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap");
 
+// Pure white background - only when modal is open
 .modal-backdrop {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
-    z-index: 999998;
-    pointer-events: all;
+    background: transparent 40%;
+    pointer-events: none; // Allow clicks to pass through
 }
 
-// Make sure modal_root has proper positioning for the absolute positioning to work
 #modal_root {
     position: fixed;
     top: 0;
@@ -23,349 +18,231 @@
     justify-content: center;
     align-items: center;
     z-index: 999999;
-    pointer-events: none;
+    pointer-events: none; // Allow clicks to pass through when empty
+    
+    // Only capture clicks when modal is actually open
+    &:has(.modal__container, .dc-modal__container) {
+        pointer-events: all;
+    }
 }
 
-.login-required-modal {
-    position: absolute !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    margin: 0 auto !important;
-    pointer-events: all;
-    
-    .modal__content {
-        background: rgba(255, 255, 255, 0.98) !important;
-        border-radius: 20px !important;
-        padding: 0 !important;
-        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
-        backdrop-filter: blur(20px);
-        animation: modalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
+// Remove all modal backgrounds
+.login-required-modal,
+.dc-modal__container,
+.modal__container,
+.modal__content,
+.dc-modal__content {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+}
 
-    &__content {
-        padding: 48px 40px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 32px;
-    }
+// Main login card - gold theme on white
+.login-card {
+    position: relative;
+    width: 580px;
+    background: linear-gradient(145deg, #3e3e3c 0%, #3e3e3c  100%);
+    border-radius: 24px;
+    padding: 2.5rem;
+    text-align: center;
+    color: #ffffff;
+    font-family: "Quicksand", sans-serif;
+    border: 2px solid #FFD700;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 215, 0, 0.3),
+        inset 0 0 60px rgba(255, 215, 0, 0.05);
+    pointer-events: all; // Ensure card captures clicks
 
-    &__logo {
-        width: 64px;
-        height: 64px;
-        margin-bottom: -8px;
-        animation: logoFloat 3s ease-in-out infinite;
-
-        svg {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(0 4px 12px rgba(0, 168, 232, 0.3));
-        }
-    }
-
-    &__header {
-        text-align: center;
+    &__emoji {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+        animation: bounce 2s infinite;
+        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
     }
 
     &__title {
-        font-size: 28px !important;
-        font-weight: 700 !important;
-        color: #1a1a2e !important;
-        margin-bottom: 8px !important;
-        letter-spacing: -0.5px !important;
-        line-height: 1.2 !important;
-        text-align: center !important;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFFFFF 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.2;
     }
 
-    &__subtitle {
-        font-size: 15px !important;
-        color: #6b7280 !important;
-        font-weight: 400 !important;
-        line-height: 1.5 !important;
-        text-align: center !important;
+    &__message {
+        background: rgba(255, 215, 0, 0.1);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #F4E4BC;
+        line-height: 1.4;
+    }
+
+    &__description {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.15rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
     }
 
     &__actions {
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        width: 100%;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
     }
 
-    &__login-btn {
+    &__btn {
         width: 100%;
-        background: linear-gradient(135deg, #0066ff 0%, #00a8e8 100%) !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 14px 24px !important;
-        font-size: 15px !important;
-        font-weight: 600 !important;
-        color: #ffffff !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        padding: 14px 24px;
+        border-radius: 50px;
+        font-size: 1.18rem;
+        font-weight: 600;
         cursor: pointer;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 12px !important;
-        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
-        
-        .btn-icon {
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-            margin-right: 4px;
-        }
+        transition: all 0.3s ease;
+        font-family: "Quicksand", sans-serif;
+        border: none;
 
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.35);
-        }
-
-        &:active {
-            transform: translateY(0);
-        }
-    }
-
-    &__create-btn {
-        width: 100%;
-        background: #f3f4f6 !important;
-        border: 1px solid #e5e7eb !important;
-        border-radius: 12px !important;
-        padding: 14px 24px !important;
-        font-size: 15px !important;
-        font-weight: 600 !important;
-        color: #4b5563 !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        cursor: pointer;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 12px !important;
-
-        .btn-icon {
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-            color: #6b7280;
-            margin-right: 4px;
-        }
-
-        &:hover {
-            background: #e5e7eb !important;
-            border-color: #d1d5db !important;
-            transform: translateY(-2px);
-        }
-
-        &:active {
-            transform: translateY(0);
-        }
-    }
-
-    &__footer {
-        text-align: center;
-        padding-top: 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-
-        .footer-text {
-            font-size: 13px !important;
-            color: #9ca3af !important;
-            font-weight: 400 !important;
-
-            .deriv-badge {
-                display: inline-block;
-                padding: 2px 8px;
-                background: linear-gradient(135deg, #ff444f 0%, #ff6b6b 100%);
-                color: white;
-                border-radius: 4px;
-                font-weight: 600;
-                font-size: 12px;
-                margin-left: 4px;
-                vertical-align: middle;
-            }
-        }
-
-        .risk-disclaimer-btn {
-            background: transparent;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 8px 20px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #6b7280;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0 auto;
+        &--primary {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #1a1a1a;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
 
             &:hover {
-                border-color: #d1d5db;
-                color: #4b5563;
-                background: #f9fafb;
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
             }
+        }
 
-            &:active {
-                transform: scale(0.98);
+        &--secondary {
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+
+            &:hover {
+                background: rgba(255, 215, 0, 0.1);
+                transform: translateY(-2px);
             }
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    &__disclaimer {
+        background: transparent;
+        border: 1px solid rgba(255, 215, 0, 0.4);
+        border-radius: 50px;
+        padding: 10px 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #F4E4BC;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: "Quicksand", sans-serif;
+
+        &:hover {
+            border-color: #FFD700;
+            background: rgba(255, 215, 0, 0.1);
+            color: #FFD700;
         }
     }
 }
 
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -45%);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%);
-    }
-}
-
-@keyframes logoFloat {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-.risk-disclaimer-modal {
-    position: absolute !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    margin: 0 auto !important;
-    pointer-events: all;
-    z-index: 1000000 !important;
-
-    .modal__content {
-        background: rgba(255, 255, 255, 0.98) !important;
-        border-radius: 16px !important;
-        padding: 0 !important;
-        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15) !important;
-        animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+// Risk Disclaimer Modal
+.risk-modal {
+    .modal__content,
+    .dc-modal__content {
+        background: #ffffff !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important;
+        border: 2px solid #FFD700 !important;
     }
 
     &__content {
-        padding: 32px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+        padding: 2rem;
+        font-family: "Quicksand", sans-serif;
     }
 
     &__title {
-        font-size: 24px !important;
-        font-weight: 700 !important;
-        color: #1a1a2e !important;
-        margin-bottom: 8px !important;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 1rem;
         text-align: center;
+        background: linear-gradient(135deg, #FFD700 70%, #FFA500 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
     &__text {
-        font-size: 14px !important;
-        line-height: 1.6 !important;
-        color: #4b5563 !important;
-        text-align: left;
+        font-size: 1.5rem;
+        line-height: 1.6;
+        color: #ffffff;
+        margin-bottom: 1rem;
     }
 
     &__list {
+        
         list-style: disc;
-        padding-left: 24px;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+        padding-left: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: #ffffff;
+        font-size: 1.5rem;
+        line-height: 1.6;
 
         li {
-            font-size: 14px;
-            line-height: 1.6;
-            color: #4b5563;
+            margin-bottom: 0.5rem;
         }
     }
 
-    &__close-btn {
+    &__btn {
         width: 100%;
-        background: linear-gradient(135deg, #0066ff 0%, #00a8e8 100%) !important;
-        border: none !important;
-        border-radius: 10px !important;
-        padding: 12px 24px !important;
-        font-size: 15px !important;
-        font-weight: 600 !important;
-        color: #ffffff !important;
-        margin-top: 12px;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        border: none;
+        border-radius: 50px;
+        color: #1a1a1e;
+        font-size: 1.25rem;
+        font-weight: 700;
         cursor: pointer;
         transition: all 0.3s ease;
+        font-family: "Quicksand", sans-serif;
 
         &:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 102, 255, 0.3);
-        }
-
-        &:active {
-            transform: translateY(0);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
         }
     }
 }
 
-// Responsive design
-@media (max-width: 768px) {
-    .login-required-modal {
-        .modal__content {
-            width: calc(100vw - 32px);
-            max-width: 400px;
-        }
+// Animations
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
 
-        &__content {
-            padding: 36px 28px;
-            gap: 24px;
-        }
-
-        &__logo {
-            width: 56px;
-            height: 56px;
-        }
-
+// Mobile responsive
+@media (max-width: 480px) {
+    .login-card {
+        width: 90vw;
+        padding: 2rem;
+        
         &__title {
-            font-size: 20px !important;
-        }
-
-        &__subtitle {
-            font-size: 13px !important;
-        }
-
-        &__login-btn,
-        &__create-btn {
-            font-size: 14px !important;
-            padding: 12px 20px !important;
-
-            .btn-icon {
-                width: 18px;
-                height: 18px;
-            }
-        }
-    }
-
-    .risk-disclaimer-modal {
-        .modal__content {
-            width: calc(100vw - 32px);
-            max-width: 440px;
-        }
-
-        &__content {
-            padding: 24px;
-            gap: 16px;
-        }
-
-        &__title {
-            font-size: 20px !important;
-        }
-
-        &__text,
-        &__list li {
-            font-size: 13px !important;
+            font-size: 1.5rem;
         }
     }
 }
