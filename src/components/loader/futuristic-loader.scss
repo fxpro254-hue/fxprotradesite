@@ -1,122 +1,200 @@
-.futuristic-loader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
+.futuristic-loader-container {
     height: 100vh;
+    width: 100vw;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    font-size: 1.6rem;
+    color: #fff;
+    background: var(--loader-bg, #fff);
+    transition: background-color 0.3s ease;
+
+    &.dark {
+        background: var(--loader-bg-dark, #1a1a1a);
+    }
+}
+
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 80px;
+}
+
+.wrap {
+    position: relative;
+    width: 50px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drop {
+    width: 20px;
+    height: 20px;
+    left: 50%;
+    margin-left: -10px;
+    position: absolute;
+    animation: drop 2s cubic-bezier(0.55, 0.085, 0.68, 0.53) 0s infinite;
+}
+
+.drop circle {
+    fill: #040404;
+}
+
+.drop-outer {
+    position: absolute;
+    box-sizing: border-box;
+    width: 50px;
+    height: 100px;
     overflow: hidden;
+    border-bottom-right-radius: 25px;
+    border-bottom-left-radius: 25px;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
+    background-clip: padding-box;
+    mask-image: radial-gradient(circle, #fff 100%, #000 100%);
+}
 
-    .loader-content {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-    }
+.ripple {
+    position: absolute;
+    box-sizing: border-box;
+    width: 120px;
+    height: 120px;
+    top: 34px;
+    left: -35px;
+    perspective: 100;
+    transform: rotateX(65deg);
+}
 
-    .logo {
-        font-size: 4rem;
-        font-weight: 800;
-        color: #fff;
-        letter-spacing: 4px;
-        margin-bottom: 2rem;
-        text-shadow: 0 0 20px rgba(33, 150, 243, 0.5);
+.ripple .ripple-svg {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+}
 
-        span {
-            color: #2196f3;
-        }
-    }
+.ripple .ripple-svg circle {
+    fill: none;
+    stroke: #dba70d;
+    stroke-width: 5px;
+    stroke-alignment: inner;
+}
 
-    .progress-bar {
-        width: 300px;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 2px;
-        margin: 2rem auto;
-        position: relative;
-        overflow: hidden;
+.ripple-1 {
+    animation: ripple 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0s infinite;
+}
 
-        .progress {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            background: linear-gradient(90deg, #2196f3, #00bcd4);
-            transition: width 0.3s ease;
-        }
+.ripple-1 .ripple-svg {
+    animation: fade-in-out 2s linear 0s infinite;
+}
 
-        .percentage {
-            position: absolute;
-            top: -25px;
-            right: 0;
-            color: #2196f3;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-    }
+.ripple-1 .ripple-svg circle {
+    animation: border 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0s infinite;
+}
 
-    .loader-message {
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 1.4rem;
-        margin: 1rem 0;
-    }
+.ripple-2 {
+    animation: ripple 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s infinite;
+}
 
-    .welcome-message {
-        color: #fff;
-        font-size: 1.8rem;
-        font-weight: 300;
-        margin-top: 2rem;
-        opacity: 0;
-        animation: fadeIn 0.5s ease forwards 0.5s;
-    }
+.ripple-2 .ripple-svg {
+    animation: fade-in-out 2s linear 0.2s infinite;
+}
 
-    .background-effects {
-        position: absolute;
-        width: 100%;
-        height: 100%;
+.ripple-2 .ripple-svg circle {
+    animation: border 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s infinite;
+}
 
-        .particle {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: #2196f3;
-            border-radius: 50%;
-            animation: float 8s infinite;
+.ripple-3 {
+    animation: ripple 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.35s infinite;
+}
 
-            @for $i from 1 through 20 {
-                &:nth-child(#{$i}) {
-                    left: random(100) * 1%;
-                    top: random(100) * 1%;
-                    animation-delay: random(8000) * -1ms;
-                }
-            }
-        }
+.ripple-3 .ripple-svg {
+    animation: fade-in-out 2s linear 0.35s infinite;
+}
+
+.ripple-3 .ripple-svg circle {
+    animation: border 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.35s infinite;
+}
+
+.loader-message {
+    font-size: 1.6rem;
+    font-weight: 500;
+    text-align: center;
+    color: var(--loader-text, #000);
+    transition: color 0.3s ease;
+
+    .dark & {
+        color: var(--loader-text-dark, #e0e0e0);
     }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes float {
+@keyframes drop {
     0% {
-        transform: translate(0, 0);
+        transform: scale3d(0.01, 0.01, 0.01) translateY(0);
+    }
+
+    10% {
+        transform: scale3d(1, 1, 1);
+    }
+
+    44% {
+        transform: scale3d(1, 1, 1) translateY(100px);
+    }
+
+    100% {
+        transform: scale3d(1, 1, 1) translateY(100px);
+    }
+}
+
+@keyframes fade-in-out {
+    0% {
         opacity: 0;
     }
-    50% {
+
+    42% {
+        opacity: 0;
+    }
+
+    52% {
         opacity: 1;
     }
+
+    65% {
+        opacity: 1;
+    }
+
     100% {
-        transform: translate(random(100) - 50px, random(100) - 50px);
         opacity: 0;
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: rotateX(65deg) scale3d(0.2, 0.2, 0.2);
+    }
+
+    42% {
+        transform: rotateX(65deg) scale3d(0.2, 0.2, 0.2);
+    }
+
+    100% {
+        transform: rotateX(65deg) scale3d(0.9, 0.9, 0.9);
+    }
+}
+
+@keyframes border {
+    0% {
+        stroke-width: 3px;
+    }
+
+    42% {
+        stroke-width: 3px;
+    }
+
+    100% {
+        stroke-width: 1px;
     }
 }

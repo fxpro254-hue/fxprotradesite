@@ -39,7 +39,7 @@ const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ onInstall, onClose, s
         <div className={`pwa-install-modal-overlay ${currentTheme === 'dark' ? 'theme--dark' : 'theme--light'}`}>
             <div className='pwa-install-modal-content'>
                 <h3>{localize('Install App?')}</h3>
-                <p>{localize('Add BinaryFx to your home screen for quick and easy access.')}</p>
+                <p>{localize('Add   FxPro Trades to your home screen for quick and easy access.')}</p>
                 <div className='pwa-install-modal-actions'>
                     <button onClick={onInstall} className='pwa-install-modal-button install'>
                         {localize('Install')}

@@ -1,17 +1,18 @@
 import { initSurvicate } from '../public-path';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
-import { Analytics } from '@vercel/analytics/react';
 import ErrorBoundary from '@/components/error-boundary/ErrorBoundary';
-import ChunkLoader from '@/components/loader/chunk-loader';
+import PWAInstallModal from '@/components/pwa-install-modal/PWAInstallModal';
 import RoutePromptDialog from '@/components/route-prompt-dialog';
 import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
-import PWAInstallModal from '@/components/pwa-install-modal/PWAInstallModal';
-{/* import LearnMorePopup from '@/components/learn-more-popup/LearnMorePopup';*/}
+import { Analytics } from '@vercel/analytics/react';
+{
+    /* import LearnMorePopup from '@/components/learn-more-popup/LearnMorePopup';*/
+}
 import { TAuthData } from '@/types/api-types';
-import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
+import { initializeI18n, TranslationProvider } from '@deriv-com/translations';
 import CoreStoreProvider from './CoreStoreProvider';
 import './app-root.scss';
 
@@ -23,16 +24,19 @@ const RouteErrorFallback = () => (
     <div style={{ padding: '40px', textAlign: 'center' }}>
         <h2>⚠️ Failed to load this page</h2>
         <p>Please try refreshing or going back to the home page.</p>
-        <button onClick={() => window.location.href = '/'} style={{
-            padding: '10px 20px',
-            marginTop: '20px',
-            background: '#667eea',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '16px',
-        }}>
+        <button
+            onClick={() => (window.location.href = '/')}
+            style={{
+                padding: '10px 20px',
+                marginTop: '20px',
+                background: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '16px',
+            }}
+        >
             Go Home
         </button>
     </div>
@@ -59,9 +63,7 @@ const router = createBrowserRouter(
             path='/'
             errorElement={<RouteErrorFallback />}
             element={
-                <Suspense
-                    fallback={<ChunkLoader message={localize('Please wait while we connect to the server...')} />}
-                >
+                <Suspense>
                     <TranslationProvider defaultLang='EN' i18nInstance={i18nInstance}>
                         <StoreProvider>
                             <RoutePromptDialog />

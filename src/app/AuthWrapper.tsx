@@ -1,7 +1,5 @@
 import React from 'react';
-import ChunkLoader from '@/components/loader/chunk-loader';
 import { generateDerivApiInstance } from '@/external/bot-skeleton/services/api/appId';
-import { localize } from '@deriv-com/translations';
 import { URLUtils } from '@deriv-com/utils';
 import App from './App';
 
@@ -62,7 +60,7 @@ export const AuthWrapper = () => {
     }, [loginInfo, paramsToDelete]);
 
     if (!isAuthComplete) {
-        return <ChunkLoader message={localize('Initializing...')} />;
+        return;
     }
 
     return <App />;
