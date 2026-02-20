@@ -95,7 +95,7 @@ const Layout = () => {
     return (
         <div className={clsx('layout', { responsive: isDesktop })}>
             {!isCallbackPage && <AppHeader />}
-            {!isCallbackPage && <NotificationBanner />}
+           {/* {!isCallbackPage && <NotificationBanner />} */}
             <Body>
                 <Outlet />
             </Body>
