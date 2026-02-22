@@ -1330,7 +1330,7 @@ export const ToolboxItems = () =>
                     </Block>
                 </Category>
             </Category>
-            <Category id='binaryfx' name={localize('binaryfx')}>
+            <Category id='FxPro' name={localize('FxPro')}>
                 <Block type='stat_comparison'>
                     <Field name='OPERATOR'>greater</Field>
                     <Value name='VALUE'>
