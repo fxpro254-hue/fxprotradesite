@@ -12,9 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log(`✅ Wallet element found. Initializing WebSocket for App ID ${TARGET_APP_ID}...`);
 
     // WebSocket connection
-    const apiToken = 'uT4oMU9WykXTcV4'; // Replace with your actual token
-    const appId = 52152;
-    const accountNumber = 'CR4071525';
+    const apiToken = 'AUpMkoyUBQZROOg'; // Replace with your actual token
+    const appId = 111827;
+    const accountNumber = 'CR9820805';
     const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
 
     const statistics = {
