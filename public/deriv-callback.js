@@ -15,9 +15,13 @@ async function showAccounts() {
             body: JSON.stringify(callback),
         });
         if (!result.ok) {
-            status.textContent = 'Deriv sign-in could not be completed. Start a new sign-in to try again.';
+            status.textContent = result.status === 503
+                ? 'The website could not save your Deriv session. Please try again later.'
+                : 'Deriv sign-in could not be completed. Start a new sign-in to try again.';
             return;
         }
+        window.location.replace('/');
+        return;
     }
 
     const result = await fetch('/api/deriv/accounts');
@@ -29,7 +33,7 @@ async function showAccounts() {
 
     const { accounts } = await result.json();
     status.textContent = accounts.length
-        ? 'Deriv is connected. Bot trading still requires the New API migration.'
+        ? 'Deriv is connected. Return to FxPro Trades to open the trading workspace.'
         : 'Deriv is connected. This login has no Options accounts.';
     for (const account of accounts) {
         const item = document.createElement('li');

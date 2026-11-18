@@ -8,7 +8,6 @@ import { useOauth2 } from '@/hooks/auth/useOauth2';
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import { StandaloneCircleUserRegularIcon } from '@deriv/quill-icons/Standalone';
-import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { Localize, useTranslations } from '@deriv-com/translations';
 import { Header, useDevice, Wrapper } from '@deriv-com/ui';
 import { Tooltip } from '@deriv-com/ui';
@@ -279,52 +278,10 @@ const AppHeader = observer(() => {
     }, [activeAccount, accounts, all_accounts_balance]);
 
     const getAccountBalance = (account_id: string) => {
-        try {
-            // Check if SVG mode is enabled
-            const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
-            
-            if (activeAccount && activeAccount.loginid === account_id) {
-                let balanceToUse = activeAccount.balance;
-                
-                // If SVG mode is enabled and this is a USD real account, try to use demo balance
-                if (isSvgModeEnabled && !activeAccount.loginid?.startsWith('VR') && activeAccount.currency?.toLowerCase() === 'usd') {
-                    const demoLoginId = Object.keys(accounts).find(id => id.startsWith('VR'));
-                    if (demoLoginId && all_accounts_balance[demoLoginId]) {
-                        balanceToUse = all_accounts_balance[demoLoginId];
-                    }
-                }
-                
-                return {
-                    balance: balanceToUse,
-                    currency: activeAccount.currency,
-                };
-            }
-
-            if (client?.balance !== undefined && client?.loginid === account_id) {
-                let balanceToUse = client.balance;
-                
-                // If SVG mode is enabled and this is a USD real account, try to use demo balance
-                if (isSvgModeEnabled && !client.loginid?.startsWith('VR') && client.currency?.toLowerCase() === 'usd') {
-                    const demoLoginId = Object.keys(accounts).find(id => id.startsWith('VR'));
-                    if (demoLoginId && all_accounts_balance[demoLoginId]) {
-                        balanceToUse = all_accounts_balance[demoLoginId];
-                    }
-                }
-                
-                return {
-                    balance: balanceToUse,
-                    currency: client.currency,
-                };
-            }
-
-            return {
-                balance: 0,
-                currency: 'USD',
-            };
-        } catch (error) {
-            console.error(`Error getting balance for account ${account_id}:`, error);
-            return { balance: 0, currency: 'USD' };
-        }
+        const accountBalance = client?.all_accounts_balance?.accounts?.[account_id];
+        if (accountBalance) return accountBalance;
+        if (client?.loginid === account_id) return { balance: client.balance, currency: client.currency };
+        return { balance: 0, currency: client?.currency || 'USD' };
     };
 
     const formatBalance = (account_id: string) => {
@@ -3931,7 +3888,7 @@ const AppHeader = observer(() => {
                                     <div className='account-cards-container'>
                                         <div className='deriv-account-switcher-item'>
                                             <span className='deriv-account-switcher-item__icon'>
-                                                {(localStorage.getItem('svging') === 'yes' || !client.loginid?.startsWith('VR')) ? (
+                                                {(localStorage.getItem('svging') === 'yes' || !client.is_virtual) ? (
                                                     // Real account icon (or forced real icon when svging is enabled)
                                                     <svg
                                                         xmlns='http://www.w3.org/2000/svg'
@@ -4009,7 +3966,7 @@ const AppHeader = observer(() => {
                                                         }
                                                         
                                                         // Default behavior: show actual account type
-                                                        return `${client.loginid?.startsWith('VR') ? 'Demo' : 'Real'} ${client.currency || 'USD'} Account`;
+                                                        return `${client.is_virtual ? 'Demo' : 'Real'} ${client.currency || 'USD'} Account`;
                                                     })()}
                                                 </span>
                                             </div>
@@ -4019,7 +3976,7 @@ const AppHeader = observer(() => {
                                                     const isSvgModeEnabled = localStorage.getItem('svging') === 'yes';
                                                     let balanceToShow = client.balance || 0;
                                                     
-                                                    if (isSvgModeEnabled && !client.loginid?.startsWith('VR')) {
+                                                    if (isSvgModeEnabled && !client.is_virtual) {
                                                         // Find demo account balance
                                                         const demoLoginId = Object.keys(accounts).find(id => id.startsWith('VR'));
                                                         if (demoLoginId && all_accounts_balance[demoLoginId]) {
@@ -4255,7 +4212,7 @@ const AppHeader = observer(() => {
                                             )}
                                         </div>
                                     )}
-                                    {client.loginid?.startsWith('VR') && localStorage.getItem('svging') !== 'yes' && (
+                                    {client.is_virtual && localStorage.getItem('svging') !== 'yes' && (
                                         <div className='copy-to-real'>
                                             <h4 className='copy-to-real__title'>Demo Settings</h4>
                                             <div className='copy-to-real__toggle'>
@@ -4388,7 +4345,7 @@ const AppHeader = observer(() => {
                         </div>
                         <div className='auth-modal__content'>
                             {activeLoginid ? (
-                                client.loginid?.startsWith('VR') && localStorage.getItem('svging') !== 'yes' ? (
+                                client.is_virtual && localStorage.getItem('svging') !== 'yes' ? (
                                     <div className='no-account-state'>
                                         <div className='no-account-state__icon'>
                                             <svg
@@ -4806,7 +4763,7 @@ const AppHeader = observer(() => {
                                 Cancel
                             </button>
 
-                            {activeLoginid && !(client.loginid?.startsWith('VR') && localStorage.getItem('svging') !== 'yes') && (
+                            {activeLoginid && !(client.is_virtual && localStorage.getItem('svging') !== 'yes') && (
                                 <button
                                     className='auth-modal__button auth-modal__button--primary'
                                     onClick={() => {

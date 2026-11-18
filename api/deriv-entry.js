@@ -2,13 +2,15 @@ const express = require('express');
 const { registerDerivAuth } = require('../server/deriv-auth');
 
 const app = express();
-const actions = new Set(['login', 'callback', 'accounts', 'logout']);
+const actions = new Set(['login', 'callback', 'accounts', 'socket', 'logout']);
 let prisma;
 
 app.use(express.json({ limit: '8kb' }));
 registerDerivAuth(app, () => {
     const { PrismaClient } = require('@prisma/client');
-    prisma ??= new PrismaClient();
+    const datasourceUrl = process.env.PRISMA_DATABASE_URL || process.env.DATABASE_URL;
+    if (!datasourceUrl) throw new Error('Deriv session database is not configured.');
+    prisma ??= new PrismaClient({ datasourceUrl });
     return prisma;
 });
 

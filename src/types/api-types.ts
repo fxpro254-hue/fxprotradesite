@@ -902,6 +902,7 @@ export type TLandingCompany = {
 };
 
 export type TAccount = {
+    balance?: number;
     account_category: string;
     account_type: string;
     broker: string;

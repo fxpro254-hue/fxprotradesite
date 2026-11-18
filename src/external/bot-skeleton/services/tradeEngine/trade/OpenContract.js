@@ -51,12 +51,12 @@ export default Engine =>
         }
 
         setContractFlags(contract) {
-            const { is_expired, is_valid_to_sell, is_sold, entry_tick } = contract;
+            const { is_expired, is_valid_to_sell, is_sold, entry_spot } = contract;
 
             this.isSold = Boolean(is_sold);
             this.isSellAvailable = !this.isSold && Boolean(is_valid_to_sell);
             this.isExpired = Boolean(is_expired);
-            this.hasEntryTick = Boolean(entry_tick);
+            this.hasEntryTick = entry_spot != null;
         }
 
         expectedContractId(contractId) {

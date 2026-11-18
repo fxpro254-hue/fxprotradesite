@@ -1,5 +1,4 @@
 import { config } from '../../constants/config';
-import PendingPromise from '../../utils/pending-promise';
 import { api_base } from './api-base';
 
 export default class ContractsFor {
@@ -57,17 +56,8 @@ export default class ContractsFor {
         if (contracts_for_category.length > 0) {
             barrier_types.forEach((barrier_type, index) => {
                 const has_selected_offset_type = ['+', '-'].includes(barrier_type);
-                const real_trade_type = this.getContractCategoryByTradeType(trade_type);
-
                 let contract = contracts_for_category.find(c => {
-                    const { BARRIER_CATEGORIES } = config();
-                    const barrier_category = Object.keys(BARRIER_CATEGORIES).find(b =>
-                        BARRIER_CATEGORIES[b].includes(trade_type)
-                    );
-
-                    const has_matching_category = c.contract_category === real_trade_type;
-                    const has_matching_duration = durations.findIndex(d => d.unit === duration) !== -1;
-                    const has_matching_barrier_category = c.barrier_category === barrier_category;
+                    const has_matching_duration = durations.some(d => d.unit === duration);
                     const has_matching_barrier_type =
                         // Match offset type barriers.
                         (has_selected_offset_type && isOffset(c.barrier || c[barrier_props[index]])) ||
@@ -75,9 +65,7 @@ export default class ContractsFor {
                         (!has_selected_offset_type && !isOffset(c.barrier || c[barrier_props[index]]));
 
                     return (
-                        has_matching_category &&
                         has_matching_duration &&
-                        has_matching_barrier_category &&
                         has_matching_barrier_type
                     );
                 });
@@ -164,75 +152,42 @@ export default class ContractsFor {
         return TRADE_TYPE_CATEGORY_NAMES[trade_type_category];
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    getBarrierCategoryByTradeType(trade_type) {
-        const { BARRIER_CATEGORIES } = config();
-        return Object.keys(BARRIER_CATEGORIES).find(barrier_category =>
-            BARRIER_CATEGORIES[barrier_category].includes(trade_type)
-        );
-    }
-
     async getContractsByTradeType(symbol, trade_type) {
         const contracts = await this.getContractsFor(symbol);
-        const contract_category = this.getContractCategoryByTradeType(trade_type);
-        const barrier_category = this.getBarrierCategoryByTradeType(trade_type);
-
-        return contracts.filter(contract => {
-            const has_matching_category = contract.contract_category === contract_category;
-            const has_matching_barrier = contract.barrier_category === barrier_category;
-
-            return has_matching_category && has_matching_barrier;
-        });
+        const contractTypes = {
+            callput: ['CALL', 'PUT'],
+            callputequal: ['CALLE', 'PUTE'],
+            higherlower: ['HIGHER', 'LOWER'],
+            matchesdiffers: ['DIGITMATCH', 'DIGITDIFF'],
+            evenodd: ['DIGITEVEN', 'DIGITODD'],
+            overunder: ['DIGITOVER', 'DIGITUNDER'],
+            endsinout: ['EXPIRYRANGE', 'EXPIRYMISS', 'EXPIRYRANGEE', 'EXPIRYMISSE'],
+            staysinout: ['RANGE', 'UPORDOWN'],
+        }[trade_type];
+        return contracts.filter(contract => contractTypes
+            ? contractTypes.includes(contract.contract_type)
+            : contract.contract_category === this.getContractCategoryByTradeType(trade_type));
     }
 
     async getContractsFor(symbol) {
-        if (!symbol || symbol === 'na') {
-            return [];
-        }
+        const api = api_base.api;
+        if (!api || !symbol || symbol === 'na') return [];
+        const cached = this.contracts_for[symbol];
+        if (cached?.api === api && cached.expires > Date.now()) return cached.contracts;
 
-        const getContractsForFromApi = async () => {
-            if (this.retrieving_contracts_for[symbol]) {
-                await this.retrieving_contracts_for[symbol];
-                return this.contracts_for[symbol].contracts;
-            }
+        const pending = this.retrieving_contracts_for[symbol];
+        if (pending?.api === api) return pending.request;
 
-            this.retrieving_contracts_for[symbol] = new PendingPromise();
-            const response = await api_base.api.send({ contracts_for: symbol });
-
-            if (response.error) {
-                return [];
-            }
-
-            const {
-                contracts_for: { available: contracts },
-            } = response;
-
-            // We don't offer forward-starting contracts in bot.
-            const filtered_contracts = contracts.filter(c => c.start_type !== 'forward');
-
-            this.contracts_for[symbol] = {
-                contracts: filtered_contracts,
-                timestamp: this.server_time.unix(),
-            };
-
-            this.retrieving_contracts_for[symbol].resolve();
-            delete this.retrieving_contracts_for[symbol];
-
-            return filtered_contracts;
-        };
-
-        if (this.contracts_for[symbol]) {
-            const { contracts, timestamp } = this.contracts_for[symbol];
-            const is_expired = this.server_time.unix() - timestamp > this.cache_age_in_min * 60;
-
-            if (is_expired) {
-                getContractsForFromApi();
-            }
-
+        const request = api.send({ contracts_for: symbol }).then(response => {
+            const contracts = response.contracts_for?.available;
+            if (api_base.api !== api || !Array.isArray(contracts)) return [];
+            this.contracts_for[symbol] = { api, contracts, expires: Date.now() + this.cache_age_in_min * 60000 };
             return contracts;
-        }
-
-        return getContractsForFromApi();
+        }).catch(() => []).finally(() => {
+            if (this.retrieving_contracts_for[symbol]?.request === request) delete this.retrieving_contracts_for[symbol];
+        });
+        this.retrieving_contracts_for[symbol] = { api, request };
+        return request;
     }
 
     async getDurations(symbol, trade_type, convert_day_to_hours = true) {

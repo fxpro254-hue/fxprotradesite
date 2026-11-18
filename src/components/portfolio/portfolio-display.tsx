@@ -988,10 +988,9 @@ const PortfolioDisplay: React.FC = observer(() => {
 
         const symbol = 'R_10';
         const amount = 1;
-        const app_id = "52152";
 
         return new Promise<number>((resolve, reject) => {
-            const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${app_id}`);
+            const ws = new WebSocket("wss://api.derivws.com/trading/v1/options/ws/public");
             
             const timeout = setTimeout(() => {
                 console.warn(`Timeout for ${contractType}`);
@@ -1009,7 +1008,7 @@ const PortfolioDisplay: React.FC = observer(() => {
                     currency: client?.currency || 'USD',
                     duration: 1,
                     duration_unit: "t",
-                    symbol: symbol
+                    underlying_symbol: symbol
                 };
 
                 console.log(`Fetching payout for ${contractType} (API: ${apiContractType})`);
@@ -1142,7 +1141,7 @@ const PortfolioDisplay: React.FC = observer(() => {
         const payouts: { [key: string]: number } = {};
         const symbol = 'R_10'; // Default volatility index
         const amount = 1; // Standard $1 stake for rate calculation
-        const app_id = "52152"; // Deriv App ID
+     // Deriv App ID
 
         console.log('Attempting to fetch rates for contracts:', contractTypes);
 
@@ -1153,7 +1152,7 @@ const PortfolioDisplay: React.FC = observer(() => {
                 
                 try {
                     const payout = await new Promise<number>((resolve, reject) => {
-                        const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${app_id}`);
+                        const ws = new WebSocket("wss://api.derivws.com/trading/v1/options/ws/public");
                         
                         const timeout = setTimeout(() => {
                             console.warn(`Timeout for ${contractType}`);
@@ -1171,7 +1170,7 @@ const PortfolioDisplay: React.FC = observer(() => {
                                 currency: client?.currency || 'USD',
                                 duration: 1,
                                 duration_unit: "t",
-                                symbol: symbol
+                                underlying_symbol: symbol
                             };
 
                             console.log(`Fetching payout for ${contractType} (API: ${apiContractType})`); // Debug log
@@ -1293,12 +1292,12 @@ const PortfolioDisplay: React.FC = observer(() => {
 
     // Function to get payout for a specific contract type
     const getSpecificPayout = async (contractType: string, userStake: number = 1): Promise<number> => {
-        const app_id = "52152"; // Deriv App ID
+     // Deriv App ID
         const symbol = 'R_10'; // Default volatility index
         
         try {
             return await new Promise<number>((resolve, reject) => {
-                const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${app_id}`);
+                const ws = new WebSocket("wss://api.derivws.com/trading/v1/options/ws/public");
                 
                 const timeout = setTimeout(() => {
                     ws.close();
@@ -1314,7 +1313,7 @@ const PortfolioDisplay: React.FC = observer(() => {
                         currency: client?.currency || 'USD',
                         duration: 1,
                         duration_unit: "t",
-                        symbol: symbol
+                        underlying_symbol: symbol
                     };
 
                     // Add barriers based on contract type

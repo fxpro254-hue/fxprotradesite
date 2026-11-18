@@ -5,6 +5,7 @@ import ErrorComponent from '@/components/error-component/error-component';
 import FuturisticLoader from '@/components/loader/futuristic-loader';
 import TradingAssesmentModal from '@/components/trading-assesment-modal';
 import { api_base } from '@/external/bot-skeleton';
+import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import { localize } from '@deriv-com/translations';
 import './app-root.scss';
@@ -32,6 +33,7 @@ const ErrorComponentWrapper = observer(() => {
 
 const AppRoot = () => {
     const store = useStore();
+    const { isAuthorized, isAuthorizing, authData } = useApiBase();
     const api_base_initialized = useRef(false);
     const [is_api_initialized, setIsApiInitialized] = useState(false);
 
@@ -53,6 +55,12 @@ const AppRoot = () => {
         <Suspense fallback={<FuturisticLoader message={localize('Initializing  FxProTrades...')} />}>
             <ErrorBoundary root_store={store}>
                 <ErrorComponentWrapper />
+                {authData && !isAuthorized && (
+                    <p role='status'>
+                        {isAuthorizing ? 'Connecting to your Deriv account…' : 'Deriv trading is disconnected. '}
+                        {!isAuthorizing && <button type='button' onClick={() => void api_base.init(true)}>Reconnect</button>}
+                    </p>
+                )}
                 <AppContent />
                 <TradingAssesmentModal />
             </ErrorBoundary>

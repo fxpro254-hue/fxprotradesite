@@ -10,7 +10,7 @@ class ApiHelpers {
         this.trading_times = new TradingTimes(api_helpers_store);
         this.contracts_for = new ContractsFor(api_helpers_store);
         this.active_symbols = new ActiveSymbols(this.trading_times);
-        this.account_limits = new AccountLimits(api_helpers_store);
+        this.account_limits = new AccountLimits(this.contracts_for);
     }
 
     static disposeInstance() {

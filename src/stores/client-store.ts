@@ -9,6 +9,10 @@ import {
 import type { TAuthData, TLandingCompany } from '@/types/api-types';
 import type { Balance, GetAccountStatus, GetSettings, WebsiteStatus } from '@deriv/api-types';
 
+type OptionsBalance = Omit<Balance, 'accounts'> & {
+    accounts?: Record<string, { balance: number; currency: string }>;
+};
+
 const eu_shortcode_regex = /^maltainvest$/;
 const eu_excluded_regex = /^mt$/;
 export default class ClientStore {
@@ -24,7 +28,7 @@ export default class ClientStore {
     upgradeable_landing_companies: string[] = [];
     accounts: Record<string, TAuthData['account_list'][number]> = {};
     is_landing_company_loaded = false;
-    all_accounts_balance: Balance | null = null;
+    all_accounts_balance: OptionsBalance | null = null;
     is_logging_out = false;
 
     // TODO: fix with self exclusion
@@ -249,8 +253,7 @@ export default class ClientStore {
     };
 
     getToken = () => {
-        const accountList = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
-        return accountList[this.loginid] ?? '';
+        return this.loginid;
     };
 
     setAccountStatus(status: GetAccountStatus | undefined) {
@@ -281,7 +284,7 @@ export default class ClientStore {
         this.upgradeable_landing_companies = upgradeable_landing_companies;
     };
 
-    setAllAccountsBalance = (all_accounts_balance: Balance | undefined) => {
+    setAllAccountsBalance = (all_accounts_balance: OptionsBalance | undefined) => {
         this.all_accounts_balance = all_accounts_balance ?? null;
     };
 

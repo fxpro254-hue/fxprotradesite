@@ -1,11 +1,14 @@
 import { redirectToLogin } from '@/components/shared/utils/login/login';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Button, Text, Input } from '@deriv-com/ui';
+import { Button, Text } from '@deriv-com/ui';
 import classNames from 'classnames';
 import { ProposalOpenContract } from '@deriv/api-types';
 import './advanced-display.scss';
 import { observer as globalObserver } from '../../external/bot-skeleton/utils/observer';
+import { api_base } from '@/external/bot-skeleton';
+import { useApiBase } from '@/hooks/useApiBase';
+import { useOauth2 } from '@/hooks/auth/useOauth2';
 import { useStore } from '@/hooks/useStore';
 
 // Symbol type for multi-symbol analysis
@@ -92,33 +95,11 @@ interface LastTradeInfo {
 }
 
 // Add App ID configuration constants
-const APP_CONFIG = {
-    local: '36300', // Local/test app ID
-    staging: '111827', // Staging environment
-    production: '111827', // Production app ID
-};
-
 // Add constants for localStorage keys
 const STORAGE_KEYS = {
     TRADING_SETTINGS: 'trading_settings',
     TOTAL_PROFIT: 'total_profit',
-    AUTH_TOKEN: 'authToken',
-    USER_EMAIL: 'userEmail',
 };
-
-// Debug helper - accessible from browser console
-if (typeof window !== 'undefined') {
-    (window as any).checkUserEmail = () => {
-        const email = localStorage.getItem(STORAGE_KEYS.USER_EMAIL);
-        const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-        console.log('=== User Session Debug ===');
-        console.log('Auth Token:', token ? '✅ Present' : '❌ Missing');
-        console.log('User Email:', email || '❌ Not stored');
-        console.log('All localStorage keys:', Object.keys(localStorage));
-        console.log('localStorage.userEmail:', localStorage.getItem('userEmail'));
-        return { email, token, hasEmail: !!email, hasToken: !!token };
-    };
-}
 
 // Add trade result tracking constants
 const MAX_CONSECUTIVE_LOSSES = 3; // Stop after 3 consecutive losses
@@ -126,7 +107,9 @@ const PROFIT_TARGET = 50; // $50 profit target
 
 const AdvancedDisplay = observer(() => {
     // Get transactions store
-    const { transactions } = useStore();
+    const { transactions, client } = useStore();
+    const { isAuthorized, isAuthorizing, activeLoginid } = useApiBase();
+    const { oAuthLogout } = useOauth2({ handleLogout: async () => client.logout(), client });
 
     // State
     const [isRunning, setIsRunning] = useState(false);
@@ -221,7 +204,6 @@ const AdvancedDisplay = observer(() => {
     });
 
     // Add trading states
-    const [tradeWs, setTradeWs] = useState<WebSocket | null>(null);
     const [tradeStatus, setTradeStatus] = useState<TradeStatus>('idle');
     const [tradeMessage, setTradeMessage] = useState<string>('');
     const [activeTradeSymbol, setActiveTradeSymbol] = useState<SymbolType | null>(null);
@@ -251,24 +233,9 @@ const AdvancedDisplay = observer(() => {
     // Add new state for completed contract similar to trading-hub-display
     const [completedContract, setCompletedContract] = useState<ProposalOpenContract | null>(null);
 
-    // Add authentication state
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
-    const [authError, setAuthError] = useState<string | null>(null);
+    const isAuthenticated = Boolean(activeLoginid);
+    const isAuthLoading = isAuthorizing;
     const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-    const [apiToken, setApiToken] = useState<string>('');
-
-    // Replace localStorage app ID retrieval with environment-based logic
-    const getAppId = useCallback(() => {
-        const host = window.location.hostname;
-        if (host === 'localhost' || host === '127.0.0.1') {
-            return APP_CONFIG.local;
-        }
-        // Check for staging environment if needed
-        // if (host.includes('staging')) return APP_CONFIG.staging;
-
-        return APP_CONFIG.production;
-    }, []);
 
     // Add utility function to get readable contract type names
     const getReadableContractType = (type: string): string => {
@@ -453,98 +420,6 @@ const AdvancedDisplay = observer(() => {
     const dismissNotification = useCallback((id: number) => {
         setNotifications(prevNotifications => prevNotifications.filter(notification => notification.id !== id));
     }, []);
-
-    // Add a debug helper function to log contract activity
-    const logContractActivity = (type: string, data: any) => {
-        console.log(`[${new Date().toISOString()}] ${type}:`, JSON.stringify(data, null, 2));
-    };
-
-    // Enhance the WebSocket message handler to better track contracts
-    const initTradeWebSocket = (token: string) => {
-        console.log('Initializing trade WebSocket with token');
-
-        const appId = getAppId();
-        const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
-
-        ws.onopen = () => {
-            console.log('Trade WebSocket connected.');
-            ws.send(JSON.stringify({ authorize: token }));
-        };
-
-        ws.onmessage = event => {
-            const data = JSON.parse(event.data);
-
-            // Improved buy response handling
-            if (data.buy !== undefined) {
-                logContractActivity('Trade success response', data.buy);
-
-                if (data.buy && typeof data.buy === 'object' && 'contract_id' in data.buy) {
-                    // Immediately subscribe to this contract to ensure we get updates
-                    ws.send(
-                        JSON.stringify({
-                            proposal_open_contract: 1,
-                            contract_id: data.buy.contract_id,
-                            subscribe: 1,
-                        })
-                    );
-
-                    handleTradeSuccess(data);
-                } else {
-                    console.error('Received malformed buy response:', data);
-                    setTradeStatus('error');
-                    setTradeMessage('Received invalid trade response from server');
-                    showNotification('Error in trade response format', 'error');
-                }
-            }
-
-            // Enhanced contract updates handling with better logging
-            if (data.proposal_open_contract) {
-                const contract = data.proposal_open_contract;
-                logContractActivity('Contract update', {
-                    id: contract.contract_id,
-                    type: contract.contract_type,
-                    status: contract.status,
-                    entry: contract.entry_tick,
-                    exit: contract.exit_tick,
-                    profit: contract.profit,
-                    is_sold: contract.is_sold,
-                });
-
-                handleContractUpdate(contract);
-            }
-
-            if (data.error) {
-                console.error('WebSocket error:', data.error);
-                setTradeStatus('error');
-                setTradeMessage(`Error: ${data.error.message || 'Unknown error'}`);
-                showNotification(`Trade error: ${data.error.message}`, 'error');
-                return;
-            }
-
-            if (data.authorize) {
-                console.log('WebSocket authorized.');
-                setTradeStatus('idle');
-                setTradeMessage('Authenticated for trading');
-                Array.from(activeContracts.keys()).forEach(contractId => {
-                    ws.send(JSON.stringify({ proposal_open_contract: 1, contract_id: contractId, subscribe: 1 }));
-                });
-                setTimeout(() => setTradeMessage(''), 3000);
-            }
-        };
-
-        ws.onerror = error => {
-            console.error('WebSocket error:', error);
-            setTradeStatus('error');
-            setTradeMessage('Connection error. Please try again.');
-        };
-
-        ws.onclose = () => {
-            console.warn('Trade WebSocket connection closed.');
-            setTradeWs(null);
-        };
-
-        setTradeWs(ws);
-    };
 
     // Enhance the trade success handler to emit events for Run Panel, mirroring trading-hub-display
     const handleTradeSuccess = (data: TradeResponse) => {
@@ -751,18 +626,6 @@ const AdvancedDisplay = observer(() => {
                 barrier: barrier,
             });
 
-            // Explicitly request an update for this contract (keep this)
-            if (tradeWs && tradeWs.readyState === WebSocket.OPEN) {
-                console.log(`Explicitly requesting updates for contract: ${contractId}`);
-                tradeWs.send(
-                    JSON.stringify({
-                        proposal_open_contract: 1,
-                        contract_id: contractId,
-                        subscribe: 1,
-                    })
-                );
-            }
-
             // Reset status after 5 seconds (keep this)
             setTimeout(() => {
                 setTradeStatus('idle');
@@ -798,8 +661,8 @@ const AdvancedDisplay = observer(() => {
                     status: 'pending',
                     currentSpot: contract.current_spot,
                     currentSpotTime: contract.current_spot_time,
-                    entryTime: contract.entry_tick_time,
-                    exitTime: contract.exit_tick_time,
+                    entryTime: contract.entry_spot_time,
+                    exitTime: contract.exit_spot_time,
                     remainingTime: contract.date_expiry
                         ? contract.date_expiry - Math.floor(Date.now() / 1000)
                         : undefined,
@@ -843,8 +706,8 @@ const AdvancedDisplay = observer(() => {
                         contractId: contract.contract_id,
                         type: contract.contract_type,
                         symbol: contract.underlying || initialTradeData.symbol || 'R_10',
-                        entrySpot: contract.entry_tick_display_value,
-                        exitSpot: contract.exit_tick_display_value,
+                        entrySpot: contract.entry_spot,
+                        exitSpot: contract.exit_spot,
                         stake: contract.buy_price,
                         payout: contract.payout,
                         profit: contract.profit,
@@ -857,8 +720,8 @@ const AdvancedDisplay = observer(() => {
                                 ? (contract.sell_time - contract.purchase_time).toFixed(1)
                                 : 'N/A',
                         purchaseTime: contract.purchase_time * 1000,
-                        entryTime: contract.entry_tick_time * 1000,
-                        exitTime: contract.exit_tick_time * 1000,
+                        entryTime: contract.entry_spot_time * 1000,
+                        exitTime: contract.exit_spot_time * 1000,
                     };
 
                     console.log('Trade result processed:', result);
@@ -887,13 +750,13 @@ const AdvancedDisplay = observer(() => {
                         profit: Number(contract.profit),
                         payout: Number(contract.payout),
                         status: status,
-                        exit_tick_time: contract.exit_tick_time,
+                        exit_tick_time: contract.exit_spot_time,
                         sell_time: contract.sell_time,
                         date_expiry: contract.date_expiry,
-                        entry_tick: contract.entry_tick,
-                        exit_tick: contract.exit_tick,
-                        entry_tick_display_value: contract.entry_tick_display_value,
-                        exit_tick_display_value: contract.exit_tick_display_value,
+                        entry_tick: contract.entry_spot,
+                        exit_tick: contract.exit_spot,
+                        entry_tick_display_value: contract.entry_spot,
+                        exit_tick_display_value: contract.exit_spot,
                         transaction_ids: {
                             buy: initialTradeData.transaction_ids?.buy || contract.transaction_ids?.buy,
                             sell: contract.transaction_ids?.sell,
@@ -923,7 +786,7 @@ const AdvancedDisplay = observer(() => {
                                 ? String(contract.barrier)
                                 : initialTradeData.contract_parameter,
                         parameter_type: initialTradeData.parameter_type,
-                        entry_tick_time: contract.entry_tick_time || initialTradeData.entry_tick_time,
+                        entry_tick_time: contract.entry_spot_time || initialTradeData.entry_tick_time,
                         run_id: sessionRunId,
                         display_name: initialTradeData.display_name,
                         transaction_time: initialTradeData.transaction_time,
@@ -1154,96 +1017,26 @@ const AdvancedDisplay = observer(() => {
         );
     };
 
-    // More aggressive resubscription for active trades with shorter interval
     useEffect(() => {
-        if (!tradeWs || tradeWs.readyState !== WebSocket.OPEN) return;
+        const api = api_base.api;
+        if (!api || !isAuthorized || !activeContracts.size) return;
+        const listener = api.onMessage().subscribe(({ data }: { data: any }) => {
+            const contract = data?.proposal_open_contract;
+            if (contract && activeContracts.has(contract.contract_id)) handleContractUpdate(contract);
+        });
+        return () => listener.unsubscribe();
+    }, [isAuthorized, activeContracts, activeLoginid]);
 
-        // For any active contracts, check status every second
-        const statusInterval = setInterval(() => {
-            // Get list of active contract IDs
-            const activeContractIds = Array.from(activeContracts.keys());
-
-            if (activeContractIds.length > 0) {
-                console.log(`Checking ${activeContractIds.length} active contracts`);
-
-                // Re-subscribe to any active contracts to ensure we get updates
-                activeContractIds.forEach(contractId => {
-                    if (!processedContracts.current.has(contractId)) {
-                        tradeWs.send(
-                            JSON.stringify({
-                                proposal_open_contract: 1,
-                                contract_id: contractId,
-                                subscribe: 1,
-                            })
-                        );
-                    }
-                });
-            }
-        }, 1000); // Check every second
-
-        return () => clearInterval(statusInterval);
-    }, [tradeWs, activeContracts]);
-
-    // Add this function to check and resubscribe to contracts if needed
-    useEffect(() => {
-        // Skip if no trade websocket or no active contracts
-        if (!tradeWs || tradeWs.readyState !== WebSocket.OPEN || activeContracts.size === 0) return;
-
-        // Set up interval to check contracts
-        const checkInterval = setInterval(() => {
-            Array.from(activeContracts.entries()).forEach(([contractId, contractData]) => {
-                console.log(`Checking contract: ${contractId}`, contractData);
-
-                // Resubscribe to contract
-                tradeWs.send(
-                    JSON.stringify({
-                        proposal_open_contract: 1,
-                        contract_id: contractId,
-                        subscribe: 1,
-                    })
-                );
-            });
-        }, 5000); // Check every 5 seconds
-
-        return () => clearInterval(checkInterval);
-    }, [tradeWs, activeContracts]);
-
-    // Improved subscription function with better contract tracking
-    const subscribeToContract = useCallback(
-        (
-            contractId: number,
-            contractData: {
-                type: string;
-                symbol: SymbolType;
-                stake: number;
-                barrier?: string;
-            }
-        ) => {
-            if (!tradeWs || tradeWs.readyState !== WebSocket.OPEN) return;
-
-            // Track more contract details
-            setActiveContracts(prev => {
-                const updated = new Map(prev);
-                updated.set(contractId, {
-                    ...contractData,
-                    contractId,
-                    timestamp: Date.now(),
-                });
-                return updated;
-            });
-
-            // Create a subscription to get contract updates
-            const request = {
-                proposal_open_contract: 1,
-                contract_id: contractId,
-                subscribe: 1,
-            };
-
-            console.log(`Subscribing to contract: ${contractId}`, contractData);
-            tradeWs.send(JSON.stringify(request));
-        },
-        [tradeWs]
-    );
+    const subscribeToContract = (
+        contractId: number,
+        contractData: { type: string; symbol: SymbolType; stake: number; barrier?: string }
+    ) => {
+        setActiveContracts(prev => {
+            const updated = new Map(prev);
+            updated.set(contractId, { ...contractData, contractId, timestamp: Date.now() });
+            return updated;
+        });
+    };
 
     // Function to request tick history and subscribe to updates
     const startWebSocket = (symbol: SymbolType) => {
@@ -1252,13 +1045,11 @@ const AdvancedDisplay = observer(() => {
             webSocketRefs.current[symbol]?.close();
         }
 
-        // Get app ID and create new WebSocket connection
-        const appId = getAppId();
-        const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
+        const ws = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
         webSocketRefs.current[symbol] = ws;
 
         ws.onopen = () => {
-            console.log(`Market data WebSocket opened for ${symbol} with app ID: ${appId}`);
+            console.log(`Market data WebSocket opened for ${symbol}`);
             const request = {
                 ticks_history: symbol,
                 count: tickCount,
@@ -1814,7 +1605,7 @@ const AdvancedDisplay = observer(() => {
         });
     };
 
-    const placeTrade = (symbol: SymbolType, tradeType: TradeType, params: Record<string, any> = {}) => {
+    const placeTrade = async (symbol: SymbolType, tradeType: TradeType, params: Record<string, any> = {}) => {
         try {
             console.log('Placing trade:', { symbol, tradeType, params });
 
@@ -1826,18 +1617,11 @@ const AdvancedDisplay = observer(() => {
                 timestamp: Date.now(),
             });
 
-            if (!tradeWs || tradeWs.readyState !== WebSocket.OPEN) {
-                console.warn('WebSocket not open. Attempting to reconnect...');
-                const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-                if (!authToken) {
-                    console.error('Authentication token not found.');
-                    setTradeMessage('Authentication token not found. Please log in.');
-                    setTradeStatus('error');
-                    return;
-                }
-
-                initTradeWebSocket(authToken);
-                setTradeMessage('Connecting to trading server...');
+            const api = api_base.api;
+            if (!api || !isAuthorized || !client.currency || api_base.account_id !== activeLoginid) {
+                setTradeStatus('error');
+                setTradeMessage('Connect your Deriv trading account before placing a trade.');
+                if (!isAuthenticated) setShowAuthModal(true);
                 return;
             }
 
@@ -1860,132 +1644,26 @@ const AdvancedDisplay = observer(() => {
                     amount: stake,
                     basis: 'stake',
                     contract_type: params.contract_type || tradeType,
-                    currency: 'USD',
-                    symbol: symbol,
+                    currency: client.currency,
+                    underlying_symbol: symbol,
                     duration: params.duration || 1,
                     duration_unit: params.duration_unit || 't',
                     ...(params.barrier ? { barrier: params.barrier } : {}),
                 },
             };
 
-            console.log('Sending trade request:', JSON.stringify(tradeRequest, null, 2));
-
-            tradeWs.send(JSON.stringify(tradeRequest));
-
-            // Set timeout to handle no response
-            setTimeout(() => {
-                if (tradeStatus === 'pending') {
-                    setTradeStatus('error');
-                    setTradeMessage('Trade request timed out. Please try again.');
-                }
-            }, 10000);
+            const response = await api.send(tradeRequest);
+            if (api_base.api === api) handleTradeSuccess(response);
         } catch (error) {
-            console.error('Error placing trade:', error);
             setTradeStatus('error');
-            setTradeMessage('Error preparing trade request');
+            const failure = error as { error?: { message?: string } };
+            setTradeMessage(failure?.error?.message || 'Deriv could not complete the trade request.');
         }
     };
 
-    // Check authentication on component mount
-    useEffect(() => {
-        const storedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-        if (storedToken) {
-            verifyToken(storedToken);
-        } else {
-            setShowAuthModal(true);
-        }
-    }, []);
-
-    // Function to verify if a token is valid
-    const verifyToken = useCallback(
-        (token: string) => {
-            setIsAuthLoading(true);
-            setAuthError(null);
-
-            const appId = getAppId();
-            const ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
-
-            ws.onopen = () => {
-                ws.send(JSON.stringify({ authorize: token }));
-            };
-
-            ws.onmessage = event => {
-                const data = JSON.parse(event.data);
-
-                if (data.error) {
-                    console.error('Token verification failed:', data.error);
-                    setAuthError(data.error.message || 'Authentication failed');
-                    setIsAuthenticated(false);
-                    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-                    localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
-                    setShowAuthModal(true);
-                } else if (data.authorize) {
-                    console.log('✅ Authorization successful! Full response:', data.authorize);
-                    console.log('📧 Email from response:', data.authorize.email);
-                    console.log('👤 User info:', {
-                        email: data.authorize.email,
-                        loginid: data.authorize.loginid,
-                        fullname: data.authorize.fullname
-                    });
-                    
-                    setIsAuthenticated(true);
-                    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-                    
-                    // Store user email for the session
-                    const userEmail = data.authorize.email;
-                    if (userEmail) {
-                        localStorage.setItem(STORAGE_KEYS.USER_EMAIL, userEmail);
-                        console.log('✅ User email stored successfully:', userEmail);
-                        console.log('🔍 Verify storage - Reading back:', localStorage.getItem(STORAGE_KEYS.USER_EMAIL));
-                    } else {
-                        console.warn('⚠️ No email found in authorize response!');
-                    }
-                    
-                    initTradeWebSocket(token);
-                    setShowAuthModal(false);
-
-                    // Show welcome notification
-                    showNotification(
-                        `Welcome, ${userEmail || 'Trader'}!`,
-                        'success',
-                        'You are now authenticated and ready to trade.'
-                    );
-                }
-                setIsAuthLoading(false);
-                ws.close();
-            };
-
-            ws.onerror = () => {
-                setAuthError('Connection error. Please try again.');
-                setIsAuthLoading(false);
-                setShowAuthModal(true);
-            };
-        },
-        [getAppId, showNotification]
-    );
-
-    // Handle authentication
-    const handleAuthenticate = useCallback(() => {
-        if (!apiToken) {
-            setAuthError('Please enter a valid API token');
-            return;
-        }
-
-        verifyToken(apiToken);
-    }, [apiToken, verifyToken]);
-
-    // Handle logout
-    const handleLogout = useCallback(() => {
-        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
-        setIsAuthenticated(false);
-        setShowAuthModal(true);
-        if (tradeWs) {
-            tradeWs.close();
-            setTradeWs(null);
-        }
-        showNotification('You have been logged out', 'info');
-    }, [tradeWs, showNotification]);
+    const handleLogout = () => {
+        void oAuthLogout().catch(() => showNotification('Sign-out failed. Try again.', 'error'));
+    };
 
     // Authentication modal component
     const renderAuthModal = () => {
@@ -2006,8 +1684,6 @@ const AdvancedDisplay = observer(() => {
                         <p className='auth-modal__description'>
                             Please log in with your Deriv account to access trading features.
                         </p>
-
-                        {authError && <div className='auth-modal__error'>{authError}</div>}
 
                         <div className='auth-modal__login-section'>
                             <Button

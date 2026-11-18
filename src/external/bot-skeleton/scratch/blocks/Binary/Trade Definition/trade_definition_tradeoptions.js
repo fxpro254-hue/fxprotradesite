@@ -300,9 +300,8 @@ window.Blockly.Blocks.trade_definition_tradeoptions = {
     updateAmountLimits() {
         const { account_limits } = ApiHelpers?.instance ?? {};
         if (!account_limits) return;
-        const { currency, landing_company_shortcode } = DBotStore.instance.client;
         if (isAuthorizing$.getValue()) return;
-        account_limits.getStakePayoutLimits(currency, landing_company_shortcode, this.selected_market).then(limits => {
+        account_limits.getStakePayoutLimits(this.selected_symbol, this.selected_trade_type).then(limits => {
             const unsupported_trade_types = ['multiplier', 'accumulator'];
             if (unsupported_trade_types.includes(this.selected_trade_type)) return;
             const currency_block = this.getField('CURRENCY_LIST')?.getSourceBlock();
