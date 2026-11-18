@@ -68,9 +68,6 @@ export const tradeCopyOptionToBuy = (contract_type, trade_option) => {
     }
 
     // Add additional parameters if they exist
-    if (!isEmptyObject(trade_option.app_markup_percentage)) {
-        params.app_markup_percentage = trade_option.app_markup_percentage;
-    }
     if (!isEmptyObject(trade_option.barrier_range)) {
         params.barrier_range = trade_option.barrier_range;
     }
@@ -154,8 +151,6 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
     if (trade_option.secondBarrierOffset !== undefined) buy.parameters.barrier2 = trade_option.secondBarrierOffset;
     if (trade_option.growth_rate !== undefined) buy.parameters.growth_rate = trade_option.growth_rate;
     if (trade_option.limit_order !== undefined) buy.parameters.limit_order = trade_option.limit_order;
-    if (!isEmptyObject(trade_option.app_markup_percentage))
-        buy.parameters.app_markup_percentage = trade_option.app_markup_percentage;
 
     // Handle specific contract types
     if (['MULTUP', 'MULTDOWN'].includes(contract_type)) {
