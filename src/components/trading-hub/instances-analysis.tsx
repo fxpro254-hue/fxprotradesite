@@ -172,7 +172,7 @@ const InstancesAnalysis = observer(() => {
 
     // Create WebSocket connection for an instance
     const createInstanceWebSocket = (instance: AnalysisInstance) => {
-        const ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
+        const ws = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
 
         ws.onopen = () => {
             console.log(`WebSocket connected for ${instance.symbol}`);

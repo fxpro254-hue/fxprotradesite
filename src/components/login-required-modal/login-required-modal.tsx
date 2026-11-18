@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { getAppId } from '@/components/shared';
+import { redirectToLogin } from '@/components/shared/utils/login/login';
 import Button from '@/components/shared_ui/button';
 import Modal from '@/components/shared_ui/modal';
 import Text from '@/components/shared_ui/text';
@@ -32,13 +32,7 @@ const LoginRequiredModal = observer(() => {
         setIsModalOpen(shouldShowModal);
     }, [client?.is_logged_in]);
 
-    const handleLogin = () => {
-        const app_id = getAppId();
-        const oauth_url = 'https://oauth.deriv.com/oauth2/authorize';
-        const redirect_uri = encodeURIComponent(`${window.location.origin}/callback`);
-        const url = `${oauth_url}?app_id=${app_id}&affiliate_token=qUdkKtoOWpVMjdsyM5hasGNd7ZgqdRLk&utm_campaign=myaffiliates&l=EN&brand=deriv&redirect_uri=${redirect_uri}`;
-        window.location.href = url;
-    };
+    const handleLogin = redirectToLogin;
 
     const handleCreateAccount = () => {
         const url = `https://track.deriv.com/_qUdkKtoOWpVMjdsyM5hasGNd7ZgqdRLk/1/`;

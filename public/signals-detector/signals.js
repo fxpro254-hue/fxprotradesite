@@ -33,7 +33,7 @@ let latestSignal = null;
 // Track if signals are active (starts after 2 minutes)
 let signalsActive = false;
 
-const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=52152');
+const ws = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
 
 const subscribeTicks = symbol => {
     ws.send(

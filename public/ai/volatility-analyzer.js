@@ -62,8 +62,7 @@ function startWebSocket() {
     }
 
     try {
-        // Use consistent app_id (111827 was in your original code)
-        derivWs = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=111827');
+        derivWs = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
         
         derivWs.onopen = function() {
             console.log("✅ WebSocket connection established");
@@ -71,24 +70,7 @@ function startWebSocket() {
             reconnectAttempts = 0;
             notifyConnectionStatus('connected');
             
-            // Authorize using explicit message
-            const authRequest = {
-                authorize: "YOUR_TOKEN_HERE", // Optional - replace with actual token if you have one
-                app_id: 111827
-            };
-            
-            // Wait a moment before sending requests to ensure connection is fully established
-            setTimeout(() => {
-                try {
-                    if (derivWs && derivWs.readyState === WebSocket.OPEN) {
-                        console.log("Sending authorization request");
-                        derivWs.send(JSON.stringify({app_id: 111827}));
-                        requestTickHistory();
-                    }
-                } catch (e) {
-                    console.error("Error during init requests:", e);
-                }
-            }, 500);
+            requestTickHistory();
         };
 
         derivWs.onmessage = function(event) {
@@ -116,9 +98,6 @@ function startWebSocket() {
 
                     if (tickHistory.length > tickCount) tickHistory.shift();
                     updateUI();
-                } else if (data.ping) {
-                    // Respond to ping with pong to keep connection alive
-                    derivWs.send(JSON.stringify({pong: 1}));
                 }
             } catch (e) {
                 console.error("Error processing message:", e);

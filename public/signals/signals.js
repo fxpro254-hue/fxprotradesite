@@ -14,7 +14,7 @@ const ticksStorage = {
     '1HZ100V': [],
 };
 
-const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=52152');
+const ws = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
 
 const subscribeTicks = symbol => {
     ws.send(
