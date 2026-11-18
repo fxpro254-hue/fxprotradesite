@@ -19,7 +19,6 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
-require('../server/deriv-auth').registerDerivAuth(app, prismaClient);
 
 // Root route for testing
 app.get('/', (req, res) => {

@@ -9,7 +9,7 @@ const randomId = () => randomBytes(32).toString('base64url');
 const digest = value => createHash('sha256').update(value).digest('base64url');
 const readCookie = (req, name) => req.headers.cookie?.match(new RegExp('(?:^|; )' + name + '=([A-Za-z0-9_.-]+)(?:;|$)'))?.[1];
 
-const registerDerivAuth = (app, prisma) => {
+const registerDerivAuth = (app, getPrisma) => {
     app.use('/api/deriv', (req, res, next) => {
         res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
         next();
@@ -63,6 +63,7 @@ const registerDerivAuth = (app, prisma) => {
             const id = randomId();
             const maxAge = Math.min(expires_in, 30 * 86400) * 1000;
             const previous = readCookie(req, sessionCookie);
+            const prisma = getPrisma();
             await prisma.$transaction([
                 prisma.derivSession.deleteMany({ where: { OR: [
                     { expiresAt: { lte: new Date() } },
@@ -83,7 +84,7 @@ const registerDerivAuth = (app, prisma) => {
         const id = readCookie(req, sessionCookie);
         if (!id) return res.sendStatus(401);
         try {
-            const session = await prisma.derivSession.findUnique({ where: { id: digest(id) } });
+            const session = await getPrisma().derivSession.findUnique({ where: { id: digest(id) } });
             if (!session || session.expiresAt <= new Date()) return res.sendStatus(401);
             const response = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
                 headers: { Authorization: 'Bearer ' + session.accessToken },
@@ -106,7 +107,7 @@ const registerDerivAuth = (app, prisma) => {
         if (!hosts.has(req.hostname) || req.get('origin') !== 'https://' + req.hostname) return res.sendStatus(403);
         const id = readCookie(req, sessionCookie);
         try {
-            if (id) await prisma.derivSession.deleteMany({ where: { id: digest(id) } });
+            if (id) await getPrisma().derivSession.deleteMany({ where: { id: digest(id) } });
             res.clearCookie(sessionCookie, cookieOptions);
             return res.sendStatus(204);
         } catch {

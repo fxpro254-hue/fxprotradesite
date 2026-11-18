@@ -5,6 +5,7 @@
     "installCommand": "npm install",
     "rewrites": [
         { "source": "/callback", "destination": "/deriv-callback.html" },
+        { "source": "/api/deriv/:action", "destination": "/api/deriv-entry?derivAction=:action" },
         {
             "source": "/api/(.*)",
             "destination": "/api"

@@ -1,3 +1,4 @@
+import { redirectToLogin } from '@/components/shared/utils/login/login';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import { standalone_routes } from '@/components/shared';
@@ -3752,13 +3753,7 @@ const AppHeader = observer(() => {
                 <div className='auth-actions'>
                     <Button
                         tertiary
-                        onClick={() => {
-                            const app_id = getAppId();
-                            const oauth_url = 'https://oauth.deriv.com/oauth2/authorize';
-                            const redirect_uri = encodeURIComponent(`${window.location.origin}/callback`);
-                            const url = `${oauth_url}?app_id=${app_id}&l=EN&brand=deriv&redirect_uri=${redirect_uri}`;
-                            window.location.href = url;
-                        }}
+                        onClick={redirectToLogin}
                     >
                         <Localize i18n_default_text='Log in' />
                     </Button>
@@ -4335,15 +4330,7 @@ const AppHeader = observer(() => {
                                     </p>
                                     <button
                                         className='no-account-state__button auth-modal__button auth-modal__button--primary'
-                                        onClick={() => {
-                                            const app_id = getAppId();
-                                            const oauth_url = 'https://oauth.deriv.com/oauth2/authorize';
-                                            const redirect_uri = encodeURIComponent(
-                                                `${window.location.origin}/callback`
-                                            );
-                                            const url = `${oauth_url}?app_id=${app_id}&l=EN&brand=deriv&redirect_uri=${redirect_uri}`;
-                                            window.location.href = url;
-                                        }}
+                                        onClick={redirectToLogin}
                                     >
                                         Get Started
                                     </button>
@@ -4801,15 +4788,7 @@ const AppHeader = observer(() => {
                                     </p>
                                     <button
                                         className='no-account-state__button auth-modal__button auth-modal__button--primary'
-                                        onClick={() => {
-                                            const app_id = getAppId();
-                                            const oauth_url = 'https://oauth.deriv.com/oauth2/authorize';
-                                            const redirect_uri = encodeURIComponent(
-                                                `${window.location.origin}/callback`
-                                            );
-                                            const url = `${oauth_url}?app_id=${app_id}&l=EN&brand=deriv&redirect_uri=${redirect_uri}`;
-                                            window.location.href = url;
-                                        }}
+                                        onClick={redirectToLogin}
                                     >
                                         Log In
                                     </button>

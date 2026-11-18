@@ -1,3 +1,4 @@
+import { redirectToLogin } from '@/components/shared/utils/login/login';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button, Text, Input } from '@deriv-com/ui';
@@ -2011,13 +2012,7 @@ const AdvancedDisplay = observer(() => {
                         <div className='auth-modal__login-section'>
                             <Button
                                 className='auth-modal__login-button'
-                                onClick={() => {
-                                    const app_id = getAppId();
-                                    const oauth_url = 'https://oauth.deriv.com/oauth2/authorize';
-                                    const redirect_uri = encodeURIComponent(`${window.location.origin}/callback`);
-                                    const url = `${oauth_url}?app_id=${app_id}&l=EN&brand=deriv&redirect_uri=${redirect_uri}`;
-                                    window.location.href = url;
-                                }}
+                                onClick={redirectToLogin}
                                 disabled={isAuthLoading}
                             >
                                 {isAuthLoading ? 'Processing...' : 'Log in with Deriv'}
