@@ -1,23 +1,20 @@
-import { generateDerivApiInstance, getLoginId, getToken } from './appId';
+import { generateDerivApiInstance } from './appId';
 
 class ChartAPI {
     api;
 
-    onsocketclose() {
+    onsocketclose = () => {
         this.reconnectIfNotConnected();
-    }
+    };
 
     init = async (force_create_connection = false) => {
         if (!this.api || force_create_connection) {
             if (this.api?.connection) {
+                this.api.connection.removeEventListener('close', this.onsocketclose);
                 this.api.disconnect();
-                this.api.connection.removeEventListener('close', this.onsocketclose.bind(this));
             }
-            this.api = await generateDerivApiInstance();
-            this.api?.connection.addEventListener('close', this.onsocketclose.bind(this));
-        }
-        if (getLoginId()) {
-            await this.api.authorize(getToken().token);
+            this.api = generateDerivApiInstance('wss://api.derivws.com/trading/v1/options/ws/public');
+            this.api?.connection.addEventListener('close', this.onsocketclose);
         }
         this.getTime();
     };
@@ -25,7 +22,9 @@ class ChartAPI {
     getTime() {
         if (!this.time_interval) {
             this.time_interval = setInterval(() => {
-                this.api.send({ time: 1 });
+                if (this.api.connection.readyState === WebSocket.OPEN) {
+                    this.api.send({ ping: 1 }).catch(() => {});
+                }
             }, 30000);
         }
     }

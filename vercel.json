@@ -4,12 +4,17 @@
     "outputDirectory": "dist",
     "installCommand": "npm install",
     "rewrites": [
+        { "source": "/callback", "destination": "/deriv-callback.html" },
         {
             "source": "/api/(.*)",
             "destination": "/api"
         }
     ],
     "headers": [
+        {
+            "source": "/callback",
+            "headers": [{ "key": "Referrer-Policy", "value": "no-referrer" }]
+        },
         {
             "source": "/(.*)",
             "headers": [

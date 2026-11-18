@@ -146,7 +146,7 @@ window.addEventListener(
 
         rndGet();
 
-        ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=3738&l=' + lng);
+        ws = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
 
         ws.onopen = function (evt) {
             ws.send(JSON.stringify({ ticks: rnd }));

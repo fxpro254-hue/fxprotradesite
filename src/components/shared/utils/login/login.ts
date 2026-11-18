@@ -1,3 +1,3 @@
 export const redirectToLogin = () => {
-    window.location.href = 'https://oauth.deriv.com/oauth2/authorize?app_id=111827';
+    window.location.href = '/api/deriv/login';
 };

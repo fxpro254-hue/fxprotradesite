@@ -88,3 +88,10 @@ model Reaction {
   @@unique([messageId, emoji]) // Each emoji can only appear once per message
   @@map("reactions")
 }
+model DerivSession {
+  id          String   @id
+  accessToken String
+  expiresAt   DateTime
+
+  @@index([expiresAt])
+}
