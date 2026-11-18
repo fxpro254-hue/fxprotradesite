@@ -513,7 +513,7 @@ function startTickAnalysis(symbol = 'R_100') {
         }
 
         try {
-            tickWs = new WebSocket(`${WS_URL}?app_id=${APP_ID}`);
+            tickWs = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
 
             const timeoutId = setTimeout(() => {
                 reject(new Error('Tick WebSocket connection timeout'));

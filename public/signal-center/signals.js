@@ -6,12 +6,7 @@ const ticksStorage = {
     R_100: [],
 };
 
-let selectedMarket = null;
-let isTrading = false;
-let oauthToken = null;
-let tradeHistory = [];
-
-const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=52152');
+const ws = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
 
 ws.onopen = () => {
     Object.keys(ticksStorage).forEach(subscribeTicks);
@@ -57,8 +52,6 @@ function updateTables() {
 
         const rowRiseFall = document.createElement('tr');
         rowRiseFall.innerHTML = `<td>${symbol}</td><td>${isBuy ? 'Rise' : '----'}</td><td>${isSell ? 'Fall' : '----'}</td>`;
-        rowRiseFall.addEventListener('click', () => selectMarket(symbol, rowRiseFall));
-        if (symbol === selectedMarket) rowRiseFall.classList.add('selected');
         riseFallTable.appendChild(rowRiseFall);
 
         const digitCounts = new Array(10).fill(0);
@@ -74,8 +67,6 @@ function updateTables() {
 
         const rowOverUnder = document.createElement('tr');
         rowOverUnder.innerHTML = `<td>${symbol}</td><td>${isOver ? 'Over 2' : '----'}</td><td>${isUnder ? 'Under 7' : '----'}</td>`;
-        rowOverUnder.addEventListener('click', () => selectMarket(symbol, rowOverUnder));
-        if (symbol === selectedMarket) rowOverUnder.classList.add('selected');
         overUnderTable.appendChild(rowOverUnder);
     });
 }
@@ -96,135 +87,6 @@ function calculateTrendPercentage(symbol, ticksCount) {
         risePercentage: total > 0 ? (riseCount / total) * 100 : 0,
         fallPercentage: total > 0 ? (fallCount / total) * 100 : 0,
     };
-}
-
-function selectMarket(symbol, row) {
-    if (selectedMarket === symbol) {
-        selectedMarket = null;
-        row.classList.remove('selected');
-        document.getElementById('startButton').disabled = true;
-    } else {
-        selectedMarket = symbol;
-        document.querySelectorAll('tr').forEach(tr => tr.classList.remove('selected'));
-        row.classList.add('selected');
-        document.getElementById('startButton').disabled = false;
-    }
-}
-
-document.getElementById('oauthButton').addEventListener('click', () => {
-    const authUrl = `https://oauth.deriv.com/oauth2/authorize?app_id=111827&response_type=token&scope=read,trade`;
-    window.open(authUrl, '_blank');
-});
-
-function setToken(token) {
-    oauthToken = token;
-    alert('Logged in successfully!');
-    document.getElementById('startButton').disabled = false;
-    fetchUserData();
-}
-
-async function fetchUserData() {
-    const response = await fetch('https://ws.derivws.com/websockets/v3', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${oauthToken}`,
-        },
-        body: JSON.stringify({ authorize: oauthToken }),
-    });
-
-    const result = await response.json();
-    if (result.authorize) {
-        const { fullname, balance } = result.authorize;
-        document.getElementById('userInfo').innerHTML = `Welcome, ${fullname}. Balance: $${balance}`;
-    } else {
-        console.error('Failed to fetch user data', result);
-    }
-}
-
-document.getElementById('startButton').addEventListener('click', () => {
-    if (!oauthToken) return alert('Please log in first.');
-    if (!selectedMarket) return alert('Please select a market.');
-
-    isTrading = true;
-    document.getElementById('stopButton').disabled = false;
-    trade();
-});
-
-document.getElementById('stopButton').addEventListener('click', () => {
-    isTrading = false;
-    document.getElementById('stopButton').disabled = true;
-    alert('Trading stopped.');
-});
-
-async function trade() {
-    if (!isTrading || !selectedMarket) return;
-
-    const { risePercentage, fallPercentage } = calculateTrendPercentage(selectedMarket, 255);
-    const isBuy = risePercentage > 57;
-    const isSell = fallPercentage > 57;
-
-    let tradeType = null;
-    if (isBuy) tradeType = 'CALL';
-    if (isSell) tradeType = 'PUT';
-
-    if (!tradeType) {
-        setTimeout(trade, 3000);
-        return;
-    }
-
-    const tradeData = {
-        buy: 1,
-        price: 10,
-        parameters: {
-            amount: 10,
-            basis: 'stake',
-            contract_type: tradeType,
-            currency: 'USD',
-            duration: 1,
-            duration_unit: 't',
-            symbol: selectedMarket,
-        },
-    };
-
-    const response = await fetch('https://ws.derivws.com/websockets/v3', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${oauthToken}`,
-        },
-        body: JSON.stringify(tradeData),
-    });
-
-    const result = await response.json();
-    if (result.buy) {
-        const contractId = result.buy.contract_id;
-        trackTrade(contractId);
-    } else {
-        console.error('Trade failed', result);
-        tradeHistory.unshift(`Trade failed: ${result.error?.message}`);
-        updateTradeHistory();
-    }
-}
-
-async function trackTrade(contractId) {
-    if (!isTrading) return;
-
-    const response = await fetch(`https://ws.derivws.com/websockets/v3?contract_id=${contractId}`);
-    const result = await response.json();
-
-    if (result.contract) {
-        const tradeResult = result.contract.profit > 0 ? 'Win' : 'Loss';
-        tradeHistory.unshift(`Trade on ${selectedMarket}: ${tradeResult} ($${result.contract.profit})`);
-        updateTradeHistory();
-    }
-
-    setTimeout(trade, 3000);
-}
-
-function updateTradeHistory() {
-    const tradeHistoryDiv = document.getElementById('tradeHistory');
-    tradeHistoryDiv.innerHTML = tradeHistory.map(entry => `<p>${entry}</p>`).join('');
 }
 
 setInterval(updateTables, 1000);
