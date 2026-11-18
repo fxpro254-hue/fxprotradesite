@@ -2,6 +2,7 @@ const params = new URLSearchParams(window.location.search);
 const status = document.getElementById('status');
 const list = document.getElementById('accounts');
 const logout = document.getElementById('logout');
+const completedSignIn = params.has('code') && !params.has('error');
 
 async function showAccounts() {
     if (params.has('code') || params.has('error')) {
@@ -20,8 +21,7 @@ async function showAccounts() {
                 : 'Deriv sign-in could not be completed. Start a new sign-in to try again.';
             return;
         }
-        window.location.replace('/');
-        return;
+
     }
 
     const result = await fetch('/api/deriv/accounts');
@@ -31,10 +31,16 @@ async function showAccounts() {
     }
     if (!result.ok) throw new Error('Accounts unavailable');
 
-    const { accounts } = await result.json();
+    const { accounts, unsupportedAccountCount } = await result.json();
+    if (completedSignIn && accounts.some(account => account.status === 'active')) {
+        window.location.replace('/');
+        return;
+    }
     status.textContent = accounts.length
         ? 'Deriv is connected. Return to FxPro Trades to open the trading workspace.'
-        : 'Deriv is connected. This login has no Options accounts.';
+        : unsupportedAccountCount
+            ? 'Deriv is connected, but FxPro Trades could not read the Options accounts returned for this login.'
+            : 'Deriv is connected. Deriv returned no Options accounts for this login.';
     for (const account of accounts) {
         const item = document.createElement('li');
         item.textContent = [account.account_type, account.account_id, account.currency, account.status].join(' · ');

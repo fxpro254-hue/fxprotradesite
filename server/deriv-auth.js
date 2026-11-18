@@ -128,13 +128,17 @@ const registerDerivAuth = (app, getPrisma) => {
             if (!response.ok) return res.sendStatus(502);
             const { data } = await response.json();
             if (!Array.isArray(data)) return res.sendStatus(502);
-            const accounts = data.filter(account =>
-                typeof account?.account_id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(account.account_id) &&
-                typeof account.currency === 'string' && Number.isFinite(account.balance) &&
-                ['demo', 'real'].includes(account.account_type));
-            return res.json({ accounts: accounts.map(({ account_id, account_type, balance, currency, status }) => ({
-                account_id, account_type, balance, currency, status,
-            })) });
+            const accounts = data.flatMap(account => {
+                if (!account || typeof account.account_id !== 'string' ||
+                    !/^[A-Za-z0-9_-]{1,64}$/.test(account.account_id) || typeof account.currency !== 'string') return [];
+                const { account_id, currency, status } = account;
+                const account_type = typeof account.account_type === 'string' ? account.account_type.toLowerCase() : '';
+                const balance = typeof account.balance === 'string' && account.balance.trim()
+                    ? Number(account.balance) : account.balance;
+                if (!Number.isFinite(balance) || !['demo', 'real'].includes(account_type)) return [];
+                return [{ account_id, account_type, balance, currency, status: String(status ?? '').toLowerCase() }];
+            });
+            return res.json({ accounts, unsupportedAccountCount: data.length - accounts.length });
         } catch {
             return res.sendStatus(502);
         }
