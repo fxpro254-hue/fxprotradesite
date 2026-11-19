@@ -1585,6 +1585,10 @@ const SmartTradingDisplay = observer(() => {
             }, [], api_base);
             trades.push(standardTradePromise);
 
+            // Check copy trading settings from header (same implementation as TradingHub)
+            // Execute all trades with enhanced error handling for Rise/Fall
+            console.log(`🚨 [TRADE EXECUTION] About to execute ${trades.length} trade(s) for ${contractType}`);
+
             let results;
             try {
                 results = await Promise.all(trades);

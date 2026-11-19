@@ -1,15 +1,16 @@
 export default class AccountLimits {
-    constructor(contractsFor) {
-        this.contractsFor = contractsFor;
+    constructor(store) {
+        this.ws = store.ws;
     }
-
-    async getStakePayoutLimits(symbol, tradeType) {
-        const contracts = await this.contractsFor.getContractsByTradeType(symbol, tradeType);
-        const minStakes = contracts.map(contract => contract.min_stake).filter(Number.isFinite);
-        const maxPayouts = contracts.map(contract => contract.payout_limit).filter(Number.isFinite);
-        return {
-            min_stake: minStakes.length ? Math.min(...minStakes) : undefined,
-            max_payout: maxPayouts.length ? Math.max(...maxPayouts) : undefined,
-        };
+    // eslint-disable-next-line default-param-last
+    getStakePayoutLimits(currency = 'AUD', landing_company_shortcode = 'svg', selected_market) {
+        return this.ws
+            .send({
+                landing_company_details: landing_company_shortcode,
+            })
+            .then(landing_company => {
+                const currency_config = landing_company?.landing_company_details?.currency_config[selected_market];
+                return currency_config ? currency_config[currency] : {};
+            });
     }
 }

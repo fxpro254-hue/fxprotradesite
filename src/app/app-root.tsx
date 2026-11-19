@@ -2,20 +2,22 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import ErrorBoundary from '@/components/error-component/error-boundary';
 import ErrorComponent from '@/components/error-component/error-component';
-import FuturisticLoader from '@/components/loader/futuristic-loader';
+import ClientSiteLoader from '@/components/loader/client-site-loader';
 import TradingAssesmentModal from '@/components/trading-assesment-modal';
 import { api_base } from '@/external/bot-skeleton';
-import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
-import { localize } from '@deriv-com/translations';
 import './app-root.scss';
 
+
 const AppContent = lazy(() => import('./app-content'));
+
 
 const ErrorComponentWrapper = observer(() => {
     const { common } = useStore();
 
+
     if (!common.error) return null;
+
 
     return (
         <ErrorComponent
@@ -31,41 +33,52 @@ const ErrorComponentWrapper = observer(() => {
     );
 });
 
+
 const AppRoot = () => {
     const store = useStore();
-    const { isAuthorized, isAuthorizing, authData } = useApiBase();
     const api_base_initialized = useRef(false);
     const [is_api_initialized, setIsApiInitialized] = useState(false);
+
 
     useEffect(() => {
         const initializeApi = async () => {
             if (!api_base_initialized.current) {
-                await api_base.init();
-                api_base_initialized.current = true;
-                setIsApiInitialized(true);
+                try {
+                    await Promise.race([
+                        api_base.init(),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('API init timeout')), 10000)
+                        )
+                    ]);
+                    api_base_initialized.current = true;
+                    setIsApiInitialized(true);
+                } catch (error) {
+                    console.error('API initialization error:', error);
+                    // Force initialization to complete after error
+                    api_base_initialized.current = true;
+                    setIsApiInitialized(true);
+                }
             }
         };
+
 
         initializeApi();
     }, []);
 
-    if (!store || !is_api_initialized) return <FuturisticLoader message={localize('Initializing FxProTrades...')} />;
+
+    if (!store || !is_api_initialized) return <ClientSiteLoader />;
+
 
     return (
-        <Suspense fallback={<FuturisticLoader message={localize('Initializing  FxProTrades...')} />}>
+        <Suspense fallback={null}>
             <ErrorBoundary root_store={store}>
                 <ErrorComponentWrapper />
-                {authData && !isAuthorized && (
-                    <p role='status'>
-                        {isAuthorizing ? 'Connecting to your Deriv account…' : 'Deriv trading is disconnected. '}
-                        {!isAuthorizing && <button type='button' onClick={() => void api_base.init(true)}>Reconnect</button>}
-                    </p>
-                )}
                 <AppContent />
                 <TradingAssesmentModal />
             </ErrorBoundary>
         </Suspense>
     );
 };
+
 
 export default AppRoot;

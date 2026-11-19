@@ -1,4 +1,6 @@
 import { action, computed, makeObservable, observable } from 'mobx';
+import { api_base } from '@/external/bot-skeleton';
+import { V2GetActiveClientId } from '@/external/bot-skeleton/services/api/appId';
 import { TStores } from '@deriv/stores/types';
 import RootStore from './root-store';
 
@@ -62,6 +64,6 @@ export default class SelfExclusionStore {
     }
 
     async checkRestriction() {
-        // The Options API does not expose the former account self-exclusion request.
+        // Account-side trading limits are enforced by Deriv on every purchase.
     }
 }

@@ -1,46 +1,53 @@
 {
-    "version": 2,
-    "buildCommand": "npm run build",
-    "outputDirectory": "dist",
-    "installCommand": "npm install",
-    "rewrites": [
-        { "source": "/callback", "destination": "/deriv-callback.html" },
-        { "source": "/api/deriv/:action", "destination": "/api/deriv-entry?derivAction=:action" },
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "rewrites": [
+    {
+      "source": "/api/deriv/:route*",
+      "destination": "/api/deriv-session?route=:route*"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/callback",
+      "headers": [
         {
-            "source": "/api/(.*)",
-            "destination": "/api"
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
         }
-    ],
-    "headers": [
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
         {
-            "source": "/callback",
-            "headers": [{ "key": "Referrer-Policy", "value": "no-referrer" }]
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
         },
         {
-            "source": "/(.*)",
-            "headers": [
-                {
-                    "key": "X-Content-Type-Options",
-                    "value": "nosniff"
-                },
-                {
-                    "key": "X-Frame-Options",
-                    "value": "SAMEORIGIN"
-                },
-                {
-                    "key": "X-XSS-Protection",
-                    "value": "1; mode=block"
-                }
-            ]
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
         },
         {
-            "source": "/static/(.*)",
-            "headers": [
-                {
-                    "key": "Cache-Control",
-                    "value": "public, max-age=31536000, immutable"
-                }
-            ]
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
-    ]
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
 }

@@ -11,9 +11,9 @@ class ChartAPI {
         if (!this.api || force_create_connection) {
             if (this.api?.connection) {
                 this.api.connection.removeEventListener('close', this.onsocketclose);
-                this.api.disconnect();
+
             }
-            this.api = generateDerivApiInstance('wss://api.derivws.com/trading/v1/options/ws/public');
+            this.api = await generateDerivApiInstance();
             this.api?.connection.addEventListener('close', this.onsocketclose);
         }
         this.getTime();

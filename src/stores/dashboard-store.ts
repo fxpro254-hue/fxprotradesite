@@ -58,6 +58,7 @@ export interface IDashboardStore {
     showVideoDialog: (param: { [key: string]: string }) => void;
     strategy_save_type: string;
     toast_message: string;
+    is_chart_modal_visible: boolean;
     is_trading_view_modal_visible: boolean;
     is_analysis_modal_visible: boolean;
     is_signals_modal_visible: boolean;
@@ -122,6 +123,7 @@ export default class DashboardStore implements IDashboardStore {
             setStrategySaveType: action.bound,
             setShowMobileTourDialog: action.bound,
             setStandaloneChartModalVisibility: action.bound,
+            is_chart_modal_visible: observable,
             is_trading_view_modal_visible: observable,
             is_analysis_modal_visible: observable,
             is_signals_modal_visible: observable,
@@ -209,6 +211,7 @@ export default class DashboardStore implements IDashboardStore {
     faq_tab_content = faq_content;
     quick_strategy_tab_content = quick_strategy_content;
     filtered_tab_list = [];
+    is_chart_modal_visible = false;
     is_trading_view_modal_visible = false;
     is_analysis_modal_visible = false;
     is_signals_modal_visible = false;
@@ -285,6 +288,10 @@ export default class DashboardStore implements IDashboardStore {
     setOpenSettings = (toast_message: NOTIFICATION_TYPE) => {
         this.toast_message = toast_message;
         botNotification(notification_message()[toast_message]);
+    };
+
+    setChartModalVisibility = () => {
+        this.is_chart_modal_visible = !this.is_chart_modal_visible;
     };
 
     setTradingViewModalVisibility = () => {

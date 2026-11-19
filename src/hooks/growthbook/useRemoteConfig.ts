@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ObjectUtils } from '@deriv-com/utils';
-import initData from '@/utils/remote_config.json';
+import initData from './remote_config.json';
 
 const remoteConfigQuery = async function () {
     const isProductionOrStaging = process.env.APP_ENV === 'production' || process.env.APP_ENV === 'staging';

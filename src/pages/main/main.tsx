@@ -26,6 +26,7 @@ import StandaloneChartModal from '@/pages/chart/standalone-chart-modal';
 import { Localize, localize } from '@deriv-com/translations';
 import { useDevice } from '@deriv-com/ui';
 import RunPanel from '../../components/run-panel';
+import ChartModal from '../chart/chart-modal';
 import Dashboard from '../dashboard';
 import RunStrategy from '../dashboard/run-strategy';
 import './main.scss';
@@ -38,10 +39,8 @@ declare global {
     }
 }
 
-const OptionsTrade = lazy(() => import('../chart/options-trade'));
-const TradingHub = lazy(() => import('@/components/trading-hub/trading-hub-display'));
-const SmartTrading = lazy(() => import('../chart/smart-trading-display'));
-const SpeedBot = lazy(() => import('../chart/speed-bot-display'));
+const Chart = lazy(() => import('../chart'));
+const DTrader = lazy(() => import('../dtrader'));
 const Forex = lazy(() => import('../forex'));
 
 const DashboardIcon = () => (
@@ -153,6 +152,36 @@ const BotIcon = () => (
     </svg>
 );
 
+const DTraderIcon = () => (
+    <svg width='20px' height='20px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+        <path
+            d='M3 13L7 9L11 13L17 7L21 11'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        />
+        <path
+            d='M17 7H21V11'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        />
+        <rect
+            x='2'
+            y='17'
+            width='20'
+            height='5'
+            rx='1'
+            stroke='var(--text-general)'
+            strokeWidth='2'
+            fill='none'
+        />
+        <path d='M6 19H6.01' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
+        <path d='M10 19H10.01' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
+    </svg>
+);
 
 const ForexIcon = () => (
     <svg width='20px' height='20px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
@@ -190,7 +219,7 @@ const ForexIcon = () => (
 const AppWrapper = observer(() => {
     const { connectionStatus } = useApiBase();
     const { dashboard, load_modal, run_panel, summary_card } = useStore();
-    const { active_tab, setActiveTab } = dashboard;
+    const { active_tab, is_chart_modal_visible, setActiveTab } = dashboard;
     const {
         is_dialog_open,
         dialog_options,
@@ -786,11 +815,6 @@ const AppWrapper = observer(() => {
         DBOT_TABS.CHART,
         DBOT_TABS.ANALYSIS_TOOL,
         DBOT_TABS.FREE_BOTS,
-        DBOT_TABS.TRADING_HUB,
-        DBOT_TABS.SMART_TRADING,
-        DBOT_TABS.SPEED_BOT,
-        DBOT_TABS.ACCUMULATORS,
-        DBOT_TABS.DIGITS,
     ].includes(active_tab);
 
     // Scroll to top functionality
@@ -854,14 +878,27 @@ const AppWrapper = observer(() => {
                         <div
                             label={
                                 <>
+                                    <DTraderIcon />
+                                    <Localize i18n_default_text='DTrader' />
+                                </>
+                            }
+                            id='id-dtrader'
+                        >
+                            <Suspense fallback={<ChunkLoader message={localize('Loading DTrader...')} />}>
+                                <DTrader />
+                            </Suspense>
+                        </div>
+                        <div
+                            label={
+                                <>
                                     <ChartsIcon />
-                                    <Localize i18n_default_text='Rise/Fall' />
+                                    <Localize i18n_default_text='Smart trading' />
                                 </>
                             }
                             id='id-charts'
                         >
                             <Suspense fallback={<ChunkLoader message={localize('Please wait, loading chart...')} />}>
-                                {active_tab === DBOT_TABS.CHART && <OptionsTrade key='rise-fall' family='riseFall' />}
+                                <Chart show_digits_stats={true} />
                             </Suspense>
                         </div>
                         <div
@@ -876,6 +913,7 @@ const AppWrapper = observer(() => {
                             <div
                                 className={classNames('dashboard__chart-wrapper', {
                                     'dashboard__chart-wrapper--expanded': is_drawer_open && isDesktop,
+                                    'dashboard__chart-wrapper--modal': is_chart_modal_visible && isDesktop,
                                 })}
                             >
                                 <div className='analysis-tool-toggle'>
@@ -1300,39 +1338,15 @@ const AppWrapper = observer(() => {
                                 </Suspense>
                             </div>
                         </div>
-                        <div id='id-trading-hub' label={<Localize i18n_default_text='Trading Hub' />}>
-                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
-                                {active_tab === DBOT_TABS.TRADING_HUB && <TradingHub />}
-                            </Suspense>
-                        </div>
-                        <div id='id-smart-trading' label={<Localize i18n_default_text='Smart Trading' />}>
-                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
-                                {active_tab === DBOT_TABS.SMART_TRADING && <SmartTrading />}
-                            </Suspense>
-                        </div>
-                        <div id='id-speed-bot' label={<Localize i18n_default_text='Speed Bot' />}>
-                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
-                                {active_tab === DBOT_TABS.SPEED_BOT && <SpeedBot />}
-                            </Suspense>
-                        </div>
-                        <div id='id-accumulators' label={<Localize i18n_default_text='Accumulators' />}>
-                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
-                                {active_tab === DBOT_TABS.ACCUMULATORS && <OptionsTrade key='accumulators' family='accumulators' />}
-                            </Suspense>
-                        </div>
-                        <div id='id-digits' label={<Localize i18n_default_text='Digits' />}>
-                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
-                                {active_tab === DBOT_TABS.DIGITS && <OptionsTrade key='digits' family='digits' />}
-                            </Suspense>
-                        </div>
                     </Tabs>
                 </div>
             </div>
             <DesktopWrapper>
                 <div className='main__run-strategy-wrapper'>
-                    {active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunStrategy />}
+                    {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunStrategy />}
                     {showRunPanel && <RunPanel />}
                 </div>
+                <ChartModal />
                 <TradingViewModal />
                 <AnalysistoolModal />
                 <SignalsModal />
@@ -1340,7 +1354,7 @@ const AppWrapper = observer(() => {
                 <StandaloneChartModal />
             </DesktopWrapper>
             <MobileWrapper>
-                {active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunPanel />}
+                {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunPanel />}
             </MobileWrapper>
             <Dialog
                 cancel_button_text={cancel_button_text || localize('Cancel')}

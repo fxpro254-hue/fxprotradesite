@@ -8,8 +8,10 @@ import { getUrlBase } from '@/components/shared';
 import TncStatusUpdateModal from '@/components/tnc-status-update-modal';
 import TransactionDetailsModal from '@/components/transaction-details';
 import { api_base, ApiHelpers, ServerTime } from '@/external/bot-skeleton';
+import { V2GetActiveToken } from '@/external/bot-skeleton/services/api/appId';
 import { CONNECTION_STATUS } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
 import { useApiBase } from '@/hooks/useApiBase';
+import useIntercom from '@/hooks/useIntercom';
 import { useStore } from '@/hooks/useStore';
 import useThemeSwitcher from '@/hooks/useThemeSwitcher';
 import useTrackjs from '@/hooks/useTrackjs';
@@ -56,6 +58,9 @@ const AppContent = observer(() => {
     };
 
     useLiveChat(livechat_client_information);
+
+    const token = V2GetActiveToken() ?? null;
+    useIntercom(token);
 
     useEffect(() => {
         if (connectionStatus === CONNECTION_STATUS.OPENED) {
@@ -236,10 +241,20 @@ const AppContent = observer(() => {
         if (is_api_initialized) {
             init();
             setIsLoading(true);
-            changeActiveSymbolLoadingState();
+            if (!client.is_logged_in) {
+                changeActiveSymbolLoadingState();
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [is_api_initialized]);
+
+    // use is_landing_company_loaded to know got details of accounts to identify should show an error or not
+    React.useEffect(() => {
+        if (client.is_logged_in && client.is_landing_company_loaded && is_api_initialized) {
+            changeActiveSymbolLoadingState();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [client.is_landing_company_loaded, is_api_initialized, client.loginid]);
 
     useEffect(() => {
         initDatadog(true);

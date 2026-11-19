@@ -57,11 +57,6 @@
                 justify-content: start;
                 position: relative;
                 z-index: 5; /* Above notification banner (z-index: 4) */
-                overflow-x: auto;
-
-                > * {
-                    flex-shrink: 0;
-                }
 
                 @include mobile-or-tablet-screen {
                     overflow-x: auto;

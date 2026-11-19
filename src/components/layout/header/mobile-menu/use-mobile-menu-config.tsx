@@ -19,7 +19,6 @@ import {
     LegacyTheme1pxIcon,
     LegacyWhatsappIcon,
 } from '@deriv/quill-icons/Legacy';
-import { BrandDerivLogoCoralIcon } from '@deriv/quill-icons/Logo';
 import { useTranslations } from '@deriv-com/translations';
 import { ToggleSwitch } from '@deriv-com/ui';
 import { URLConstants } from '@deriv-com/utils';
@@ -55,9 +54,9 @@ const useMobileMenuConfig = (client?: RootStore['client']) => {
         [
             {
                 as: 'a',
-                href: 'https://fxprotrades.site',
-                label: localize('FxProTrades.site'),
-                LeftComponent: BrandDerivLogoCoralIcon,
+                href: '/',
+                label: window.__PF_SITE_BRANDING__?.name || localize('Trading site'),
+                LeftComponent: () => <span aria-hidden='true'>{window.__PF_SITE_BRANDING__?.name?.slice(0, 1) || 'T'}</span>,
             },
             {
                 as: 'button',

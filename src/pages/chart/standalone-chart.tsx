@@ -13,7 +13,6 @@ import { ChartTitle, SmartChart } from '@deriv/deriv-charts';
 import { useDevice } from '@deriv-com/ui';
 import ToolbarWidgets from './toolbar-widgets';
 import '@deriv/deriv-charts/dist/smartcharts.css';
-import './chart.scss';
 
 type TSubscription = {
     [key: string]: null | {

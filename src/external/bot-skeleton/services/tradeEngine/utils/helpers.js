@@ -42,6 +42,7 @@ export const tradeOptionToProposal = (trade_option, purchase_reference) =>
         return proposal;
     });
 
+// Keep original tradeOptionToBuy unchanged for main account
 export const tradeOptionToBuy = (contract_type, trade_option) => {
     const buy = {
         buy: '1',
@@ -85,6 +86,8 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
     if (trade_option.secondBarrierOffset !== undefined) buy.parameters.barrier2 = trade_option.secondBarrierOffset;
     if (trade_option.growth_rate !== undefined) buy.parameters.growth_rate = trade_option.growth_rate;
     if (trade_option.limit_order !== undefined) buy.parameters.limit_order = trade_option.limit_order;
+    if (!isEmptyObject(trade_option.app_markup_percentage))
+        buy.parameters.app_markup_percentage = trade_option.app_markup_percentage;
 
     // Handle specific contract types
     if (['MULTUP', 'MULTDOWN'].includes(contract_type)) {
@@ -199,6 +202,7 @@ export const updateErrorMessage = error => {
 };
 
 export const shouldThrowError = (error, errors_to_ignore = []) => {
+    if (error.nonRetryable) return true;
     if (!error.error) {
         return false;
     }
@@ -304,10 +308,10 @@ export const createDetails = contract => {
         +contract.sell_price,
         profit,
         contract.contract_type,
-        formatTime(parseInt(`${contract.entry_spot_time}000`), 'HH:mm:ss'),
-        +contract.entry_spot,
-        formatTime(parseInt(`${contract.exit_spot_time}000`), 'HH:mm:ss'),
-        +contract.exit_spot,
+        formatTime(parseInt(`${contract.entry_tick_time}000`), 'HH:mm:ss'),
+        +contract.entry_tick,
+        formatTime(parseInt(`${contract.exit_tick_time}000`), 'HH:mm:ss'),
+        +contract.exit_tick,
         +(contract.barrier ? contract.barrier : 0),
         result,
     ];

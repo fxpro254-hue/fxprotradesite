@@ -27,6 +27,8 @@ import {
     AuthorizeResponse,
     BalanceRequest,
     BalanceResponse,
+    BuyContractForMultipleAccountsRequest,
+    BuyContractForMultipleAccountsResponse,
     BuyContractRequest,
     BuyContractResponse,
     CancelAContractRequest,
@@ -277,6 +279,10 @@ type TSocketEndpoints = {
     balance: {
         request: BalanceRequest;
         response: BalanceResponse;
+    };
+    buy_contract_for_multiple_accounts: {
+        request: BuyContractForMultipleAccountsRequest;
+        response: BuyContractForMultipleAccountsResponse;
     };
     buy: {
         request: BuyContractRequest;
@@ -896,7 +902,6 @@ export type TLandingCompany = {
 };
 
 export type TAccount = {
-    balance?: number;
     account_category: string;
     account_type: string;
     broker: string;

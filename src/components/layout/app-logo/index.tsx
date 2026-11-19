@@ -1,14 +1,12 @@
-import { standalone_routes } from '@/components/shared';
-import { useDevice } from '@deriv-com/ui';
 import './app-logo.scss';
 
 export const AppLogo = () => {
-    const { isDesktop } = useDevice();
+    const site = window.__PF_SITE_BRANDING__;
 
-    if (!isDesktop) return null;
     return (
-        <a className='app-header__logo' href='https://fxprotrades.site' target='_blank' rel='noopener noreferrer'>
-            <img src='/deriv-logo.png' alt='FxProTrades' className='app-header__logo-image' />
+        <a className='app-header__logo' href='/' aria-label={`${site?.name || 'Trading site'} home`}>
+            {site?.logo_data ? <img src={site.logo_data} alt='' className='app-header__logo-image' /> : null}
+            <span>{site?.name || 'Trading site'}</span>
         </a>
     );
 };

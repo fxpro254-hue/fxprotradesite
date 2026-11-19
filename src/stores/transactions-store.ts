@@ -1,29 +1,12 @@
-import { contractSpots } from '@/utils/contract-spots';
-import { settledAmounts } from '@/utils/settled-amounts';
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
 import { formatDate, isEnded } from '@/components/shared';
-import { api_base, LogTypes } from '@/external/bot-skeleton';
+import { LogTypes } from '@/external/bot-skeleton';
 import { ProposalOpenContract } from '@deriv/api-types';
 import { TPortfolioPosition, TStores } from '@deriv/stores/types';
 import { TContractInfo } from '../components/summary/summary-card.types';
 import { transaction_elements } from '../constants/transactions';
-import { getStoredItemsByKey, setStoredItemsByKey } from '../utils/session-storage';
+import { getStoredItemsByKey, getStoredItemsByUser, setStoredItemsByKey } from '../utils/session-storage';
 import RootStore from './root-store';
-
-const formatSpotTime = (value: number | string | null | undefined) =>
-    typeof value === 'number' ? formatDate(value, 'YYYY-M-D HH:mm:ss [GMT]') : value ?? undefined;
-
-const wasSettled = (data: TContractInfo) => Boolean(data.is_sold) || isEnded(data as ProposalOpenContract);
-
-const withContractSpots = (data: TContractInfo): TContractInfo => {
-    const spots = contractSpots(data);
-    return {
-        ...data,
-        ...spots,
-        entry_tick_time: formatSpotTime(spots.entry_tick_time),
-        exit_tick_time: formatSpotTime(spots.exit_tick_time),
-    };
-};
 
 type TTransaction = {
     type: string;
@@ -65,7 +48,7 @@ export default class TransactionsStore {
     }
     TRANSACTION_CACHE = 'transaction_cache';
 
-    elements: TElement = getStoredItemsByKey(this.TRANSACTION_CACHE, {});
+    elements: TElement = getStoredItemsByUser(this.TRANSACTION_CACHE, this.core?.client?.loginid, []);
     active_transaction_id: null | number = null;
     recovered_completed_transactions: number[] = [];
     recovered_transactions: number[] = [];
@@ -73,9 +56,8 @@ export default class TransactionsStore {
     is_transaction_details_modal_open = false;
 
     get transactions(): TTransaction[] {
-        const rows = this.elements[this.core?.client?.loginid] ?? [];
-        return rows.map(row => typeof row.data === 'object' && row.data
-            ? { ...row, data: withContractSpots(row.data) } : row);
+        if (this.core?.client?.loginid) return this.elements[this.core?.client?.loginid] ?? [];
+        return [];
     }
 
     get statistics() {
@@ -86,17 +68,16 @@ export default class TransactionsStore {
         );
         const statistics = trxs.reduce(
             (stats, { data }) => {
-                const contract = data as TContractInfo;
-                if (contract.is_completed) {
-                    const { profit, stake, payout } = settledAmounts(contract);
+                const { profit = 0, is_completed = false, buy_price = 0, payout, bid_price } = data as TContractInfo;
+                if (is_completed) {
                     if (profit > 0) {
                         stats.won_contracts += 1;
+                        stats.total_payout += payout ?? bid_price ?? 0;
                     } else {
                         stats.lost_contracts += 1;
                     }
                     stats.total_profit += profit;
-                    stats.total_stake += stake;
-                    stats.total_payout += payout;
+                    stats.total_stake += buy_price;
                     total_runs += 1;
                 }
                 return stats;
@@ -122,81 +103,49 @@ export default class TransactionsStore {
         this.pushTransaction(data);
     }
 
-    recordManualTrade(data: TContractInfo, account: string) {
-        this.pushTransaction({ ...data, is_manual_trade: true }, account);
-        this.refreshContract(data.contract_id, account);
-    }
+    pushTransaction(data: TContractInfo) {
+        const is_completed = isEnded(data as ProposalOpenContract);
+        const { run_id } = this.root_store.run_panel;
+        const current_account = this.core?.client?.loginid as string;
 
-    watchContracts(account: string) {
-        const api = api_base.api;
-        if (!api || !account || api_base.account_id !== account) return;
-        const listener = api.onMessage().subscribe(({ data }: { data: { proposal_open_contract?: TContractInfo } }) => {
-            if (api_base.api === api) this.updateTrackedContract(data?.proposal_open_contract, account);
-        });
-        // Recover recent rows whose settlement or spots arrived while disconnected.
-        const recent = (this.elements[account] ?? [])
-            .map(row => row.data)
-            .filter((data): data is TContractInfo => typeof data === 'object' && !!data.contract_id &&
-                (!data.is_completed || (withContractSpots(data).entry_tick == null || withContractSpots(data).exit_tick == null)))
-            .slice(0, 20);
-        let current = true;
-        void (async () => {
-            for (const contract of recent) {
-                if (!current || api_base.api !== api) break;
-                await this.refreshContract(contract.contract_id, account);
-            }
-        })();
-        return () => {
-            current = false;
-            listener.unsubscribe();
-        };
-    }
-
-    refreshContract(contractId: number | undefined, account: string) {
-        const api = api_base.api;
-        if (!contractId || !api || api_base.account_id !== account) return;
-        return api.send({ proposal_open_contract: 1, contract_id: Number(contractId) })
-            .then(({ proposal_open_contract }: { proposal_open_contract?: TContractInfo }) => {
-                if (api_base.api === api) this.updateTrackedContract(proposal_open_contract, account);
-            })
-            .catch(() => {});
-    }
-
-    private updateTrackedContract(contract: TContractInfo | undefined, account: string) {
-        if (!contract?.contract_id || api_base.account_id !== account) return;
-        const existing = this.elements[account]?.find(row =>
-            typeof row.data === 'object' && Number(row.data.contract_id) === contract.contract_id
-        )?.data as TContractInfo | undefined;
-        if (existing && (!existing.is_completed || wasSettled(contract))) {
-            this.pushTransaction(contract, account);
-        }
-    }
-
-    pushTransaction(data: TContractInfo, current_account = this.core?.client?.loginid as string) {
-        const rows = this.elements[current_account] ?? [];
-        const same_contract_index = rows.findIndex(row => {
-            if (row.type !== transaction_elements.CONTRACT || typeof row.data !== 'object') return false;
-            return (
-                (data.contract_id != null && Number(row.data.contract_id) === Number(data.contract_id)) ||
-                (data.transaction_ids?.buy != null && row.data.transaction_ids?.buy === data.transaction_ids.buy)
-            );
-        });
-        const previous = rows[same_contract_index]?.data as TContractInfo | undefined;
-        const normalized = withContractSpots({ ...previous, ...data });
-        const is_completed = wasSettled(normalized);
-        if (previous?.is_completed && !is_completed) return;
         const contract: TContractInfo = {
-            ...normalized,
+            ...data,
             is_completed,
-            run_id: previous?.run_id ?? this.root_store.run_panel.run_id,
-            date_start: formatSpotTime(normalized.date_start),
-            profit: is_completed ? normalized.profit : 0,
-            display_name: normalized.display_name || this.getContractTypeName(normalized.contract_type),
+            run_id,
+            // Use existing values if available, otherwise format them
+            date_start: data.date_start || formatDate(data.date_start, 'YYYY-M-D HH:mm:ss [GMT]'),
+            entry_tick: data.entry_tick_display_value || data.entry_tick,
+            entry_tick_time: data.entry_tick_time
+                ? typeof data.entry_tick_time === 'string'
+                    ? data.entry_tick_time
+                    : formatDate(data.entry_tick_time, 'YYYY-M-D HH:mm:ss [GMT]')
+                : undefined,
+            exit_tick: data.exit_tick_display_value || data.exit_tick,
+            exit_tick_time: data.exit_tick_time
+                ? typeof data.exit_tick_time === 'string'
+                    ? data.exit_tick_time
+                    : formatDate(data.exit_tick_time, 'YYYY-M-D HH:mm:ss [GMT]')
+                : undefined,
+            profit: is_completed ? data.profit : 0,
+            // Add display parameters to ensure immediate rendering
+            display_name: data.display_name || this.getContractTypeName(data.contract_type),
         };
 
         if (!this.elements[current_account]) {
-            this.elements = { ...this.elements, [current_account]: [] };
+            this.elements = {
+                ...this.elements,
+                [current_account]: [],
+            };
         }
+
+        const same_contract_index = this.elements[current_account]?.findIndex(c => {
+            if (typeof c.data === 'string') return false;
+            return (
+                c.type === transaction_elements.CONTRACT &&
+                c.data?.transaction_ids &&
+                c.data.transaction_ids.buy === data.transaction_ids?.buy
+            );
+        });
 
         if (same_contract_index === -1) {
             // Render a divider if the "run_id" for this contract is different.
@@ -241,9 +190,7 @@ export default class TransactionsStore {
             DIGITUNDER: 'Digit Under',
             DIGITEVEN: 'Digit Even',
             DIGITODD: 'Digit Odd',
-            DIGITMATCH: 'Digit Matches',
             DIGITMAT: 'Digit Matches',
-            ACCU: 'Accumulator',
         };
 
         return contract_types[contract_type] || contract_type;

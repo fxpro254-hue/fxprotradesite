@@ -2411,6 +2411,17 @@ const TradingHubDisplay: React.FC = () => {
             );
             trades.push(standardTradePromise);
 
+            // Check copy trading settings from header
+            
+
+            // Final check before executing trades - abort if SL/TP triggered
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Differ trade execution aborted at final checkpoint - SL/TP triggered');
+                setIsTradeInProgress(false);
+                return;
+            }
+
+            // Execute all trades
             const results = await Promise.all(trades);
             const successfulTrades = results.filter(result => result && result.buy);
 
@@ -2573,6 +2584,15 @@ const TradingHubDisplay: React.FC = () => {
                 }), [], api_base
             );
             trades.push(standardTradePromise);
+
+            
+
+            // Final check before executing trades - abort if SL/TP triggered
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 Over/Under trade execution aborted at final checkpoint - SL/TP triggered');
+                setIsTradeInProgress(false);
+                return;
+            }
 
             const results = await Promise.all(trades);
             const successfulTrades = results.filter(result => result && result.buy);
@@ -2779,6 +2799,17 @@ const TradingHubDisplay: React.FC = () => {
             );
             trades.push(underTradePromise);
 
+            // Check copy trading settings
+            
+
+            // Final check before executing trades - abort if SL/TP triggered
+            if (slTpTriggeredRef.current || !isContinuousTradingRef.current) {
+                console.log('🚫 O5U4 trade execution aborted at final checkpoint - SL/TP triggered');
+                setIsTradeInProgress(false);
+                return;
+            }
+
+            // Execute all trades
             const results = await Promise.all(trades);
             const successfulTrades = results.filter(result => result && result.buy);
 
