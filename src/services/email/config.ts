@@ -25,9 +25,6 @@ export enum EmailTemplateType {
     PASSWORD_RESET = 'password_reset',
     VERIFICATION = 'verification',
     NOTIFICATION = 'notification',
-    COPY_TRADING_REQUEST = 'copy_trading_request',
-    COPY_TRADING_ACCEPTED = 'copy_trading_accepted',
-    COPY_TRADING_REJECTED = 'copy_trading_rejected',
     COMMUNITY_MENTION = 'community_mention',
     COMMUNITY_REPLY = 'community_reply',
 }

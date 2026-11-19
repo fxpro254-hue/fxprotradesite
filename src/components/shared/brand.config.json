@@ -45,11 +45,6 @@
         }
     },
     "platforms_appstore": {
-        "trader": {
-            "name": "Deriv Trader",
-            "icon": "DTrader",
-            "availability": "All"
-        },
         "dbot": {
             "name": "Deriv Bot",
             "icon": "DBot",

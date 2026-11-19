@@ -40,7 +40,6 @@ declare global {
 }
 
 const Chart = lazy(() => import('../chart'));
-const DTrader = lazy(() => import('../dtrader'));
 const Forex = lazy(() => import('../forex'));
 
 const DashboardIcon = () => (
@@ -152,36 +151,6 @@ const BotIcon = () => (
     </svg>
 );
 
-const DTraderIcon = () => (
-    <svg width='20px' height='20px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-        <path
-            d='M3 13L7 9L11 13L17 7L21 11'
-            stroke='var(--text-general)'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-        />
-        <path
-            d='M17 7H21V11'
-            stroke='var(--text-general)'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-        />
-        <rect
-            x='2'
-            y='17'
-            width='20'
-            height='5'
-            rx='1'
-            stroke='var(--text-general)'
-            strokeWidth='2'
-            fill='none'
-        />
-        <path d='M6 19H6.01' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
-        <path d='M10 19H10.01' stroke='var(--text-general)' strokeWidth='2' strokeLinecap='round' />
-    </svg>
-);
 
 const ForexIcon = () => (
     <svg width='20px' height='20px' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
@@ -878,19 +847,6 @@ const AppWrapper = observer(() => {
                         <div
                             label={
                                 <>
-                                    <DTraderIcon />
-                                    <Localize i18n_default_text='DTrader' />
-                                </>
-                            }
-                            id='id-dtrader'
-                        >
-                            <Suspense fallback={<ChunkLoader message={localize('Loading DTrader...')} />}>
-                                <DTrader />
-                            </Suspense>
-                        </div>
-                        <div
-                            label={
-                                <>
                                     <ChartsIcon />
                                     <Localize i18n_default_text='Smart trading' />
                                 </>
@@ -1343,7 +1299,7 @@ const AppWrapper = observer(() => {
             </div>
             <DesktopWrapper>
                 <div className='main__run-strategy-wrapper'>
-                    {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunStrategy />}
+                    {active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunStrategy />}
                     {showRunPanel && <RunPanel />}
                 </div>
                 <ChartModal />
@@ -1354,7 +1310,7 @@ const AppWrapper = observer(() => {
                 <StandaloneChartModal />
             </DesktopWrapper>
             <MobileWrapper>
-                {active_tab !== DBOT_TABS.DTRADER && active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunPanel />}
+                {active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunPanel />}
             </MobileWrapper>
             <Dialog
                 cancel_button_text={cancel_button_text || localize('Cancel')}

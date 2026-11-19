@@ -170,7 +170,6 @@ const welcomeEmailTemplate = (data) => {
                 <strong>Stay Updated:</strong> Get the latest news and updates about FxProTrades Bot
             </div>
             <div class="feature-item">
-                <strong>Copy Trading:</strong> Follow successful traders and copy their strategies
             </div>
         </div>
         
@@ -214,7 +213,6 @@ What You Can Do:
 ✓ Share Insights: Post your trading experiences and learn from others
 ✓ Get Support: Ask questions and get help from the community
 ✓ Stay Updated: Get the latest news and updates about FxProTrades Bot
-✓ Copy Trading: Follow successful traders and copy their strategies
 
 Visit the community: ${process.env.APP_URL || 'https://fxprotrades.site'}/community
 

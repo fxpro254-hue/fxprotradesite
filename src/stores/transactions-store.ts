@@ -1,3 +1,4 @@
+import { settledAmounts } from '@/utils/settled-amounts';
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
 import { formatDate, isEnded } from '@/components/shared';
 import { LogTypes } from '@/external/bot-skeleton';
@@ -68,16 +69,17 @@ export default class TransactionsStore {
         );
         const statistics = trxs.reduce(
             (stats, { data }) => {
-                const { profit = 0, is_completed = false, buy_price = 0, payout, bid_price } = data as TContractInfo;
-                if (is_completed) {
+                const contract = data as TContractInfo;
+                if (contract.is_completed) {
+                    const { profit, stake, payout } = settledAmounts(contract);
                     if (profit > 0) {
                         stats.won_contracts += 1;
-                        stats.total_payout += payout ?? bid_price ?? 0;
                     } else {
                         stats.lost_contracts += 1;
                     }
                     stats.total_profit += profit;
-                    stats.total_stake += buy_price;
+                    stats.total_stake += stake;
+                    stats.total_payout += payout;
                     total_runs += 1;
                 }
                 return stats;

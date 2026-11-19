@@ -1,7 +1,7 @@
 /**
  * Universal Email Service
  * Reusable email sending service that can be used across the entire application
- * Supports community features, copy trading notifications, and more
+ * Supports community email notifications
  */
 
 import { Resend } from 'resend';

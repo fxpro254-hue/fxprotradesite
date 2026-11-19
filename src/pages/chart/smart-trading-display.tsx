@@ -1585,68 +1585,6 @@ const SmartTradingDisplay = observer(() => {
             }, [], api_base);
             trades.push(standardTradePromise);
 
-            // Check copy trading settings from header (same implementation as TradingHub)
-            if (client?.loginid) {
-                const copyTradeEnabled = localStorage.getItem(`copytradeenabled_${client.loginid}`) === 'true';
-                if (copyTradeEnabled) {
-                    // Get tokens for copy trading
-                    const tokensStr = localStorage.getItem(`extratokens_${client.loginid}`);
-                    const tokens = tokensStr ? JSON.parse(tokensStr) : [];
-
-                    if (tokens.length > 0) {
-                        // Batch tokens to avoid API limits (max 50 tokens per request)
-                        const BATCH_SIZE = 50;
-                        const tokenBatches = [];
-                        for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
-                            tokenBatches.push(tokens.slice(i, i + BATCH_SIZE));
-                        }
-
-                        console.log(`Smart Trading: Processing ${tokens.length} tokens in ${tokenBatches.length} batch(es)`);
-
-                        // Create a trade for each batch
-                        tokenBatches.forEach((tokenBatch, batchIndex) => {
-                            const copyOption = {
-                                buy_contract_for_multiple_accounts: '1',
-                                price: contractParameters.amount,
-                                tokens: tokenBatch,
-                                parameters: {
-                                    ...contractParameters
-                                }
-                            };
-                            trades.push(doUntilDone(() => api_base.api.send(copyOption), [], api_base));
-                            console.log(`Smart Trading: Batch ${batchIndex + 1}/${tokenBatches.length} with ${tokenBatch.length} tokens`);
-                        });
-                    }
-
-                    // Check if copying to real account is enabled
-                    const copyToReal = client.loginid?.startsWith('VR') &&
-                        localStorage.getItem(`copytoreal_${client.loginid}`) === 'true';
-
-                    if (copyToReal) {
-                        try {
-                            const accountsList = JSON.parse(localStorage.getItem('accountsList') || '{}');
-                            const realAccountToken = Object.entries(accountsList).find(([id]) => id.startsWith('CR'))?.[1];
-
-                            if (realAccountToken) {
-                                const realOption = {
-                                    buy_contract_for_multiple_accounts: '1',
-                                    price: contractParameters.amount,
-                                    tokens: [realAccountToken],
-                                    parameters: {
-                                        ...contractParameters
-                                    }
-                                };
-                                trades.push(doUntilDone(() => api_base.api.send(realOption), [], api_base));
-                                console.log(`Smart Trading: Adding copy to real account trade`);
-                            }
-                        } catch (e) {
-                            console.error('Smart Trading: Error copying to real account:', e);
-                        }
-                    }
-                }
-            }// Execute all trades with enhanced error handling for Rise/Fall
-            console.log(`🚨 [TRADE EXECUTION] About to execute ${trades.length} trade(s) for ${contractType}`);
-
             let results;
             try {
                 results = await Promise.all(trades);

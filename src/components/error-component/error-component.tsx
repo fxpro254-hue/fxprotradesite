@@ -22,7 +22,7 @@ const ErrorComponent = ({
     redirectOnClick = null,
     should_clear_error_on_click,
     setError,
-    redirect_to = standalone_routes.trade,
+    redirect_to = standalone_routes.bot,
     should_redirect = true,
 }: Partial<TErrorComponent>) => {
     return (
