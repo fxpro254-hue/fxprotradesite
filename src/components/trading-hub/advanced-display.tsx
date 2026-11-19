@@ -1,14 +1,14 @@
+import { useApiBase } from '@/hooks/useApiBase';
+import { api_base } from '@/external/bot-skeleton';
+import { getSelectedAccount, logoutTradingSession } from '../../pipforge/session';
 import { redirectToLogin } from '@/components/shared/utils/login/login';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Button, Text } from '@deriv-com/ui';
+import { Button, Text, Input } from '@deriv-com/ui';
 import classNames from 'classnames';
 import { ProposalOpenContract } from '@deriv/api-types';
 import './advanced-display.scss';
 import { observer as globalObserver } from '../../external/bot-skeleton/utils/observer';
-import { api_base } from '@/external/bot-skeleton';
-import { useApiBase } from '@/hooks/useApiBase';
-import { useOauth2 } from '@/hooks/auth/useOauth2';
 import { useStore } from '@/hooks/useStore';
 
 // Symbol type for multi-symbol analysis
@@ -95,10 +95,17 @@ interface LastTradeInfo {
 }
 
 // Add App ID configuration constants
+const APP_CONFIG = {
+    local: '36300', // Local/test app ID
+    staging: '111827', // Staging environment
+    production: '111827', // Production app ID
+};
+
 // Add constants for localStorage keys
 const STORAGE_KEYS = {
     TRADING_SETTINGS: 'trading_settings',
     TOTAL_PROFIT: 'total_profit',
+    USER_EMAIL: 'userEmail',
 };
 
 // Add trade result tracking constants
@@ -107,9 +114,8 @@ const PROFIT_TARGET = 50; // $50 profit target
 
 const AdvancedDisplay = observer(() => {
     // Get transactions store
-    const { transactions, client } = useStore();
-    const { isAuthorized, isAuthorizing, activeLoginid } = useApiBase();
-    const { oAuthLogout } = useOauth2({ handleLogout: async () => client.logout(), client });
+    const { transactions } = useStore();
+    const { connectionStatus } = useApiBase();
 
     // State
     const [isRunning, setIsRunning] = useState(false);
@@ -204,6 +210,7 @@ const AdvancedDisplay = observer(() => {
     });
 
     // Add trading states
+
     const [tradeStatus, setTradeStatus] = useState<TradeStatus>('idle');
     const [tradeMessage, setTradeMessage] = useState<string>('');
     const [activeTradeSymbol, setActiveTradeSymbol] = useState<SymbolType | null>(null);
@@ -233,9 +240,24 @@ const AdvancedDisplay = observer(() => {
     // Add new state for completed contract similar to trading-hub-display
     const [completedContract, setCompletedContract] = useState<ProposalOpenContract | null>(null);
 
-    const isAuthenticated = Boolean(activeLoginid);
-    const isAuthLoading = isAuthorizing;
+    // Add authentication state
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
+    const [authError, setAuthError] = useState<string | null>(null);
     const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+    const [apiToken, setApiToken] = useState<string>('');
+
+    // Replace localStorage app ID retrieval with environment-based logic
+    const getAppId = useCallback(() => {
+        const host = window.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1') {
+            return APP_CONFIG.local;
+        }
+        // Check for staging environment if needed
+        // if (host.includes('staging')) return APP_CONFIG.staging;
+
+        return APP_CONFIG.production;
+    }, []);
 
     // Add utility function to get readable contract type names
     const getReadableContractType = (type: string): string => {
@@ -420,6 +442,67 @@ const AdvancedDisplay = observer(() => {
     const dismissNotification = useCallback((id: number) => {
         setNotifications(prevNotifications => prevNotifications.filter(notification => notification.id !== id));
     }, []);
+
+    // Add a debug helper function to log contract activity
+    const logContractActivity = (type: string, data: any) => {
+        console.log(`[${new Date().toISOString()}] ${type}:`, JSON.stringify(data, null, 2));
+    };
+
+    // Enhance the WebSocket message handler to better track contracts
+    useEffect(() => {
+        let subscription: { unsubscribe: () => void } | undefined;
+        let disposed = false;
+        const attach = async () => {
+            if (!api_base.api) await api_base.init();
+            if (disposed) return;
+            subscription = api_base.api?.onMessage().subscribe(({ data }) => {
+            // Improved buy response handling
+            if (data.buy !== undefined && data.echo_req?.passthrough?.workspace === 'advanced') {
+                logContractActivity('Trade success response', data.buy);
+
+                if (data.buy && typeof data.buy === 'object' && 'contract_id' in data.buy) {
+                    // Immediately subscribe to this contract to ensure we get updates
+                    
+
+                    handleTradeSuccess(data);
+                } else {
+                    console.error('Received malformed buy response:', data);
+                    setTradeStatus('error');
+                    setTradeMessage('Received invalid trade response from server');
+                    showNotification('Error in trade response format', 'error');
+                }
+            }
+
+            // Enhanced contract updates handling with better logging
+            if (data.proposal_open_contract) {
+                const contract = data.proposal_open_contract;
+                logContractActivity('Contract update', {
+                    id: contract.contract_id,
+                    type: contract.contract_type,
+                    status: contract.status,
+                    entry: contract.entry_tick,
+                    exit: contract.exit_tick,
+                    profit: contract.profit,
+                    is_sold: contract.is_sold,
+                });
+
+                handleContractUpdate(contract);
+            }
+
+            if (data.error) {
+                console.error('WebSocket error:', data.error);
+                setTradeStatus('error');
+                setTradeMessage(`Error: ${data.error.message || 'Unknown error'}`);
+                showNotification(`Trade error: ${data.error.message}`, 'error');
+                return;
+            }
+
+            });
+        };
+        void attach().catch(() => setTradeMessage('Could not connect. Please retry.'));
+        return () => { disposed = true; subscription?.unsubscribe(); };
+    }, [connectionStatus]);
+
 
     // Enhance the trade success handler to emit events for Run Panel, mirroring trading-hub-display
     const handleTradeSuccess = (data: TradeResponse) => {
@@ -661,8 +744,8 @@ const AdvancedDisplay = observer(() => {
                     status: 'pending',
                     currentSpot: contract.current_spot,
                     currentSpotTime: contract.current_spot_time,
-                    entryTime: contract.entry_spot_time,
-                    exitTime: contract.exit_spot_time,
+                    entryTime: contract.entry_tick_time,
+                    exitTime: contract.exit_tick_time,
                     remainingTime: contract.date_expiry
                         ? contract.date_expiry - Math.floor(Date.now() / 1000)
                         : undefined,
@@ -706,8 +789,8 @@ const AdvancedDisplay = observer(() => {
                         contractId: contract.contract_id,
                         type: contract.contract_type,
                         symbol: contract.underlying || initialTradeData.symbol || 'R_10',
-                        entrySpot: contract.entry_spot,
-                        exitSpot: contract.exit_spot,
+                        entrySpot: contract.entry_tick_display_value,
+                        exitSpot: contract.exit_tick_display_value,
                         stake: contract.buy_price,
                         payout: contract.payout,
                         profit: contract.profit,
@@ -720,8 +803,8 @@ const AdvancedDisplay = observer(() => {
                                 ? (contract.sell_time - contract.purchase_time).toFixed(1)
                                 : 'N/A',
                         purchaseTime: contract.purchase_time * 1000,
-                        entryTime: contract.entry_spot_time * 1000,
-                        exitTime: contract.exit_spot_time * 1000,
+                        entryTime: contract.entry_tick_time * 1000,
+                        exitTime: contract.exit_tick_time * 1000,
                     };
 
                     console.log('Trade result processed:', result);
@@ -750,13 +833,13 @@ const AdvancedDisplay = observer(() => {
                         profit: Number(contract.profit),
                         payout: Number(contract.payout),
                         status: status,
-                        exit_tick_time: contract.exit_spot_time,
+                        exit_tick_time: contract.exit_tick_time,
                         sell_time: contract.sell_time,
                         date_expiry: contract.date_expiry,
-                        entry_tick: contract.entry_spot,
-                        exit_tick: contract.exit_spot,
-                        entry_tick_display_value: contract.entry_spot,
-                        exit_tick_display_value: contract.exit_spot,
+                        entry_tick: contract.entry_tick,
+                        exit_tick: contract.exit_tick,
+                        entry_tick_display_value: contract.entry_tick_display_value,
+                        exit_tick_display_value: contract.exit_tick_display_value,
                         transaction_ids: {
                             buy: initialTradeData.transaction_ids?.buy || contract.transaction_ids?.buy,
                             sell: contract.transaction_ids?.sell,
@@ -786,7 +869,7 @@ const AdvancedDisplay = observer(() => {
                                 ? String(contract.barrier)
                                 : initialTradeData.contract_parameter,
                         parameter_type: initialTradeData.parameter_type,
-                        entry_tick_time: contract.entry_spot_time || initialTradeData.entry_tick_time,
+                        entry_tick_time: contract.entry_tick_time || initialTradeData.entry_tick_time,
                         run_id: sessionRunId,
                         display_name: initialTradeData.display_name,
                         transaction_time: initialTradeData.transaction_time,
@@ -1017,26 +1100,33 @@ const AdvancedDisplay = observer(() => {
         );
     };
 
-    useEffect(() => {
-        const api = api_base.api;
-        if (!api || !isAuthorized || !activeContracts.size) return;
-        const listener = api.onMessage().subscribe(({ data }: { data: any }) => {
-            const contract = data?.proposal_open_contract;
-            if (contract && activeContracts.has(contract.contract_id)) handleContractUpdate(contract);
-        });
-        return () => listener.unsubscribe();
-    }, [isAuthorized, activeContracts, activeLoginid]);
+    // Improved subscription function with better contract tracking
+    const subscribeToContract = useCallback(
+        (
+            contractId: number,
+            contractData: {
+                type: string;
+                symbol: SymbolType;
+                stake: number;
+                barrier?: string;
+            }
+        ) => {
+            if (!api_base.is_authorized) return;
 
-    const subscribeToContract = (
-        contractId: number,
-        contractData: { type: string; symbol: SymbolType; stake: number; barrier?: string }
-    ) => {
-        setActiveContracts(prev => {
-            const updated = new Map(prev);
-            updated.set(contractId, { ...contractData, contractId, timestamp: Date.now() });
-            return updated;
-        });
-    };
+            // Track more contract details
+            setActiveContracts(prev => {
+                const updated = new Map(prev);
+                updated.set(contractId, {
+                    ...contractData,
+                    contractId,
+                    timestamp: Date.now(),
+                });
+                return updated;
+            });
+
+        },
+        []
+    );
 
     // Function to request tick history and subscribe to updates
     const startWebSocket = (symbol: SymbolType) => {
@@ -1045,11 +1135,13 @@ const AdvancedDisplay = observer(() => {
             webSocketRefs.current[symbol]?.close();
         }
 
+        // Get app ID and create new WebSocket connection
+        const appId = getAppId();
         const ws = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
         webSocketRefs.current[symbol] = ws;
 
         ws.onopen = () => {
-            console.log(`Market data WebSocket opened for ${symbol}`);
+            console.log(`Market data WebSocket opened for ${symbol} with app ID: ${appId}`);
             const request = {
                 ticks_history: symbol,
                 count: tickCount,
@@ -1617,14 +1709,11 @@ const AdvancedDisplay = observer(() => {
                 timestamp: Date.now(),
             });
 
-            const api = api_base.api;
-            if (!api || !isAuthorized || !client.currency || api_base.account_id !== activeLoginid) {
-                setTradeStatus('error');
-                setTradeMessage('Connect your Deriv trading account before placing a trade.');
-                if (!isAuthenticated) setShowAuthModal(true);
+            if (!getSelectedAccount() || !api_base.is_authorized) {
+                setShowAuthModal(true);
+                setTradeMessage('Connect your Deriv account before trading.');
                 return;
             }
-
             setActiveTradeSymbol(symbol);
             setTradeStatus('pending');
             setTradeMessage(`Placing ${tradeType} trade on ${symbol}...`);
@@ -1638,32 +1727,40 @@ const AdvancedDisplay = observer(() => {
             }
 
             const tradeRequest = {
-                buy: 1,
+                passthrough: { workspace: 'advanced' },
+                buy: '1',
                 price: stake,
                 parameters: {
                     amount: stake,
                     basis: 'stake',
                     contract_type: params.contract_type || tradeType,
-                    currency: client.currency,
+                    currency: getSelectedAccount()!.currency,
                     underlying_symbol: symbol,
                     duration: params.duration || 1,
                     duration_unit: params.duration_unit || 't',
-                    ...(params.barrier ? { barrier: params.barrier } : {}),
+                    ...(params.barrier !== undefined ? { barrier: params.barrier } : {}),
                 },
             };
 
-            const response = await api.send(tradeRequest);
-            if (api_base.api === api) handleTradeSuccess(response);
+            console.log('Sending trade request:', JSON.stringify(tradeRequest, null, 2));
+
+            await api_base.api!.send(tradeRequest);
+
         } catch (error) {
+            console.error('Error placing trade:', error);
             setTradeStatus('error');
-            const failure = error as { error?: { message?: string } };
-            setTradeMessage(failure?.error?.message || 'Deriv could not complete the trade request.');
+            setTradeMessage('Error preparing trade request');
         }
     };
 
-    const handleLogout = () => {
-        void oAuthLogout().catch(() => showNotification('Sign-out failed. Try again.', 'error'));
-    };
+    useEffect(() => {
+        const update = () => { setIsAuthenticated(!!getSelectedAccount()); setShowAuthModal(!getSelectedAccount()); };
+        update();
+        window.addEventListener('pf:account-changed', update);
+        return () => window.removeEventListener('pf:account-changed', update);
+    }, []);
+    const handleAuthenticate = () => redirectToLogin();
+    const handleLogout = () => { void logoutTradingSession().then(() => window.location.reload()); };
 
     // Authentication modal component
     const renderAuthModal = () => {
@@ -1684,6 +1781,8 @@ const AdvancedDisplay = observer(() => {
                         <p className='auth-modal__description'>
                             Please log in with your Deriv account to access trading features.
                         </p>
+
+                        {authError && <div className='auth-modal__error'>{authError}</div>}
 
                         <div className='auth-modal__login-section'>
                             <Button

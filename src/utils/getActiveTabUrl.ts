@@ -1,8 +1,19 @@
-import { TAB_IDS } from '@/constants/bot-contents';
-
 export const getActiveTabUrl = () => {
-    const activeTab = Number(localStorage.getItem('active_tab'));
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', TAB_IDS[activeTab] ?? TAB_IDS[0]);
-    return url.href;
+    const current_tab_number = localStorage.getItem('active_tab');
+    const TAB_NAMES = [
+        'dashboard',
+        'bot_builder',
+        'chart',
+        'tutorial',
+        'analysis_tool',
+        'signals',
+        'portfolio',
+        'free_bots',
+    ] as const;
+    const getTabName = (index: number) => TAB_NAMES[index];
+    const current_tab_name = getTabName(Number(current_tab_number));
+
+    const current_url = window.location.href.split('#')[0];
+    const active_tab_url = `${current_url}#${current_tab_name}`;
+    return active_tab_url;
 };

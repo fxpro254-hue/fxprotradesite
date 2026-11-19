@@ -7,6 +7,7 @@ import {
 } from '@deriv/quill-icons/Legacy';
 import {
     DerivProductBrandLightDerivBotLogoWordmarkIcon as DerivBotLogo,
+    DerivProductBrandLightDerivTraderLogoWordmarkIcon as DerivTraderLogo,
     PartnersProductBrandLightSmarttraderLogoWordmarkIcon as SmarttraderLogo,
 } from '@deriv/quill-icons/Logo';
 import { localize } from '@deriv-com/translations';
@@ -40,6 +41,14 @@ export type TAccount = {
 };
 
 export const platformsConfig: PlatformsConfig[] = [
+    {
+        active: false,
+        buttonIcon: <DerivTraderLogo height={25} width={114.97} />,
+        description: localize('A whole new trading experience on a powerful yet easy to use platform.'),
+        href: standalone_routes.trade,
+        icon: <DerivTraderLogo height={32} width={148} />,
+        showInEU: true,
+    },
     {
         active: true,
         buttonIcon: <DerivBotLogo height={25} width={94} />,

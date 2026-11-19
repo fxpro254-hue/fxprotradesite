@@ -1,3 +1,4 @@
+import { logoutTradingSession } from '../pipforge/session';
 import { action, computed, makeObservable, observable } from 'mobx';
 import { ContentFlag, isEmptyObject } from '@/components/shared';
 import { isEuCountry, isMultipliersOnly, isOptionsBlocked } from '@/components/shared/common/utility';
@@ -8,10 +9,6 @@ import {
 } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
 import type { TAuthData, TLandingCompany } from '@/types/api-types';
 import type { Balance, GetAccountStatus, GetSettings, WebsiteStatus } from '@deriv/api-types';
-
-type OptionsBalance = Omit<Balance, 'accounts'> & {
-    accounts?: Record<string, { balance: number; currency: string }>;
-};
 
 const eu_shortcode_regex = /^maltainvest$/;
 const eu_excluded_regex = /^mt$/;
@@ -28,7 +25,7 @@ export default class ClientStore {
     upgradeable_landing_companies: string[] = [];
     accounts: Record<string, TAuthData['account_list'][number]> = {};
     is_landing_company_loaded = false;
-    all_accounts_balance: OptionsBalance | null = null;
+    all_accounts_balance: Balance | null = null;
     is_logging_out = false;
 
     // TODO: fix with self exclusion
@@ -253,7 +250,7 @@ export default class ClientStore {
     };
 
     getToken = () => {
-        return this.loginid;
+        return ''; // Credentials are owned by the backend session.
     };
 
     setAccountStatus(status: GetAccountStatus | undefined) {
@@ -284,7 +281,7 @@ export default class ClientStore {
         this.upgradeable_landing_companies = upgradeable_landing_companies;
     };
 
-    setAllAccountsBalance = (all_accounts_balance: OptionsBalance | undefined) => {
+    setAllAccountsBalance = (all_accounts_balance: Balance | undefined) => {
         this.all_accounts_balance = all_accounts_balance ?? null;
     };
 
@@ -293,6 +290,7 @@ export default class ClientStore {
     };
 
     logout = () => {
+        void logoutTradingSession().catch(() => { window.location.assign('/api/deriv/login'); });
         // reset all the states
         this.account_list = [];
         this.account_status = undefined;

@@ -141,58 +141,6 @@ function App() {
         sessionStorage.setItem('dbot_pwa_prompt_dismissed_this_session', 'true');
     };
 
-    useEffect(() => {
-        const accountsList = localStorage.getItem('accountsList');
-        const clientAccounts = localStorage.getItem('clientAccounts');
-        const urlParams = new URLSearchParams(window.location.search);
-        const accountCurrency = urlParams.get('account');
-
-        if (!accountsList || !clientAccounts) return;
-
-        try {
-            const parsedAccounts = JSON.parse(accountsList);
-            const parsedClientAccounts = JSON.parse(clientAccounts) as TAuthData['account_list'];
-            const isValidCurrency = accountCurrency
-                ? Object.values(parsedClientAccounts).some(
-                      account => account.currency.toUpperCase() === accountCurrency.toUpperCase()
-                  )
-                : false;
-
-            const updateLocalStorage = (token: string, loginid: string) => {
-                localStorage.setItem('authToken', token);
-                localStorage.setItem('active_loginid', loginid);
-            };
-
-            // Handle demo account
-            if (accountCurrency?.toUpperCase() === 'DEMO') {
-                const demoAccount = Object.entries(parsedAccounts).find(([key]) => key.startsWith('VR'));
-
-                if (demoAccount) {
-                    const [loginid, token] = demoAccount;
-                    updateLocalStorage(String(token), loginid);
-                    return;
-                }
-            }
-
-            // Handle real account with valid currency
-            if (accountCurrency?.toUpperCase() !== 'DEMO' && isValidCurrency) {
-                const realAccount = Object.entries(parsedClientAccounts).find(
-                    ([loginid, account]) =>
-                        !loginid.startsWith('VR') && account.currency.toUpperCase() === accountCurrency?.toUpperCase()
-                );
-
-                if (realAccount) {
-                    const [loginid, account] = realAccount;
-                    if ('token' in account) {
-                        updateLocalStorage(String(account?.token), loginid);
-                    }
-                    return;
-                }
-            }
-        } catch (e) {
-            console.warn('Error parsing accounts:', e);
-        }
-    }, []);
 
     // ✅ Register the service worker (for PWA support)
     useEffect(() => {

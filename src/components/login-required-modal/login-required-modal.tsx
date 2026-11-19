@@ -72,7 +72,7 @@ const LoginRequiredModal = observer(() => {
                         <span className='login-card__emoji'>🚀</span>
                         
                         <h1 className='login-card__title'>
-                            Welcome to FxPro Trades!
+                            Welcome to {window.__PF_SITE_BRANDING__?.name || 'your trading site'}!
                         </h1>
                         
                         <div className='login-card__message'>

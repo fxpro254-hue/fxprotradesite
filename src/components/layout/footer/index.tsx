@@ -16,6 +16,7 @@ import NetworkStatus from './NetworkStatus';
 import ResponsibleTrading from './ResponsibleTrading';
 import ServerTime from './ServerTime';
 import WhatsApp from './WhatsApp';
+import ClientSocialProfiles from '../client-social-profiles';
 import './footer.scss';
 
 const Footer = () => {
@@ -29,6 +30,7 @@ const Footer = () => {
 
     return (
         <footer className='app-footer'>
+            <ClientSocialProfiles place='footer' />
             <FullScreen />
             <LanguageSettings openLanguageSettingModal={openLanguageSettingModal} />
             <HelpCentre />

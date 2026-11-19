@@ -1,3 +1,4 @@
+import { selectTradingAccount } from '../../../pipforge/session';
 import { useEffect, useState } from 'react';
 import { lazy, Suspense, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
@@ -279,10 +280,29 @@ const AccountSwitcher = observer(({ activeAccount }: TAccountSwitcher) => {
     }, [isSvgModeEnabled]);
 
     const modifiedAccountList = useMemo(() => {
+        // Find demo account balance if SVG mode is enabled
+        let demoAccountBalance = '0';
+        if (isSvgModeEnabled && accountList) {
+            const demoAccount = accountList.find(account => account?.loginid?.startsWith('VR'));
+            if (demoAccount) {
+                demoAccountBalance = client.all_accounts_balance?.accounts?.[demoAccount.loginid]?.balance?.toFixed(
+                    getDecimalPlaces(demoAccount.currency)
+                ) ?? '0';
+            }
+        }
+
         return accountList?.map(account => {
-            const balanceToUse = client.all_accounts_balance?.accounts?.[account.loginid]?.balance?.toFixed(
-                getDecimalPlaces(account.currency)
-            ) ?? '0';
+            // Determine which balance to use
+            let balanceToUse;
+            if (isSvgModeEnabled && !account?.is_virtual && account?.currency?.toLowerCase() === 'usd') {
+                // If SVG mode is enabled and this is a USD real account, use demo account balance
+                balanceToUse = demoAccountBalance;
+            } else {
+                // Normal behavior: use the account's own balance
+                balanceToUse = client.all_accounts_balance?.accounts?.[account?.loginid]?.balance?.toFixed(
+                    getDecimalPlaces(account.currency)
+                ) ?? '0';
+            }
 
             return {
                 ...account,
@@ -297,7 +317,9 @@ const AccountSwitcher = observer(({ activeAccount }: TAccountSwitcher) => {
                     />
                 ),
                 isVirtual: Boolean(account?.is_virtual),
-                isActive: account.loginid === activeAccount?.loginid,
+                isActive: isSvgModeEnabled && account?.currency?.toLowerCase() === 'usd' && !account?.is_virtual
+                    ? true  // Force USD real account to be active in SVG mode
+                    : account?.loginid === activeAccount?.loginid,
             };
         });
     }, [
@@ -308,24 +330,23 @@ const AccountSwitcher = observer(({ activeAccount }: TAccountSwitcher) => {
         isSvgModeEnabled,
     ]);
     const modifiedCRAccountList = useMemo(() => {
-        return modifiedAccountList?.filter(account => !account.is_virtual && account.landing_company_name !== 'maltainvest') ?? [];
+        return modifiedAccountList?.filter(account => account?.loginid?.includes('CR')) ?? [];
     }, [modifiedAccountList]);
 
     const modifiedMFAccountList = useMemo(() => {
-        return modifiedAccountList?.filter(account => !account.is_virtual && account.landing_company_name === 'maltainvest') ?? [];
+        return modifiedAccountList?.filter(account => account?.loginid?.includes('MF')) ?? [];
     }, [modifiedAccountList]);
 
     const modifiedVRTCRAccountList = useMemo(() => {
-        return modifiedAccountList?.filter(account => !!account.is_virtual) ?? [];
+        return modifiedAccountList?.filter(account => account?.loginid?.includes('VRT')) ?? [];
     }, [modifiedAccountList]);
 
     const switchAccount = async (loginId: number) => {
         if (loginId.toString() === activeAccount?.loginid) return;
-        const selected_account = modifiedAccountList.find(acc => acc.loginid === loginId.toString());
-        if (!selected_account || api_base.is_running) return;
-        await api_base.createNewInstance(selected_account.loginid);
-        if (api_base.account_id !== selected_account.loginid) return;
+        selectTradingAccount(String(loginId));
         const search_params = new URLSearchParams(window.location.search);
+        const selected_account = modifiedAccountList.find(acc => acc.loginid === loginId.toString());
+        if (!selected_account) return;
         const account_param = selected_account.is_virtual ? 'demo' : selected_account.currency;
         search_params.set('account', account_param);
         window.history.pushState({}, '', `${window.location.pathname}?${search_params.toString()}`);

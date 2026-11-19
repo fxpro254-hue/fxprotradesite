@@ -8,7 +8,7 @@ export type TSidebarItem = {
 
 export const SIDEBAR_INTRO = (): TSidebarItem[] => [
     {
-        label: localize('Welcome to FxProTrades!'),
+        label: localize(`Welcome to ${window.__PF_SITE_BRANDING__?.name || 'your trading workspace'}!`),
         content: [
             {
                 data: localize(

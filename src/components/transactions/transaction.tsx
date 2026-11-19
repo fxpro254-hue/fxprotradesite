@@ -197,14 +197,14 @@ const Transaction = ({ contract, active_transaction_id, onClickTransaction }: TT
                     <TransactionIconWithText
                         icon={<LegacyRadioOnIcon height={10} width={10} />}
                         title={localize('Entry spot')}
-                        message={contract?.entry_tick ?? (contract?.is_completed ? '—' : <TransactionFieldLoader />)}
+                        message={contract?.entry_tick ?? <TransactionFieldLoader />}
                     />
                 </div>
                 <div className='transactions__cell transactions__exit-spot'>
                     <TransactionIconWithText
                         icon={<LegacyRadioOffIcon height={10} width={10} />}
                         title={localize('Exit spot')}
-                        message={contract?.exit_tick ?? (contract?.is_completed ? '—' : <TransactionFieldLoader />)}
+                        message={contract?.exit_tick ?? <TransactionFieldLoader />}
                     />
                 </div>
                 <div className='transactions__cell transactions__stake'>

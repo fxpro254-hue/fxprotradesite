@@ -1,3 +1,4 @@
+import { selectTradingAccount } from '../../../../pipforge/session';
 import React from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
@@ -40,12 +41,7 @@ export const AccountSwitcherWalletItem = observer(
         const is_dtrade_active = dtrade_loginid === active_loginid;
 
         const switchAccount = async (loginId: number) => {
-            const account_list = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
-            const token = account_list[loginId];
-            if (!token) return;
-            localStorage.setItem('authToken', token);
-            localStorage.setItem('active_loginid', loginId.toString());
-            await api_base?.init(true);
+        selectTradingAccount(String(loginId));
             closeAccountsDialog();
 
             const client_accounts = JSON.parse(localStorage.getItem('clientAccounts') ?? '{}');

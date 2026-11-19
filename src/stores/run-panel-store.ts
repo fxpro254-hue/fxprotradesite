@@ -4,7 +4,7 @@ import { notification_message } from '@/components/bot-notification/bot-notifica
 import { isSafari, mobileOSDetect, standalone_routes } from '@/components/shared';
 import { contract_stages, TContractStage } from '@/constants/contract-stage';
 import { run_panel } from '@/constants/run-panel';
-import { api_base, ErrorTypes, MessageTypes, observer, unrecoverable_errors } from '@/external/bot-skeleton';
+import { ErrorTypes, MessageTypes, observer, unrecoverable_errors } from '@/external/bot-skeleton';
 import { getSelectedTradeType } from '@/external/bot-skeleton/scratch/utils';
 // import { journalError, switch_account_notification } from '@/utils/bot-notifications';
 import GTM from '@/utils/gtm';
@@ -207,7 +207,6 @@ export default class RunPanelStore {
             this.showLoginDialog();
             return;
         }
-        if (!api_base.is_authorized || api_base.account_id !== client.loginid) return;
 
         /**
          * Due to Apple's policy on cellular data usage in ios audioElement.play() should be initially called on

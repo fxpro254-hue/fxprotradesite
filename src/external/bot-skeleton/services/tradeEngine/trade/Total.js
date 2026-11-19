@@ -1,4 +1,3 @@
-import { settledAmounts } from '@/utils/settled-amounts';
 import { getRoundedNumber } from '@/components/shared';
 import { localize } from '@deriv-com/translations';
 import { LogTypes } from '../../../constants/messages';
@@ -36,10 +35,9 @@ export default Engine =>
         }
 
         updateTotals(contract) {
-            const { currency } = contract;
-            const { stake, payout, profit: settledProfit } = settledAmounts(contract);
+            const { sell_price: sellPrice, buy_price: buyPrice, currency } = contract;
 
-            const profit = getRoundedNumber(settledProfit, currency);
+            const profit = getRoundedNumber(Number(sellPrice) - Number(buyPrice), currency);
 
             const win = profit > 0;
 
@@ -53,9 +51,9 @@ export default Engine =>
 
             accountStat.totalProfit = getRoundedNumber(Number(accountStat.totalProfit) + Number(profit), currency);
 
-            accountStat.totalStake = getRoundedNumber(Number(accountStat.totalStake) + stake, currency);
+            accountStat.totalStake = getRoundedNumber(Number(accountStat.totalStake) + Number(buyPrice), currency);
 
-            accountStat.totalPayout = getRoundedNumber(Number(accountStat.totalPayout) + payout, currency);
+            accountStat.totalPayout = getRoundedNumber(Number(accountStat.totalPayout) + Number(sellPrice), currency);
 
             info({
                 profit,
