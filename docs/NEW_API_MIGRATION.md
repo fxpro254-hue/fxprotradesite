@@ -20,3 +20,7 @@ Both copies build with Rsbuild. Pipforge's test suite includes session/account-s
 ## Next integration step
 
 Build this runtime into Pipforge's output, mount it in the builder preview with draft branding, and route live tenant domains directly to it. Saved name/logo, template, font, blur, header, loader and social preferences already have a first-pass branding bridge, but the full preference matrix and mobile layout must be verified when the runtime is connected. Do not describe that routing or appearance work as deployed yet.
+
+
+## Full Pipforge runtime
+The native app is built into Pipforge for both preview and published tenant sites. Branding loads before the UI mounts, then updates in place through a same-origin parent bridge or saved public tenant configuration. Client fonts, palette, glass/blur, header, loader, socials, account presentation and native menu visibility apply to the full app. The generated client-background.js carries the same animation engine as the builder. Token/copy tools remain removed. No live trade was placed during integration verification.
