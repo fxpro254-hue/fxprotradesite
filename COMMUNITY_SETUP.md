@@ -68,90 +68,11 @@ npx prisma db push
 npx prisma studio
 ```
 
-## File Structure
-```
-bot/
-├── prisma/
-│   └── schema.prisma           # Database schema
-├── src/
-│   ├── api/
-│   │   └── community.api.ts    # API handlers
-│   ├── services/
-│   │   └── community.service.ts # Database operations
-│   ├── hooks/
-│   │   └── useDerivAuth.ts     # Deriv authentication hook
-│   ├── lib/
-│   │   └── prisma.ts           # Prisma client instance
-│   └── pages/
-│       └── community/
-│           ├── community.tsx    # Community component
-│           └── community.scss   # Styles
-└── setup-community.js           # Setup script
-```
+## Application files
 
-## Usage
-
-### Deriv Authentication
-The community feature automatically fetches user information from Deriv:
-```typescript
-import { useDerivAuth } from '@/hooks/useDerivAuth';
-
-const { user, loading } = useDerivAuth();
-// user.loginId - Deriv login ID
-// user.fullName - User's full name
-```
-
-### API Functions
-
-#### Get Categories
-```typescript
-import { handleGetCategories } from '@/api/community.api';
-
-const result = await handleGetCategories();
-```
-
-#### Get Messages
-```typescript
-import { handleGetMessages } from '@/api/community.api';
-
-const result = await handleGetMessages(categoryId, limit);
-```
-
-#### Create Message
-```typescript
-import { handleCreateMessage } from '@/api/community.api';
-
-const result = await handleCreateMessage({
-    content: 'Hello!',
-    userId: user.id,
-    categoryId: category.id,
-    replyToId: optionalReplyId,
-    attachments: optionalAttachments
-});
-```
-
-#### Register User
-```typescript
-import { handleRegisterUser } from '@/api/community.api';
-
-const result = await handleRegisterUser(loginId, fullName);
-```
-
-#### Update User Status
-```typescript
-import { handleUpdateUserStatus } from '@/api/community.api';
-
-const result = await handleUpdateUserStatus(loginId, 'online');
-```
-
-## Integration with Community Component
-
-The community component will need to be updated to:
-1. Use `useDerivAuth` hook to get current user
-2. Register user on first visit
-3. Load messages from database
-4. Send messages to database
-5. Update user status (online/offline)
+- `api/index.js` serves the Vercel community API. `server/index.js` serves the standalone community API.
+- `src/pages/community/community.tsx` uses the app's shared Deriv session and calls the community API through `src/api/community.api.ts`.
+- `prisma/schema.prisma` defines the database schema. `setup-community.js` initializes the community data.
 
 ## Database Maintenance
 

@@ -4,7 +4,6 @@ import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginBasicSsl } from '@rsbuild/plugin-basic-ssl';
 
 const path = require('path');
-const fs = require('fs');
 
 export default defineConfig({
     plugins: [
@@ -67,7 +66,6 @@ export default defineConfig({
             { from: 'node_modules/@deriv/deriv-charts/dist/chart/assets/fonts/*', to: 'assets/fonts/[name][ext]' },
             { from: 'node_modules/@deriv/deriv-charts/dist/chart/assets/shaders/*', to: 'assets/shaders/[name][ext]' },
             { from: path.join(__dirname, 'public') },
-            // DTrader is now loaded from Vercel deployment, no need to copy local build
         ],
     },
     html: {

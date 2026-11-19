@@ -26,7 +26,6 @@ import StandaloneChartModal from '@/pages/chart/standalone-chart-modal';
 import { Localize, localize } from '@deriv-com/translations';
 import { useDevice } from '@deriv-com/ui';
 import RunPanel from '../../components/run-panel';
-import ChartModal from '../chart/chart-modal';
 import Dashboard from '../dashboard';
 import RunStrategy from '../dashboard/run-strategy';
 import './main.scss';
@@ -191,7 +190,7 @@ const ForexIcon = () => (
 const AppWrapper = observer(() => {
     const { connectionStatus } = useApiBase();
     const { dashboard, load_modal, run_panel, summary_card } = useStore();
-    const { active_tab, is_chart_modal_visible, setActiveTab } = dashboard;
+    const { active_tab, setActiveTab } = dashboard;
     const {
         is_dialog_open,
         dialog_options,
@@ -877,7 +876,6 @@ const AppWrapper = observer(() => {
                             <div
                                 className={classNames('dashboard__chart-wrapper', {
                                     'dashboard__chart-wrapper--expanded': is_drawer_open && isDesktop,
-                                    'dashboard__chart-wrapper--modal': is_chart_modal_visible && isDesktop,
                                 })}
                             >
                                 <div className='analysis-tool-toggle'>
@@ -1335,7 +1333,6 @@ const AppWrapper = observer(() => {
                     {active_tab !== DBOT_TABS.PORTFOLIO && active_tab !== DBOT_TABS.FOREX && <RunStrategy />}
                     {showRunPanel && <RunPanel />}
                 </div>
-                <ChartModal />
                 <TradingViewModal />
                 <AnalysistoolModal />
                 <SignalsModal />
