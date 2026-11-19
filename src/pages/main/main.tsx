@@ -39,7 +39,10 @@ declare global {
     }
 }
 
-const Chart = lazy(() => import('../chart'));
+const OptionsTrade = lazy(() => import('../chart/options-trade'));
+const TradingHub = lazy(() => import('@/components/trading-hub/trading-hub-display'));
+const SmartTrading = lazy(() => import('../chart/smart-trading-display'));
+const SpeedBot = lazy(() => import('../chart/speed-bot-display'));
 const Forex = lazy(() => import('../forex'));
 
 const DashboardIcon = () => (
@@ -784,6 +787,11 @@ const AppWrapper = observer(() => {
         DBOT_TABS.CHART,
         DBOT_TABS.ANALYSIS_TOOL,
         DBOT_TABS.FREE_BOTS,
+        DBOT_TABS.TRADING_HUB,
+        DBOT_TABS.SMART_TRADING,
+        DBOT_TABS.SPEED_BOT,
+        DBOT_TABS.ACCUMULATORS,
+        DBOT_TABS.DIGITS,
     ].includes(active_tab);
 
     // Scroll to top functionality
@@ -848,13 +856,13 @@ const AppWrapper = observer(() => {
                             label={
                                 <>
                                     <ChartsIcon />
-                                    <Localize i18n_default_text='Smart trading' />
+                                    <Localize i18n_default_text='Rise/Fall' />
                                 </>
                             }
                             id='id-charts'
                         >
                             <Suspense fallback={<ChunkLoader message={localize('Please wait, loading chart...')} />}>
-                                <Chart show_digits_stats={true} />
+                                {active_tab === DBOT_TABS.CHART && <OptionsTrade key='rise-fall' family='riseFall' />}
                             </Suspense>
                         </div>
                         <div
@@ -1293,6 +1301,31 @@ const AppWrapper = observer(() => {
                                     <Forex />
                                 </Suspense>
                             </div>
+                        </div>
+                        <div id='id-trading-hub' label={<Localize i18n_default_text='Trading Hub' />}>
+                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
+                                {active_tab === DBOT_TABS.TRADING_HUB && <TradingHub />}
+                            </Suspense>
+                        </div>
+                        <div id='id-smart-trading' label={<Localize i18n_default_text='Smart Trading' />}>
+                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
+                                {active_tab === DBOT_TABS.SMART_TRADING && <SmartTrading />}
+                            </Suspense>
+                        </div>
+                        <div id='id-speed-bot' label={<Localize i18n_default_text='Speed Bot' />}>
+                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
+                                {active_tab === DBOT_TABS.SPEED_BOT && <SpeedBot />}
+                            </Suspense>
+                        </div>
+                        <div id='id-accumulators' label={<Localize i18n_default_text='Accumulators' />}>
+                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
+                                {active_tab === DBOT_TABS.ACCUMULATORS && <OptionsTrade key='accumulators' family='accumulators' />}
+                            </Suspense>
+                        </div>
+                        <div id='id-digits' label={<Localize i18n_default_text='Digits' />}>
+                            <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
+                                {active_tab === DBOT_TABS.DIGITS && <OptionsTrade key='digits' family='digits' />}
+                            </Suspense>
                         </div>
                     </Tabs>
                 </div>

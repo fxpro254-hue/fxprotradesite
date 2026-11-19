@@ -11,8 +11,8 @@ import { TSocketResponseData } from '@/types/api-types';
 import { useTranslations } from '@deriv-com/translations';
 
 const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ children }) => {
-    const { connectionStatus, authData } = useApiBase();
-    const { client, common } = useStore();
+    const { connectionStatus, authData, isAuthorized } = useApiBase();
+    const { client, common, transactions } = useStore();
     const { currentLang } = useTranslations();
 
     useEffect(() => {
@@ -41,6 +41,13 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
             }])),
         });
     }, [authData, client]);
+
+    const account = authData?.loginid;
+    useEffect(() => {
+        if (account && isAuthorized && connectionStatus === CONNECTION_STATUS.OPENED) {
+            return transactions.watchContracts(account);
+        }
+    }, [account, connectionStatus, isAuthorized, transactions]);
 
     useEffect(() => {
         const api = api_base.api;

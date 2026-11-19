@@ -1,0 +1,28 @@
+.options-trade {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
+    gap: 2rem;
+    padding: 2rem;
+    color: var(--text-general);
+
+    &__chart,
+    &__controls {
+        padding: 1.6rem;
+        background: var(--general-main-1);
+        border: 1px solid var(--general-section-2);
+        border-radius: 8px;
+    }
+    h2 { margin-bottom: 1rem; font-size: 2rem; }
+    p { margin: 0.8rem 0; font-size: 1.4rem; }
+    svg { width: 100%; min-height: 180px; color: #a98935; }
+    fieldset { border: 0; padding: 0; min-width: 0; }
+    label { display: grid; gap: 0.4rem; margin-bottom: 1rem; font-size: 1.4rem; }
+    input, select, button { min-height: 3.6rem; padding: 0.5rem 0.8rem; border-radius: 4px; font: inherit; }
+    input, select { background: var(--general-main-1); color: inherit; border: 1px solid var(--general-section-2); }
+    button { border: 0; background: #a98935; color: #15110a; cursor: pointer; font-size: 1.4rem; }
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    @media (max-width: 740px) {
+        grid-template-columns: 1fr;
+    }
+}

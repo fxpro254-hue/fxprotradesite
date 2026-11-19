@@ -8,8 +8,13 @@ export type TContractInfo = Omit<
 > & {
     accountID?: number | string;
     is_completed?: boolean;
+    is_manual_trade?: boolean;
     run_id?: string;
     date_start?: TDateType;
+    entry_spot?: string | null;
+    entry_spot_time?: number | null;
+    exit_spot?: string | null;
+    exit_spot_time?: number | null;
     entry_tick?: TDateType;
     entry_tick_time?: TDateType;
     exit_tick?: TDateType;
